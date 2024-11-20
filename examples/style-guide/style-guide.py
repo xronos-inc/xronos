@@ -1,0 +1,159 @@
+# SPDX-FileCopyrightText: © 2024 Xronos Inc.
+# SPDX-License-Identifier: BSD-3-Clause
+
+"""This example serves as a general style guide for writing Reactors."""
+
+import datetime
+import threading
+import time
+from typing import Callable
+
+import xronos
+
+
+class MyReactor(xronos.Reactor):
+    # Ports should be public attributes, as they are accessed by the enviornment
+    # when making connections to other reactors.
+    #
+    # Name the port in a way that will make sense when making connections to and
+    # from other reactors.
+    #
+    # Here, use the name `input_` instead of `input` to avoid a keyword collision
+    # with Python -- or better, use a more descriptive name than `input`.
+    input_ = xronos.InputPortDeclaration[float]()
+    output = xronos.OutputPortDeclaration[float]()
+
+    # Physical events may be public attributes if raised by external processes,
+    # or private if they are raised by processes internal to this reactor.
+    # suffix physical and internal events with 'event'
+    #
+    # Use a descriptive name for what the event signals, and from what process
+    # and under which conditions the event is raised. In this example, it signals
+    # that a sensor value has been produced by an external process (such as an
+    # interrupt) with a floating-pint value.
+    _sensor_event = xronos.PhysicalEventDeclaration[float]()
+
+    # Internal events should always be private -- they are intended for use for
+    # messaging within a reactor only. If you need to communicate to another
+    # reactor, use ports.
+    #
+    # Use a descriptive name for what the event signals. In this example, when the
+    # event is triggered, it signals an actuation with a floating-point should occur.
+    _actuate_event = xronos.InternalEventDeclaration[float]()
+
+    # Timers should in general be private.
+    _timer = xronos.TimerDeclaration()
+
+    # reactor constants
+    OUTPUT_COUNT: int = 3
+
+    def __init__(self) -> None:
+        super().__init__()
+
+        self._timer.period = datetime.timedelta(milliseconds=500)
+        self._timer.offset = self._timer.period
+
+        # threads should be private, started on a triggered event such as startup,
+        # signalled using a state variable, and joined on shutdown.
+        self._thread: threading.Thread = threading.Thread()
+
+        # variables used to signal threads should end with `request`
+        self._shutdown_request: bool = False
+
+    # suffix methods intended to run in threads with `process`
+    def read_sensor_process(self) -> None:
+        output_count = 0
+        output_period = datetime.timedelta(milliseconds=500)
+        last_output_time = self.get_time_since_startup()
+        while not self._shutdown_request and output_count < self.OUTPUT_COUNT:
+            # simulate a blocking read: wait until the output period to produce output
+            if self.get_time_since_startup() - last_output_time < output_period:
+                time.sleep(0)  # yield CPU to other threads
+            else:
+                self._sensor_event.schedule(42)  # imagine this is a value from a sensor
+                output_count = output_count + 1
+                last_output_time = self.get_time_since_startup()
+        self.environment.request_shutdown()
+
+    # reaction specifications begin with the event and have prefix `on`
+    @xronos.reaction
+    def on_startup(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
+        """Specify the reaction to the startup event."""
+        interface.add_trigger(self.startup)
+
+        # use the name `handler()` for the reaction body
+        def handler() -> None:
+            self._thread = threading.Thread(target=self.read_sensor_process)
+            self._thread.start()
+
+        return handler
+
+    @xronos.reaction
+    def on_shutdown(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
+        """Specify the reaction to the shutdown event."""
+        interface.add_trigger(self.shutdown)
+
+        # use the name `handler()` for the reaction body
+        def handler() -> None:
+            # signal threads to terminate
+            self._shutdown_request = True
+            # join (block) only on a shutdown reaction
+            self._thread.join()
+
+        return handler
+
+    @xronos.reaction
+    def on_input(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
+        input_trigger = interface.add_trigger(self.input_)
+        output_effect = interface.add_effect(self.output)
+
+        def handler() -> None:
+            output_effect.value = input_trigger.value
+
+        return handler
+
+    @xronos.reaction
+    def on_sensor(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
+        """Specify the reacition to the sensor action."""
+        # use the base name of the event for the ActionEffect
+        sensor = interface.add_trigger(self._sensor_event)
+
+        def handler() -> None:
+            print(f"Sensor read: {sensor.value}")
+
+        return handler
+
+    @xronos.reaction
+    def on_actuate(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
+        actuate_trigger = interface.add_trigger(self._actuate_event)
+
+        def handler() -> None:
+            print(f"Actuating with value {actuate_trigger.value}")
+
+        return handler
+
+    @xronos.reaction
+    def on_timer(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
+        interface.add_trigger(self._timer)
+
+        # prefix effects with the port or action name and suffix with `effect`
+        actuate_effect = interface.add_effect(self._actuate_event)
+
+        def handler() -> None:
+            actuate_effect.schedule(1.0)
+
+        return handler
+
+
+def test_style_guide() -> None:
+    main(True)
+
+
+def main(fast: bool = False) -> None:
+    env = xronos.Environment(fast=fast)
+    env.create_reactor("MyReactor", MyReactor)
+    env.execute()
+
+
+if __name__ == "__main__":
+    main()
