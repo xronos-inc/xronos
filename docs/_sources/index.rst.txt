@@ -1,0 +1,17 @@
+====================
+Xronos Documentation
+====================
+
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Contents:
+
+   getting_started
+   reference_guide/index
+   diagrams
+   dashboard
+   tutorials
+   api
+   lib
+

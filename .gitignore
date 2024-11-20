@@ -1,0 +1,30 @@
+build
+manual-build
+
+**/.xronos.diagrams.layoutsdb
+
+# IDE
+**/.vscode/settings.json
+**/.vscode/c_cpp_properties.json
+
+# operating system
+.DS_Store
+
+# general log files
+**/*.log
+
+# python
+**/.venv/
+**/__pycache__/
+**/.mypy_cache/
+**/.pytest_cache/
+**/.pic
+
+# build artifacts
+**/.cache/
+**/.tmp-earthly-out/
+
+# release artifacts
+**/target/
+**/*.whl
+release/

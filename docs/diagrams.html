@@ -1,0 +1,198 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Diagram View &mdash; xronos  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="_static/fix_stacking.css?v=30aa6f93" />
+
+  
+    <link rel="shortcut icon" href="_static/logo.svg"/>
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="_static/copybutton.js?v=35a8b989"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Trace Dashboard" href="dashboard.html" />
+    <link rel="prev" title="Internal Events" href="reference_guide/internal_events.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html">
+            
+              <img src="_static/logo_written.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference_guide/index.html">Reference Guide</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Diagram View</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#system-requirements">System Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#rendering-diagrams">Rendering Diagrams</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#code-navigation">Code Navigation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#viewing-diagram-server-logs">Viewing Diagram Server Logs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#interoperability-with-wsl-or-visual-studio-code-remote-ssh">Interoperability with <code class="docutils literal notranslate"><span class="pre">WSL</span></code> or <code class="docutils literal notranslate"><span class="pre">Visual</span> <span class="pre">Studio</span> <span class="pre">Code</span> <span class="pre">Remote</span> <span class="pre">-</span> <span class="pre">SSH</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="dashboard.html">Trace Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lib.html">Library Reactors</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">xronos</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Diagram View</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/diagrams.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="diagram-view">
+<span id="diagram"></span><h1>Diagram View<a class="headerlink" href="#diagram-view" title="Link to this heading"></a></h1>
+<p>The topology of a xronos program can be visualized in an interactive diagram using our VS Code extension.</p>
+<section id="system-requirements">
+<h2>System Requirements<a class="headerlink" href="#system-requirements" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>A Linux-based operating system. We recommend <a class="reference external" href="https://ubuntu.com/download/desktop">Ubuntu</a> 22.04 or newer.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">node.js</span></code> needs to be installed. We recommend version <code class="docutils literal notranslate"><span class="pre">23.1.0</span></code>, and versions
+older than <code class="docutils literal notranslate"><span class="pre">16.0.0</span></code> will not work. We recommend using <code class="docutils literal notranslate"><span class="pre">nvm</span></code> to manage your
+<code class="docutils literal notranslate"><span class="pre">node</span></code> version, as described
+<a class="reference external" href="https://github.com/nvm-sh/nvm/blob/master/README.md">here</a>.</p></li>
+<li><p>VS Code needs to be installed. On Ubuntu, download the package matching your
+architecture (<a class="reference external" href="https://code.visualstudio.com/docs/?dv=linux64_deb">x86_64</a>,
+<a class="reference external" href="https://code.visualstudio.com/docs/?dv=linuxarm64_deb">aarch64</a>) and install
+the downloaded file using <code class="docutils literal notranslate"><span class="pre">dbkg</span> <span class="pre">-i</span> <span class="pre">&lt;downloaded_file&gt;</span></code>.</p></li>
+</ul>
+</section>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h2>
+<p>Start VS Code and open the market place using <span class="menuselection">View ‣ Extensions</span>. Type “Xronos” into the search field and then click the
+<span class="guilabel">Install</span> button next to the Xronos extension.</p>
+</section>
+<section id="rendering-diagrams">
+<span id="id1"></span><h2>Rendering Diagrams<a class="headerlink" href="#rendering-diagrams" title="Link to this heading"></a></h2>
+<p>Open VS Code and bring up the Command Palette using
+<kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">Shift</kbd>+<kbd class="kbd docutils literal notranslate">P</kbd>. Type <code class="docutils literal notranslate"><span class="pre">Xronos:</span> <span class="pre">Diagram</span></code> and select the
+corresponding entry using <kbd class="kbd docutils literal notranslate">⏎</kbd>. This will open the Xronos Diagram view as
+shown below.</p>
+<p><img alt="empty diagram" src="_images/empty_diagram_vscode.png" /></p>
+<p>Initially, no diagram is shown. The diagram view automatically renders the
+program that was last executed. Try running the <a class="reference internal" href="getting_started.html#hello-world"><span class="std std-ref">Hello World</span></a> example. If
+you like, you can use the builtin terminal of VS Code.</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span><span class="nb">source</span><span class="w"> </span>.venv/bin/activate
+<span class="gp">$ </span>python<span class="w"> </span>hello.py
+</pre></div>
+</div>
+<p>Now the diagram view updates and shows the <code class="docutils literal notranslate"><span class="pre">hello</span></code> reactor that we just executed.
+<img alt="hello diagram" src="_images/diagram_hello_vscode.png" /></p>
+<p>You may run arbitrary xronos programs and observe their topology in the diagram
+view. For instance, the <a class="reference internal" href="tutorials.html#yolo"><span class="std std-ref">YOLO</span></a> example is rendered as shown below.
+<img alt="YOLO diagram" src="_images/diagram_yolo.png" /></p>
+</section>
+<section id="code-navigation">
+<h2>Code Navigation<a class="headerlink" href="#code-navigation" title="Link to this heading"></a></h2>
+<p>You can also use the diagram to navigate your code. Select an element in the
+diagram and press <kbd class="kbd docutils literal notranslate">F12</kbd>, or click on an element while holding down the
+<kbd class="kbd docutils literal notranslate">Ctrl</kbd> key (<kbd class="kbd docutils literal notranslate">Cmd</kbd>/<kbd class="kbd docutils literal notranslate">⌘</kbd> key on Mac). This will bring you to the
+location in the Python code that created the element.</p>
+</section>
+<section id="viewing-diagram-server-logs">
+<span id="id2"></span><h2>Viewing Diagram Server Logs<a class="headerlink" href="#viewing-diagram-server-logs" title="Link to this heading"></a></h2>
+<p>To view the diagram server logs, open the VS Code integrated terminal using
+<kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">​`​</kbd> and navigate to the terminal titled <code class="docutils literal notranslate"><span class="pre">Xronos</span> <span class="pre">Diagram</span> <span class="pre">Server</span></code>.</p>
+</section>
+<section id="interoperability-with-wsl-or-visual-studio-code-remote-ssh">
+<h2>Interoperability with <code class="docutils literal notranslate"><span class="pre">WSL</span></code> or <code class="docutils literal notranslate"><span class="pre">Visual</span> <span class="pre">Studio</span> <span class="pre">Code</span> <span class="pre">Remote</span> <span class="pre">-</span> <span class="pre">SSH</span></code><a class="headerlink" href="#interoperability-with-wsl-or-visual-studio-code-remote-ssh" title="Link to this heading"></a></h2>
+<p>We recommend Microsoft’s <code class="docutils literal notranslate"><span class="pre">WSL</span></code> or <code class="docutils literal notranslate"><span class="pre">Visual</span> <span class="pre">Studio</span> <span class="pre">Code</span> <span class="pre">Remote</span> <span class="pre">-</span> <span class="pre">SSH</span></code> extensions
+for users who prefer to use an unsupported operating system or who are doing
+on-target development on a headless machine.</p>
+<p>The diagram viewer requires port forwarding in order to work with the <code class="docutils literal notranslate"><span class="pre">Visual</span> <span class="pre">Studio</span> <span class="pre">Code</span> <span class="pre">Remote</span> <span class="pre">-</span> <span class="pre">SSH</span></code> extension. <code class="docutils literal notranslate"><span class="pre">WSL</span></code> does not require port forwarding.</p>
+<p>The first time you start a new VS Code session using the <code class="docutils literal notranslate"><span class="pre">Visual</span> <span class="pre">Studio</span> <span class="pre">Code</span> <span class="pre">Remote</span> <span class="pre">-</span> <span class="pre">SSH</span></code> extension and <a class="reference internal" href="#rendering-diagrams"><span class="std std-ref">open the diagram viewer</span></a>, you
+may receive a notification like the following:</p>
+<p><img alt="Port forwarding notification" src="_images/notification_port_forwarding.png" /></p>
+<p>If you do not receive this notification, it could be because automatic port
+forwarding is not enabled in your VS Code settings. Therefore, you will need to
+forward a port manually by following the directions in <a class="reference external" href="https://code.visualstudio.com/docs/editor/port-forwarding">VS Code’s official
+documentation</a> or by
+executing the command <code class="docutils literal notranslate"><span class="pre">VS</span> <span class="pre">Code:</span> <span class="pre">Forward</span> <span class="pre">a</span> <span class="pre">Port</span></code> in the VS Code command palette.
+The port you will need to forward will be specified in the
+<a class="reference internal" href="#viewing-diagram-server-logs"><span class="std std-ref">logs</span></a> as some port number between 3001 and 3020.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="reference_guide/internal_events.html" class="btn btn-neutral float-left" title="Internal Events" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="dashboard.html" class="btn btn-neutral float-right" title="Trace Dashboard" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Xronos Inc..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,69 @@
+(dashboard)=
+# Trace Dashboard
+
+The runtime behavior of xronos programs can be observed using the Xronos Dashboard.
+
+## System Requirements
+
+- A running docker daemon.
+
+## Installation
+
+We provide the dashboard as a zip archive. Use the following commands to extract and start the dashboard.
+
+```console
+$ unzip xronos-dashboard.zip
+$ cd xronos-dashboard
+$ docker compose up
+```
+
+## Usage
+
+Open [`http://localhost:3000`](http://localhost:3000) in your browser. This will
+open the Grafana-based dashboard. On first usage, you need to log in using the
+username `admin` and password `xronos`.
+
+![dashboard login](./_img/dashboard_login.png)
+
+After logging in, the trace view opens. Initially, it will be empty.
+
+![empty dashboard](./_img/dashboard_empty.png)
+
+To show trace data in the dashboard, we need to run a xronos application that
+has tracing enabled. Tracing can be enabled on any application by calling
+{func}`~xronos.Environment.enable_tracing` on the environment. Note that this
+has to happen before calling execute {func}`~xronos.Environment.execute`.
+
+Modify the {ref}`hello_world` example like shown below.
+
+```python
+env = xronos.Environment()
+env.create_reactor("hello", Hello)
+env.enable_tracing()
+env.execute()
+```
+
+Then execute the program.
+
+```console
+$ python hello.py
+```
+
+Hit the {guilabel}`🗘 Refresh` button in the dashboard. The trace view should now show a single
+execution of the `hello` reaction.
+
+![dashboard hello](./_img/dashboard_hello.png)
+
+If the trace view is still empty, you were likely not quick enough. By default,
+the trace view shows the last 5 seconds. Try extending the time window using the
+drop-down menu on the left of the {guilabel}`🗘 Refresh` button. For instance,
+you can select {guilabel}`Last 5 minutes`.
+
+The trace view is most useful for analyzing the execution of more complex
+applications. For instance, below you can see the trace view for the
+{ref}`YOLO<yolo>` example, when run with the `--trace` argument. Note that you
+can use the drop-down just next to the {guilabel}`🗘 Refresh` button and select
+{guilabel}`Auto` to enable automatic refreshing, which provides a live view of
+the collected data.
+
+![dashboard yolo](./_img/dashboard_yolo.png)

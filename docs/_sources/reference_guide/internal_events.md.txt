@@ -1,0 +1,163 @@
+# Internal Events
+
+Internal events provide a convenient way for reactors to schedule future
+behavior. While ports can be used to send messages to other reactors, internal
+events can be seen as a mechanism for a reactor to send a delayed messages to
+its future self.
+
+The following example replicates the behavior of a {ref}`timer<timer>` using an
+internal event.
+
+
+````{tabs}
+```{code-tab} python plain
+import datetime
+import xronos
+
+class Timer(xronos.Reactor):
+    _event = xronos.InternalEventDeclaration()
+
+    def __init__(self, period: datetime.timedelta):
+        super().__init__()
+        self._period = period
+
+    def _schedule_next(self, event_effect):
+        event_effect.schedule(value=None, delay=self._period)
+
+    @xronos.reaction
+    def next(self, interface):
+        interface.add_trigger(self.startup)
+        interface.add_trigger(self._event)
+        event_effect = interface.add_effect(self._event)
+
+        return lambda: self._schedule_next(event_effect)
+
+    @xronos.reaction
+    def tick(self, interface):
+        interface.add_trigger(self._event)
+
+        return lambda: print(f"Tick at {self.get_time_since_startup()}")
+
+
+env = xronos.Environment()
+env.create_reactor("timer", Timer, period=datetime.timedelta(seconds=1))
+env.execute()
+```
+```{code-tab} python type hints
+import datetime
+from typing import Callable
+import xronos
+
+class Timer(xronos.Reactor):
+    _event = xronos.InternalEventDeclaration[None]()
+
+    def __init__(self, period: datetime.timedelta) -> None:
+        super().__init__()
+        self._period = period
+
+    def _schedule_next(self, event_effect: xronos.InternalEventEffect[None]) -> None:
+        event_effect.schedule(value=None, delay=self._period)
+
+    @xronos.reaction
+    def next(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
+        interface.add_trigger(self.startup)
+        interface.add_trigger(self._event)
+        event_effect = interface.add_effect(self._event)
+
+        return lambda: self._schedule_next(event_effect)
+
+    @xronos.reaction
+    def tick(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
+        interface.add_trigger(self._event)
+
+        return lambda: print(f"Tick at {self.get_time_since_startup()}")
+
+
+env = xronos.Environment()
+env.create_reactor("timer", Timer, period=datetime.timedelta(seconds=1))
+env.execute()
+```
+```{group-tab} diagram
+![diagram timer](./_img/diagram_event_timer.png){.bg-warning w="60%" align=center}
+```
+````
+
+The `Timer` reactor declares an internal event called `_event` using an
+{class}`xronos.InternalEventDeclaration`. The reactor further defines two
+reactions. The `tick` reaction is triggered by `_event` and prints a message
+that includes the current time. The `next` reaction is triggered both by
+{attr}`~xronos.Reactor.startup` and by `_event`. It also declares an effect on
+`_event`. Using the {class}`~xronos.InternalEventEffect` object, the reaction
+may call {func}`~xronos.InternalEventEffect.schedule` to schedule a future
+occurrence of the event. In this example, the reaction handler calls
+`_schedule_next()` which in turn calls
+{func}`~xronos.InternalEventEffect.schedule` using `self._period` as delay.
+
+The `next` reaction ensures that `_event` triggers in regular intervals. The
+first invocation of `next` is triggered by {attr}`~xronos.Reactor.startup`. This
+schedules the first occurrence of `_event`. All subsequent invocations of `next`
+will be triggered by `_event` itself.
+
+When executed, the program produces the following output.
+```console
+Tick at 0:00:01
+Tick at 0:00:02
+Tick at 0:00:03
+Tick at 0:00:04
+Tick at 0:00:05
+...
+```
+
+While we can use internal event to replicate the behavior of timers, they are a
+lot more versatile. Since occurrences are scheduled by reactions, the reaction
+handlers gain full control over when events occur. This allows us to implement
+more interesting behavior. For instance, the following example implements a
+timer that slows down with each tick.
+
+````{tabs}
+```{code-tab} python plain
+class SlowingTimer(Timer):
+    def __init__(self, period, increment):
+        super().__init__(period)
+        self._increment = increment
+
+    def _schedule_next(self, event_effect):
+        event_effect.schedule(value=None, delay=self._period)
+        self._period += self._increment
+
+
+env = xronos.Environment()
+env.create_reactor(
+    "timer",
+    SlowingTimer,
+    period=datetime.timedelta(seconds=1),
+    increment=datetime.timedelta(milliseconds=200),
+)
+env.execute()
+```
+```{code-tab} python type hints
+class SlowingTimer(Timer):
+    def __init__(
+        self, period: datetime.timedelta, increment: datetime.timedelta
+    ) -> None:
+        super().__init__(period)
+        self._increment = increment
+
+    def _schedule_next(self, event_effect: xronos.InternalEventEffect[None]) -> None:
+        event_effect.schedule(value=None, delay=self._period)
+        self._period += self._increment
+
+
+env = xronos.Environment()
+env.create_reactor(
+    "timer",
+    SlowingTimer,
+    period=datetime.timedelta(seconds=1),
+    increment=datetime.timedelta(milliseconds=200),
+)
+env.execute()
+```
+```{group-tab} diagram
+![diagram slowing timer](./_img/diagram_event_timer_slowing.png){.bg-warning w="60%" align=center}
+```
+````

@@ -1,0 +1,180 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Trace Dashboard &mdash; xronos  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="_static/fix_stacking.css?v=30aa6f93" />
+
+  
+    <link rel="shortcut icon" href="_static/logo.svg"/>
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="_static/copybutton.js?v=35a8b989"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Tutorials" href="tutorials.html" />
+    <link rel="prev" title="Diagram View" href="diagrams.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html">
+            
+              <img src="_static/logo_written.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference_guide/index.html">Reference Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="diagrams.html">Diagram View</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Trace Dashboard</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#system-requirements">System Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#usage">Usage</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lib.html">Library Reactors</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">xronos</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Trace Dashboard</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/dashboard.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="trace-dashboard">
+<span id="dashboard"></span><h1>Trace Dashboard<a class="headerlink" href="#trace-dashboard" title="Link to this heading"></a></h1>
+<p>The runtime behavior of xronos programs can be observed using the Xronos Dashboard.</p>
+<section id="system-requirements">
+<h2>System Requirements<a class="headerlink" href="#system-requirements" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>A running docker daemon.</p></li>
+</ul>
+</section>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h2>
+<p>We provide the dashboard as a zip archive. Use the following commands to extract and start the dashboard.</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>unzip<span class="w"> </span>xronos-dashboard.zip
+<span class="gp">$ </span><span class="nb">cd</span><span class="w"> </span>xronos-dashboard
+<span class="gp">$ </span>docker<span class="w"> </span>compose<span class="w"> </span>up
+</pre></div>
+</div>
+</section>
+<section id="usage">
+<h2>Usage<a class="headerlink" href="#usage" title="Link to this heading"></a></h2>
+<p>Open <a class="reference external" href="http://localhost:3000"><code class="docutils literal notranslate"><span class="pre">http://localhost:3000</span></code></a> in your browser. This will
+open the Grafana-based dashboard. On first usage, you need to log in using the
+username <code class="docutils literal notranslate"><span class="pre">admin</span></code> and password <code class="docutils literal notranslate"><span class="pre">xronos</span></code>.</p>
+<p><img alt="dashboard login" src="_images/dashboard_login.png" /></p>
+<p>After logging in, the trace view opens. Initially, it will be empty.</p>
+<p><img alt="empty dashboard" src="_images/dashboard_empty.png" /></p>
+<p>To show trace data in the dashboard, we need to run a xronos application that
+has tracing enabled. Tracing can be enabled on any application by calling
+<a class="reference internal" href="api.html#xronos.Environment.enable_tracing" title="xronos.Environment.enable_tracing"><code class="xref py py-func docutils literal notranslate"><span class="pre">enable_tracing()</span></code></a> on the environment. Note that this
+has to happen before calling execute <a class="reference internal" href="api.html#xronos.Environment.execute" title="xronos.Environment.execute"><code class="xref py py-func docutils literal notranslate"><span class="pre">execute()</span></code></a>.</p>
+<p>Modify the <a class="reference internal" href="getting_started.html#hello-world"><span class="std std-ref">Hello World</span></a> example like shown below.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">env</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">Environment</span><span class="p">()</span>
+<span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;hello&quot;</span><span class="p">,</span> <span class="n">Hello</span><span class="p">)</span>
+<span class="n">env</span><span class="o">.</span><span class="n">enable_tracing</span><span class="p">()</span>
+<span class="n">env</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Then execute the program.</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>python<span class="w"> </span>hello.py
+</pre></div>
+</div>
+<p>Hit the <span class="guilabel">🗘 Refresh</span> button in the dashboard. The trace view should now show a single
+execution of the <code class="docutils literal notranslate"><span class="pre">hello</span></code> reaction.</p>
+<p><img alt="dashboard hello" src="_images/dashboard_hello.png" /></p>
+<p>If the trace view is still empty, you were likely not quick enough. By default,
+the trace view shows the last 5 seconds. Try extending the time window using the
+drop-down menu on the left of the <span class="guilabel">🗘 Refresh</span> button. For instance,
+you can select <span class="guilabel">Last 5 minutes</span>.</p>
+<p>The trace view is most useful for analyzing the execution of more complex
+applications. For instance, below you can see the trace view for the
+<a class="reference internal" href="tutorials.html#yolo"><span class="std std-ref">YOLO</span></a> example, when run with the <code class="docutils literal notranslate"><span class="pre">--trace</span></code> argument. Note that you
+can use the drop-down just next to the <span class="guilabel">🗘 Refresh</span> button and select
+<span class="guilabel">Auto</span> to enable automatic refreshing, which provides a live view of
+the collected data.</p>
+<p><img alt="dashboard yolo" src="_images/dashboard_yolo.png" /></p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="diagrams.html" class="btn btn-neutral float-left" title="Diagram View" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="tutorials.html" class="btn btn-neutral float-right" title="Tutorials" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Xronos Inc..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

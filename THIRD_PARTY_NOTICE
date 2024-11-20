@@ -1,0 +1,116 @@
+THIRD-PARTY SOFTWARE NOTICES AND INFORMATION
+
+This project includes third-party software components, which are distributed under the
+following licenses. Full licenses and notices are provided in the
+[third-party-licenses](third-party-licenses) subdirectory.
+
+---
+
+Component: Abseil C++
+Version: Abseil LTS 20240722.0
+License: Apache License 2.0
+License text: https://www.apache.org/licenses/LICENSE-2.0
+Source: https://github.com/abseil/abseil-cpp
+
+For the full license text, see:
+[third-party-licenses/libabseil_LICENSE](third-party-licenses/libabseil_LICENSE)
+
+---
+
+Component: gRPC
+Version: v1.68.0
+License: Apache License 2.0
+License text: https://www.apache.org/licenses/LICENSE-2.0
+Source: https://github.com/grpc/grpc
+
+gRPC includes third-party dependencies distributed under various licenses. For the full
+list of licenses, see:
+[third-party-licenses/grpc_LICENSE](third-party-licenses/grpc_LICENSE)
+
+---
+
+Component: myst_parser
+Version: v4.0.0
+License: MIT License
+License text: https://opensource.org/licenses/MIT
+Source: https://github.com/executablebooks/MyST-Parser
+
+For the full license text, see:
+[third-party-licenses/myst_parser_LICENSE](third-party-licenses/myst_parser_LICENSE)
+
+---
+
+Component: OpenTelemetry protcol (OLTP)
+Version: v1.3.2
+License: Apache License 2.0
+License text: https://www.apache.org/licenses/LICENSE-2.0
+Source: https://github.com/open-telemetry/opentelemetry-proto
+
+For the full license text, see:
+[third-party-licenses/opentelemetry_python_LICENSE](third-party-licenses/opentelemetry_python_LICENSE)
+
+---
+
+Component: OpenTelemetry Python
+Version: 1.28.2
+License: Apache License 2.0
+License text: https://www.apache.org/licenses/LICENSE-2.0
+Source: https://github.com/open-telemetry/opentelemetry-python
+
+For the full license text, see:
+[third-party-licenses/opentelemetry_python_LICENSE](third-party-licenses/opentelemetry_python_LICENSE)
+
+---
+
+Component: OpenTelemetry C++
+Version: v1.17.0
+License: Apache License 2.0
+License text: https://www.apache.org/licenses/LICENSE-2.0
+Source: https://github.com/open-telemetry/opentelemetry-cpp
+
+For the full license text, see:
+[third-party-licenses/opentelemetry_cpp_LICENSE](third-party-licenses/opentelemetry_cpp_LICENSE)
+
+---
+
+Component: sphinx-copybutton
+Version: v0.5.2
+License: MIT License
+License text: https://opensource.org/licenses/MIT
+Source: https://github.com/executablebooks/sphinx-copybutton
+
+For the full license text, see:
+[third-party-licenses/sphinx_copybutton_LICENSE](third-party-licenses/sphinx_copybutton_LICENSE)
+
+---
+
+Component: sphinx_rtd_theme
+Version: 3.0.2
+License: MIT License
+License text: https://opensource.org/licenses/MIT
+Source: https://github.com/readthedocs/sphinx_rtd_theme
+
+For the full license text, see:
+[third-party-licenses/sphinx_rtd_theme_LICENSE](third-party-licenses/sphinx_rtd_theme_LICENSE)
+
+---
+
+Component: sphinx-tabs
+Version: 3.4.7
+License: MIT License
+License text: https://opensource.org/licenses/MIT
+Source: https://github.com/executablebooks/sphinx-tabs
+
+For the full license text, see:
+[third-party-licenses/sphinx_tabs_LICENSE](third-party-licenses/sphinx_tabs_LICENSE)
+
+---
+
+Component: pybind11
+Version: v2.13.6
+License: BSD 3-Clause License
+License text: https://opensource.org/licenses/BSD-3-Clause
+Source: https://github.com/pybind/pybind11
+
+For the full license text, see:
+[third-party-licenses/pybind11_LICENSE](third-party-licenses/pybind11_LICENSE)
