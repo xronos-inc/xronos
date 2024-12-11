@@ -7,22 +7,22 @@
 # This file contains portions from the Lingua Franca Coordination Language
 # under BSD-2-Clause and modifications Xronos Inc. under BSD-3-Clause.
 
-opencv-python
-pandas
-tqdm
-seaborn
-requests
-ipywidgets
-ipython
-ipykernel
-matplotlib
-numpy
+opencv-python == 4.10.0.84
+pandas == 2.2.3
+tqdm == 4.67.1
+seaborn == 0.13.2
+requests == 2.32.3
+ipywidgets == 8.1.5
+ipython == 8.30.0
+ipykernel == 6.29.5
+matplotlib == 3.9.3
+numpy == 2.2.0
 Pillow>=7.1.2
 PyYAML>=5.3.1
 scipy>=1.4.1
-ultralytics
+ultralytics == 8.3.48
 
 # Logging -------------------------------------
 tensorboard>=2.4.1
 # wandb
-thop  # FLOPs computation
+thop == 0.1.1.post2209072238 # FLOPs computation

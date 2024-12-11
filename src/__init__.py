@@ -21,8 +21,10 @@ from xronos._core import (
     Timer,
     TimerDeclaration,
     Trigger,
-    ValidationError,
     reaction,
+)
+from xronos._runtime import (
+    ValidationError,
 )
 
 __all__ = [
@@ -30,19 +32,19 @@ __all__ = [
     "InputPort",
     "InputPortDeclaration",
     "InternalEvent",
-    "InternalEventEffect",
     "InternalEventDeclaration",
-    "OutputPortDeclaration",
+    "InternalEventEffect",
     "OutputPort",
+    "OutputPortDeclaration",
     "PhysicalEvent",
     "PhysicalEventDeclaration",
     "PortEffect",
     "ReactionInterface",
     "Reactor",
-    "Timer",
     "Shutdown",
     "Source",
     "Startup",
+    "Timer",
     "TimerDeclaration",
     "Trigger",
     "ValidationError",

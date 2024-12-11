@@ -11,7 +11,7 @@ Xronos Documentation
    reference_guide/index
    diagrams
    dashboard
-   tutorials
+   tutorials/index
    api
    lib
 

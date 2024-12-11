@@ -27,43 +27,21 @@ $ pip install xronos
 
 This section shows you how to write a hello world program using xronos. Create a file called `hello.py` and paste the following content into it.
 
-````{tabs}
-```{code-tab} py plain
-import xronos
-
-class Hello(xronos.Reactor):
-    @xronos.reaction
-    def hello(self, interface):
-        interface.add_trigger(self.startup)
-        return lambda: print(f"Hello, World!")
-
-env = xronos.Environment()
-env.create_reactor("hello", Hello)
-env.execute()
-```
-
-```{code-tab} py with type hints
-from typing import Callable
-
-import xronos
-
-class Hello(xronos.Reactor):
-    @xronos.reaction
-    def hello(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        interface.add_trigger(self.startup)
-        return lambda: print(f"Hello, World!")
-
-env = xronos.Environment()
-env.create_reactor("hello", Hello)
-env.execute()
+`````{tabs}
+````{group-tab} plain
+```{literalinclude} _examples/hello.py
 ```
 ````
+````{group-tab} with type hints
+```{literalinclude} _examples/hello_hints.py
+```
+````
+`````
 
 Run the program:
 
-```console
-$ python hello.py
-Hello, World!
+```{literalinclude} _examples/hello_out.txt
+:language: console
 ```
 
 Let us break down the hello world program. The building blocks of xronos are called
@@ -78,21 +56,20 @@ decorated method is expected to accept a single argument of type
 that implements an event handler. Our example reactor defines a single reaction
 called `hello`:
 
-````{tabs}
-```{code-tab} py plain
-@xronos.reaction
-def hello(self, interface):
-    interface.add_trigger(self.startup)
-    return lambda: print(f"Hello, World!")
-```
-
-```{code-tab} py with type hints
-@xronos.reaction
-def hello(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-    interface.add_trigger(self.startup)
-    return lambda: print(f"Hello, World!")
+`````{tabs}
+````{group-tab} plain
+```{literalinclude} _examples/hello.py
+:pyobject: Hello.hello
+:dedent:
 ```
 ````
+````{group-tab} with type hints
+```{literalinclude} _examples/hello_hints.py
+:pyobject: Hello.hello
+:dedent:
+```
+````
+`````
 
 The execution of xronos programs is event-based. All reaction handlers are
 executed automatically in response to one or multiple triggering events. We use
@@ -103,12 +80,10 @@ allow reactions to trigger new events.
 The reaction handler returned by `hello` is a simple lambda function that prints
 "Hello, World!".
 
-Finally, the last three lines assemble and execute the program.
+Finally, the `main()` function assembles and executes the program.
 
-```py
-env = xronos.Environment()
-env.create_reactor("hello", Hello)
-env.execute()
+```{literalinclude} _examples/hello_hints.py
+:pyobject: main
 ```
 
 We first instantiate a new {class}`xronos.Environment` object, which we call
@@ -125,3 +100,57 @@ This is the diagram for our hello world example.
 
 See {ref}`diagram` for instructions on how to generate a diagram view.
 
+## Suggested development setup
+
+### Editor integration
+
+We recommend using Visual Studio Code as the primary way to edit xronos
+projects. VS Code is compatible with diagram generation and with on-target
+development or development on a virtual machine using SSH.
+
+See {ref}`diagram` for instructions on how to install the xronos VS Code
+extension and for the VS Code extension's system requirements.
+
+### Tracing dashboard
+
+See {ref}`dashboard` for setup instructions and system requirements for viewing
+trace data from xronos applications.
+
+### Enabling type checking
+
+To get the full benefit of xronos APIs, it is recommended to enable type
+checking using Pyright or Mypy. There are multiple ways to enable type
+checking.
+
+Microsoft's Pylance VS Code extension provides Pyright-based type checking,
+which can be enabled by placing a `pyrightconfig.json` file such as the
+following in the root of your project:
+```json
+{
+    "python.analysis.typeCheckingMode": "standard",
+    "strict": ["*"]
+}
+```
+
+Alternatively, you can use the following configuration in your `pyproject.toml`:
+```toml
+[tool.pyright]
+strict = ["*"]
+```
+
+If you prefer to use Mypy instead of Pyright, the following `pyproject.toml`
+configuration is known to be compatible with xronos APIs:
+```toml
+[tool.mypy]
+exclude = ['venv', '.venv', 'build']
+disallow_untyped_defs = true
+disallow_any_unimported = true
+no_implicit_optional = true
+check_untyped_defs = true
+warn_return_any = true
+show_error_codes = true
+warn_unused_ignores = true
+```
+
+Other ways of configuring type checking are likely to work, but may not have
+been tested for compatibility with xronos.

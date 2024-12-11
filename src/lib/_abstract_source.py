@@ -151,16 +151,16 @@ class AbstractSource(xronos.Reactor, Generic[TOutput]):
             if self.__inhibit:
                 return
 
-            if output_effect.is_present and self.warn_on_simultaneous_output:
+            if output_effect.is_present() and self.warn_on_simultaneous_output:
                 warnings.warn(
                     OutputDiscardedWarning(
                         message="Simultaneous writes to an output port occurred.",
                         fqn=self.output.fqn,
-                        value=output_effect.value,
+                        value=output_effect.get(),
                         timestamp=self.get_time(),
                     )
                 )
-            output_effect.value = value
+            output_effect.set(value)
 
         return body
 
@@ -177,7 +177,7 @@ class AbstractSource(xronos.Reactor, Generic[TOutput]):
         inhibit_trigger = interface.add_trigger(self.inhibit)
 
         def handler() -> None:
-            self.__inhibit = inhibit_trigger.value
+            self.__inhibit = inhibit_trigger.get()
 
         return handler
 

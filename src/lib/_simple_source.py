@@ -88,7 +88,7 @@ class ConstSource(abstract_source.AbstractTriggeredSource[TOutput]):
         trigger = interface.add_trigger(self.set_value_port)
 
         def handler() -> None:
-            self.__value = copy.deepcopy(trigger.value)
+            self.__value = copy.deepcopy(trigger.get())
 
         return handler
 

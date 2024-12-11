@@ -108,7 +108,7 @@ class MyReactor(xronos.Reactor):
         output_effect = interface.add_effect(self.output)
 
         def handler() -> None:
-            output_effect.value = input_trigger.value
+            output_effect.set(input_trigger.get())
 
         return handler
 
@@ -119,7 +119,7 @@ class MyReactor(xronos.Reactor):
         sensor = interface.add_trigger(self._sensor_event)
 
         def handler() -> None:
-            print(f"Sensor read: {sensor.value}")
+            print(f"Sensor read: {sensor.get()}")
 
         return handler
 
@@ -128,7 +128,7 @@ class MyReactor(xronos.Reactor):
         actuate_trigger = interface.add_trigger(self._actuate_event)
 
         def handler() -> None:
-            print(f"Actuating with value {actuate_trigger.value}")
+            print(f"Actuating with value {actuate_trigger.get()}")
 
         return handler
 

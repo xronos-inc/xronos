@@ -25,7 +25,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Library Reactors" href="lib.html" />
-    <link rel="prev" title="Tutorials" href="tutorials.html" /> 
+    <link rel="prev" title="Yahboom Robot Arm Controller" href="tutorials/robot_arm.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -54,7 +54,7 @@
 <li class="toctree-l1"><a class="reference internal" href="reference_guide/index.html">Reference Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="diagrams.html">Diagram View</a></li>
 <li class="toctree-l1"><a class="reference internal" href="dashboard.html">Trace Dashboard</a></li>
-<li class="toctree-l1"><a class="reference internal" href="tutorials.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/index.html">Tutorials</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">API Documentation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#xronos.Environment"><code class="docutils literal notranslate"><span class="pre">Environment</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#xronos.Environment.connect"><code class="docutils literal notranslate"><span class="pre">Environment.connect()</span></code></a></li>
@@ -77,9 +77,9 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#xronos.InternalEventDeclaration"><code class="docutils literal notranslate"><span class="pre">InternalEventDeclaration</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#xronos.InternalEventEffect"><code class="docutils literal notranslate"><span class="pre">InternalEventEffect</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#xronos.InternalEventEffect.is_present"><code class="docutils literal notranslate"><span class="pre">InternalEventEffect.is_present</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#xronos.InternalEventEffect.get"><code class="docutils literal notranslate"><span class="pre">InternalEventEffect.get()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#xronos.InternalEventEffect.is_present"><code class="docutils literal notranslate"><span class="pre">InternalEventEffect.is_present()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#xronos.InternalEventEffect.schedule"><code class="docutils literal notranslate"><span class="pre">InternalEventEffect.schedule()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#xronos.InternalEventEffect.value"><code class="docutils literal notranslate"><span class="pre">InternalEventEffect.value</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#xronos.OutputPort"><code class="docutils literal notranslate"><span class="pre">OutputPort</span></code></a><ul>
@@ -96,8 +96,9 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#xronos.PhysicalEventDeclaration"><code class="docutils literal notranslate"><span class="pre">PhysicalEventDeclaration</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#xronos.PortEffect"><code class="docutils literal notranslate"><span class="pre">PortEffect</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#xronos.PortEffect.is_present"><code class="docutils literal notranslate"><span class="pre">PortEffect.is_present</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#xronos.PortEffect.value"><code class="docutils literal notranslate"><span class="pre">PortEffect.value</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#xronos.PortEffect.get"><code class="docutils literal notranslate"><span class="pre">PortEffect.get()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#xronos.PortEffect.is_present"><code class="docutils literal notranslate"><span class="pre">PortEffect.is_present()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#xronos.PortEffect.set"><code class="docutils literal notranslate"><span class="pre">PortEffect.set()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#xronos.ReactionInterface"><code class="docutils literal notranslate"><span class="pre">ReactionInterface</span></code></a><ul>
@@ -125,8 +126,8 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#xronos.Source"><code class="docutils literal notranslate"><span class="pre">Source</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#xronos.Source.is_present"><code class="docutils literal notranslate"><span class="pre">Source.is_present</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#xronos.Source.value"><code class="docutils literal notranslate"><span class="pre">Source.value</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#xronos.Source.get"><code class="docutils literal notranslate"><span class="pre">Source.get()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#xronos.Source.is_present"><code class="docutils literal notranslate"><span class="pre">Source.is_present()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#xronos.Startup"><code class="docutils literal notranslate"><span class="pre">Startup</span></code></a><ul>
@@ -143,8 +144,8 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#xronos.TimerDeclaration"><code class="docutils literal notranslate"><span class="pre">TimerDeclaration</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#xronos.Trigger"><code class="docutils literal notranslate"><span class="pre">Trigger</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#xronos.Trigger.is_present"><code class="docutils literal notranslate"><span class="pre">Trigger.is_present</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#xronos.Trigger.value"><code class="docutils literal notranslate"><span class="pre">Trigger.value</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#xronos.Trigger.get"><code class="docutils literal notranslate"><span class="pre">Trigger.get()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#xronos.Trigger.is_present"><code class="docutils literal notranslate"><span class="pre">Trigger.is_present()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#xronos.ValidationError"><code class="docutils literal notranslate"><span class="pre">ValidationError</span></code></a></li>
@@ -378,10 +379,23 @@ associated with an active event.</p>
 <a class="reference internal" href="#xronos.ReactionInterface.add_effect" title="xronos.ReactionInterface.add_effect"><code class="xref py py-func docutils literal notranslate"><span class="pre">add_effect()</span></code></a> instead.</p>
 <dl class="field-list simple">
 </dl>
-<dl class="py property">
+<dl class="py method">
+<dt class="sig sig-object py" id="xronos.InternalEventEffect.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">T</span></span></span><a class="headerlink" href="#xronos.InternalEventEffect.get" title="Link to this definition"></a></dt>
+<dd><p>Get the current value of the referenced reactor element.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>AbsentException</strong> – If called and <a class="reference internal" href="#xronos.InternalEventEffect.is_present" title="xronos.InternalEventEffect.is_present"><code class="xref py py-func docutils literal notranslate"><span class="pre">is_present()</span></code></a> returns <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="xronos.InternalEventEffect.is_present">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_present</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a></em><a class="headerlink" href="#xronos.InternalEventEffect.is_present" title="Link to this definition"></a></dt>
-<dd><p>Indicates if the referenced element has triggered.</p>
+<span class="sig-name descname"><span class="pre">is_present</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a></span></span><a class="headerlink" href="#xronos.InternalEventEffect.is_present" title="Link to this definition"></a></dt>
+<dd><p>Check if the referenced element has triggered.</p>
+<dl class="field-list simple">
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -393,22 +407,6 @@ associated with an active event.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>value</strong> (<em>T</em>) – The value to be associated with the event occurrence.</p></li>
 <li><p><strong>delay</strong> (<a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.timedelta" title="(in Python v3.13)"><em>timedelta</em></a>) – The time to wait until the new event is processed.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="xronos.InternalEventEffect.value">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">value</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">T</span></em><a class="headerlink" href="#xronos.InternalEventEffect.value" title="Link to this definition"></a></dt>
-<dd><p>The current value of the referenced reactor element (read-only).</p>
-<dl class="field-list simple">
-<dt class="field-odd">Raises<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#AttributeError" title="(in Python v3.13)"><strong>AttributeError</strong></a> – If the referenced element does not have a value
-    (e.g. <a class="reference internal" href="#xronos.Timer" title="xronos.Timer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Timer</span></code></a>, <a class="reference internal" href="#xronos.Shutdown" title="xronos.Shutdown"><code class="xref py py-class docutils literal notranslate"><span class="pre">Shutdown</span></code></a>,
-    <a class="reference internal" href="#xronos.Startup" title="xronos.Startup"><code class="xref py py-class docutils literal notranslate"><span class="pre">Startup</span></code></a>)</p></li>
-<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#AttributeError" title="(in Python v3.13)"><strong>AttributeError</strong></a> – If accessed and <a class="reference internal" href="#xronos.InternalEventEffect.is_present" title="xronos.InternalEventEffect.is_present"><code class="xref py py-attr docutils literal notranslate"><span class="pre">is_present</span></code></a> is <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
 </ul>
 </dd>
 </dl>
@@ -512,21 +510,35 @@ active event.</p>
 <a class="reference internal" href="#xronos.ReactionInterface.add_effect" title="xronos.ReactionInterface.add_effect"><code class="xref py py-func docutils literal notranslate"><span class="pre">add_effect()</span></code></a> instead.</p>
 <dl class="field-list simple">
 </dl>
-<dl class="py property">
-<dt class="sig sig-object py" id="xronos.PortEffect.is_present">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_present</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a></em><a class="headerlink" href="#xronos.PortEffect.is_present" title="Link to this definition"></a></dt>
-<dd><p>Indicates if the referenced element has triggered.</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="xronos.PortEffect.value">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">value</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">T</span></em><a class="headerlink" href="#xronos.PortEffect.value" title="Link to this definition"></a></dt>
-<dd><p>The current value of the referenced port (read-write).</p>
-<p>May be written to send a value via the port. For each execution of a
-reaction only one the last value written will be sent.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="xronos.PortEffect.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">T</span></span></span><a class="headerlink" href="#xronos.PortEffect.get" title="Link to this definition"></a></dt>
+<dd><p>Get the current value of the referenced reactor element.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Raises<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#AttributeError" title="(in Python v3.13)"><strong>AttributeError</strong></a> – If read and <a class="reference internal" href="#xronos.PortEffect.is_present" title="xronos.PortEffect.is_present"><code class="xref py py-attr docutils literal notranslate"><span class="pre">is_present</span></code></a> is <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+<dd class="field-odd"><p><strong>AbsentException</strong> – If called and <a class="reference internal" href="#xronos.PortEffect.is_present" title="xronos.PortEffect.is_present"><code class="xref py py-func docutils literal notranslate"><span class="pre">is_present()</span></code></a> returns <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="xronos.PortEffect.is_present">
+<span class="sig-name descname"><span class="pre">is_present</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a></span></span><a class="headerlink" href="#xronos.PortEffect.is_present" title="Link to this definition"></a></dt>
+<dd><p>Check if the referenced element has triggered.</p>
+<dl class="field-list simple">
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="xronos.PortEffect.set">
+<span class="sig-name descname"><span class="pre">set</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">T</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></span><a class="headerlink" href="#xronos.PortEffect.set" title="Link to this definition"></a></dt>
+<dd><p>Set the port value and send a message to connected ports.</p>
+<p>Can be called multiple times, but at each time at most one value is
+sent to connected ports. When called repeatedly at a particular time, the
+previous value is overwritten.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>value</strong> (<em>T</em>) – The value to be written to the referenced port.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -760,25 +772,22 @@ internal clock.</p>
 <a class="reference internal" href="#xronos.ReactionInterface.add_source" title="xronos.ReactionInterface.add_source"><code class="xref py py-func docutils literal notranslate"><span class="pre">add_source()</span></code></a> instead.</p>
 <dl class="field-list simple">
 </dl>
-<dl class="py property">
-<dt class="sig sig-object py" id="xronos.Source.is_present">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_present</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a></em><a class="headerlink" href="#xronos.Source.is_present" title="Link to this definition"></a></dt>
-<dd><p>Indicates if the referenced element has triggered.</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="xronos.Source.value">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">value</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">T</span></em><a class="headerlink" href="#xronos.Source.value" title="Link to this definition"></a></dt>
-<dd><p>The current value of the referenced reactor element (read-only).</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="xronos.Source.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">T</span></span></span><a class="headerlink" href="#xronos.Source.get" title="Link to this definition"></a></dt>
+<dd><p>Get the current value of the referenced reactor element.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Raises<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#AttributeError" title="(in Python v3.13)"><strong>AttributeError</strong></a> – If the referenced element does not have a value
-    (e.g. <a class="reference internal" href="#xronos.Timer" title="xronos.Timer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Timer</span></code></a>, <a class="reference internal" href="#xronos.Shutdown" title="xronos.Shutdown"><code class="xref py py-class docutils literal notranslate"><span class="pre">Shutdown</span></code></a>,
-    <a class="reference internal" href="#xronos.Startup" title="xronos.Startup"><code class="xref py py-class docutils literal notranslate"><span class="pre">Startup</span></code></a>)</p></li>
-<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#AttributeError" title="(in Python v3.13)"><strong>AttributeError</strong></a> – If accessed and <a class="reference internal" href="#xronos.Source.is_present" title="xronos.Source.is_present"><code class="xref py py-attr docutils literal notranslate"><span class="pre">is_present</span></code></a> is <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
-</ul>
+<dd class="field-odd"><p><strong>AbsentException</strong> – If called and <a class="reference internal" href="#xronos.Source.is_present" title="xronos.Source.is_present"><code class="xref py py-func docutils literal notranslate"><span class="pre">is_present()</span></code></a> returns <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
 </dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="xronos.Source.is_present">
+<span class="sig-name descname"><span class="pre">is_present</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a></span></span><a class="headerlink" href="#xronos.Source.is_present" title="Link to this definition"></a></dt>
+<dd><p>Check if the referenced element has triggered.</p>
+<dl class="field-list simple">
 </dl>
 </dd></dl>
 
@@ -859,25 +868,22 @@ and the first event emitted by the timer (optional).</p></li>
 <a class="reference internal" href="#xronos.ReactionInterface.add_trigger" title="xronos.ReactionInterface.add_trigger"><code class="xref py py-func docutils literal notranslate"><span class="pre">add_trigger()</span></code></a> instead.</p>
 <dl class="field-list simple">
 </dl>
-<dl class="py property">
-<dt class="sig sig-object py" id="xronos.Trigger.is_present">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_present</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a></em><a class="headerlink" href="#xronos.Trigger.is_present" title="Link to this definition"></a></dt>
-<dd><p>Indicates if the referenced element has triggered.</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="xronos.Trigger.value">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">value</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">T</span></em><a class="headerlink" href="#xronos.Trigger.value" title="Link to this definition"></a></dt>
-<dd><p>The current value of the referenced reactor element (read-only).</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="xronos.Trigger.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">T</span></span></span><a class="headerlink" href="#xronos.Trigger.get" title="Link to this definition"></a></dt>
+<dd><p>Get the current value of the referenced reactor element.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Raises<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#AttributeError" title="(in Python v3.13)"><strong>AttributeError</strong></a> – If the referenced element does not have a value
-    (e.g. <a class="reference internal" href="#xronos.Timer" title="xronos.Timer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Timer</span></code></a>, <a class="reference internal" href="#xronos.Shutdown" title="xronos.Shutdown"><code class="xref py py-class docutils literal notranslate"><span class="pre">Shutdown</span></code></a>,
-    <a class="reference internal" href="#xronos.Startup" title="xronos.Startup"><code class="xref py py-class docutils literal notranslate"><span class="pre">Startup</span></code></a>)</p></li>
-<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#AttributeError" title="(in Python v3.13)"><strong>AttributeError</strong></a> – If accessed and <a class="reference internal" href="#xronos.Trigger.is_present" title="xronos.Trigger.is_present"><code class="xref py py-attr docutils literal notranslate"><span class="pre">is_present</span></code></a> is <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
-</ul>
+<dd class="field-odd"><p><strong>AbsentException</strong> – If called and <a class="reference internal" href="#xronos.Trigger.is_present" title="xronos.Trigger.is_present"><code class="xref py py-func docutils literal notranslate"><span class="pre">is_present()</span></code></a> returns <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
 </dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="xronos.Trigger.is_present">
+<span class="sig-name descname"><span class="pre">is_present</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a></span></span><a class="headerlink" href="#xronos.Trigger.is_present" title="Link to this definition"></a></dt>
+<dd><p>Check if the referenced element has triggered.</p>
+<dl class="field-list simple">
 </dl>
 </dd></dl>
 
@@ -908,7 +914,7 @@ a reaction handler.</p>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="tutorials.html" class="btn btn-neutral float-left" title="Tutorials" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="tutorials/robot_arm.html" class="btn btn-neutral float-left" title="Yahboom Robot Arm Controller" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="lib.html" class="btn btn-neutral float-right" title="Library Reactors" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 

@@ -48,9 +48,9 @@ class PrintAndAssert(xronos.Reactor, Generic[T]):
             self._assert_count += 1
             print(
                 f"<PrintAndAssert> #{self._assert_count}"
-                + f" expects {check_value} and received {input_trigger.value}"
+                + f" expects {check_value} and received {input_trigger.get()}"
             )
-            assert check_value == input_trigger.value
+            assert check_value == input_trigger.get()
 
         return body
 

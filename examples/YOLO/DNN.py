@@ -14,11 +14,14 @@ import numpy as np
 import torch
 import ultralytics  # type: ignore
 import xronos
+from numpy.typing import NDArray
 
 
 class DNN(xronos.Reactor):
     frame = xronos.InputPortDeclaration[cv2.typing.MatLike]()
-    result = xronos.OutputPortDeclaration[tuple[np.ndarray, np.ndarray, np.ndarray]]()
+    result = xronos.OutputPortDeclaration[
+        tuple[list[str], NDArray[np.float32], NDArray[np.float32]]
+    ]()
 
     def __init__(self, model_path: str) -> None:
         super().__init__()
@@ -32,20 +35,18 @@ class DNN(xronos.Reactor):
 
     @xronos.reaction
     def on_frame(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        frame = interface.add_trigger(self.frame)
-        result = interface.add_effect(self.result)
+        frame_trigger = interface.add_trigger(self.frame)
+        result_effect = interface.add_effect(self.result)
 
         def handler() -> None:
             # Run the model on the frame
-            results: ultralytics.engine.results.Results = self.model([frame.value])[0]  # type: ignore
+            results: ultralytics.engine.results.Results = self.model(  # type: ignore
+                [frame_trigger.get()]
+            )[0]
             # Extract names, bounding boxes and confidences scores from the results.
             boundingBoxes = results.boxes.xyxyn.cpu().numpy()
             confidences = results.boxes.conf.cpu().numpy()
             names = [results.names[x] for x in results.boxes.cls.cpu().numpy()]
-            result.value = (
-                np.array(names),
-                np.array(confidences),
-                np.array(boundingBoxes),
-            )
+            result_effect.set((names, confidences, boundingBoxes))
 
         return handler

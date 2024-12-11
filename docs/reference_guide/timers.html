@@ -61,7 +61,7 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../diagrams.html">Diagram View</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../dashboard.html">Trace Dashboard</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../tutorials.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/index.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api.html">API Documentation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../lib.html">Library Reactors</a></li>
 </ul>
@@ -97,9 +97,11 @@
 behavior. The simplest mechanism is provided by <em>timers</em>. Copy the following
 example into a new file called <code class="docutils literal notranslate"><span class="pre">timer.py</span></code>.</p>
 <div class="sphinx-tabs docutils container">
-<div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-0-cGxhaW4=" aria-selected="true" class="sphinx-tabs-tab code-tab group-tab" id="tab-0-cGxhaW4=" name="cGxhaW4=" role="tab" tabindex="0">plain</button><button aria-controls="panel-0-dHlwZSBoaW50cw==" aria-selected="false" class="sphinx-tabs-tab code-tab group-tab" id="tab-0-dHlwZSBoaW50cw==" name="dHlwZSBoaW50cw==" role="tab" tabindex="-1">type hints</button><button aria-controls="panel-0-ZGlhZ3JhbQ==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-ZGlhZ3JhbQ==" name="ZGlhZ3JhbQ==" role="tab" tabindex="-1">diagram</button></div><div aria-labelledby="tab-0-cGxhaW4=" class="sphinx-tabs-panel code-tab group-tab" id="panel-0-cGxhaW4=" name="cGxhaW4=" role="tabpanel" tabindex="0"><div class="highlight-py notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">datetime</span>
+<div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-0-cGxhaW4=" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-0-cGxhaW4=" name="cGxhaW4=" role="tab" tabindex="0">plain</button><button aria-controls="panel-0-d2l0aCB0eXBlIGhpbnRz" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-d2l0aCB0eXBlIGhpbnRz" name="d2l0aCB0eXBlIGhpbnRz" role="tab" tabindex="-1">with type hints</button><button aria-controls="panel-0-ZGlhZ3JhbQ==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-ZGlhZ3JhbQ==" name="ZGlhZ3JhbQ==" role="tab" tabindex="-1">diagram</button></div><div aria-labelledby="tab-0-cGxhaW4=" class="sphinx-tabs-panel group-tab" id="panel-0-cGxhaW4=" name="cGxhaW4=" role="tabpanel" tabindex="0"><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">datetime</span>
 
 <span class="kn">import</span> <span class="nn">xronos</span>
+
+<span class="n">MAX_COUNT</span> <span class="o">=</span> <span class="mi">5</span>
 
 
 <span class="k">class</span> <span class="nc">Timed</span><span class="p">(</span><span class="n">xronos</span><span class="o">.</span><span class="n">Reactor</span><span class="p">):</span>
@@ -121,8 +123,11 @@ example into a new file called <code class="docutils literal notranslate"><span 
 
         <span class="k">def</span> <span class="nf">handler</span><span class="p">():</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_count</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_time</span><span class="p">()</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39;s timer triggered (count=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_count</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_count</span> <span class="o">==</span> <span class="mi">11</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_time</span><span class="p">()</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39;s timer triggered &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;(count=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_count</span><span class="si">}</span><span class="s2">)&quot;</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_count</span> <span class="o">==</span> <span class="n">MAX_COUNT</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">environment</span><span class="o">.</span><span class="n">request_shutdown</span><span class="p">()</span>
 
         <span class="k">return</span> <span class="n">handler</span>
@@ -133,15 +138,22 @@ example into a new file called <code class="docutils literal notranslate"><span 
         <span class="k">return</span> <span class="k">lambda</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_time</span><span class="p">()</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> says &#39;Goodbye!&#39;&quot;</span><span class="p">)</span>
 
 
-<span class="n">env</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">Environment</span><span class="p">()</span>
-<span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;timed&quot;</span><span class="p">,</span> <span class="n">Timed</span><span class="p">,</span> <span class="n">period</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
-<span class="n">env</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="n">env</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">Environment</span><span class="p">()</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;timed&quot;</span><span class="p">,</span> <span class="n">Timed</span><span class="p">,</span> <span class="n">period</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
 </pre></div>
 </div>
-</div><div aria-labelledby="tab-0-dHlwZSBoaW50cw==" class="sphinx-tabs-panel code-tab group-tab" hidden="true" id="panel-0-dHlwZSBoaW50cw==" name="dHlwZSBoaW50cw==" role="tabpanel" tabindex="0"><div class="highlight-py notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">datetime</span>
+</div><div aria-labelledby="tab-0-d2l0aCB0eXBlIGhpbnRz" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-0-d2l0aCB0eXBlIGhpbnRz" name="d2l0aCB0eXBlIGhpbnRz" role="tabpanel" tabindex="0"><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">datetime</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span>
 
 <span class="kn">import</span> <span class="nn">xronos</span>
+
+<span class="n">MAX_COUNT</span> <span class="o">=</span> <span class="mi">5</span>
 
 
 <span class="k">class</span> <span class="nc">Timed</span><span class="p">(</span><span class="n">xronos</span><span class="o">.</span><span class="n">Reactor</span><span class="p">):</span>
@@ -163,8 +175,11 @@ example into a new file called <code class="docutils literal notranslate"><span 
 
         <span class="k">def</span> <span class="nf">handler</span><span class="p">():</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_count</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_time</span><span class="p">()</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39;s timer triggered (count=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_count</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_count</span> <span class="o">==</span> <span class="mi">11</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_time</span><span class="p">()</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39;s timer triggered &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;(count=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_count</span><span class="si">}</span><span class="s2">)&quot;</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_count</span> <span class="o">==</span> <span class="n">MAX_COUNT</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">environment</span><span class="o">.</span><span class="n">request_shutdown</span><span class="p">()</span>
 
         <span class="k">return</span> <span class="n">handler</span>
@@ -175,9 +190,14 @@ example into a new file called <code class="docutils literal notranslate"><span 
         <span class="k">return</span> <span class="k">lambda</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_time</span><span class="p">()</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> says &#39;Goodbye!&#39;&quot;</span><span class="p">)</span>
 
 
-<span class="n">env</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">Environment</span><span class="p">()</span>
-<span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;timed&quot;</span><span class="p">,</span> <span class="n">Timed</span><span class="p">,</span> <span class="n">period</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
-<span class="n">env</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="n">env</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">Environment</span><span class="p">()</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;timed&quot;</span><span class="p">,</span> <span class="n">Timed</span><span class="p">,</span> <span class="n">period</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
 </pre></div>
 </div>
 </div><div aria-labelledby="tab-0-ZGlhZ3JhbQ==" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-0-ZGlhZ3JhbQ==" name="ZGlhZ3JhbQ==" role="tabpanel" tabindex="0"><p><a class="bg-warning reference internal" href="../_images/diagram_timed.png"><img alt="diagram timed" class="bg-warning align-center" src="../_images/diagram_timed.png" style="width: 50%;" /></a></p>
@@ -197,32 +217,32 @@ response to the builtin <a class="reference internal" href="../api.html#xronos.R
 handler that is a little bit more complex than the simple lambda function we
 have seen so far. The reaction defines a nested <code class="docutils literal notranslate"><span class="pre">handler</span></code> function that it then
 returns.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">handler</span><span class="p">():</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">handler</span><span class="p">():</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_count</span> <span class="o">+=</span> <span class="mi">1</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_time</span><span class="p">()</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39;s timer triggered (count=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_count</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_count</span> <span class="o">==</span> <span class="mi">11</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_time</span><span class="p">()</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39;s timer triggered &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;(count=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_count</span><span class="si">}</span><span class="s2">)&quot;</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_count</span> <span class="o">==</span> <span class="n">MAX_COUNT</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">environment</span><span class="o">.</span><span class="n">request_shutdown</span><span class="p">()</span>
+
+<span class="k">return</span> <span class="n">handler</span>
 </pre></div>
 </div>
 <p>The handler performs multiple steps. First, it increments the <code class="docutils literal notranslate"><span class="pre">self._count</span></code>
 variable. It then prints the current time, the timer’s fully qualified name and
-the current count. Finally, it checks if the count has reached 11, in which
-<a class="reference internal" href="../api.html#xronos.Environment.request_shutdown" title="xronos.Environment.request_shutdown"><code class="xref py py-func docutils literal notranslate"><span class="pre">xronos.Environment.request_shutdown()</span></code></a> is called to terminate the program.</p>
-<p>The program runs for about 10 seconds and produces output similar to the following:</p>
+the current count. Finally, it checks if the count has reached <code class="docutils literal notranslate"><span class="pre">MAX_COUNT</span></code>, in
+which case <a class="reference internal" href="../api.html#xronos.Environment.request_shutdown" title="xronos.Environment.request_shutdown"><code class="xref py py-func docutils literal notranslate"><span class="pre">request_shutdown()</span></code></a> is called to terminate
+the program.</p>
+<p>The program runs for about 4 seconds and produces output similar to the following:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>python<span class="w"> </span>timer.py
-<span class="go">2024-11-11 17:02:30.549478: timed says &#39;Hello!&#39;</span>
-<span class="go">2024-11-11 17:02:30.549478: timed._timer triggered (count=1)</span>
-<span class="go">2024-11-11 17:02:31.549478: timed._timer triggered (count=2)</span>
-<span class="go">2024-11-11 17:02:32.549478: timed._timer triggered (count=3)</span>
-<span class="go">2024-11-11 17:02:33.549478: timed._timer triggered (count=4)</span>
-<span class="go">2024-11-11 17:02:34.549478: timed._timer triggered (count=5)</span>
-<span class="go">2024-11-11 17:02:35.549478: timed._timer triggered (count=6)</span>
-<span class="go">2024-11-11 17:02:36.549478: timed._timer triggered (count=7)</span>
-<span class="go">2024-11-11 17:02:37.549478: timed._timer triggered (count=8)</span>
-<span class="go">2024-11-11 17:02:38.549478: timed._timer triggered (count=9)</span>
-<span class="go">2024-11-11 17:02:39.549478: timed._timer triggered (count=10)</span>
-<span class="go">2024-11-11 17:02:40.549478: timed._timer triggered (count=11)</span>
-<span class="go">2024-11-11 17:02:40.549478: timed says &#39;Goodbye!&#39;</span>
+<span class="go">2024-11-29 10:17:13.893071: timed says &#39;Hello!&#39;</span>
+<span class="go">2024-11-29 10:17:13.893071: timed&#39;s timer triggered (count=1)</span>
+<span class="go">2024-11-29 10:17:14.893071: timed&#39;s timer triggered (count=2)</span>
+<span class="go">2024-11-29 10:17:15.893071: timed&#39;s timer triggered (count=3)</span>
+<span class="go">2024-11-29 10:17:16.893071: timed&#39;s timer triggered (count=4)</span>
+<span class="go">2024-11-29 10:17:17.893071: timed&#39;s timer triggered (count=5)</span>
+<span class="go">2024-11-29 10:17:17.893071: timed says &#39;Goodbye!&#39;</span>
 </pre></div>
 </div>
 <p>Carefully look at the printed timestamps. The timestamp printed by <code class="docutils literal notranslate"><span class="pre">hello</span></code> is
@@ -243,51 +263,42 @@ the instantiation code as shown in the following, so that the program consists
 of three <code class="docutils literal notranslate"><span class="pre">Timed</span></code> reactors using a period of 1 second, 2 seconds and 3 seconds,
 respectively.</p>
 <div class="sphinx-tabs docutils container">
-<div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-1-cGxhaW4=" aria-selected="true" class="sphinx-tabs-tab code-tab group-tab" id="tab-1-cGxhaW4=" name="cGxhaW4=" role="tab" tabindex="0">plain</button><button aria-controls="panel-1-dHlwZSBoaW50cw==" aria-selected="false" class="sphinx-tabs-tab code-tab group-tab" id="tab-1-dHlwZSBoaW50cw==" name="dHlwZSBoaW50cw==" role="tab" tabindex="-1">type hints</button><button aria-controls="panel-1-ZGlhZ3JhbQ==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-1-ZGlhZ3JhbQ==" name="ZGlhZ3JhbQ==" role="tab" tabindex="-1">diagram</button></div><div aria-labelledby="tab-1-cGxhaW4=" class="sphinx-tabs-panel code-tab group-tab" id="panel-1-cGxhaW4=" name="cGxhaW4=" role="tabpanel" tabindex="0"><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">env</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">Environment</span><span class="p">()</span>
-<span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;timed1&quot;</span><span class="p">,</span> <span class="n">Timed</span><span class="p">,</span> <span class="n">period</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
-<span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;timed2&quot;</span><span class="p">,</span> <span class="n">Timed</span><span class="p">,</span> <span class="n">period</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
-<span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;timed3&quot;</span><span class="p">,</span> <span class="n">Timed</span><span class="p">,</span> <span class="n">period</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="mi">3</span><span class="p">))</span>
-<span class="n">env</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+<div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-1-cGxhaW4=" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-1-cGxhaW4=" name="cGxhaW4=" role="tab" tabindex="0">plain</button><button aria-controls="panel-1-d2l0aCB0eXBlIGhpbnRz" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-1-d2l0aCB0eXBlIGhpbnRz" name="d2l0aCB0eXBlIGhpbnRz" role="tab" tabindex="-1">with type hints</button><button aria-controls="panel-1-ZGlhZ3JhbQ==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-1-ZGlhZ3JhbQ==" name="ZGlhZ3JhbQ==" role="tab" tabindex="-1">diagram</button></div><div aria-labelledby="tab-1-cGxhaW4=" class="sphinx-tabs-panel group-tab" id="panel-1-cGxhaW4=" name="cGxhaW4=" role="tabpanel" tabindex="0"><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="n">env</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">Environment</span><span class="p">()</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;timed1&quot;</span><span class="p">,</span> <span class="n">Timed</span><span class="p">,</span> <span class="n">period</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;timed2&quot;</span><span class="p">,</span> <span class="n">Timed</span><span class="p">,</span> <span class="n">period</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;timed3&quot;</span><span class="p">,</span> <span class="n">Timed</span><span class="p">,</span> <span class="n">period</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="mi">3</span><span class="p">))</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
 </pre></div>
 </div>
-</div><div aria-labelledby="tab-1-dHlwZSBoaW50cw==" class="sphinx-tabs-panel code-tab group-tab" hidden="true" id="panel-1-dHlwZSBoaW50cw==" name="dHlwZSBoaW50cw==" role="tabpanel" tabindex="0"><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">env</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">Environment</span><span class="p">()</span>
-<span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;timed1&quot;</span><span class="p">,</span> <span class="n">Timed</span><span class="p">,</span> <span class="n">period</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
-<span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;timed2&quot;</span><span class="p">,</span> <span class="n">Timed</span><span class="p">,</span> <span class="n">period</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
-<span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;timed3&quot;</span><span class="p">,</span> <span class="n">Timed</span><span class="p">,</span> <span class="n">period</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="mi">3</span><span class="p">))</span>
-<span class="n">env</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+</div><div aria-labelledby="tab-1-d2l0aCB0eXBlIGhpbnRz" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-1-d2l0aCB0eXBlIGhpbnRz" name="d2l0aCB0eXBlIGhpbnRz" role="tabpanel" tabindex="0"><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="n">env</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">Environment</span><span class="p">()</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;timed1&quot;</span><span class="p">,</span> <span class="n">Timed</span><span class="p">,</span> <span class="n">period</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;timed2&quot;</span><span class="p">,</span> <span class="n">Timed</span><span class="p">,</span> <span class="n">period</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;timed3&quot;</span><span class="p">,</span> <span class="n">Timed</span><span class="p">,</span> <span class="n">period</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="mi">3</span><span class="p">))</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
 </pre></div>
 </div>
 </div><div aria-labelledby="tab-1-ZGlhZ3JhbQ==" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-1-ZGlhZ3JhbQ==" name="ZGlhZ3JhbQ==" role="tabpanel" tabindex="0"><p><a class="bg-warning reference internal" href="../_images/diagram_timed_3.png"><img alt="diagram timed times 3" class="bg-warning align-center" src="../_images/diagram_timed_3.png" style="width: 80%;" /></a></p>
 </div></div>
 <p>Running the program produces output similar to the following:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>python<span class="w"> </span>timer.py
-<span class="go">2024-11-11 17:15:59.856537: timed3 says &#39;Hello!&#39;</span>
-<span class="go">2024-11-11 17:15:59.856537: timed1 says &#39;Hello!&#39;</span>
-<span class="go">2024-11-11 17:15:59.856537: timed2 says &#39;Hello!&#39;</span>
-<span class="go">2024-11-11 17:15:59.856537: timed3._timer triggered (count=1)</span>
-<span class="go">2024-11-11 17:15:59.856537: timed1._timer triggered (count=1)</span>
-<span class="go">2024-11-11 17:15:59.856537: timed2._timer triggered (count=1)</span>
-<span class="go">2024-11-11 17:16:00.856537: timed1._timer triggered (count=2)</span>
-<span class="go">2024-11-11 17:16:01.856537: timed1._timer triggered (count=3)</span>
-<span class="go">2024-11-11 17:16:01.856537: timed2._timer triggered (count=2)</span>
-<span class="go">2024-11-11 17:16:02.856537: timed3._timer triggered (count=2)</span>
-<span class="go">2024-11-11 17:16:02.856537: timed1._timer triggered (count=4)</span>
-<span class="go">2024-11-11 17:16:03.856537: timed1._timer triggered (count=5)</span>
-<span class="go">2024-11-11 17:16:03.856537: timed2._timer triggered (count=3)</span>
-<span class="go">2024-11-11 17:16:04.856537: timed1._timer triggered (count=6)</span>
-<span class="go">2024-11-11 17:16:05.856537: timed3._timer triggered (count=3)</span>
-<span class="go">2024-11-11 17:16:05.856537: timed1._timer triggered (count=7)</span>
-<span class="go">2024-11-11 17:16:05.856537: timed2._timer triggered (count=4)</span>
-<span class="go">2024-11-11 17:16:06.856537: timed1._timer triggered (count=8)</span>
-<span class="go">2024-11-11 17:16:07.856537: timed1._timer triggered (count=9)</span>
-<span class="go">2024-11-11 17:16:07.856537: timed2._timer triggered (count=5)</span>
-<span class="go">2024-11-11 17:16:08.856537: timed3._timer triggered (count=4)</span>
-<span class="go">2024-11-11 17:16:08.856537: timed1._timer triggered (count=10)</span>
-<span class="go">2024-11-11 17:16:09.856537: timed1._timer triggered (count=11)</span>
-<span class="go">2024-11-11 17:16:09.856537: timed2._timer triggered (count=6)</span>
-<span class="go">2024-11-11 17:16:09.856537: timed3 says &#39;Goodbye!&#39;</span>
-<span class="go">2024-11-11 17:16:09.856537: timed1 says &#39;Goodbye!&#39;</span>
-<span class="go">2024-11-11 17:16:09.856537: timed2 says &#39;Goodbye!&#39;</span>
+<span class="go">2024-11-29 10:48:57.423695: timed2 says &#39;Hello!&#39;</span>
+<span class="go">2024-11-29 10:48:57.423695: timed3 says &#39;Hello!&#39;</span>
+<span class="go">2024-11-29 10:48:57.423695: timed1 says &#39;Hello!&#39;</span>
+<span class="go">2024-11-29 10:48:57.423695: timed2&#39;s timer triggered (count=1)</span>
+<span class="go">2024-11-29 10:48:57.423695: timed3&#39;s timer triggered (count=1)</span>
+<span class="go">2024-11-29 10:48:57.423695: timed1&#39;s timer triggered (count=1)</span>
+<span class="go">2024-11-29 10:48:58.423695: timed1&#39;s timer triggered (count=2)</span>
+<span class="go">2024-11-29 10:48:59.423695: timed2&#39;s timer triggered (count=2)</span>
+<span class="go">2024-11-29 10:48:59.423695: timed1&#39;s timer triggered (count=3)</span>
+<span class="go">2024-11-29 10:49:00.423695: timed3&#39;s timer triggered (count=2)</span>
+<span class="go">2024-11-29 10:49:00.423695: timed1&#39;s timer triggered (count=4)</span>
+<span class="go">2024-11-29 10:49:01.423695: timed2&#39;s timer triggered (count=3)</span>
+<span class="go">2024-11-29 10:49:01.423695: timed1&#39;s timer triggered (count=5)</span>
+<span class="go">2024-11-29 10:49:01.423695: timed2 says &#39;Goodbye!&#39;</span>
+<span class="go">2024-11-29 10:49:01.423695: timed3 says &#39;Goodbye!&#39;</span>
+<span class="go">2024-11-29 10:49:01.423695: timed1 says &#39;Goodbye!&#39;</span>
 </pre></div>
 </div>
 <p>Note how all three reactors say ‘Hello!’ or ‘Goodbye!’ at the same time, and how

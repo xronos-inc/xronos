@@ -38,7 +38,9 @@ class WebCam(xronos.Reactor):
 
         self.stream.set(cv2.CAP_PROP_FPS, frames_per_second)
 
-    def reschedule_sample_webcam(self, action: xronos.InternalEventEffect) -> None:
+    def reschedule_sample_webcam(
+        self, action: xronos.InternalEventEffect[None]
+    ) -> None:
         next_sample_time = self.sample_period + self.sample_period * math.floor(
             self.get_lag() / self.sample_period
         )
@@ -47,10 +49,10 @@ class WebCam(xronos.Reactor):
     @xronos.reaction
     def on_startup(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
         interface.add_trigger(self.startup)
-        sample_webcam = interface.add_effect(self._sample_webcam)
+        sample_webcam_effect = interface.add_effect(self._sample_webcam)
 
         def handler() -> None:
-            self.reschedule_sample_webcam(sample_webcam)
+            self.reschedule_sample_webcam(sample_webcam_effect)
 
         return handler
 
@@ -59,17 +61,17 @@ class WebCam(xronos.Reactor):
         self, interface: xronos.ReactionInterface
     ) -> Callable[[], None]:
         interface.add_trigger(self._sample_webcam)
-        sample_webcam = interface.add_effect(self._sample_webcam)
-        frame = interface.add_effect(self.frame)
+        sample_webcam_effect = interface.add_effect(self._sample_webcam)
+        frame_effect = interface.add_effect(self.frame)
 
         def handler() -> None:
             ret, _frame = self.stream.read()
             if ret:
-                frame.value = _frame
+                frame_effect.set(_frame)
             else:
                 print("WARNING: Failed to read frames from videostream. Shutting down.")
                 self.environment.request_shutdown()
-            self.reschedule_sample_webcam(sample_webcam)
+            self.reschedule_sample_webcam(sample_webcam_effect)
 
         return handler
 

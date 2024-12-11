@@ -5,7 +5,8 @@ The runtime behavior of xronos programs can be observed using the Xronos Dashboa
 
 ## System Requirements
 
-- A running docker daemon.
+- A running Docker daemon. The Xronos Dashboard has been tested with Docker
+  Engine version 27.2.1.
 
 ## Installation
 
@@ -66,4 +67,4 @@ can use the drop-down just next to the {guilabel}`🗘 Refresh` button and selec
 {guilabel}`Auto` to enable automatic refreshing, which provides a live view of
 the collected data.
 
-![dashboard yolo](./_img/dashboard_yolo.png)
+![dashboard yolo](./tutorials/_img/dashboard_yolo.png)

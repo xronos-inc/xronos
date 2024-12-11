@@ -61,7 +61,7 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../diagrams.html">Diagram View</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../dashboard.html">Trace Dashboard</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../tutorials.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/index.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api.html">API Documentation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../lib.html">Library Reactors</a></li>
 </ul>
@@ -100,10 +100,12 @@ its future self.</p>
 <p>The following example replicates the behavior of a <a class="reference internal" href="timers.html#timer"><span class="std std-ref">timer</span></a> using an
 internal event.</p>
 <div class="sphinx-tabs docutils container">
-<div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-0-cGxhaW4=" aria-selected="true" class="sphinx-tabs-tab code-tab group-tab" id="tab-0-cGxhaW4=" name="cGxhaW4=" role="tab" tabindex="0">plain</button><button aria-controls="panel-0-dHlwZSBoaW50cw==" aria-selected="false" class="sphinx-tabs-tab code-tab group-tab" id="tab-0-dHlwZSBoaW50cw==" name="dHlwZSBoaW50cw==" role="tab" tabindex="-1">type hints</button><button aria-controls="panel-0-ZGlhZ3JhbQ==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-ZGlhZ3JhbQ==" name="ZGlhZ3JhbQ==" role="tab" tabindex="-1">diagram</button></div><div aria-labelledby="tab-0-cGxhaW4=" class="sphinx-tabs-panel code-tab group-tab" id="panel-0-cGxhaW4=" name="cGxhaW4=" role="tabpanel" tabindex="0"><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">datetime</span>
+<div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-0-cGxhaW4=" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-0-cGxhaW4=" name="cGxhaW4=" role="tab" tabindex="0">plain</button><button aria-controls="panel-0-d2l0aCB0eXBlIGhpbnRz" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-d2l0aCB0eXBlIGhpbnRz" name="d2l0aCB0eXBlIGhpbnRz" role="tab" tabindex="-1">with type hints</button><button aria-controls="panel-0-ZGlhZ3JhbQ==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-ZGlhZ3JhbQ==" name="ZGlhZ3JhbQ==" role="tab" tabindex="-1">diagram</button></div><div aria-labelledby="tab-0-cGxhaW4=" class="sphinx-tabs-panel group-tab" id="panel-0-cGxhaW4=" name="cGxhaW4=" role="tabpanel" tabindex="0"><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">datetime</span>
+
 <span class="kn">import</span> <span class="nn">xronos</span>
 
-<span class="k">class</span> <span class="nc">Timer</span><span class="p">(</span><span class="n">xronos</span><span class="o">.</span><span class="n">Reactor</span><span class="p">):</span>
+
+<span class="k">class</span> <span class="nc">Clock</span><span class="p">(</span><span class="n">xronos</span><span class="o">.</span><span class="n">Reactor</span><span class="p">):</span>
     <span class="n">_event</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">InternalEventDeclaration</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">period</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">):</span>
@@ -128,14 +130,21 @@ internal event.</p>
         <span class="k">return</span> <span class="k">lambda</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Tick at </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_time_since_startup</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
 
-<span class="n">env</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">Environment</span><span class="p">()</span>
-<span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;timer&quot;</span><span class="p">,</span> <span class="n">Timer</span><span class="p">,</span> <span class="n">period</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
-<span class="n">env</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="n">env</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">Environment</span><span class="p">()</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;clock&quot;</span><span class="p">,</span> <span class="n">Clock</span><span class="p">,</span> <span class="n">period</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
 </pre></div>
 </div>
-</div><div aria-labelledby="tab-0-dHlwZSBoaW50cw==" class="sphinx-tabs-panel code-tab group-tab" hidden="true" id="panel-0-dHlwZSBoaW50cw==" name="dHlwZSBoaW50cw==" role="tabpanel" tabindex="0"><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">datetime</span>
+</div><div aria-labelledby="tab-0-d2l0aCB0eXBlIGhpbnRz" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-0-d2l0aCB0eXBlIGhpbnRz" name="d2l0aCB0eXBlIGhpbnRz" role="tabpanel" tabindex="0"><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">datetime</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span>
+
 <span class="kn">import</span> <span class="nn">xronos</span>
+
 
 <span class="k">class</span> <span class="nc">Timer</span><span class="p">(</span><span class="n">xronos</span><span class="o">.</span><span class="n">Reactor</span><span class="p">):</span>
     <span class="n">_event</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">InternalEventDeclaration</span><span class="p">[</span><span class="kc">None</span><span class="p">]()</span>
@@ -162,15 +171,20 @@ internal event.</p>
         <span class="k">return</span> <span class="k">lambda</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Tick at </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_time_since_startup</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
 
-<span class="n">env</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">Environment</span><span class="p">()</span>
-<span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;timer&quot;</span><span class="p">,</span> <span class="n">Timer</span><span class="p">,</span> <span class="n">period</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
-<span class="n">env</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="n">env</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">Environment</span><span class="p">()</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;timer&quot;</span><span class="p">,</span> <span class="n">Timer</span><span class="p">,</span> <span class="n">period</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
 </pre></div>
 </div>
-</div><div aria-labelledby="tab-0-ZGlhZ3JhbQ==" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-0-ZGlhZ3JhbQ==" name="ZGlhZ3JhbQ==" role="tabpanel" tabindex="0"><p><a class="bg-warning reference internal" href="../_images/diagram_event_timer.png"><img alt="diagram timer" class="bg-warning align-center" src="../_images/diagram_event_timer.png" style="width: 60%;" /></a></p>
+</div><div aria-labelledby="tab-0-ZGlhZ3JhbQ==" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-0-ZGlhZ3JhbQ==" name="ZGlhZ3JhbQ==" role="tabpanel" tabindex="0"><p><a class="bg-warning reference internal" href="../_images/diagram_event_clock.png"><img alt="diagram clock" class="bg-warning align-center" src="../_images/diagram_event_clock.png" style="width: 60%;" /></a></p>
 </div></div>
-<p>The <code class="docutils literal notranslate"><span class="pre">Timer</span></code> reactor declares an internal event called <code class="docutils literal notranslate"><span class="pre">_event</span></code> using an
-<a class="reference internal" href="../api.html#xronos.InternalEventDeclaration" title="xronos.InternalEventDeclaration"><code class="xref py py-class docutils literal notranslate"><span class="pre">xronos.InternalEventDeclaration</span></code></a>. The reactor further defines two
+<p>The <code class="docutils literal notranslate"><span class="pre">Clock</span></code> reactor declares an internal event called <code class="docutils literal notranslate"><span class="pre">_event</span></code> using an
+<a class="reference internal" href="../api.html#xronos.InternalEventDeclaration" title="xronos.InternalEventDeclaration"><code class="xref py py-class docutils literal notranslate"><span class="pre">InternalEventDeclaration</span></code></a>. The reactor further defines two
 reactions. The <code class="docutils literal notranslate"><span class="pre">tick</span></code> reaction is triggered by <code class="docutils literal notranslate"><span class="pre">_event</span></code> and prints a message
 that includes the current time. The <code class="docutils literal notranslate"><span class="pre">next</span></code> reaction is triggered both by
 <a class="reference internal" href="../api.html#xronos.Reactor.startup" title="xronos.Reactor.startup"><code class="xref py py-attr docutils literal notranslate"><span class="pre">startup</span></code></a> and by <code class="docutils literal notranslate"><span class="pre">_event</span></code>. It also declares an effect on
@@ -184,7 +198,8 @@ first invocation of <code class="docutils literal notranslate"><span class="pre"
 schedules the first occurrence of <code class="docutils literal notranslate"><span class="pre">_event</span></code>. All subsequent invocations of <code class="docutils literal notranslate"><span class="pre">next</span></code>
 will be triggered by <code class="docutils literal notranslate"><span class="pre">_event</span></code> itself.</p>
 <p>When executed, the program produces the following output.</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">Tick at 0:00:01</span>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>python<span class="w"> </span>event.py
+<span class="go">Tick at 0:00:01</span>
 <span class="go">Tick at 0:00:02</span>
 <span class="go">Tick at 0:00:03</span>
 <span class="go">Tick at 0:00:04</span>
@@ -192,13 +207,13 @@ will be triggered by <code class="docutils literal notranslate"><span class="pre
 <span class="go">...</span>
 </pre></div>
 </div>
-<p>While we can use internal event to replicate the behavior of timers, they are a
+<p>While we can use internal events to replicate the behavior of timers, they are a
 lot more versatile. Since occurrences are scheduled by reactions, the reaction
 handlers gain full control over when events occur. This allows us to implement
 more interesting behavior. For instance, the following example implements a
-timer that slows down with each tick.</p>
+clock that slows down with each tick.</p>
 <div class="sphinx-tabs docutils container">
-<div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-1-cGxhaW4=" aria-selected="true" class="sphinx-tabs-tab code-tab group-tab" id="tab-1-cGxhaW4=" name="cGxhaW4=" role="tab" tabindex="0">plain</button><button aria-controls="panel-1-dHlwZSBoaW50cw==" aria-selected="false" class="sphinx-tabs-tab code-tab group-tab" id="tab-1-dHlwZSBoaW50cw==" name="dHlwZSBoaW50cw==" role="tab" tabindex="-1">type hints</button><button aria-controls="panel-1-ZGlhZ3JhbQ==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-1-ZGlhZ3JhbQ==" name="ZGlhZ3JhbQ==" role="tab" tabindex="-1">diagram</button></div><div aria-labelledby="tab-1-cGxhaW4=" class="sphinx-tabs-panel code-tab group-tab" id="panel-1-cGxhaW4=" name="cGxhaW4=" role="tabpanel" tabindex="0"><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">SlowingTimer</span><span class="p">(</span><span class="n">Timer</span><span class="p">):</span>
+<div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-1-cGxhaW4=" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-1-cGxhaW4=" name="cGxhaW4=" role="tab" tabindex="0">plain</button><button aria-controls="panel-1-d2l0aCB0eXBlIGhpbnRz" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-1-d2l0aCB0eXBlIGhpbnRz" name="d2l0aCB0eXBlIGhpbnRz" role="tab" tabindex="-1">with type hints</button><button aria-controls="panel-1-ZGlhZ3JhbQ==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-1-ZGlhZ3JhbQ==" name="ZGlhZ3JhbQ==" role="tab" tabindex="-1">diagram</button></div><div aria-labelledby="tab-1-cGxhaW4=" class="sphinx-tabs-panel group-tab" id="panel-1-cGxhaW4=" name="cGxhaW4=" role="tabpanel" tabindex="0"><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">SlowingClock</span><span class="p">(</span><span class="n">Clock</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">period</span><span class="p">,</span> <span class="n">increment</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">period</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_increment</span> <span class="o">=</span> <span class="n">increment</span>
@@ -208,17 +223,22 @@ timer that slows down with each tick.</p>
         <span class="bp">self</span><span class="o">.</span><span class="n">_period</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_increment</span>
 
 
-<span class="n">env</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">Environment</span><span class="p">()</span>
-<span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span>
-    <span class="s2">&quot;timer&quot;</span><span class="p">,</span>
-    <span class="n">SlowingTimer</span><span class="p">,</span>
-    <span class="n">period</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
-    <span class="n">increment</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">milliseconds</span><span class="o">=</span><span class="mi">200</span><span class="p">),</span>
-<span class="p">)</span>
-<span class="n">env</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="n">env</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">Environment</span><span class="p">()</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span>
+        <span class="s2">&quot;clock&quot;</span><span class="p">,</span>
+        <span class="n">SlowingClock</span><span class="p">,</span>
+        <span class="n">period</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+        <span class="n">increment</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">milliseconds</span><span class="o">=</span><span class="mi">200</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
 </pre></div>
 </div>
-</div><div aria-labelledby="tab-1-dHlwZSBoaW50cw==" class="sphinx-tabs-panel code-tab group-tab" hidden="true" id="panel-1-dHlwZSBoaW50cw==" name="dHlwZSBoaW50cw==" role="tabpanel" tabindex="0"><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">SlowingTimer</span><span class="p">(</span><span class="n">Timer</span><span class="p">):</span>
+</div><div aria-labelledby="tab-1-d2l0aCB0eXBlIGhpbnRz" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-1-d2l0aCB0eXBlIGhpbnRz" name="d2l0aCB0eXBlIGhpbnRz" role="tabpanel" tabindex="0"><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">SlowingClock</span><span class="p">(</span><span class="n">Clock</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">period</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">,</span> <span class="n">increment</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -230,18 +250,33 @@ timer that slows down with each tick.</p>
         <span class="bp">self</span><span class="o">.</span><span class="n">_period</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_increment</span>
 
 
-<span class="n">env</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">Environment</span><span class="p">()</span>
-<span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span>
-    <span class="s2">&quot;timer&quot;</span><span class="p">,</span>
-    <span class="n">SlowingTimer</span><span class="p">,</span>
-    <span class="n">period</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
-    <span class="n">increment</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">milliseconds</span><span class="o">=</span><span class="mi">200</span><span class="p">),</span>
-<span class="p">)</span>
-<span class="n">env</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="n">env</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">Environment</span><span class="p">()</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span>
+        <span class="s2">&quot;clock&quot;</span><span class="p">,</span>
+        <span class="n">SlowingClock</span><span class="p">,</span>
+        <span class="n">period</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+        <span class="n">increment</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">milliseconds</span><span class="o">=</span><span class="mi">200</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
 </pre></div>
 </div>
-</div><div aria-labelledby="tab-1-ZGlhZ3JhbQ==" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-1-ZGlhZ3JhbQ==" name="ZGlhZ3JhbQ==" role="tabpanel" tabindex="0"><p><a class="bg-warning reference internal" href="../_images/diagram_event_timer_slowing.png"><img alt="diagram slowing timer" class="bg-warning align-center" src="../_images/diagram_event_timer_slowing.png" style="width: 60%;" /></a></p>
+</div><div aria-labelledby="tab-1-ZGlhZ3JhbQ==" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-1-ZGlhZ3JhbQ==" name="ZGlhZ3JhbQ==" role="tabpanel" tabindex="0"><p><a class="bg-warning reference internal" href="../_images/diagram_event_slowing_clock.png"><img alt="diagram slowing clock" class="bg-warning align-center" src="../_images/diagram_event_slowing_clock.png" style="width: 60%;" /></a></p>
 </div></div>
+<p>With this modification, the program produces the following output.</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>python<span class="w"> </span>event.py
+<span class="go">Tick at 0:00:01</span>
+<span class="go">Tick at 0:00:02.200000</span>
+<span class="go">Tick at 0:00:03.600000</span>
+<span class="go">Tick at 0:00:05.200000</span>
+<span class="go">Tick at 0:00:07</span>
+<span class="go">...</span>
+</pre></div>
+</div>
 </section>
 
 

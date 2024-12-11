@@ -23,7 +23,7 @@ class ValidationError(Exception):
     def __init__(self, message: str) -> None: ...
 
 class SourceInfo:
-    def __init__(  # noqa: PLR0913 (too-many-arguments). The recommended way to reduce
+    def __init__(  # noqa: PLR0913 (too-many-arguments)
         # number of arguments is to add more classes, which would in turn need CPP
         # bindings. The complexity is not justified.
         self,

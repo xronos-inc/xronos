@@ -904,10 +904,18 @@ class _Dependency(Generic[T]):
     def __init__(self, element: GenericEventSource[T]) -> None:
         self._element = element
 
-    @property
     def is_present(self) -> bool:
-        """Indicates if the referenced element has triggered."""
+        """Check if the referenced element has triggered."""
         return self._element._is_present
+
+
+class AbsentError(Exception):
+    """Indicates an attempt to read a value that is absent.
+
+    See :func:`Source.get`.
+    """
+
+    pass
 
 
 class Source(Generic[T], _Dependency[T]):
@@ -920,23 +928,23 @@ class Source(Generic[T], _Dependency[T]):
     def __init__(self, element: GenericEventSource[T]) -> None:
         super().__init__(element)
 
-    @property
-    def value(self) -> T:
-        """The current value of the referenced reactor element (read-only).
+    def get(self) -> T:
+        """Get the current value of the referenced reactor element.
 
         Raises:
-            AttributeError: If the referenced element does not have a value
-                (e.g. :class:`~xronos.Timer`, :class:`~xronos.Shutdown`,
-                :class:`~xronos.Startup`)
-            AttributeError: If accessed and :attr:`is_present` is ``False``.
+            AbsentException: If called and :func:`is_present` returns ``False``.
         """
-        if not self.is_present:
-            raise AttributeError("Cannot access value as it is not present")
+        if not self.is_present():
+            raise AbsentError(
+                f"Tried to read a value from {self._element.fqn},"
+                " but there is no present value."
+            )
+
         if isinstance(
             self._element,
             (runtime.Timer, runtime.Startup, runtime.Shutdown),
         ):
-            raise AttributeError("The element does not have a value")
+            return cast(T, None)
         return self._element._get()
 
 
@@ -962,21 +970,17 @@ class PortEffect(Generic[T], Source[T]):
         # overwrite so that type checker knows element is a Port[T]
         self._element = element
 
-    @property
-    def value(self) -> T:
-        """The current value of the referenced port (read-write).
+    def set(self, value: T) -> None:
+        """Set the port value and send a message to connected ports.
 
-        May be written to send a value via the port. For each execution of a
-        reaction only one the last value written will be sent.
+        Can be called multiple times, but at each time at most one value is
+        sent to connected ports. When called repeatedly at a particular time, the
+        previous value is overwritten.
 
-        Raises:
-            AttributeError: If read and :attr:`is_present` is ``False``.
+        Args:
+            value: The value to be written to the referenced port.
         """
-        return super().value
-
-    @value.setter
-    def value(self, v: T) -> None:
-        self._element._set(v)
+        self._element._set(value)
 
 
 class InternalEventEffect(Generic[T], Source[T]):
