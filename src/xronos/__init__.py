@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: © 2024 Xronos Inc.
+# SPDX-FileCopyrightText: Copyright (c) 2025 Xronos Inc.
 # SPDX-License-Identifier: BSD-3-Clause
 
 from xronos._core import (
@@ -8,6 +8,9 @@ from xronos._core import (
     InternalEvent,
     InternalEventDeclaration,
     InternalEventEffect,
+    Metric,
+    MetricDeclaration,
+    MetricEffect,
     OutputPort,
     OutputPortDeclaration,
     PhysicalEvent,
@@ -23,7 +26,7 @@ from xronos._core import (
     Trigger,
     reaction,
 )
-from xronos._runtime import (
+from xronos._runtime import (  # type: ignore
     ValidationError,
 )
 
@@ -34,6 +37,9 @@ __all__ = [
     "InternalEvent",
     "InternalEventDeclaration",
     "InternalEventEffect",
+    "Metric",
+    "MetricDeclaration",
+    "MetricEffect",
     "OutputPort",
     "OutputPortDeclaration",
     "PhysicalEvent",

@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: © 2024 Xronos Inc.
+# SPDX-FileCopyrightText: Copyright (c) 2025 Xronos Inc.
 # SPDX-License-Identifier: BSD-3-Clause
 
 # Ignore access to protected/private members. We use access to protected
@@ -9,6 +9,8 @@
 
 import datetime
 import inspect
+import os
+import platform
 from typing import (
     Any,
     Callable,
@@ -29,9 +31,7 @@ except ImportError:
     from typing_extensions import Self
 
 import xronos._runtime as runtime
-from xronos._runtime import (
-    ValidationError,  # pyright: ignore[reportUnusedImport]
-)
+from xronos._runtime import TelemetryBackend, ValidationError
 
 ValidationError.__doc__ = (
     "An exception that indicates problems in the reactor topology as defined by"
@@ -53,6 +53,45 @@ def _get_calling_stack_frame() -> inspect.FrameInfo:
     return frame
 
 
+AttributeValue: TypeAlias = str | bool | int | float
+AttributeMap: TypeAlias = dict[str, AttributeValue]
+
+
+class AttributeMixin:
+    def add_attribute(self, key: str, value: AttributeValue) -> None:
+        """Annotate the element with an attribute.
+
+        See :ref:`attributes` for more information.
+
+        Args:
+            key: The name of the attribute to add
+            value: The value of the attribute to add
+
+        Raises:
+            KeyError: If the attribute key was added before.
+        """
+        assert isinstance(self, runtime.ReactorElement)
+        result = self._environment._add_attribute(self, key, value)
+        if not result:
+            raise KeyError("Overwriting an existing attribute is not permitted.")
+
+    def add_attributes(self, attributes: AttributeMap) -> None:
+        """Annotate the element with multiple attributes.
+
+        See :ref:`attributes` for more information.
+
+        Args:
+            attributes: A map of attribute names and their values to be added.
+
+        Raises:
+            KeyError: If any of the provided attribute keys was added before.
+        """
+        assert isinstance(self, runtime.ReactorElement)
+        result = self._environment._add_attributes(self, attributes)
+        if not result:
+            raise KeyError("Overwriting an existing attribute is not permitted.")
+
+
 Elem = TypeVar("Elem", bound=runtime.ReactorElement)
 
 
@@ -68,10 +107,12 @@ class ElementDescriptor(Generic[Elem]):
         self,
         initializer: Callable[[str, "Reactor"], Elem],
         frame_info: inspect.FrameInfo,
+        attributes: AttributeMap | None = None,
     ) -> None:
         self.__name: str | None = None
         self.__initializer = initializer
         self.__frame_info = frame_info
+        self.__attributes = attributes
 
     def __set_name__(self, reactor_cls: Type["Reactor"], name: str) -> None:
         """Record the element name and register the descriptor with the reactor class.
@@ -103,7 +144,7 @@ class ElementDescriptor(Generic[Elem]):
         assert self.__name
         return self.__name
 
-    def _get_instance(self, container: "Reactor"):
+    def _get_instance(self, container: "Reactor") -> runtime.ReactorElement:
         """Return an instance of the described element.
 
         Args:
@@ -111,10 +152,13 @@ class ElementDescriptor(Generic[Elem]):
         """
         instance = self.__initializer(self._name, container)
         container.environment._add_frame_info(self.__frame_info, instance)
+        if self.__attributes:
+            assert isinstance(instance, AttributeMixin)
+            instance.add_attributes(self.__attributes)
         return instance
 
 
-class Startup(runtime.Startup):
+class Startup(runtime.Startup, AttributeMixin):
     """An event that triggers when the program starts executing."""
 
     @property
@@ -133,7 +177,7 @@ class StartupDeclaration(ElementDescriptor[Startup]):
         super().__init__(Startup, frame_info=_get_calling_stack_frame())
 
 
-class Shutdown(runtime.Shutdown):
+class Shutdown(runtime.Shutdown, AttributeMixin):
     """An event that triggers before the program shuts down."""
 
     @property
@@ -152,7 +196,7 @@ class ShutdownDeclaration(ElementDescriptor[Shutdown]):
         super().__init__(Shutdown, frame_info=_get_calling_stack_frame())
 
 
-class Timer(runtime.Timer):
+class Timer(runtime.Timer, AttributeMixin):
     """A trigger that emits events in regular intervals."""
 
     @property
@@ -197,20 +241,23 @@ class TimerDeclaration(ElementDescriptor[Timer]):
         period: The delay in between two events emitted by the timer (optional).
         offset: The delay between the :attr:`~Reactor.startup` event
             and the first event emitted by the timer (optional).
+        attributes(optional): A dict of attributes characterizing the timer.
     """
 
     def __init__(
         self,
         period: datetime.timedelta = datetime.timedelta(0),
         offset: datetime.timedelta = datetime.timedelta(0),
+        attributes: AttributeMap | None = None,
     ) -> None:
         super().__init__(
             lambda name, container: Timer(name, container, period, offset),
             frame_info=_get_calling_stack_frame(),
+            attributes=attributes,
         )
 
 
-class InputPort(Generic[T], runtime.Input):
+class InputPort(Generic[T], runtime.Input, AttributeMixin):
     """A port that receives values from other reactors.
 
     The input port does not provide direct access to received values. A
@@ -241,15 +288,20 @@ class InputPort(Generic[T], runtime.Input):
 class InputPortDeclaration(ElementDescriptor[InputPort[T]]):
     """A declaration for an :class:`InputPort[T]<InputPort>`.
 
+    Args:
+        attributes(optional): A dict of attributes characterizing the input port.
+
     Type Parameters:
         T(optional): The type of values carried by the port.
     """
 
-    def __init__(self) -> None:
-        super().__init__(InputPort, frame_info=_get_calling_stack_frame())
+    def __init__(self, attributes: AttributeMap | None = None) -> None:
+        super().__init__(
+            InputPort, frame_info=_get_calling_stack_frame(), attributes=attributes
+        )
 
 
-class OutputPort(Generic[T], runtime.Output):
+class OutputPort(Generic[T], runtime.Output, AttributeMixin):
     """A port that sends values to other reactors.
 
     The output port does not provide direct access for writing values. A
@@ -279,15 +331,20 @@ class OutputPort(Generic[T], runtime.Output):
 class OutputPortDeclaration(ElementDescriptor[OutputPort[T]]):
     """A declaration for an :class:`OutputPort[T]<OutputPort>`.
 
+    Args:
+        attributes(optional): A dict of attributes characterizing the output port.
+
     Type Parameters:
         T(optional): The type of values carried by the port.
     """
 
-    def __init__(self) -> None:
-        super().__init__(OutputPort, frame_info=_get_calling_stack_frame())
+    def __init__(self, attributes: AttributeMap | None = None) -> None:
+        super().__init__(
+            OutputPort, frame_info=_get_calling_stack_frame(), attributes=attributes
+        )
 
 
-class InternalEvent(Generic[T], runtime.InternalEvent):
+class InternalEvent(Generic[T], runtime.InternalEvent, AttributeMixin):
     """An element for scheduling new events.
 
     Internal events may be used by reactions to schedule new events in the
@@ -320,15 +377,20 @@ class InternalEvent(Generic[T], runtime.InternalEvent):
 class InternalEventDeclaration(ElementDescriptor[InternalEvent[T]]):
     """A declaration for a :class:`InternalEvent[T]<InternalEvent>`.
 
+    Args:
+        attributes(optional): A dict of attributes characterizing the internal event.
+
     Type Parameters:
         T(optional): The type of values carried by the internal event.
     """
 
-    def __init__(self) -> None:
-        super().__init__(InternalEvent, frame_info=_get_calling_stack_frame())
+    def __init__(self, attributes: AttributeMap | None = None) -> None:
+        super().__init__(
+            InternalEvent, frame_info=_get_calling_stack_frame(), attributes=attributes
+        )
 
 
-class PhysicalEvent(Generic[T], runtime.PhysicalEvent):
+class PhysicalEvent(Generic[T], runtime.PhysicalEvent, AttributeMixin):
     """An element for scheduling new events from external contexts.
 
     Physical events may be used to schedule new events from an external context
@@ -369,12 +431,75 @@ class PhysicalEvent(Generic[T], runtime.PhysicalEvent):
 class PhysicalEventDeclaration(ElementDescriptor[PhysicalEvent[T]]):
     """A declaration for a :class:`PhysicalEvent[T]<PhysicalEvent>`.
 
+    Args:
+        attributes(optional): A dict of attributes characterizing the physical event.
+
     Type Parameters:
         T(optional): The type of values carried by the physical event.
     """
 
-    def __init__(self) -> None:
-        super().__init__(PhysicalEvent, frame_info=_get_calling_stack_frame())
+    def __init__(self, attributes: AttributeMap | None = None) -> None:
+        super().__init__(
+            PhysicalEvent, frame_info=_get_calling_stack_frame(), attributes=attributes
+        )
+
+
+class Metric(runtime.Metric, AttributeMixin):
+    """Allows recording values to an external data base from reaction handlers.
+
+    This class is not intended to be instantiated directly. Use
+    :class:`MetricDeclaration` instead.
+    """
+
+    @property
+    def name(self) -> str:
+        """Name of the metric (read-only)."""
+        return self._name
+
+    @property
+    def fqn(self) -> str:
+        """Fully qualified name of the metric (read-only)."""
+        return self._fqn
+
+    @property
+    def description(self) -> str:
+        """Description of the metric (read-only)."""
+        return self._description
+
+    @property
+    def unit(self) -> str:
+        """Unit of the metric (read-only)."""
+        return self._unit
+
+
+class MetricDeclaration(ElementDescriptor[Metric]):
+    """A declaration for a :class:`Metric`.
+
+    Args:
+        description: A description of the metric.
+        unit: The unit of the metric.
+        attributes: A dict of attributes characterizing the metric.
+    """
+
+    def __init__(
+        self,
+        description: str,
+        unit: str | None = None,
+        attributes: AttributeMap | None = None,
+    ) -> None:
+        if unit is None:
+            unit = ""
+        super().__init__(
+            lambda name, container: Metric(
+                name,
+                container,
+                container.environment._metric_data_logger_provider,
+                description,
+                unit,
+            ),
+            frame_info=_get_calling_stack_frame(),
+            attributes=attributes,
+        )
 
 
 Port: TypeAlias = InputPort[T] | OutputPort[T]
@@ -556,24 +681,42 @@ class Environment(runtime.Environment):
         source_info = Environment.__frameinfo_to_sourceinfo(frame, element)
         self.__source_locations.append(source_info)
 
-    @staticmethod
     def enable_tracing(
-        endpoint: str = "localhost:4317",
+        self,
         application_name: str = "xronos",
+        endpoint: str = "localhost:4317",
     ) -> None:
         """Enable the collection of trace data during program execution.
 
-        See :ref:`dashboard` for information on how to visualize the trace data.
+        See :ref:`telemetry` for more information on tracing and
+        :ref:`dashboard` for information on how to visualize the trace data.
 
         Args:
-            endpoint: The network endpoint to send trace data to. This is
-                typically port 4137 on the host running the :ref:`dashboard`.
             application_name: The name of the application as it should appear
                 in the trace data.
+            endpoint: The network endpoint to send trace data to. This is
+                typically port 4137 on the host running the :ref:`dashboard`.
+
+        Raises:
+           RuntimeError: If the telemetry backend is not installed.
+               (See :ref:`telemetry`)
         """
-        runtime.Environment.enable_tracing(
-            endpoint=endpoint, application_name=application_name
-        )
+        try:
+            from xronos_telemetry.otel import OtelTelemetryBackend  # type: ignore
+
+            backend = OtelTelemetryBackend(  # type: ignore
+                self._attribute_manager,
+                application_name,
+                endpoint,
+                platform.node(),
+                os.getpid(),
+            )
+            self._set_telemetry_backend(cast(TelemetryBackend, backend))
+        except ModuleNotFoundError:
+            raise RuntimeError(
+                "The telemetry backend is not available. "
+                "It can be installed with 'pip install xronos[telemetry]'"
+            )
 
     def request_shutdown(self) -> None:
         """Request the termination of a currently running reactor program.
@@ -586,7 +729,7 @@ class Environment(runtime.Environment):
         return super().request_shutdown()
 
 
-class Reactor(runtime.Reactor):
+class Reactor(runtime.Reactor, AttributeMixin):
     """An abstract reactor that can be subclassed to define new reactors."""
 
     #: Startup: Startup event.
@@ -1007,6 +1150,25 @@ class InternalEventEffect(Generic[T], Source[T]):
         self._element._schedule(value, delay)
 
 
+class MetricEffect:
+    """An accessor for a metric that can be recorded.
+
+    This class is not intended to be instantiated directly. Use
+    :func:`~xronos.ReactionInterface.add_effect` instead.
+    """
+
+    def __init__(self, metric: Metric) -> None:
+        self._metric = metric
+
+    def record(self, value: int | float) -> None:
+        """Record a value.
+
+        Args:
+            value: The value to be recorded.
+        """
+        self._metric._record(value)
+
+
 class ReactionInterface:
     """Helper class for defining the interfaces of a reaction.
 
@@ -1065,31 +1227,37 @@ class ReactionInterface:
         return Source(source)
 
     @overload
-    def add_effect(self, effect: Port[T]) -> PortEffect[T]: ...
+    def add_effect(self, target: Port[T]) -> PortEffect[T]: ...
 
     @overload
-    def add_effect(self, effect: InternalEvent[T]) -> InternalEventEffect[T]: ...
+    def add_effect(self, target: InternalEvent[T]) -> InternalEventEffect[T]: ...
+
+    @overload
+    def add_effect(self, target: Metric) -> MetricEffect: ...
 
     def add_effect(
-        self, effect: Port[T] | InternalEvent[T]
-    ) -> PortEffect[T] | InternalEventEffect[T]:
+        self, target: Port[T] | InternalEvent[T] | Metric
+    ) -> PortEffect[T] | InternalEventEffect[T] | MetricEffect:
         """Declare a reaction effect.
 
         An effect provides read and write access to the referenced element, but
         does not trigger the reaction.
 
         Args:
-            effect: The reactor element to declare as the reaction effect.
+            target: The reactor element to declare as the reaction effect.
 
         Returns:
             A new effect object that can be used by the reaction handler to
             write to ports or schedule events.
         """
-        self._effects.add(effect)
-        if isinstance(effect, InputPort | OutputPort):
-            return PortEffect(effect)
+        if isinstance(target, InputPort | OutputPort):
+            self._effects.add(target)
+            return PortEffect(target)
+        elif isinstance(target, InternalEvent):
+            self._effects.add(target)
+            return InternalEventEffect(target)
         else:
-            return InternalEventEffect(effect)
+            return MetricEffect(target)
 
 
 class Reaction(runtime.Reaction):

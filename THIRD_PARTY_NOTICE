@@ -7,7 +7,7 @@ following licenses. Full licenses and notices are provided in the
 ---
 
 Component: Abseil C++
-Version: Abseil LTS 20240722.0
+Version: Abseil LTS 20240116.1
 License: Apache License 2.0
 License text: https://www.apache.org/licenses/LICENSE-2.0
 Source: https://github.com/abseil/abseil-cpp
@@ -17,14 +17,30 @@ For the full license text, see:
 
 ---
 
+Component address_sorting
+License: BSD 3-Clause License
+License text: https://opensource.org/licenses/BSD-3-Clause
+Source: https://github.com/grpc/grpc/tree/v1.67.1/third_party/address_sorting
+
+[third-party-licenses/address_sorting_LICENSE](third-party-licenses/address_sorting_LICENSE)
+
+---
+
+Component boringssl
+License: Mixed, see full license text
+Version dec0d8f681348af8bb675e07bd89989665fca8bc
+Source: https://boringssl.googlesource.com/boringssl
+
+[third-party-licenses/boringssl_LICENSE](third-party-licenses/boringssl_LICENSE)
+
+---
+
 Component: gRPC
-Version: v1.68.0
+Version: v1.67.1
 License: Apache License 2.0
 License text: https://www.apache.org/licenses/LICENSE-2.0
 Source: https://github.com/grpc/grpc
 
-gRPC includes third-party dependencies distributed under various licenses. For the full
-list of licenses, see:
 [third-party-licenses/grpc_LICENSE](third-party-licenses/grpc_LICENSE)
 
 ---
@@ -40,36 +56,47 @@ For the full license text, see:
 
 ---
 
-Component: OpenTelemetry protcol (OLTP)
-Version: v1.3.2
-License: Apache License 2.0
-License text: https://www.apache.org/licenses/LICENSE-2.0
-Source: https://github.com/open-telemetry/opentelemetry-proto
+Component: protobuf
+Version: v27.2
+License: BSD 3-Clause License
+License text: https://opensource.org/licenses/BSD-3-Clause
+Source: https://github.com/protocolbuffers/protobuf
 
 For the full license text, see:
-[third-party-licenses/opentelemetry_python_LICENSE](third-party-licenses/opentelemetry_python_LICENSE)
+[third-party-licenses/protobuf_LICENSE](third-party-licenses/protobuf_LICENSE)
 
 ---
 
-Component: OpenTelemetry Python
-Version: 1.28.2
-License: Apache License 2.0
-License text: https://www.apache.org/licenses/LICENSE-2.0
-Source: https://github.com/open-telemetry/opentelemetry-python
+Component: pybind11
+Version: v2.13.6
+License: BSD 3-Clause License
+License text: https://opensource.org/licenses/BSD-3-Clause
+Source: https://github.com/pybind/pybind11
 
 For the full license text, see:
-[third-party-licenses/opentelemetry_python_LICENSE](third-party-licenses/opentelemetry_python_LICENSE)
+[third-party-licenses/pybind11_LICENSE](third-party-licenses/pybind11_LICENSE)
 
 ---
 
-Component: OpenTelemetry C++
-Version: v1.17.0
-License: Apache License 2.0
-License text: https://www.apache.org/licenses/LICENSE-2.0
-Source: https://github.com/open-telemetry/opentelemetry-cpp
+Component: reactor-cpp
+Version: ae09ff11b131ff926bc4af3b4b4b466c6ca16c1d
+License: ISC License
+License text: https://opensource.org/licenses/ISC
+Source: https://github.com/lf-lang/reactor-cpp
 
 For the full license text, see:
-[third-party-licenses/opentelemetry_cpp_LICENSE](third-party-licenses/opentelemetry_cpp_LICENSE)
+[third-party-licenses/reactor_cpp_LICENSE](third-party-licenses/reactor_cpp_LICENSE)
+
+---
+
+Component: re2
+Version: 2022-04-01
+License: BSD 3-Clause License
+License text: https://opensource.org/licenses/BSD-3-Clause
+Source: https://github.com/google/re2
+
+For the full license text, see:
+[third-party-licenses/re2_LICENSE](third-party-licenses/re2_LICENSE)
 
 ---
 
@@ -106,11 +133,10 @@ For the full license text, see:
 
 ---
 
-Component: pybind11
-Version: v2.13.6
-License: BSD 3-Clause License
-License text: https://opensource.org/licenses/BSD-3-Clause
-Source: https://github.com/pybind/pybind11
+Component: utf8_range
+License: MIT License
+License text: https://opensource.org/licenses/MIT
+Source: https://github.com/grpc/grpc/tree/v1.67.1/third_party/utf8_range
 
 For the full license text, see:
-[third-party-licenses/pybind11_LICENSE](third-party-licenses/pybind11_LICENSE)
+[third-party-licenses/utf8_range_LICENSE](third-party-licenses/utf8_range_LICENSE)
