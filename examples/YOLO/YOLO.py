@@ -1,7 +1,7 @@
-# SPDX-FileCopyrightText: © 2022 The Lingua Franca Coordination Language.
+# SPDX-FileCopyrightText: (c) 2022 The Lingua Franca Coordination Language.
 # SPDX-License-Identifier: BSD-2-Clause
 #
-# Modifications Copyright © 2024 Xronos Inc.
+# Modifications Copyright (c) 2025 Xronos Inc.
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # This file contains portions from the Lingua Franca Coordination Language
@@ -11,6 +11,7 @@ import argparse
 from typing import Optional
 
 import xronos
+
 from Display import Display
 from DNN import DNN
 from WebCam import WebCam

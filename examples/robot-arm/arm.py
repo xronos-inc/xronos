@@ -1,15 +1,16 @@
-# SPDX-FileCopyrightText: © 2024 Xronos Inc.
+# SPDX-FileCopyrightText: Copyright (c) 2025 Xronos Inc.
 # SPDX-License-Identifier: BSD-3-Clause
 
 import argparse
 import datetime
 import time
-from typing import Callable, Optional
+from typing import Callable, Optional, cast
+
+import xronos
+from parse import Result, parse  # type: ignore
 
 import pose_constants
-import xronos
 from Arm_Lib import Arm_Device
-from parse import Result, parse  # type: ignore
 from pose import Actuator, Pose, Trajectory
 from user_interface import UserInterface
 
@@ -148,12 +149,12 @@ def user_input_parser(cmd: str) -> Trajectory | None | KeyboardInterrupt:
         return KeyboardInterrupt()
 
     r = parse("moveto {}", cmd)
-    trajectory = []
+    trajectory = list[Pose]()
     if not isinstance(r, Result):
         print(f"Could not parse command `{cmd}`")
         return None
 
-    goals = r[0].split(" ")
+    goals = cast(list[str], r[0].split(" "))  # type: ignore[reportUnknownMemberType]
     for goal in goals:
         pose = goal_to_pose(goal)
         if pose:

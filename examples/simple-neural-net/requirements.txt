@@ -1,2 +1,2 @@
-xronos >= 0.0.2
+xronos >= 0.0.4
 numpy == 2.2.0
