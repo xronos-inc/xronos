@@ -7,7 +7,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Getting Started &mdash; xronos  documentation</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
       <link rel="stylesheet" type="text/css" href="_static/tabs.css?v=a5c4661c" />
@@ -54,7 +54,10 @@
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Getting Started</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#system-requirements">System Requirements</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#optional-components">Optional Components</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#hello-world">Hello World</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#suggested-development-setup">Suggested development setup</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#editor-integration">Editor integration</a></li>
@@ -66,6 +69,7 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="reference_guide/index.html">Reference Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="diagrams.html">Diagram View</a></li>
+<li class="toctree-l1"><a class="reference internal" href="telemetry.html">Telemetry</a></li>
 <li class="toctree-l1"><a class="reference internal" href="dashboard.html">Trace Dashboard</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorials/index.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API Documentation</a></li>
@@ -102,7 +106,7 @@
 <h2>System Requirements<a class="headerlink" href="#system-requirements" title="Link to this heading"></a></h2>
 <ul class="simple">
 <li><p>A <a class="reference external" href="https://github.com/mayeut/pep600_compliance?tab=readme-ov-file#distro-compatibility">manylinux_2_35</a> compliant Linux distribution. We recommend <a class="reference external" href="https://ubuntu.com/download/desktop">Ubuntu</a> 22.04 or newer.</p></li>
-<li><p>Python version 3.10, 3.11, or 3.12</p></li>
+<li><p>Python version 3.10, 3.11, 3.12, or 3.13</p></li>
 </ul>
 </section>
 <section id="installation">
@@ -117,22 +121,30 @@ create and load a new environment <code class="docutils literal notranslate"><sp
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ pip install xronos
 </pre></div>
 </div>
+<section id="optional-components">
+<h3>Optional Components<a class="headerlink" href="#optional-components" title="Link to this heading"></a></h3>
+<p>Some additional tools and components can be installed optionally. This includes:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="telemetry.html#telemetry"><span class="std std-ref">Telemetry</span></a>: <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">xronos[telemetry]</span></code></p></li>
+<li><p><a class="reference internal" href="dashboard.html#dashboard"><span class="std std-ref">Trace Dashboard</span></a>: <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">xronos[dashboard]</span></code></p></li>
+</ul>
+</section>
 </section>
 <section id="hello-world">
 <span id="id1"></span><h2>Hello World<a class="headerlink" href="#hello-world" title="Link to this heading"></a></h2>
 <p>This section shows you how to write a hello world program using xronos. Create a file called <code class="docutils literal notranslate"><span class="pre">hello.py</span></code> and paste the following content into it.</p>
 <div class="sphinx-tabs docutils container">
-<div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-0-cGxhaW4=" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-0-cGxhaW4=" name="cGxhaW4=" role="tab" tabindex="0">plain</button><button aria-controls="panel-0-d2l0aCB0eXBlIGhpbnRz" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-d2l0aCB0eXBlIGhpbnRz" name="d2l0aCB0eXBlIGhpbnRz" role="tab" tabindex="-1">with type hints</button></div><div aria-labelledby="tab-0-cGxhaW4=" class="sphinx-tabs-panel group-tab" id="panel-0-cGxhaW4=" name="cGxhaW4=" role="tabpanel" tabindex="0"><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">xronos</span>
+<div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-0-cGxhaW4=" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-0-cGxhaW4=" name="cGxhaW4=" role="tab" tabindex="0">plain</button><button aria-controls="panel-0-d2l0aCB0eXBlIGhpbnRz" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-d2l0aCB0eXBlIGhpbnRz" name="d2l0aCB0eXBlIGhpbnRz" role="tab" tabindex="-1">with type hints</button></div><div aria-labelledby="tab-0-cGxhaW4=" class="sphinx-tabs-panel group-tab" id="panel-0-cGxhaW4=" name="cGxhaW4=" role="tabpanel" tabindex="0"><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">xronos</span>
 
 
-<span class="k">class</span> <span class="nc">Hello</span><span class="p">(</span><span class="n">xronos</span><span class="o">.</span><span class="n">Reactor</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Hello</span><span class="p">(</span><span class="n">xronos</span><span class="o">.</span><span class="n">Reactor</span><span class="p">):</span>
     <span class="nd">@xronos</span><span class="o">.</span><span class="n">reaction</span>
-    <span class="k">def</span> <span class="nf">hello</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">hello</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface</span><span class="p">):</span>
         <span class="n">interface</span><span class="o">.</span><span class="n">add_trigger</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">startup</span><span class="p">)</span>
         <span class="k">return</span> <span class="k">lambda</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Hello, World!&quot;</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
     <span class="n">env</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">Environment</span><span class="p">()</span>
     <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;hello&quot;</span><span class="p">,</span> <span class="n">Hello</span><span class="p">)</span>
     <span class="n">env</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
@@ -142,19 +154,19 @@ create and load a new environment <code class="docutils literal notranslate"><sp
     <span class="n">main</span><span class="p">()</span>
 </pre></div>
 </div>
-</div><div aria-labelledby="tab-0-d2l0aCB0eXBlIGhpbnRz" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-0-d2l0aCB0eXBlIGhpbnRz" name="d2l0aCB0eXBlIGhpbnRz" role="tabpanel" tabindex="0"><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span>
+</div><div aria-labelledby="tab-0-d2l0aCB0eXBlIGhpbnRz" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-0-d2l0aCB0eXBlIGhpbnRz" name="d2l0aCB0eXBlIGhpbnRz" role="tabpanel" tabindex="0"><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
 
-<span class="kn">import</span> <span class="nn">xronos</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">xronos</span>
 
 
-<span class="k">class</span> <span class="nc">Hello</span><span class="p">(</span><span class="n">xronos</span><span class="o">.</span><span class="n">Reactor</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Hello</span><span class="p">(</span><span class="n">xronos</span><span class="o">.</span><span class="n">Reactor</span><span class="p">):</span>
     <span class="nd">@xronos</span><span class="o">.</span><span class="n">reaction</span>
-    <span class="k">def</span> <span class="nf">hello</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface</span><span class="p">:</span> <span class="n">xronos</span><span class="o">.</span><span class="n">ReactionInterface</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">hello</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface</span><span class="p">:</span> <span class="n">xronos</span><span class="o">.</span><span class="n">ReactionInterface</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">]:</span>
         <span class="n">interface</span><span class="o">.</span><span class="n">add_trigger</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">startup</span><span class="p">)</span>
         <span class="k">return</span> <span class="k">lambda</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Hello, World!&quot;</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="n">env</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">Environment</span><span class="p">()</span>
     <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;hello&quot;</span><span class="p">,</span> <span class="n">Hello</span><span class="p">)</span>
     <span class="n">env</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
@@ -182,13 +194,13 @@ that implements an event handler. Our example reactor defines a single reaction
 called <code class="docutils literal notranslate"><span class="pre">hello</span></code>:</p>
 <div class="sphinx-tabs docutils container">
 <div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-1-cGxhaW4=" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-1-cGxhaW4=" name="cGxhaW4=" role="tab" tabindex="0">plain</button><button aria-controls="panel-1-d2l0aCB0eXBlIGhpbnRz" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-1-d2l0aCB0eXBlIGhpbnRz" name="d2l0aCB0eXBlIGhpbnRz" role="tab" tabindex="-1">with type hints</button></div><div aria-labelledby="tab-1-cGxhaW4=" class="sphinx-tabs-panel group-tab" id="panel-1-cGxhaW4=" name="cGxhaW4=" role="tabpanel" tabindex="0"><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@xronos</span><span class="o">.</span><span class="n">reaction</span>
-<span class="k">def</span> <span class="nf">hello</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">hello</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface</span><span class="p">):</span>
     <span class="n">interface</span><span class="o">.</span><span class="n">add_trigger</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">startup</span><span class="p">)</span>
     <span class="k">return</span> <span class="k">lambda</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Hello, World!&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div><div aria-labelledby="tab-1-d2l0aCB0eXBlIGhpbnRz" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-1-d2l0aCB0eXBlIGhpbnRz" name="d2l0aCB0eXBlIGhpbnRz" role="tabpanel" tabindex="0"><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@xronos</span><span class="o">.</span><span class="n">reaction</span>
-<span class="k">def</span> <span class="nf">hello</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface</span><span class="p">:</span> <span class="n">xronos</span><span class="o">.</span><span class="n">ReactionInterface</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">hello</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface</span><span class="p">:</span> <span class="n">xronos</span><span class="o">.</span><span class="n">ReactionInterface</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">]:</span>
     <span class="n">interface</span><span class="o">.</span><span class="n">add_trigger</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">startup</span><span class="p">)</span>
     <span class="k">return</span> <span class="k">lambda</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Hello, World!&quot;</span><span class="p">)</span>
 </pre></div>
@@ -203,7 +215,7 @@ allow reactions to trigger new events.
 The reaction handler returned by <code class="docutils literal notranslate"><span class="pre">hello</span></code> is a simple lambda function that prints
 “Hello, World!”.</p>
 <p>Finally, the <code class="docutils literal notranslate"><span class="pre">main()</span></code> function assembles and executes the program.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="n">env</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">Environment</span><span class="p">()</span>
     <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;hello&quot;</span><span class="p">,</span> <span class="n">Hello</span><span class="p">)</span>
     <span class="n">env</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>

@@ -6,7 +6,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Index &mdash; xronos  documentation</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
       <link rel="stylesheet" type="text/css" href="_static/fix_stacking.css?v=30aa6f93" />
@@ -50,6 +50,7 @@
 <li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="reference_guide/index.html">Reference Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="diagrams.html">Diagram View</a></li>
+<li class="toctree-l1"><a class="reference internal" href="telemetry.html">Telemetry</a></li>
 <li class="toctree-l1"><a class="reference internal" href="dashboard.html">Trace Dashboard</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorials/index.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API Documentation</a></li>
@@ -85,6 +86,7 @@
 <div class="genindex-jumpbox">
  <a href="#A"><strong>A</strong></a>
  | <a href="#C"><strong>C</strong></a>
+ | <a href="#D"><strong>D</strong></a>
  | <a href="#E"><strong>E</strong></a>
  | <a href="#F"><strong>F</strong></a>
  | <a href="#G"><strong>G</strong></a>
@@ -96,6 +98,7 @@
  | <a href="#R"><strong>R</strong></a>
  | <a href="#S"><strong>S</strong></a>
  | <a href="#T"><strong>T</strong></a>
+ | <a href="#U"><strong>U</strong></a>
  | <a href="#V"><strong>V</strong></a>
  | <a href="#X"><strong>X</strong></a>
  
@@ -103,10 +106,50 @@
 <h2 id="A">A</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api.html#xronos.ReactionInterface.add_effect">add_effect() (xronos.ReactionInterface method)</a>
+      <li><a href="api.html#xronos.InputPort.add_attribute">add_attribute() (xronos.InputPort method)</a>
+
+      <ul>
+        <li><a href="api.html#xronos.InternalEvent.add_attribute">(xronos.InternalEvent method)</a>
 </li>
+        <li><a href="api.html#xronos.Metric.add_attribute">(xronos.Metric method)</a>
+</li>
+        <li><a href="api.html#xronos.OutputPort.add_attribute">(xronos.OutputPort method)</a>
+</li>
+        <li><a href="api.html#xronos.PhysicalEvent.add_attribute">(xronos.PhysicalEvent method)</a>
+</li>
+        <li><a href="api.html#xronos.Reactor.add_attribute">(xronos.Reactor method)</a>
+</li>
+        <li><a href="api.html#xronos.Shutdown.add_attribute">(xronos.Shutdown method)</a>
+</li>
+        <li><a href="api.html#xronos.Startup.add_attribute">(xronos.Startup method)</a>
+</li>
+        <li><a href="api.html#xronos.Timer.add_attribute">(xronos.Timer method)</a>
+</li>
+      </ul></li>
+      <li><a href="api.html#xronos.InputPort.add_attributes">add_attributes() (xronos.InputPort method)</a>
+
+      <ul>
+        <li><a href="api.html#xronos.InternalEvent.add_attributes">(xronos.InternalEvent method)</a>
+</li>
+        <li><a href="api.html#xronos.Metric.add_attributes">(xronos.Metric method)</a>
+</li>
+        <li><a href="api.html#xronos.OutputPort.add_attributes">(xronos.OutputPort method)</a>
+</li>
+        <li><a href="api.html#xronos.PhysicalEvent.add_attributes">(xronos.PhysicalEvent method)</a>
+</li>
+        <li><a href="api.html#xronos.Reactor.add_attributes">(xronos.Reactor method)</a>
+</li>
+        <li><a href="api.html#xronos.Shutdown.add_attributes">(xronos.Shutdown method)</a>
+</li>
+        <li><a href="api.html#xronos.Startup.add_attributes">(xronos.Startup method)</a>
+</li>
+        <li><a href="api.html#xronos.Timer.add_attributes">(xronos.Timer method)</a>
+</li>
+      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#xronos.ReactionInterface.add_effect">add_effect() (xronos.ReactionInterface method)</a>
+</li>
       <li><a href="api.html#xronos.ReactionInterface.add_source">add_source() (xronos.ReactionInterface method)</a>
 </li>
       <li><a href="api.html#xronos.ReactionInterface.add_trigger">add_trigger() (xronos.ReactionInterface method)</a>
@@ -123,10 +166,14 @@
         <li><a href="api.html#xronos.Reactor.connect">(xronos.Reactor method)</a>
 </li>
       </ul></li>
-      <li><a href="lib.html#xronos.lib.ConstSource">ConstSource (class in xronos.lib)</a>
+      <li><a href="lib.html#xronos.lib.ConsoleInput">ConsoleInput (class in xronos.lib)</a>
+</li>
+      <li><a href="lib.html#xronos.lib.ConsoleInput.RequestShutdown">ConsoleInput.RequestShutdown</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="lib.html#xronos.lib.ConstSource">ConstSource (class in xronos.lib)</a>
+</li>
       <li><a href="lib.html#xronos.lib.SuccessorSource.count">count() (xronos.lib.SuccessorSource method)</a>
 </li>
       <li><a href="api.html#xronos.Environment.create_reactor">create_reactor() (xronos.Environment method)</a>
@@ -138,10 +185,18 @@
   </ul></td>
 </tr></table>
 
+<h2 id="D">D</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#xronos.Metric.description">description (xronos.Metric property)</a>
+</li>
+  </ul></td>
+</tr></table>
+
 <h2 id="E">E</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api.html#xronos.Environment.enable_tracing">enable_tracing() (xronos.Environment static method)</a>
+      <li><a href="api.html#xronos.Environment.enable_tracing">enable_tracing() (xronos.Environment method)</a>
 </li>
       <li><a href="api.html#xronos.Environment">Environment (class in xronos)</a>
 </li>
@@ -150,6 +205,8 @@
       <li><a href="api.html#xronos.Reactor.environment">environment (xronos.Reactor property)</a>
 </li>
       <li><a href="api.html#xronos.Environment.execute">execute() (xronos.Environment method)</a>
+</li>
+      <li><a href="lib.html#xronos.lib.ExternalInput">ExternalInput (class in xronos.lib)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -161,6 +218,8 @@
 
       <ul>
         <li><a href="api.html#xronos.InternalEvent.fqn">(xronos.InternalEvent property)</a>
+</li>
+        <li><a href="api.html#xronos.Metric.fqn">(xronos.Metric property)</a>
 </li>
         <li><a href="api.html#xronos.OutputPort.fqn">(xronos.OutputPort property)</a>
 </li>
@@ -233,6 +292,14 @@
 <h2 id="M">M</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#xronos.Metric">Metric (class in xronos)</a>
+</li>
+      <li><a href="api.html#xronos.MetricDeclaration">MetricDeclaration (class in xronos)</a>
+</li>
+      <li><a href="api.html#xronos.MetricEffect">MetricEffect (class in xronos)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     module
 
@@ -252,6 +319,8 @@
 
       <ul>
         <li><a href="api.html#xronos.InternalEvent.name">(xronos.InternalEvent property)</a>
+</li>
+        <li><a href="api.html#xronos.Metric.name">(xronos.Metric property)</a>
 </li>
         <li><a href="api.html#xronos.OutputPort.name">(xronos.OutputPort property)</a>
 </li>
@@ -274,10 +343,18 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api.html#xronos.Timer.offset">offset (xronos.Timer property)</a>
 </li>
-      <li><a href="lib.html#xronos.lib.OutputDiscardedWarning">OutputDiscardedWarning</a>
+      <li><a href="lib.html#xronos.lib.ConsoleInput.output">output (xronos.lib.ConsoleInput attribute)</a>
+
+      <ul>
+        <li><a href="lib.html#xronos.lib.ExternalInput.output">(xronos.lib.ExternalInput attribute)</a>
 </li>
+        <li><a href="lib.html#xronos.lib.SocketInput.output">(xronos.lib.SocketInput attribute)</a>
+</li>
+      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="lib.html#xronos.lib.OutputDiscardedWarning">OutputDiscardedWarning</a>
+</li>
       <li><a href="api.html#xronos.OutputPort">OutputPort (class in xronos)</a>
 </li>
       <li><a href="api.html#xronos.OutputPortDeclaration">OutputPortDeclaration (class in xronos)</a>
@@ -308,11 +385,13 @@
 </li>
       <li><a href="api.html#xronos.reaction">reaction() (in module xronos)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api.html#xronos.ReactionInterface">ReactionInterface (class in xronos)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api.html#xronos.Reactor">Reactor (class in xronos)</a>
+</li>
+      <li><a href="api.html#xronos.MetricEffect.record">record() (xronos.MetricEffect method)</a>
 </li>
       <li><a href="api.html#xronos.Environment.request_shutdown">request_shutdown() (xronos.Environment method)</a>
 </li>
@@ -334,8 +413,12 @@
 </li>
       <li><a href="api.html#xronos.Reactor.shutdown">shutdown (xronos.Reactor attribute)</a>
 </li>
+      <li><a href="lib.html#xronos.lib.SocketInput">SocketInput (class in xronos.lib)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="lib.html#xronos.lib.SocketInput.Mode">SocketInput.Mode (class in xronos.lib)</a>
+</li>
       <li><a href="api.html#xronos.Source">Source (class in xronos)</a>
 </li>
       <li><a href="api.html#xronos.Startup">Startup (class in xronos)</a>
@@ -361,6 +444,14 @@
       <li><a href="lib.html#xronos.lib.TimerSource">TimerSource (class in xronos.lib)</a>
 </li>
       <li><a href="api.html#xronos.Trigger">Trigger (class in xronos)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="U">U</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#xronos.Metric.unit">unit (xronos.Metric property)</a>
 </li>
   </ul></td>
 </tr></table>

@@ -7,7 +7,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Trace Dashboard &mdash; xronos  documentation</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
       <link rel="stylesheet" type="text/css" href="_static/fix_stacking.css?v=30aa6f93" />
@@ -25,7 +25,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Tutorials" href="tutorials/index.html" />
-    <link rel="prev" title="Diagram View" href="diagrams.html" /> 
+    <link rel="prev" title="Telemetry" href="telemetry.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -53,10 +53,13 @@
 <li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="reference_guide/index.html">Reference Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="diagrams.html">Diagram View</a></li>
+<li class="toctree-l1"><a class="reference internal" href="telemetry.html">Telemetry</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Trace Dashboard</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#system-requirements">System Requirements</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#usage">Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#visualizing-metrics">Visualizing Metrics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#closing-the-dashboard">Closing the Dashboard</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="tutorials/index.html">Tutorials</a></li>
@@ -90,7 +93,10 @@
              
   <section id="trace-dashboard">
 <span id="dashboard"></span><h1>Trace Dashboard<a class="headerlink" href="#trace-dashboard" title="Link to this heading"></a></h1>
-<p>The runtime behavior of xronos programs can be observed using the Xronos Dashboard.</p>
+<p>The runtime behavior of xronos programs can be observed using the Xronos
+Dashboard. The dashboard consists of a user interface based on
+<a class="reference external" href="https://grafana.com/">Grafana</a> and a time series database that stores
+trace data of reaction executions and any values recorded using <a class="reference internal" href="telemetry.html#metrics"><span class="std std-ref">metrics</span></a>.</p>
 <section id="system-requirements">
 <h2>System Requirements<a class="headerlink" href="#system-requirements" title="Link to this heading"></a></h2>
 <ul class="simple">
@@ -100,15 +106,20 @@ Engine version 27.2.1.</p></li>
 </section>
 <section id="installation">
 <h2>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h2>
-<p>We provide the dashboard as a zip archive. Use the following commands to extract and start the dashboard.</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>unzip<span class="w"> </span>xronos-dashboard.zip
-<span class="gp">$ </span><span class="nb">cd</span><span class="w"> </span>xronos-dashboard
-<span class="gp">$ </span>docker<span class="w"> </span>compose<span class="w"> </span>up
+<p>Create a new virtual environment or activate the same environment in which you
+installed the <code class="docutils literal notranslate"><span class="pre">xronos</span></code> package. Install the dashboard using the following
+command:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>pip<span class="w"> </span>install<span class="w"> </span>xronos<span class="o">[</span>dashboard<span class="o">]</span>
 </pre></div>
 </div>
 </section>
 <section id="usage">
 <h2>Usage<a class="headerlink" href="#usage" title="Link to this heading"></a></h2>
+<p>Use the following command to start the dashboard:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>xronos-dashboard<span class="w"> </span>start
+<span class="go">✔ dashboard available at http://localhost:3000</span>
+</pre></div>
+</div>
 <p>Open <a class="reference external" href="http://localhost:3000"><code class="docutils literal notranslate"><span class="pre">http://localhost:3000</span></code></a> in your browser. This will
 open the Grafana-based dashboard. On first usage, you need to log in using the
 username <code class="docutils literal notranslate"><span class="pre">admin</span></code> and password <code class="docutils literal notranslate"><span class="pre">xronos</span></code>.</p>
@@ -145,13 +156,75 @@ can use the drop-down just next to the <span class="guilabel">🗘 Refresh</span
 the collected data.</p>
 <p><img alt="dashboard yolo" src="_images/dashboard_yolo.png" /></p>
 </section>
+<section id="visualizing-metrics">
+<span id="queries"></span><h2>Visualizing Metrics<a class="headerlink" href="#visualizing-metrics" title="Link to this heading"></a></h2>
+<p>We can also use the dashboard to visualize data values recorded for
+<a class="reference internal" href="telemetry.html#metrics"><span class="std std-ref">metrics</span></a>. When you run an application that uses <a class="reference internal" href="telemetry.html#metrics"><span class="std std-ref">Metrics</span></a>
+while the dashboard is running and tracing is enabled, this will also store any
+values recorded by the application in the database. For instance, you can run
+the <a class="reference external" href="https://github.com/xronos-inc/xronos/tree/main/examples/montecarlo">Monte Carlo
+example</a>,
+which already includes a few metrics. The example estimates the value of pi, and
+we record the current estimate, the estimation error, and the number of
+processed points as metrics.</p>
+<p>If everything works correctly, the reactions that were executed should be shown in the default dashboard.</p>
+<p><img alt="montecarlo dashboard" src="_images/dashboard_montecarlo.png" /></p>
+<p>Click the “Edit” button in the top-right corner of the Grafana UI to customize
+your dashboard.</p>
+<p><img alt="dashboard enter edit mode" src="_images/dashboard_enter_edit_mode.png" /></p>
+<p>You can then add visualizations to select any time series of interest from your
+application.</p>
+<p><img alt="dashboard add visualization" src="_images/dashboard_add_visualization.png" /></p>
+<p>We use <a class="reference external" href="https://www.influxdata.com/">InfluxDB</a> for storing the collected data.
+InfluxDB supports two query languages:
+<a class="reference external" href="https://docs.influxdata.com/influxdb/v2/query-data/influxql/">InfluxQL</a>
+and
+<a class="reference external" href="https://docs.influxdata.com/influxdb/cloud/query-data/flux/">Flux</a>.
+We recommend InfluxQL as it is similar to other database query languages and is
+forward-compatible to upcoming versions of InfluxDB, but you may also select the
+Flux data source if you prefer.</p>
+<p>Choose the InfluxDB InfluxQL data source to use the graphical InfluxQL editor.</p>
+<p><img alt="dashboard InfluxQL data source" src="_images/dashboard_influxql_data_source.png" /></p>
+<p>Select “metrics” in the <code class="docutils literal notranslate"><span class="pre">FROM</span></code> clause to visualize metrics.</p>
+<p><img alt="dashboard metrics measurement" src="_images/dashboard_metrics_measurement.png" /></p>
+<p>Delete the default <code class="docutils literal notranslate"><span class="pre">GROUP</span> <span class="pre">BY</span></code> clause. If you would like to visualize multiple
+metrics, you might want to group them by the <code class="docutils literal notranslate"><span class="pre">xronos.fqn</span></code> tag.</p>
+<p><img alt="dashboard group by" src="_images/dashboard_group_by.png" /></p>
+<p>Finally, select the <code class="docutils literal notranslate"><span class="pre">xronos.value</span></code> field which holds the value of any recorded metric.</p>
+<p><img alt="dashboard xronos value field" src="_images/dashboard_xronos_value_field.png" /></p>
+<p>You should now see a line plot like the one below.</p>
+<p><img alt="dashboard montecarlo plot" src="_images/dashboard_montecarlo_plot.png" /></p>
+<p>Adjust the time window to your liking to zoom in on the data. Note that you may click and hold to select a time range that interests you.</p>
+<p><img alt="dashboard montecarlo plot zoom" src="_images/dashboard_montecarlo_plot_zoom.png" /></p>
+<p>You may use the <code class="docutils literal notranslate"><span class="pre">WHERE</span></code> clause to apply a filter. For instance, in the image below only the current estimate of pi is visualized.</p>
+<p><img alt="dashboard montecarlo plot estimat" src="_images/dashboard_montecarlo_plot_estimate.png" /></p>
+<p>If you wish to see it in real time, you should
+set a refresh interval.</p>
+<p><img alt="dashboard set refresh interval" src="_images/dashboard_refresh_interval.png" /></p>
+<p>Save your changes to ensure that they persist, even when stopping the dashboard.</p>
+<p><img alt="dashboard save panel" src="_images/dashboard_save_panel.png" /></p>
+</section>
+<section id="closing-the-dashboard">
+<h2>Closing the Dashboard<a class="headerlink" href="#closing-the-dashboard" title="Link to this heading"></a></h2>
+<p>When you are done, you may stop the dashboard.</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>xronos-dashboard<span class="w"> </span>stop
+<span class="go">✔ stopped</span>
+</pre></div>
+</div>
+<p>In case you want to delete all state, including all collected trace data and
+custom queries, you can use the following command.</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>xronos-dashboard<span class="w"> </span>delete
+<span class="go">✔ stopped</span>
+</pre></div>
+</div>
+</section>
 </section>
 
 
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="diagrams.html" class="btn btn-neutral float-left" title="Diagram View" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="telemetry.html" class="btn btn-neutral float-left" title="Telemetry" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="tutorials/index.html" class="btn btn-neutral float-right" title="Tutorials" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 

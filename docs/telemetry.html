@@ -1,0 +1,362 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Telemetry &mdash; xronos  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="_static/tabs.css?v=a5c4661c" />
+      <link rel="stylesheet" type="text/css" href="_static/fix_stacking.css?v=30aa6f93" />
+
+  
+    <link rel="shortcut icon" href="_static/logo.svg"/>
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="_static/copybutton.js?v=35a8b989"></script>
+      <script src="_static/tabs.js?v=3030b3cb"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Trace Dashboard" href="dashboard.html" />
+    <link rel="prev" title="Diagram View" href="diagrams.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html">
+            
+              <img src="_static/logo_written.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference_guide/index.html">Reference Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="diagrams.html">Diagram View</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Telemetry</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#enabling-telemetry">Enabling Telemetry</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#attributes">Attributes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#metrics">Metrics</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="dashboard.html">Trace Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/index.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lib.html">Library Reactors</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">xronos</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Telemetry</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/telemetry.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="telemetry">
+<span id="id1"></span><h1>Telemetry<a class="headerlink" href="#telemetry" title="Link to this heading"></a></h1>
+<p>xronos provides several mechanisms for collecting telemetry data to gain insight
+into an application.</p>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h2>
+<p>To activate the telemetry functionality, the <code class="docutils literal notranslate"><span class="pre">telemetry</span></code> dependencies need to be
+installed. Activate the same environment in which you installed the <code class="docutils literal notranslate"><span class="pre">xronos</span></code>
+package, and install the telemetry backend using the following command:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>pip<span class="w"> </span>install<span class="w"> </span>xronos<span class="o">[</span>telemetry<span class="o">]</span>
+</pre></div>
+</div>
+</section>
+<section id="enabling-telemetry">
+<h2>Enabling Telemetry<a class="headerlink" href="#enabling-telemetry" title="Link to this heading"></a></h2>
+<p>An application needs to explicitly enable the collection of telemetry data by
+calling <a class="reference internal" href="api.html#xronos.Environment.enable_tracing" title="xronos.Environment.enable_tracing"><code class="xref py py-func docutils literal notranslate"><span class="pre">enable_tracing()</span></code></a> on the environment.
+By default, this records trace data for each reaction handler that executes.</p>
+<p>For instance, you can modify the <a class="reference internal" href="getting_started.html#hello-world"><span class="std std-ref">Hello World</span></a> example like shown below.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+    <span class="n">env</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">Environment</span><span class="p">()</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;hello&quot;</span><span class="p">,</span> <span class="n">Hello</span><span class="p">)</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">enable_tracing</span><span class="p">(</span><span class="n">application_name</span><span class="o">=</span><span class="s2">&quot;hello&quot;</span><span class="p">)</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Then execute the program.</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>python<span class="w"> </span>hello.py
+<span class="go">Hello, World!</span>
+<span class="go">[Error] File: /xronos/xronos-telemetry/build/_deps/opentelemetry-cpp-src/exporters/otlp/src/otlp_grpc_exporter.cc:114 [OTLP TRACE GRPC Exporter] Export() failed with status_code: &quot;UNAVAILABLE&quot; error_message: &quot;failed to connect to all addresses; last error: UNKNOWN: ipv4:127.0.0.1:4317: Failed to connect to remote host: connect: Connection refused (111)&quot;</span>
+</pre></div>
+</div>
+<p>This prints an error because we ran the program with tracing enabled, but did
+not provide an endpoint for receiving the telemetry data. See <a class="reference internal" href="dashboard.html#dashboard"><span class="std std-ref">Trace Dashboard</span></a>
+for instructions on how to start and use the dashboard for receiving and
+visualizing telemetry data.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference internal" href="api.html#xronos.Environment.enable_tracing" title="xronos.Environment.enable_tracing"><code class="xref py py-func docutils literal notranslate"><span class="pre">enable_tracing()</span></code></a> throws a <a class="reference external" href="https://docs.python.org/3/library/exceptions.html#RuntimeError" title="(in Python v3.13)"><code class="xref py py-exc docutils literal notranslate"><span class="pre">RuntimeError</span></code></a> if <code class="docutils literal notranslate"><span class="pre">xronos[telemetry]</span></code> is not installed.</p>
+</div>
+</section>
+<section id="attributes">
+<span id="id2"></span><h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading"></a></h2>
+<p>All elements within the xronos framework may be annotated with attributes. The
+attributes provide a mechanism for labeling the recorded data and provide a
+mechanism for filtering the telemetry data in the <a class="reference internal" href="dashboard.html#dashboard"><span class="std std-ref">dashboard</span></a>.
+By default, the following attributes are recorded:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">host.name</span></code>: Name of the host executing the xronos program.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">process.pid</span></code>: The process ID of the running xronos program.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">service.name</span></code>: Name of the application as given provided in the call to <a class="reference internal" href="api.html#xronos.Environment.enable_tracing" title="xronos.Environment.enable_tracing"><code class="xref py py-func docutils literal notranslate"><span class="pre">enable_tracing()</span></code></a>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">xronos.fqn</span></code>: Fully qualified name of the element that produces trace data.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">xronos.name</span></code>: Name of the element that produces trace data.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">xronos.element_type</span></code>: Type of the element that produces trace data (e.g., “reactor”, “reaction”, “metric”)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">xronos.container_fqn</span></code>: Fully qualified name of the reactor that contains the element that produces trace data.</p></li>
+</ul>
+<p>This set of attributes is sufficient to uniquely identify the origin of each
+datapoint. However, you may specify additional attributes that will help you
+to better identify the data you are looking for. For this, each element
+has an <a class="reference internal" href="api.html#xronos.Reactor.add_attribute" title="xronos.Reactor.add_attribute"><code class="xref py py-func docutils literal notranslate"><span class="pre">add_attribute()</span></code></a> and
+<a class="reference internal" href="api.html#xronos.Reactor.add_attributes" title="xronos.Reactor.add_attributes"><code class="xref py py-func docutils literal notranslate"><span class="pre">add_attributes()</span></code></a> method.</p>
+<p>Each element inherits all attributes of the reactor that it is contained in. Consider
+the following simplified example program. It shows the structure of a control
+program for a pick-and-place robot that uses two <a class="reference external" href="https://en.wikipedia.org/wiki/Delta_robot">delta
+arms</a>, where each arm consists of 3
+motors.</p>
+<div class="sphinx-tabs docutils container">
+<div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-0-cGxhaW4=" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-0-cGxhaW4=" name="cGxhaW4=" role="tab" tabindex="0">plain</button><button aria-controls="panel-0-d2l0aCB0eXBlIGhpbnRz" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-d2l0aCB0eXBlIGhpbnRz" name="d2l0aCB0eXBlIGhpbnRz" role="tab" tabindex="-1">with type hints</button><button aria-controls="panel-0-ZGlhZ3JhbQ==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-ZGlhZ3JhbQ==" name="ZGlhZ3JhbQ==" role="tab" tabindex="-1">diagram</button></div><div aria-labelledby="tab-0-cGxhaW4=" class="sphinx-tabs-panel group-tab" id="panel-0-cGxhaW4=" name="cGxhaW4=" role="tabpanel" tabindex="0"><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">xronos</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Motor</span><span class="p">(</span><span class="n">xronos</span><span class="o">.</span><span class="n">Reactor</span><span class="p">):</span>
+    <span class="n">angle</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">InputPortDeclaration</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_attribute</span><span class="p">(</span><span class="s2">&quot;motor&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">DeltaArm</span><span class="p">(</span><span class="n">xronos</span><span class="o">.</span><span class="n">Reactor</span><span class="p">):</span>
+    <span class="n">pos</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">InputPortDeclaration</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_attribute</span><span class="p">(</span><span class="s2">&quot;arm&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="n">Motor</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;B&quot;</span><span class="p">,</span> <span class="n">Motor</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;C&quot;</span><span class="p">,</span> <span class="n">Motor</span><span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">PickAndPlaceRobot</span><span class="p">(</span><span class="n">xronos</span><span class="o">.</span><span class="n">Reactor</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;Arm1&quot;</span><span class="p">,</span> <span class="n">DeltaArm</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;Arm2&quot;</span><span class="p">,</span> <span class="n">DeltaArm</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+    <span class="n">env</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">Environment</span><span class="p">()</span>
+    <span class="n">pick_and_place</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;pick_and_place&quot;</span><span class="p">,</span> <span class="n">PickAndPlaceRobot</span><span class="p">)</span>
+    <span class="n">pick_and_place</span><span class="o">.</span><span class="n">add_attribute</span><span class="p">(</span><span class="s2">&quot;location&quot;</span><span class="p">,</span> <span class="s2">&quot;factory1&quot;</span><span class="p">)</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+</div><div aria-labelledby="tab-0-d2l0aCB0eXBlIGhpbnRz" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-0-d2l0aCB0eXBlIGhpbnRz" name="d2l0aCB0eXBlIGhpbnRz" role="tabpanel" tabindex="0"><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">xronos</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Motor</span><span class="p">(</span><span class="n">xronos</span><span class="o">.</span><span class="n">Reactor</span><span class="p">):</span>
+    <span class="n">angle</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">InputPortDeclaration</span><span class="p">[</span><span class="nb">float</span><span class="p">]()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_attribute</span><span class="p">(</span><span class="s2">&quot;motor&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">DeltaArm</span><span class="p">(</span><span class="n">xronos</span><span class="o">.</span><span class="n">Reactor</span><span class="p">):</span>
+    <span class="n">pos</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">InputPortDeclaration</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_attribute</span><span class="p">(</span><span class="s2">&quot;arm&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="n">Motor</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;B&quot;</span><span class="p">,</span> <span class="n">Motor</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;C&quot;</span><span class="p">,</span> <span class="n">Motor</span><span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">PickAndPlaceRobot</span><span class="p">(</span><span class="n">xronos</span><span class="o">.</span><span class="n">Reactor</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;Arm1&quot;</span><span class="p">,</span> <span class="n">DeltaArm</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;Arm2&quot;</span><span class="p">,</span> <span class="n">DeltaArm</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">env</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">Environment</span><span class="p">()</span>
+    <span class="n">pick_and_place</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;pick_and_place&quot;</span><span class="p">,</span> <span class="n">PickAndPlaceRobot</span><span class="p">)</span>
+    <span class="n">pick_and_place</span><span class="o">.</span><span class="n">add_attribute</span><span class="p">(</span><span class="s2">&quot;location&quot;</span><span class="p">,</span> <span class="s2">&quot;factory1&quot;</span><span class="p">)</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+</div><div aria-labelledby="tab-0-ZGlhZ3JhbQ==" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-0-ZGlhZ3JhbQ==" name="ZGlhZ3JhbQ==" role="tabpanel" tabindex="0"><p><a class="bg-warning reference internal" href="_images/diagram_attributes.png"><img alt="diagram clock" class="bg-warning align-center" src="_images/diagram_attributes.png" style="width: 90%;" /></a></p>
+</div></div>
+<p>The <code class="docutils literal notranslate"><span class="pre">pick_and_place</span></code> reactor has an attribute “location” that can be used to
+identify the location that the robot operates in. Here it is set to “factory1”.
+This attribute will also be added to any reactor and element contained within
+<code class="docutils literal notranslate"><span class="pre">pick_and_place</span></code>. The <code class="docutils literal notranslate"><span class="pre">DeltaArm</span></code> reactor additionally sets the “arm” attribute
+to its reactor name. Finally, the <code class="docutils literal notranslate"><span class="pre">Motor</span></code> reactor sets the “motor”
+attribute to its reactor name. Consequently, the reactor
+<code class="docutils literal notranslate"><span class="pre">pick_and_place.Arm1.B</span></code> has the following attributes:</p>
+<ul class="simple">
+<li><p>“motor: “A”</p></li>
+<li><p>“arm”: “Arm1”</p></li>
+<li><p>“location”: “factory1”</p></li>
+</ul>
+<p>This makes it convenient to filter telemetry data. For instance, it lets us show all
+data matching a specific location or show data relating to a specific motor,
+independent of the concrete arm and location. See <a class="reference internal" href="dashboard.html#queries"><span class="std std-ref">Visualizing Metrics</span></a> for
+instructions on how to filter telemetry data.</p>
+<p>Note that the same attribute may not be added twice for the same element. Once
+an attribute is added, its value cannot be changed. However, it is possible for
+contained elements to overwrite attributes that are defined higher in the
+reactor hierarchy.</p>
+</section>
+<section id="metrics">
+<span id="id3"></span><h2>Metrics<a class="headerlink" href="#metrics" title="Link to this heading"></a></h2>
+<p>Metrics provide a convenient mechanism for recording information about the
+system’s state. Metrics are declared and used similarly to all other reactor
+elements. A <a class="reference internal" href="api.html#xronos.MetricDeclaration" title="xronos.MetricDeclaration"><code class="xref py py-class docutils literal notranslate"><span class="pre">MetricDeclaration</span></code></a> can be used to declare a metric
+as part of a reactor. Consider the following example, which extends the <code class="docutils literal notranslate"><span class="pre">Motor</span></code>
+reactor from above so that it has a metric <code class="docutils literal notranslate"><span class="pre">_current</span></code>, which is used to record
+the current measured on the motor.</p>
+<div class="sphinx-tabs docutils container">
+<div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-1-cGxhaW4=" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-1-cGxhaW4=" name="cGxhaW4=" role="tab" tabindex="0">plain</button><button aria-controls="panel-1-d2l0aCB0eXBlIGhpbnRz" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-1-d2l0aCB0eXBlIGhpbnRz" name="d2l0aCB0eXBlIGhpbnRz" role="tab" tabindex="-1">with type hints</button><button aria-controls="panel-1-ZGlhZ3JhbQ==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-1-ZGlhZ3JhbQ==" name="ZGlhZ3JhbQ==" role="tab" tabindex="-1">diagram</button></div><div aria-labelledby="tab-1-cGxhaW4=" class="sphinx-tabs-panel group-tab" id="panel-1-cGxhaW4=" name="cGxhaW4=" role="tabpanel" tabindex="0"><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Motor</span><span class="p">(</span><span class="n">xronos</span><span class="o">.</span><span class="n">Reactor</span><span class="p">):</span>
+    <span class="n">angle</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">InputPortDeclaration</span><span class="p">()</span>
+    <span class="n">_timer</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">TimerDeclaration</span><span class="p">(</span><span class="n">period</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">microseconds</span><span class="o">=</span><span class="mi">500</span><span class="p">))</span>
+    <span class="n">_current</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">MetricDeclaration</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">&quot;Motor current&quot;</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;mA&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_attribute</span><span class="p">(</span><span class="s2">&quot;motor&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+    <span class="nd">@xronos</span><span class="o">.</span><span class="n">reaction</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">control</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface</span><span class="p">):</span>
+        <span class="n">interface</span><span class="o">.</span><span class="n">add_trigger</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_timer</span><span class="p">)</span>
+        <span class="n">current_effect</span> <span class="o">=</span> <span class="n">interface</span><span class="o">.</span><span class="n">add_effect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_current</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">handler</span><span class="p">():</span>
+            <span class="n">current_effect</span><span class="o">.</span><span class="n">record</span><span class="p">(</span><span class="n">read_current</span><span class="p">())</span>
+            <span class="c1"># do control</span>
+
+        <span class="k">return</span> <span class="n">handler</span>
+</pre></div>
+</div>
+</div><div aria-labelledby="tab-1-d2l0aCB0eXBlIGhpbnRz" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-1-d2l0aCB0eXBlIGhpbnRz" name="d2l0aCB0eXBlIGhpbnRz" role="tabpanel" tabindex="0"><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Motor</span><span class="p">(</span><span class="n">xronos</span><span class="o">.</span><span class="n">Reactor</span><span class="p">):</span>
+    <span class="n">angle</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">InputPortDeclaration</span><span class="p">[</span><span class="nb">float</span><span class="p">]()</span>
+    <span class="n">_timer</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">TimerDeclaration</span><span class="p">(</span><span class="n">period</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">microseconds</span><span class="o">=</span><span class="mi">500</span><span class="p">))</span>
+    <span class="n">_current</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">MetricDeclaration</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">&quot;Motor current&quot;</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;mA&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_attribute</span><span class="p">(</span><span class="s2">&quot;motor&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+    <span class="nd">@xronos</span><span class="o">.</span><span class="n">reaction</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">control</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface</span><span class="p">:</span> <span class="n">xronos</span><span class="o">.</span><span class="n">ReactionInterface</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">]:</span>
+        <span class="n">interface</span><span class="o">.</span><span class="n">add_trigger</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_timer</span><span class="p">)</span>
+        <span class="n">current_effect</span> <span class="o">=</span> <span class="n">interface</span><span class="o">.</span><span class="n">add_effect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_current</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">handler</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">current_effect</span><span class="o">.</span><span class="n">record</span><span class="p">(</span><span class="n">read_current</span><span class="p">())</span>
+            <span class="c1"># do control</span>
+
+        <span class="k">return</span> <span class="n">handler</span>
+</pre></div>
+</div>
+</div><div aria-labelledby="tab-1-ZGlhZ3JhbQ==" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-1-ZGlhZ3JhbQ==" name="ZGlhZ3JhbQ==" role="tabpanel" tabindex="0"><p><a class="bg-warning reference internal" href="_images/diagram_metrics_motor.png"><img alt="diagram clock" class="bg-warning align-center" src="_images/diagram_metrics_motor.png" style="width: 40%;" /></a></p>
+</div></div>
+<p>When declaring a metric, a description needs to be provided and optionally a unit
+can be set. It is also possible to provide additional attributes via
+<a class="reference internal" href="api.html#xronos.MetricDeclaration" title="xronos.MetricDeclaration"><code class="xref py py-class docutils literal notranslate"><span class="pre">MetricDeclaration</span></code></a> or by using
+<a class="reference internal" href="api.html#xronos.Metric.add_attribute" title="xronos.Metric.add_attribute"><code class="xref py py-func docutils literal notranslate"><span class="pre">add_attribute()</span></code></a> or <a class="reference internal" href="api.html#xronos.Metric.add_attributes" title="xronos.Metric.add_attributes"><code class="xref py py-func docutils literal notranslate"><span class="pre">add_attributes()</span></code></a> on
+the metric.</p>
+<p>In the example above, the <code class="docutils literal notranslate"><span class="pre">control</span></code> reaction executes every 500 microseconds. It
+reads and records the measured current using
+<a class="reference internal" href="api.html#xronos.MetricEffect.record" title="xronos.MetricEffect.record"><code class="xref py py-func docutils literal notranslate"><span class="pre">record()</span></code></a>. The control algorithm is omitted from the
+example.</p>
+<p>See <a class="reference internal" href="dashboard.html#queries"><span class="std std-ref">Visualizing Metrics</span></a> for instruction on how to visualize data recorded from metrics.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="diagrams.html" class="btn btn-neutral float-left" title="Diagram View" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="dashboard.html" class="btn btn-neutral float-right" title="Trace Dashboard" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Xronos Inc..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

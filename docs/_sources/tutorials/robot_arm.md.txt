@@ -69,15 +69,15 @@ elements. Two ports, an internal event, and a physical event. A {class}`~Physica
 the xronos runtime from *external* contexts such as a thread. In the `__init__` method we initialize class variables
 including a thread and a semaphore.
 
-```{literalinclude} ../../../examples/robot-arm/user_interface.py
+```{literalinclude} ../../examples/robot-arm/user_interface.py
 :pyobject: UserInterface.__init__
 :dedent:
 ```
 
 The thread is not started until the startup reaction. This ensures that the xronos runtime runs before the thread calls
 any of the xronos APIs.
-  
-```{literalinclude} ../../../examples/robot-arm/user_interface.py
+
+```{literalinclude} ../../examples/robot-arm/user_interface.py
 :pyobject: UserInterface.on_startup
 :dedent:
 ```
@@ -86,7 +86,7 @@ any of the xronos APIs.
 The thread reads a user command from `stdin` and schedules it via the physical event. The thread will then acquire a
 semaphore before reading the next command.
 
-```{literalinclude} ../../../examples/robot-arm/user_interface.py
+```{literalinclude} ../../examples/robot-arm/user_interface.py
 :pyobject: UserInterface.run_user_input_thread
 :dedent:
 ```
@@ -95,9 +95,9 @@ The physical events encapsulating the commands from `stdin` are handled by a rea
 function and writes recognized commands to the output port. The `UserInterface` reactor can be configured as
 *blocking*, in which case it will wait for an event on its input port before releasing the semaphore and allowing the
 external thread to read more commands from the console. If it is *non-blocking* it will schedule the release of the
-semaphore at once. 
+semaphore at once.
 
-```{literalinclude} ../../../examples/robot-arm/user_interface.py
+```{literalinclude} ../../examples/robot-arm/user_interface.py
 :pyobject: UserInterface.on_user_input
 :dedent:
 ```
@@ -111,7 +111,7 @@ notifying the user, or planner, that the trajectory was completed.
 
 Upon receiving a new trajectory on the input port we update the internal state of `ArmControl`.
 
-```{literalinclude} ../../../examples/robot-arm/arm.py
+```{literalinclude} ../../examples/robot-arm/arm.py
 :pyobject: ArmControl.on_new_trajectory
 :dedent:
 ```
@@ -120,8 +120,7 @@ In response to timer events, the position of each servo is read through `self.re
 small delta angle from its desired position, it is said to be *in-position*. The reaction schedules an internal event if
 in-position changes.
 
-
-```{literalinclude} ../../../examples/robot-arm/arm.py
+```{literalinclude} ../../examples/robot-arm/arm.py
 :pyobject: ArmControl.on_sample_timer
 :dedent:
 ```
@@ -130,9 +129,9 @@ When in-position changes one out of three things can happen. If the robot is not
 a new command is sent to the servo actuators to drive the robot to in-position. If the robot is
 in-position, it has either arrived at an intermediate pose of its trajectory, in which case it
 updates the current goal to the next pose, or it has completed its trajectory, in which case it
-writes to the output port to notify the user. 
+writes to the output port to notify the user.
 
-```{literalinclude} ../../../examples/robot-arm/arm.py
+```{literalinclude} ../../examples/robot-arm/arm.py
 :pyobject: ArmControl.on_in_position_change
 :dedent:
 ```
