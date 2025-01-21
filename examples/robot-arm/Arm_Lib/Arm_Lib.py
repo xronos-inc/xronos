@@ -5,7 +5,7 @@
 # No copyright or license information was provided with this file.
 # Source: https://github.com/YahboomTechnology/dofbot-jetson_nano
 
-# pyright: ignore-file
+# pyright: standard
 # mypy: ignore-errors
 # ruff: noqa
 

@@ -1,5 +1,8 @@
-# SPDX-FileCopyrightText: (c) 2024 Xronos Inc.
+# SPDX-FileCopyrightText: Coyright (c) 2025 Xronos Inc.
 # SPDX-License-Identifier: BSD-3-Clause
+
+# ruff: noqa: PLR0913
+# pyright: standard
 
 import datetime
 from typing import Any, Callable, List, Literal, TypedDict
@@ -50,9 +53,12 @@ class TrainingController(xronos.Reactor):
 
     def __init__(
         self,
-        max_epochs: int = 1000,
         X: np.ndarray = np.array([]),
         y: np.ndarray = np.array([]),
+        convergence_threshold: float = 0.01,
+        patience: int = 50,
+        min_epochs: int = 100,
+        max_epochs: int = 1000,
     ):
         super().__init__()
         self.X = X
@@ -60,7 +66,52 @@ class TrainingController(xronos.Reactor):
         self.current_idx = 0
         self.epoch = 0
         self.max_epochs = max_epochs
-        self._training_timer.period = datetime.timedelta(milliseconds=50)
+        self._training_timer.period = datetime.timedelta(milliseconds=2)
+
+        # Convergence parameters
+        self.min_epochs = min_epochs
+        self.convergence_threshold = convergence_threshold
+        # how many epochs we should wait without improvement before stopping
+        self.patience = patience
+        self.best_loss = float(
+            1000
+        )  # loss should never really be more than one in worst case scenario
+        self.epochs_without_improvement = 0
+        self.running_loss: List[float] = []
+        self.window_size = 5  # we're going to calculate loss based on a moving average
+
+    def check_convergence(self, current_loss: float) -> bool:
+        """Check if the model has converged based on several criteria."""
+        if self.epoch < self.min_epochs:
+            return False
+
+        # Add current loss to running window
+        self.running_loss.append(current_loss)
+        if len(self.running_loss) > self.window_size:
+            self.running_loss.pop(0)
+
+        if len(self.running_loss) == self.window_size:
+            # Calculate moving average, if we haven't start the counter
+            avg_loss = sum(self.running_loss) / self.window_size
+
+            #  Has the average improved? If it hasn't, we increment counter.
+            if avg_loss < self.best_loss - self.convergence_threshold:
+                self.best_loss = avg_loss
+                self.epochs_without_improvement = 0
+            else:
+                self.epochs_without_improvement += 1
+
+            # Loss is below threshold, we're done.
+            if avg_loss < self.convergence_threshold:
+                print(f"Converged due to loss threshold at epoch {self.epoch}")
+                return True
+
+            # No improvement for epochs of number patience, we're done.
+            if self.epochs_without_improvement >= self.patience:
+                print(f"Converged due to patience at epoch {self.epoch}")
+                return True
+
+        return False
 
     @xronos.reaction
     def on_timer(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
@@ -87,11 +138,16 @@ class TrainingController(xronos.Reactor):
 
             pred = np.clip(pred, 1e-7, 1 - 1e-7)
 
-            # choose your loss function, in this BCEL, becuase we need a 1 or a 0
-            # we only actually use the derivative of this function for the gradient.
-            # Uncomment and print if needed for debug purposes.
-
-            # loss = -np.mean(target * np.log(pred) + (1 - target) * np.log(1 - pred))
+            # choose your loss function, in this case BCEL, becuase we need a 1 or a 0
+            pred_loss = -np.mean(
+                target * np.log(pred) + (1 - target) * np.log(1 - pred)
+            )
+            # Check convergence after epoch
+            if self.current_idx == len(self.X) - 1 and self.check_convergence(
+                pred_loss
+            ):
+                self.environment.request_shutdown()
+                return
 
             # take derivative of the loss function to calculate gradient
             d_pred = -((target / pred) - ((1 - target) / (1 - pred)))
@@ -118,12 +174,23 @@ class DenseLayer(xronos.Reactor):
         is_output: bool = False,
     ):
         super().__init__()
-        self.weights = np.random.randn(input_dim, output_dim) * 0.1
-        self.biases = np.zeros((1, output_dim))
+        # self.weights = np.random.randn(input_dim, output_dim) * 0.1
+        self.biases = np.full((1, output_dim), 0.01)
         self.learning_rate = learning_rate
         self.last_input: np.ndarray | None = None
         self.last_z = None
         self.is_output = is_output
+
+        if is_output:
+            # Sigmoid Initialization
+            limit = np.sqrt(6 / (input_dim + output_dim))
+            self.weights = np.random.uniform(
+                low=-limit, high=limit, size=(input_dim, output_dim)
+            )
+        else:
+            #  ReLU initialization
+            std = np.sqrt(2.0 / input_dim)
+            self.weights = np.random.normal(0, std, (input_dim, output_dim))
 
     def get_layer_data(self) -> TrainedLayerDefinition:
         return {
@@ -243,10 +310,20 @@ def train(
     learning_rate: float = 0.06,
     X: np.ndarray = np.array([[0, 0], [0, 1], [1, 0], [1, 1]]),
     y: np.ndarray = np.array([[0], [1], [1], [0]]),
+    convergence_threshold: float = 0.01,
+    patience: int = 70,
+    min_epochs: int = 100,
 ) -> NeuralPredictor:
     env = xronos.Environment()
     controller = env.create_reactor(
-        "controller", TrainingController, max_epochs=epochs, X=X, y=y
+        "controller",
+        TrainingController,
+        max_epochs=epochs,
+        X=X,
+        y=y,
+        convergence_threshold=convergence_threshold,
+        patience=patience,
+        min_epochs=min_epochs,
     )
 
     layers: List[DenseLayer] = []

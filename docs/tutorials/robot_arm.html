@@ -7,7 +7,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Yahboom Robot Arm Controller &mdash; xronos  documentation</title>
-      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
       <link rel="stylesheet" type="text/css" href="../_static/fix_stacking.css?v=30aa6f93" />
@@ -24,7 +24,7 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="API Documentation" href="../api.html" />
+    <link rel="next" title="External Input" href="external_input.html" />
     <link rel="prev" title="Object Detection with YOLO" href="yolo.html" /> 
 </head>
 
@@ -53,6 +53,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../reference_guide/index.html">Reference Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../diagrams.html">Diagram View</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../telemetry.html">Telemetry</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../dashboard.html">Trace Dashboard</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="index.html">Tutorials</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="yolo.html">Object Detection with YOLO</a></li>
@@ -66,6 +67,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#on-device-tracing">On-device tracing</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="external_input.html">External Input</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../api.html">API Documentation</a></li>
@@ -154,7 +156,7 @@ and back to the initial pose.</p>
 elements. Two ports, an internal event, and a physical event. A <code class="xref py py-class docutils literal notranslate"><span class="pre">PhysicalEvent</span></code> is useful for sending events to
 the xronos runtime from <em>external</em> contexts such as a thread. In the <code class="docutils literal notranslate"><span class="pre">__init__</span></code> method we initialize class variables
 including a thread and a semaphore.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span> <span class="n">blocking</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">parser</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">],</span> <span class="n">T</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">|</span> <span class="ne">KeyboardInterrupt</span><span class="p">]</span>
 <span class="p">):</span>
     <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
@@ -170,11 +172,11 @@ including a thread and a semaphore.</p>
 <p>The thread is not started until the startup reaction. This ensures that the xronos runtime runs before the thread calls
 any of the xronos APIs.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@xronos</span><span class="o">.</span><span class="n">reaction</span>
-<span class="k">def</span> <span class="nf">on_startup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface</span><span class="p">:</span> <span class="n">xronos</span><span class="o">.</span><span class="n">ReactionInterface</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">on_startup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface</span><span class="p">:</span> <span class="n">xronos</span><span class="o">.</span><span class="n">ReactionInterface</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Start the thread listening for console input.&quot;&quot;&quot;</span>
     <span class="n">interface</span><span class="o">.</span><span class="n">add_trigger</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">startup</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">handler</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">handler</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="c1"># Print out the help message on startup.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">parser</span><span class="p">(</span><span class="s2">&quot;help&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">thread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
@@ -184,7 +186,7 @@ any of the xronos APIs.</p>
 </div>
 <p>The thread reads a user command from <code class="docutils literal notranslate"><span class="pre">stdin</span></code> and schedules it via the physical event. The thread will then acquire a
 semaphore before reading the next command.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">run_user_input_thread</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stop_event</span><span class="p">:</span> <span class="n">threading</span><span class="o">.</span><span class="n">Event</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">run_user_input_thread</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stop_event</span><span class="p">:</span> <span class="n">threading</span><span class="o">.</span><span class="n">Event</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Listen for console input and schedule the next user input action.</span>
 
 <span class="sd">    This function will run in a separate thread. After receiving an input</span>
@@ -202,13 +204,13 @@ function and writes recognized commands to the output port. The <code class="doc
 external thread to read more commands from the console. If it is <em>non-blocking</em> it will schedule the release of the
 semaphore at once.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@xronos</span><span class="o">.</span><span class="n">reaction</span>
-<span class="k">def</span> <span class="nf">on_user_input</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface</span><span class="p">:</span> <span class="n">xronos</span><span class="o">.</span><span class="n">ReactionInterface</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">on_user_input</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface</span><span class="p">:</span> <span class="n">xronos</span><span class="o">.</span><span class="n">ReactionInterface</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse the user input and output any parsed command on the output port.&quot;&quot;&quot;</span>
     <span class="n">user_input_trigger</span> <span class="o">=</span> <span class="n">interface</span><span class="o">.</span><span class="n">add_trigger</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_user_input_event</span><span class="p">)</span>
     <span class="n">output_effect</span> <span class="o">=</span> <span class="n">interface</span><span class="o">.</span><span class="n">add_effect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="p">)</span>
     <span class="n">unblock_effect</span> <span class="o">=</span> <span class="n">interface</span><span class="o">.</span><span class="n">add_effect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_unblock_event</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">handler</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">handler</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">cmd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parser</span><span class="p">(</span><span class="n">user_input_trigger</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="ne">KeyboardInterrupt</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">environment</span><span class="o">.</span><span class="n">request_shutdown</span><span class="p">()</span>
@@ -231,12 +233,12 @@ new trajectories from the user or a planner, a timer <code class="docutils liter
 notifying the user, or planner, that the trajectory was completed.</p>
 <p>Upon receiving a new trajectory on the input port we update the internal state of <code class="docutils literal notranslate"><span class="pre">ArmControl</span></code>.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@xronos</span><span class="o">.</span><span class="n">reaction</span>
-<span class="k">def</span> <span class="nf">on_new_trajectory</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">on_new_trajectory</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span> <span class="n">interface</span><span class="p">:</span> <span class="n">xronos</span><span class="o">.</span><span class="n">ReactionInterface</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">]:</span>
     <span class="n">new_trajectory_trigger</span> <span class="o">=</span> <span class="n">interface</span><span class="o">.</span><span class="n">add_trigger</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">new_trajectory</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">handler</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">handler</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">trajectory</span> <span class="o">=</span> <span class="n">new_trajectory_trigger</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
         <span class="n">next_pose</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">trajectory</span><span class="o">.</span><span class="n">next_pose</span><span class="p">()</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
@@ -251,14 +253,14 @@ notifying the user, or planner, that the trajectory was completed.</p>
 small delta angle from its desired position, it is said to be <em>in-position</em>. The reaction schedules an internal event if
 in-position changes.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@xronos</span><span class="o">.</span><span class="n">reaction</span>
-<span class="k">def</span> <span class="nf">on_sample_timer</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">on_sample_timer</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span> <span class="n">interface</span><span class="p">:</span> <span class="n">xronos</span><span class="o">.</span><span class="n">ReactionInterface</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">]:</span>
     <span class="n">interface</span><span class="o">.</span><span class="n">add_trigger</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sample_timer</span><span class="p">)</span>
     <span class="n">in_position_effect</span> <span class="o">=</span> <span class="n">interface</span><span class="o">.</span><span class="n">add_effect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_in_position_event</span><span class="p">)</span>
 
     <span class="c1"># update position and schedule action if state of in_position changes</span>
-    <span class="k">def</span> <span class="nf">handler</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">handler</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">read_pose</span><span class="p">()</span>
         <span class="n">in_position</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">in_position</span><span class="p">()</span>
         <span class="n">distance</span> <span class="o">=</span> <span class="n">Pose</span><span class="o">.</span><span class="n">delta</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">goal</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">position</span><span class="p">)</span>
@@ -278,13 +280,13 @@ in-position, it has either arrived at an intermediate pose of its trajectory, in
 updates the current goal to the next pose, or it has completed its trajectory, in which case it
 writes to the output port to notify the user.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@xronos</span><span class="o">.</span><span class="n">reaction</span>
-<span class="k">def</span> <span class="nf">on_in_position_change</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">on_in_position_change</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span> <span class="n">interface</span><span class="p">:</span> <span class="n">xronos</span><span class="o">.</span><span class="n">ReactionInterface</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">]:</span>
     <span class="n">in_position_trigger</span> <span class="o">=</span> <span class="n">interface</span><span class="o">.</span><span class="n">add_trigger</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_in_position_event</span><span class="p">)</span>
     <span class="n">trajectory_completed_effect</span> <span class="o">=</span> <span class="n">interface</span><span class="o">.</span><span class="n">add_effect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">trajectory_completed</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">handler</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">handler</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">in_position_trigger</span><span class="o">.</span><span class="n">get</span><span class="p">():</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
                 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Goal distance: </span><span class="si">{</span><span class="p">(</span><span class="n">Pose</span><span class="o">.</span><span class="n">delta</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">goal</span><span class="p">,</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">position</span><span class="p">))</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -345,7 +347,7 @@ event is scheduled which triggers new commands to the servos.</p>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="yolo.html" class="btn btn-neutral float-left" title="Object Detection with YOLO" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="../api.html" class="btn btn-neutral float-right" title="API Documentation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="external_input.html" class="btn btn-neutral float-right" title="External Input" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

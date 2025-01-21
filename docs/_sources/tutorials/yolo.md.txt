@@ -28,8 +28,7 @@ $ pip install -r requirements.txt
 Familiarize yourself with the main program in `YOLO.py`. After parsing some
 command line arguments, the `main()` function assembles the reactor program.
 
-
-```{literalinclude} ../../../examples/YOLO/YOLO.py
+```{literalinclude} ../../examples/YOLO/YOLO.py
 :pyobject: main
 :dedent:
 ```
@@ -48,7 +47,7 @@ scheduled at arbitrary timestamps and are, as such, more expressive than timers.
 events are scheduled from within the program. Reactors communicate by exchanging events via ports. In this case,
 `WebCam` can send events containing `cv2` matrices.
 
-```{literalinclude} ../../../examples/YOLO/WebCam.py
+```{literalinclude} ../../examples/YOLO/WebCam.py
 :pyobject: WebCam
 :dedent:
 :end-before: def __init__
@@ -57,7 +56,7 @@ events are scheduled from within the program. Reactors communicate by exchanging
 The `__init__` method defines the `sample_period` attribute and opens a `VideoCapture`
 stream using `cv2`.
 
-```{literalinclude} ../../../examples/YOLO/WebCam.py
+```{literalinclude} ../../examples/YOLO/WebCam.py
 :pyobject: WebCam.__init__
 :dedent:
 ```
@@ -71,7 +70,7 @@ the first occurrence of `_sample_webcam` event. Instead of invoking
 convenience function `reschedule_sample_webcam` to schedule the first event. We
 will explain this function in more detail later.
 
-```{literalinclude} ../../../examples/YOLO/WebCam.py
+```{literalinclude} ../../examples/YOLO/WebCam.py
 :pyobject: WebCam.on_startup
 :dedent:
 ```
@@ -86,7 +85,7 @@ Finally, the handler uses `reschedule_sample_webcam` to schedule the next
 occurrence of `_sample_webcam`, so that the reaction will be triggered again in
 the future.
 
-```{literalinclude} ../../../examples/YOLO/WebCam.py
+```{literalinclude} ../../examples/YOLO/WebCam.py
 :pyobject: WebCam.on_sample_webcam
 :dedent:
 ```
@@ -97,7 +96,7 @@ events are processed with respect to real-time. If the lag is greater than `samp
 samples. Note that event itself is declared to carry no value. Therefore, it is scheduled using `value=None`.
 
 
-```{literalinclude} ../../../examples/YOLO/WebCam.py
+```{literalinclude} ../../examples/YOLO/WebCam.py
 :pyobject: WebCam.reschedule_sample_webcam
 :dedent:
 ```
@@ -107,7 +106,7 @@ event. The handler frees up resources and gracefully shuts the camera stream
 down. Even in response to an unhandled exception or {kbd}`Ctrl`+{kbd}`C`, the
 shutdown handler is invoked and closes the video stream.
 
-```{literalinclude} ../../../examples/YOLO/WebCam.py
+```{literalinclude} ../../examples/YOLO/WebCam.py
 :pyobject: WebCam.on_shutdown
 :dedent:
 ```
@@ -116,7 +115,7 @@ shutdown handler is invoked and closes the video stream.
 
 The `DNN` reactor is found in `DNN.py`. It declares an input port called `frame` and output port called `result`.
 
-```{literalinclude} ../../../examples/YOLO/DNN.py
+```{literalinclude} ../../examples/YOLO/DNN.py
 :pyobject: DNN
 :dedent:
 :end-before: def __init__
@@ -125,7 +124,7 @@ The `DNN` reactor is found in `DNN.py`. It declares an input port called `frame`
 The `__init__` method checks whether there is a GPU with CUDA support and loads
 the YOLO model parameters using the `ultralytics` module.
 
-```{literalinclude} ../../../examples/YOLO/DNN.py
+```{literalinclude} ../../examples/YOLO/DNN.py
 :pyobject: DNN.__init__
 :dedent:
 ```
@@ -135,7 +134,7 @@ port and has the output port `result` as an effect. Upon receiving a frame it
 does inference using the YOLO model and extracts bounding boxes, confidence
 values and names. The result is written to the output port.
 
-```{literalinclude} ../../../examples/YOLO/DNN.py
+```{literalinclude} ../../examples/YOLO/DNN.py
 :pyobject: DNN.on_frame
 :dedent:
 ```
@@ -144,14 +143,14 @@ values and names. The result is written to the output port.
 
 The `Display` reactor is found in `Display.py`. It declares two input ports `frame` and `dnn_result`.
 
-```{literalinclude} ../../../examples/YOLO/Display.py
+```{literalinclude} ../../examples/YOLO/Display.py
 :pyobject: Display
 :dedent:
 :end-before: def __init__
 ```
 
 The `__init__` method initializes a few attributes.
-```{literalinclude} ../../../examples/YOLO/Display.py
+```{literalinclude} ../../examples/YOLO/Display.py
 :pyobject: Display.__init__
 :dedent:
 ```
@@ -165,7 +164,7 @@ an event can be checked using the {func}`Source.is_present` method. The ability
 to align events on multiple input port simplifies the application logic needed.
 The reaction handler can fully focus on sensor fusion.
 
-```{literalinclude} ../../../examples/YOLO/Display.py
+```{literalinclude} ../../examples/YOLO/Display.py
 :pyobject: Display.on_frame
 :dedent:
 ```
@@ -173,7 +172,7 @@ The reaction handler can fully focus on sensor fusion.
 Finally, the `on_shutdown` reaction is triggered by the
 {attr}`xronos.Reactor.shutdown` event and closes the window.
 
-```{literalinclude} ../../../examples/YOLO/Display.py
+```{literalinclude} ../../examples/YOLO/Display.py
 :pyobject: Display.on_shutdown
 :dedent:
 ```

@@ -8,3 +8,4 @@ Tutorials
 
    yolo
    robot_arm
+   external_input

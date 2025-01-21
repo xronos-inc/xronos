@@ -3,7 +3,7 @@
 ## System Requirements
 
 - A [manylinux_2_35](https://github.com/mayeut/pep600_compliance?tab=readme-ov-file#distro-compatibility) compliant Linux distribution. We recommend [Ubuntu](https://ubuntu.com/download/desktop) 22.04 or newer.
-- Python version 3.10, 3.11, or 3.12
+- Python version 3.10, 3.11, 3.12, or 3.13
 
 (xronos_installation)=
 ## Installation
@@ -21,6 +21,13 @@ Then install the xronos package.
 ```
 $ pip install xronos
 ```
+
+### Optional Components
+
+Some additional tools and components can be installed optionally. This includes:
+
+- {ref}`telemetry`: `pip install xronos[telemetry]`
+- {ref}`dashboard`: `pip install xronos[dashboard]`
 
 (hello_world)=
 ## Hello World

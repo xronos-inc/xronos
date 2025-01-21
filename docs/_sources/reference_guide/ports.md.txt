@@ -1,3 +1,4 @@
+(ports)=
 # Ports and Connections
 
 Reactors may send and receive messages to or from other reactors using input and
@@ -63,12 +64,12 @@ Now we can write a `main()` function that instantiates and connects both reactor
 `````{tabs}
 ````{group-tab} plain
 ```{literalinclude} ../_examples/ports.py
-:start-at: def main():
+:start-at: def main()
 ```
 ````
 ````{group-tab} with type hints
 ```{literalinclude} ../_examples/ports_hints.py
-:start-at: def main():
+:start-at: def main()
 ```
 ````
 ````{group-tab} diagram
@@ -174,7 +175,7 @@ returns `False` raises an {class}`AbsentError`.
 
 If both triggers are present, the handler writes the product to the output port
 using the corresponding effect. If only one of the triggers is present, then no
-output is produced. Note that is also possible to define other strategies, such
+output is produced. Note that it is also possible to define other strategies, such
 as assuming a default value or storing the last observed value on `self`.
 
 Now we have multiple options for connecting the `Multiplier` reactor with the

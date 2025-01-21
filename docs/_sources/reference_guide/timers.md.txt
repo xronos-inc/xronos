@@ -33,7 +33,7 @@ the reaction in our "Hello, World!" example. It prints the current time, the
 reactors name and 'Hello!'. The `goodbye` reaction produces a similar output in
 response to the builtin {attr}`~xronos.Reactor.shutdown` event.
 
-The reaction `on_timer` declares timer as its trigger and defines a reaction
+The reaction `on_timer` declares the timer as its trigger and defines a reaction
 handler that is a little bit more complex than the simple lambda function we
 have seen so far. The reaction defines a nested `handler` function that it then
 returns.
@@ -45,7 +45,7 @@ returns.
 ```
 
 The handler performs multiple steps. First, it increments the `self._count`
-variable. It then prints the current time, the timer's fully qualified name and
+variable. It then prints the current time, the timer's name and
 the current count. Finally, it checks if the count has reached `MAX_COUNT`, in
 which case {func}`~xronos.Environment.request_shutdown` is called to terminate
 the program.
@@ -57,7 +57,7 @@ The program runs for about 4 seconds and produces output similar to the followin
 
 Carefully look at the printed timestamps. The timestamp printed by `hello` is
 identical to the first line printed by `on_timer`. This is, because we did not
-configure an {attr}`~xronos.Timer.offset` and the fist event triggers
+configure an {attr}`~xronos.Timer.offset` and the first event triggers
 immediately at startup. In other words: the first timer event is simultaneous to
 the {attr}`~xronos.Reactor.startup` event. Also note that the individual timer
 events are perfectly spaced one second apart.
