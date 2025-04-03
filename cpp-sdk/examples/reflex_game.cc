@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: BSD-3-Clause
 
 #include <chrono>
+#include <cstdint>
 #include <random>
+#include <string_view>
 #include <thread>
 
 #include "xronos/sdk.hh"
@@ -18,11 +20,11 @@ private:
 
   std::mt19937 rand{
       std::random_device{}()}; // NOTE: originally used get_physical_time().time_since_epoch().count() as seed
-  std::uniform_int_distribution<int> dist;
+  std::uniform_int_distribution<std::uint64_t> dist;
 
 public:
   // Constructor taking duration parameters
-  RandomDelay(std::string name, sdk::Context context, std::chrono::milliseconds min_delay,
+  RandomDelay(std::string_view name, sdk::Context context, std::chrono::milliseconds min_delay,
               std::chrono::milliseconds max_delay)
       : sdk::Reactor(name, context)
       , dist(1, (max_delay - min_delay) / std::chrono::milliseconds(1)) {}
@@ -52,7 +54,7 @@ public:
 
 class KeyboardInput : public sdk::Reactor {
 private:
-  sdk::PhysicalEvent<char> keyboard_input_{"keyboard_input", context()};
+  sdk::PhysicalEvent<int> keyboard_input_{"keyboard_input", context()};
   sdk::OutputPort<void> enter_{"enter", context()};
   sdk::OutputPort<void> quit_{"quit", context()};
 
@@ -60,7 +62,7 @@ private:
   std::atomic<bool> terminate_{false};
 
 public:
-  KeyboardInput(std::string name, sdk::Context context)
+  KeyboardInput(std::string_view name, sdk::Context context)
       : sdk::Reactor(name, context) {}
 
   auto quit() -> sdk::OutputPort<void>& { return quit_; }
@@ -72,10 +74,10 @@ public:
     Trigger<void> startup_trigger{self().startup(), context()};
     void handler() final {
       self().thread_ = std::thread([&]() {
-        int c{0};
+        int key{0};
         while (!self().terminate_.load()) {
-          c = getchar();
-          self().keyboard_input_.trigger(c);
+          key = getchar();
+          self().keyboard_input_.trigger(key);
         }
       });
     }
@@ -84,12 +86,12 @@ public:
   // Input handling reaction
   class Input : public sdk::Reaction<KeyboardInput> {
     using sdk::Reaction<KeyboardInput>::Reaction;
-    Trigger<char> input_trigger{self().keyboard_input_, context()};
+    Trigger<int> input_trigger{self().keyboard_input_, context()};
     PortEffect<void> enter_effect{self().enter_, context()};
     PortEffect<void> quit_effect{self().quit_, context()};
 
     void handler() final {
-      char key = *input_trigger.get();
+      int key = *input_trigger.get();
       if (key == '\n') {
         enter_effect.set();
       } else if (key == EOF) {
@@ -131,7 +133,7 @@ private:
   std::chrono::milliseconds total_time_{0};
 
 public:
-  GameLogic(std::string name, sdk::Context context)
+  GameLogic(std::string_view name, sdk::Context context)
       : sdk::Reactor(name, context) {}
 
   auto request_prompt() -> sdk::OutputPort<void>& { return request_prompt_; }
