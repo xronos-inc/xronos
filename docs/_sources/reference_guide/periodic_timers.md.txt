@@ -1,0 +1,100 @@
+(periodic timers)=
+# Periodic Timers
+
+The xronos framework provides powerful mechanisms for implementing timed
+behavior. The simplest mechanism is provided by *periodic timers*. Copy the
+following example into a new file called `timer.py`.
+
+`````{tabs}
+````{group-tab} plain
+```{literalinclude} ../_examples/timer.py
+```
+````
+````{group-tab} with type hints
+```{literalinclude} ../_examples/timer_hints.py
+```
+````
+````{group-tab} diagram
+![diagram timed](./_img/diagram_timed.png){.bg-warning w="50%" align=center}
+````
+`````
+
+In xronos, a periodic timer can be created by instantiating
+{class}`xronos.PeriodicTimerDeclaration` as a class attribute. This declares a
+{class}`~xronos.PeriodicTimer` object that is automatically initialized by the xronos
+runtime. We can interact with the timer object simply by using `self._timer`.
+
+Note that the `__init__` method of `Timed` configures the timer's period
+according to an argument that it receives. It further defines the state variable
+`self._count` and sets it to 0.
+
+The `Timed` reactor defines three reactions. The `hello` reaction is similar to
+the reaction in our "Hello, World!" example. It prints the current time, the
+reactors name and 'Hello!'. The `goodbye` reaction produces a similar output in
+response to the builtin {attr}`~xronos.Reactor.shutdown` event.
+
+The reaction `on_timer` declares the timer as its trigger and defines a reaction
+handler that is a little bit more complex than the simple lambda function we
+have seen so far. The reaction defines a nested `handler` function that it then
+returns.
+
+```{literalinclude} ../_examples/timer.py
+:pyobject: Timed.on_timer
+:start-at: handler
+:dedent:
+```
+
+The handler performs multiple steps. First, it increments the `self._count`
+variable. It then prints the current time, the timer's name and
+the current count. Finally, it checks if the count has reached `MAX_COUNT`, in
+which case {func}`~xronos.Environment.request_shutdown` is called to terminate
+the program.
+
+The program runs for about 4 seconds and produces output similar to the following:
+```{literalinclude} ../_examples/timer_out.txt
+:language: console
+```
+
+Carefully look at the printed timestamps. The timestamp printed by `hello` is
+identical to the first line printed by `on_timer`. This is, because we did not
+configure an {attr}`~xronos.PeriodicTimer.offset` and the first event triggers
+immediately at startup. In other words: the first timer event is simultaneous to
+the {attr}`~xronos.Reactor.startup` event. Also note that the individual timer
+events are perfectly spaced one second apart.
+
+How can xronos achieve such a precision? In xronos, time behaves differently
+than the wall-clock time that computer programs usually use. The xronos runtime
+manages its own clock, and this clock is key to controlling how a program
+executes. One property of the internal clock is that the time observed by a
+reaction is equal to the timestamp of the triggering event. Moreover, any two
+calls to {func}`~xronos.Reactor.get_time` within the same reaction handler will
+return the same time value.
+
+The synchrony of timestamps is also preserved across multiple reactors. Modify
+the instantiation code as shown in the following, so that the program consists
+of three `Timed` reactors using a period of 1 second, 2 seconds and 3 seconds,
+respectively.
+
+`````{tabs}
+````{group-tab} plain
+```{literalinclude} ../_examples/timer_multiple.py
+:pyobject: main
+```
+````
+````{group-tab} with type hints
+```{literalinclude} ../_examples/timer_multiple.py
+:pyobject: main
+```
+````
+````{group-tab} diagram
+![diagram timed times 3](./_img/diagram_timed_3.png){.bg-warning w="80%" align=center}
+````
+`````
+
+Running the program produces output similar to the following:
+```{literalinclude} ../_examples/timer_multiple_out.txt
+:language: console
+```
+
+Note how all three reactors say 'Hello!' or 'Goodbye!' at the same time, and how
+the timestamps of individual timer events align between the reactors.

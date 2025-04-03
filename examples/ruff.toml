@@ -1,7 +1,0 @@
-[lint]
-select = ['E', 'F', 'W', 'A', 'PL', 'I', 'RUF', 'D']
-ignore = ['D1']
-fixable = ["ALL"]
-
-[lint.pydocstyle]
-convention = "google"
