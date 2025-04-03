@@ -1,0 +1,17 @@
+VERSION 0.8
+
+FROM alpine:3.20.3
+
+WORKDIR /xronos/graph-messages
+
+copy:  # prefer when file system timestamps are not needed (to improve caching)
+    COPY --dir src xronos ./
+    COPY build.rs Cargo.lock Cargo.toml CMakeLists.txt ./
+    WORKDIR /xronos
+    SAVE ARTIFACT graph-messages
+
+copy-keep-ts:  # required when using incremental build systems (e.g., cargo) that require timestamps
+    COPY --keep-ts --dir src xronos ./
+    COPY --keep-ts build.rs Cargo.lock Cargo.toml CMakeLists.txt ./
+    WORKDIR /xronos
+    SAVE ARTIFACT --keep-ts /xronos/ /out  # The output directory needs to have a non-default name for the timestamp preservation to work correctly. This is probably a bug in Earthly.

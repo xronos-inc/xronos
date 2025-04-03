@@ -49,7 +49,7 @@ class TrainingController(xronos.Reactor):
     output_data = xronos.OutputPortDeclaration[float]()
     input_pred = xronos.InputPortDeclaration[float]()
     output_gradient = xronos.OutputPortDeclaration[float]()
-    _training_timer = xronos.TimerDeclaration()
+    _training_timer = xronos.PeriodicTimerDeclaration()
 
     def __init__(
         self,

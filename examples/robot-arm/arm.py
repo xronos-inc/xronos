@@ -16,8 +16,8 @@ from user_interface import UserInterface
 
 
 class ArmControl(xronos.Reactor):
-    _sample_timer = xronos.TimerDeclaration()
-    _in_position_event = xronos.InternalEventDeclaration[bool]()
+    _sample_timer = xronos.PeriodicTimerDeclaration()
+    _in_position = xronos.ProgrammableTimerDeclaration[bool]()
     new_trajectory = xronos.InputPortDeclaration[Trajectory]()
     trajectory_completed = xronos.OutputPortDeclaration[bool]()
 
@@ -64,7 +64,7 @@ class ArmControl(xronos.Reactor):
         self, interface: xronos.ReactionInterface
     ) -> Callable[[], None]:
         interface.add_trigger(self._sample_timer)
-        in_position_effect = interface.add_effect(self._in_position_event)
+        in_position_effect = interface.add_effect(self._in_position)
 
         # update position and schedule action if state of in_position changes
         def handler() -> None:
@@ -84,7 +84,7 @@ class ArmControl(xronos.Reactor):
     def on_in_position_change(
         self, interface: xronos.ReactionInterface
     ) -> Callable[[], None]:
-        in_position_trigger = interface.add_trigger(self._in_position_event)
+        in_position_trigger = interface.add_trigger(self._in_position)
         trajectory_completed_effect = interface.add_effect(self.trajectory_completed)
 
         def handler() -> None:
