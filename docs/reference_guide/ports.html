@@ -26,8 +26,8 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Internal Events" href="internal_events.html" />
-    <link rel="prev" title="Timers" href="timers.html" /> 
+    <link rel="next" title="Programmable Timers" href="programmable_timers.html" />
+    <link rel="prev" title="Periodic Timers" href="periodic_timers.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -54,14 +54,14 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting Started</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="index.html">Reference Guide</a><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="timers.html">Timers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="periodic_timers.html">Periodic Timers</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Ports and Connections</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#simple-connections">Simple Connections</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#delayed-connections">Delayed Connections</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#multiple-inputs">Multiple Inputs</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="internal_events.html">Internal Events</a></li>
+<li class="toctree-l2"><a class="reference internal" href="programmable_timers.html">Programmable Timers</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../diagrams.html">Diagram View</a></li>
@@ -109,7 +109,9 @@ composing programs from simple building blocks.</p>
 <div class="sphinx-tabs docutils container">
 <div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-0-cGxhaW4=" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-0-cGxhaW4=" name="cGxhaW4=" role="tab" tabindex="0">plain</button><button aria-controls="panel-0-d2l0aCB0eXBlIGhpbnRz" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-d2l0aCB0eXBlIGhpbnRz" name="d2l0aCB0eXBlIGhpbnRz" role="tab" tabindex="-1">with type hints</button><button aria-controls="panel-0-ZGlhZ3JhbQ==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-ZGlhZ3JhbQ==" name="ZGlhZ3JhbQ==" role="tab" tabindex="-1">diagram</button></div><div aria-labelledby="tab-0-cGxhaW4=" class="sphinx-tabs-panel group-tab" id="panel-0-cGxhaW4=" name="cGxhaW4=" role="tabpanel" tabindex="0"><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Counter</span><span class="p">(</span><span class="n">xronos</span><span class="o">.</span><span class="n">Reactor</span><span class="p">):</span>
     <span class="n">output</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">OutputPortDeclaration</span><span class="p">()</span>
-    <span class="n">_timer</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">TimerDeclaration</span><span class="p">(</span><span class="n">period</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">milliseconds</span><span class="o">=</span><span class="mi">100</span><span class="p">))</span>
+    <span class="n">_timer</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">PeriodicTimerDeclaration</span><span class="p">(</span>
+        <span class="n">period</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">milliseconds</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+    <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
@@ -129,7 +131,9 @@ composing programs from simple building blocks.</p>
 </div>
 </div><div aria-labelledby="tab-0-d2l0aCB0eXBlIGhpbnRz" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-0-d2l0aCB0eXBlIGhpbnRz" name="d2l0aCB0eXBlIGhpbnRz" role="tabpanel" tabindex="0"><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Counter</span><span class="p">(</span><span class="n">xronos</span><span class="o">.</span><span class="n">Reactor</span><span class="p">):</span>
     <span class="n">output</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">OutputPortDeclaration</span><span class="p">[</span><span class="nb">int</span><span class="p">]()</span>
-    <span class="n">_timer</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">TimerDeclaration</span><span class="p">(</span><span class="n">period</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">milliseconds</span><span class="o">=</span><span class="mi">100</span><span class="p">))</span>
+    <span class="n">_timer</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">PeriodicTimerDeclaration</span><span class="p">(</span>
+        <span class="n">period</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">milliseconds</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+    <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
@@ -256,7 +260,7 @@ reactions to <a class="reference internal" href="../api.html#xronos.Reactor.shut
 termination signal is received.</p>
 <p>Note that <code class="docutils literal notranslate"><span class="pre">printer</span></code> receives the first message right at startup, and all
 subsequent messages are spaced perfectly by the timer period of 100ms. As
-mentioned in <a class="reference internal" href="timers.html#timer"><span class="std std-ref">Timers</span></a>, time does not advance while reactions execute. This
+mentioned in <a class="reference internal" href="periodic_timers.html#periodic-timers"><span class="std std-ref">Periodic Timers</span></a>, time does not advance while reactions execute. This
 is also true for any messages sent via ports. The timestamp of any output
 produced by a reaction is equal to the timestamp of its trigger.</p>
 </section>
@@ -488,8 +492,8 @@ executes.</p>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="timers.html" class="btn btn-neutral float-left" title="Timers" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="internal_events.html" class="btn btn-neutral float-right" title="Internal Events" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="periodic_timers.html" class="btn btn-neutral float-left" title="Periodic Timers" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="programmable_timers.html" class="btn btn-neutral float-right" title="Programmable Timers" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

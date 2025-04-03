@@ -5,16 +5,6 @@
 xronos provides several mechanisms for collecting telemetry data to gain insight
 into an application.
 
-## Installation
-
-To activate the telemetry functionality, the `telemetry` dependencies need to be
-installed. Activate the same environment in which you installed the `xronos`
-package, and install the telemetry backend using the following command:
-
-```console
-$ pip install xronos[telemetry]
-```
-
 ## Enabling Telemetry
 
 An application needs to explicitly enable the collection of telemetry data by
@@ -39,10 +29,6 @@ This prints an error because we ran the program with tracing enabled, but did
 not provide an endpoint for receiving the telemetry data. See {ref}`dashboard`
 for instructions on how to start and use the dashboard for receiving and
 visualizing telemetry data.
-
-```{note}
-{func}`~xronos.Environment.enable_tracing` throws a {exc}`RuntimeError` if `xronos[telemetry]` is not installed.
-```
 
 (attributes)=
 ## Attributes

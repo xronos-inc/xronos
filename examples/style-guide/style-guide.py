@@ -25,24 +25,24 @@ class MyReactor(xronos.Reactor):
 
     # Physical events may be public attributes if raised by external processes,
     # or private if they are raised by processes internal to this reactor.
-    # suffix physical and internal events with 'event'
     #
     # Use a descriptive name for what the event signals, and from what process
     # and under which conditions the event is raised. In this example, it signals
     # that a sensor value has been produced by an external process (such as an
     # interrupt) with a floating-pint value.
-    _sensor_event = xronos.PhysicalEventDeclaration[float]()
+    _sensor = xronos.PhysicalEventDeclaration[float]()
 
-    # Internal events should always be private -- they are intended for use for
+    # Programmable timers should always be private -- they are intended for use for
     # messaging within a reactor only. If you need to communicate to another
     # reactor, use ports.
     #
-    # Use a descriptive name for what the event signals. In this example, when the
-    # event is triggered, it signals an actuation with a floating-point should occur.
-    _actuate_event = xronos.InternalEventDeclaration[float]()
+    # Use a descriptive name for what an programmed event signals. In this
+    # example, when the timer triggers, it signals an actuation with a
+    # floating-point should occur.
+    _actuate = xronos.ProgrammableTimerDeclaration[float]()
 
-    # Timers should in general be private.
-    _timer = xronos.TimerDeclaration()
+    # Periodic timer should in general be private.
+    _periodic_timer = xronos.PeriodicTimerDeclaration()
 
     # reactor constants
     OUTPUT_COUNT: int = 3
@@ -50,8 +50,8 @@ class MyReactor(xronos.Reactor):
     def __init__(self) -> None:
         super().__init__()
 
-        self._timer.period = datetime.timedelta(milliseconds=500)
-        self._timer.offset = self._timer.period
+        self._periodic_timer.period = datetime.timedelta(milliseconds=500)
+        self._periodic_timer.offset = self._periodic_timer.period
 
         # threads should be private, started on a triggered event such as startup,
         # signalled using a state variable, and joined on shutdown.
@@ -70,7 +70,7 @@ class MyReactor(xronos.Reactor):
             if self.get_time_since_startup() - last_output_time < output_period:
                 time.sleep(0)  # yield CPU to other threads
             else:
-                self._sensor_event.schedule(42)  # imagine this is a value from a sensor
+                self._sensor.trigger(42)  # imagine this is a value from a sensor
                 output_count = output_count + 1
                 last_output_time = self.get_time_since_startup()
         self.environment.request_shutdown()
@@ -115,17 +115,16 @@ class MyReactor(xronos.Reactor):
     @xronos.reaction
     def on_sensor(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
         """Specify the reacition to the sensor action."""
-        # use the base name of the event for the ActionEffect
-        sensor = interface.add_trigger(self._sensor_event)
+        sensor_trigger = interface.add_trigger(self._sensor)
 
         def handler() -> None:
-            print(f"Sensor read: {sensor.get()}")
+            print(f"Sensor read: {sensor_trigger.get()}")
 
         return handler
 
     @xronos.reaction
     def on_actuate(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        actuate_trigger = interface.add_trigger(self._actuate_event)
+        actuate_trigger = interface.add_trigger(self._actuate)
 
         def handler() -> None:
             print(f"Actuating with value {actuate_trigger.get()}")
@@ -133,11 +132,13 @@ class MyReactor(xronos.Reactor):
         return handler
 
     @xronos.reaction
-    def on_timer(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        interface.add_trigger(self._timer)
+    def on_periodic_timer(
+        self, interface: xronos.ReactionInterface
+    ) -> Callable[[], None]:
+        interface.add_trigger(self._periodic_timer)
 
         # prefix effects with the port or action name and suffix with `effect`
-        actuate_effect = interface.add_effect(self._actuate_event)
+        actuate_effect = interface.add_effect(self._actuate)
 
         def handler() -> None:
             actuate_effect.schedule(1.0)

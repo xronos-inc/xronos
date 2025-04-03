@@ -56,7 +56,6 @@
 <li class="toctree-l1"><a class="reference internal" href="reference_guide/index.html">Reference Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="diagrams.html">Diagram View</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Telemetry</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#enabling-telemetry">Enabling Telemetry</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#attributes">Attributes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#metrics">Metrics</a></li>
@@ -96,15 +95,6 @@
 <span id="id1"></span><h1>Telemetry<a class="headerlink" href="#telemetry" title="Link to this heading"></a></h1>
 <p>xronos provides several mechanisms for collecting telemetry data to gain insight
 into an application.</p>
-<section id="installation">
-<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h2>
-<p>To activate the telemetry functionality, the <code class="docutils literal notranslate"><span class="pre">telemetry</span></code> dependencies need to be
-installed. Activate the same environment in which you installed the <code class="docutils literal notranslate"><span class="pre">xronos</span></code>
-package, and install the telemetry backend using the following command:</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>pip<span class="w"> </span>install<span class="w"> </span>xronos<span class="o">[</span>telemetry<span class="o">]</span>
-</pre></div>
-</div>
-</section>
 <section id="enabling-telemetry">
 <h2>Enabling Telemetry<a class="headerlink" href="#enabling-telemetry" title="Link to this heading"></a></h2>
 <p>An application needs to explicitly enable the collection of telemetry data by
@@ -128,10 +118,6 @@ By default, this records trace data for each reaction handler that executes.</p>
 not provide an endpoint for receiving the telemetry data. See <a class="reference internal" href="dashboard.html#dashboard"><span class="std std-ref">Trace Dashboard</span></a>
 for instructions on how to start and use the dashboard for receiving and
 visualizing telemetry data.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p><a class="reference internal" href="api.html#xronos.Environment.enable_tracing" title="xronos.Environment.enable_tracing"><code class="xref py py-func docutils literal notranslate"><span class="pre">enable_tracing()</span></code></a> throws a <a class="reference external" href="https://docs.python.org/3/library/exceptions.html#RuntimeError" title="(in Python v3.13)"><code class="xref py py-exc docutils literal notranslate"><span class="pre">RuntimeError</span></code></a> if <code class="docutils literal notranslate"><span class="pre">xronos[telemetry]</span></code> is not installed.</p>
-</div>
 </section>
 <section id="attributes">
 <span id="id2"></span><h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading"></a></h2>
@@ -273,7 +259,9 @@ the current measured on the motor.</p>
 <div class="sphinx-tabs docutils container">
 <div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-1-cGxhaW4=" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-1-cGxhaW4=" name="cGxhaW4=" role="tab" tabindex="0">plain</button><button aria-controls="panel-1-d2l0aCB0eXBlIGhpbnRz" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-1-d2l0aCB0eXBlIGhpbnRz" name="d2l0aCB0eXBlIGhpbnRz" role="tab" tabindex="-1">with type hints</button><button aria-controls="panel-1-ZGlhZ3JhbQ==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-1-ZGlhZ3JhbQ==" name="ZGlhZ3JhbQ==" role="tab" tabindex="-1">diagram</button></div><div aria-labelledby="tab-1-cGxhaW4=" class="sphinx-tabs-panel group-tab" id="panel-1-cGxhaW4=" name="cGxhaW4=" role="tabpanel" tabindex="0"><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Motor</span><span class="p">(</span><span class="n">xronos</span><span class="o">.</span><span class="n">Reactor</span><span class="p">):</span>
     <span class="n">angle</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">InputPortDeclaration</span><span class="p">()</span>
-    <span class="n">_timer</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">TimerDeclaration</span><span class="p">(</span><span class="n">period</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">microseconds</span><span class="o">=</span><span class="mi">500</span><span class="p">))</span>
+    <span class="n">_timer</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">PeriodicTimerDeclaration</span><span class="p">(</span>
+        <span class="n">period</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">microseconds</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>
+    <span class="p">)</span>
     <span class="n">_current</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">MetricDeclaration</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">&quot;Motor current&quot;</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;mA&quot;</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -294,7 +282,9 @@ the current measured on the motor.</p>
 </div>
 </div><div aria-labelledby="tab-1-d2l0aCB0eXBlIGhpbnRz" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-1-d2l0aCB0eXBlIGhpbnRz" name="d2l0aCB0eXBlIGhpbnRz" role="tabpanel" tabindex="0"><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Motor</span><span class="p">(</span><span class="n">xronos</span><span class="o">.</span><span class="n">Reactor</span><span class="p">):</span>
     <span class="n">angle</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">InputPortDeclaration</span><span class="p">[</span><span class="nb">float</span><span class="p">]()</span>
-    <span class="n">_timer</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">TimerDeclaration</span><span class="p">(</span><span class="n">period</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">microseconds</span><span class="o">=</span><span class="mi">500</span><span class="p">))</span>
+    <span class="n">_timer</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">PeriodicTimerDeclaration</span><span class="p">(</span>
+        <span class="n">period</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">microseconds</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>
+    <span class="p">)</span>
     <span class="n">_current</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">MetricDeclaration</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">&quot;Motor current&quot;</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;mA&quot;</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>

@@ -150,14 +150,14 @@ command line arguments, the <code class="docutils literal notranslate"><span cla
 </section>
 <section id="webcam-reactor">
 <h2>WebCam reactor<a class="headerlink" href="#webcam-reactor" title="Link to this heading"></a></h2>
-<p>Open <code class="docutils literal notranslate"><span class="pre">WebCam.py</span></code>. The <code class="docutils literal notranslate"><span class="pre">WebCam</span></code> reactor declares two reactor elements, using an <a class="reference internal" href="../api.html#xronos.InternalEventDeclaration" title="xronos.InternalEventDeclaration"><code class="xref py py-class docutils literal notranslate"><span class="pre">InternalEventDeclaration</span></code></a> called
-<code class="docutils literal notranslate"><span class="pre">_sample_webcam</span></code> and an <a class="reference internal" href="../api.html#xronos.OutputPortDeclaration" title="xronos.OutputPortDeclaration"><code class="xref py py-class docutils literal notranslate"><span class="pre">OutputPortDeclaration</span></code></a> called <code class="docutils literal notranslate"><span class="pre">frame</span></code>. Internal events are objects on which the program
-can schedule future events. Unlike timers, where the timestamps of the events are periodic, internal events can be
-scheduled at arbitrary timestamps and are, as such, more expressive than timers. It is called <em>internal</em> because the
-events are scheduled from within the program. Reactors communicate by exchanging events via ports. In this case,
-<code class="docutils literal notranslate"><span class="pre">WebCam</span></code> can send events containing <code class="docutils literal notranslate"><span class="pre">cv2</span></code> matrices.</p>
+<p>Open <code class="docutils literal notranslate"><span class="pre">WebCam.py</span></code>. The <code class="docutils literal notranslate"><span class="pre">WebCam</span></code> reactor declares two reactor elements, using an <a class="reference internal" href="../api.html#xronos.ProgrammableTimerDeclaration" title="xronos.ProgrammableTimerDeclaration"><code class="xref py py-class docutils literal notranslate"><span class="pre">ProgrammableTimerDeclaration</span></code></a> called
+<code class="docutils literal notranslate"><span class="pre">_sample_webcam</span></code> and an <a class="reference internal" href="../api.html#xronos.OutputPortDeclaration" title="xronos.OutputPortDeclaration"><code class="xref py py-class docutils literal notranslate"><span class="pre">OutputPortDeclaration</span></code></a> called <code class="docutils literal notranslate"><span class="pre">frame</span></code>. Programmable timers are objects which the program
+can use to schedule future events. Unlike periodic timers, where the timestamps of the events are periodic, programmable timers can be
+scheduled at arbitrary intervals and are, as such, more expressive than periodic timers.
+Reactors communicate by exchanging events via ports. In this case, <code class="docutils literal notranslate"><span class="pre">WebCam</span></code> can
+send events containing <code class="docutils literal notranslate"><span class="pre">cv2</span></code> matrices.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">WebCam</span><span class="p">(</span><span class="n">xronos</span><span class="o">.</span><span class="n">Reactor</span><span class="p">):</span>
-    <span class="n">_sample_webcam</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">InternalEventDeclaration</span><span class="p">[</span><span class="kc">None</span><span class="p">]()</span>
+    <span class="n">_sample_webcam</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">ProgrammableTimerDeclaration</span><span class="p">[</span><span class="kc">None</span><span class="p">]()</span>
     <span class="n">frame</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">OutputPortDeclaration</span><span class="p">[</span><span class="n">cv2</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">MatLike</span><span class="p">]()</span>
 
 </pre></div>
@@ -186,7 +186,7 @@ stream using <code class="docutils literal notranslate"><span class="pre">cv2</s
 <p>The reactor contains three reactions. <code class="docutils literal notranslate"><span class="pre">on_startup</span></code> is triggered by
 <a class="reference internal" href="../api.html#xronos.Reactor.startup" title="xronos.Reactor.startup"><code class="xref py py-attr docutils literal notranslate"><span class="pre">startup</span></code></a>. The startup reaction uses
 <a class="reference internal" href="../api.html#xronos.ReactionInterface.add_effect" title="xronos.ReactionInterface.add_effect"><code class="xref py py-func docutils literal notranslate"><span class="pre">add_effect()</span></code></a> to declare an effect on the
-internal event <code class="docutils literal notranslate"><span class="pre">_sample_webcam</span></code>. This allows the reaction handler to schedule
+programmable timer <code class="docutils literal notranslate"><span class="pre">_sample_webcam</span></code>. This allows the reaction handler to schedule
 the first occurrence of <code class="docutils literal notranslate"><span class="pre">_sample_webcam</span></code> event. Instead of invoking
 <code class="xref py py-func docutils literal notranslate"><span class="pre">schedule()</span></code> directly, the reaction handler uses the
 convenience function <code class="docutils literal notranslate"><span class="pre">reschedule_sample_webcam</span></code> to schedule the first event. We
@@ -236,7 +236,7 @@ implements a simple adaptive load-balancing strategy. It uses <a class="referenc
 events are processed with respect to real-time. If the lag is greater than <code class="docutils literal notranslate"><span class="pre">sample_period</span></code> we skip a number of
 samples. Note that event itself is declared to carry no value. Therefore, it is scheduled using <code class="docutils literal notranslate"><span class="pre">value=None</span></code>.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">reschedule_sample_webcam</span><span class="p">(</span>
-    <span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="p">:</span> <span class="n">xronos</span><span class="o">.</span><span class="n">InternalEventEffect</span><span class="p">[</span><span class="kc">None</span><span class="p">]</span>
+    <span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="p">:</span> <span class="n">xronos</span><span class="o">.</span><span class="n">ProgrammableTimerEffect</span><span class="p">[</span><span class="kc">None</span><span class="p">]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="n">next_sample_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_period</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_period</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">get_lag</span><span class="p">()</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_period</span>

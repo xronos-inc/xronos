@@ -105,7 +105,7 @@ termination signal is received.
 
 Note that `printer` receives the first message right at startup, and all
 subsequent messages are spaced perfectly by the timer period of 100ms. As
-mentioned in {ref}`timer`, time does not advance while reactions execute. This
+mentioned in {ref}`periodic timers`, time does not advance while reactions execute. This
 is also true for any messages sent via ports. The timestamp of any output
 produced by a reaction is equal to the timestamp of its trigger.
 

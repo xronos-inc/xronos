@@ -22,13 +22,6 @@ Then install the xronos package.
 $ pip install xronos
 ```
 
-### Optional Components
-
-Some additional tools and components can be installed optionally. This includes:
-
-- {ref}`telemetry`: `pip install xronos[telemetry]`
-- {ref}`dashboard`: `pip install xronos[dashboard]`
-
 (hello_world)=
 ## Hello World
 

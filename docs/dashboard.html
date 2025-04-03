@@ -164,10 +164,11 @@ while the dashboard is running and tracing is enabled, this will also store any
 values recorded by the application in the database. For instance, you can run
 the <a class="reference external" href="https://github.com/xronos-inc/xronos/tree/main/examples/montecarlo">Monte Carlo
 example</a>,
-which already includes a few metrics. The example estimates the value of pi, and
-we record the current estimate, the estimation error, and the number of
-processed points as metrics.</p>
-<p>If everything works correctly, the reactions that were executed should be shown in the default dashboard.</p>
+which already includes a few metrics. The example estimates the value of pi and
+includes metrics for the current estimate, the estimation error, and the number
+of processed points.</p>
+<p>When running a simulation with tracing set to enabled in the web interface, the
+traces of executed reactions should be shown in the default dashboard.</p>
 <p><img alt="montecarlo dashboard" src="_images/dashboard_montecarlo.png" /></p>
 <p>Click the “Edit” button in the top-right corner of the Grafana UI to customize
 your dashboard.</p>

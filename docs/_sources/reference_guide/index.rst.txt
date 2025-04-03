@@ -6,6 +6,6 @@ Reference Guide
    :maxdepth: 1
    :caption: Contents:
 
-   timers
+   periodic_timers
    ports
-   internal_events
+   programmable_timers

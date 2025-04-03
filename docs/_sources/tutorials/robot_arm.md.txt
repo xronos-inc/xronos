@@ -45,7 +45,7 @@ The following diagram shows the layout of the program.
 
 ![Robot arm controller diagram](./_img/diagram_arm.png)
 
-The `ArmControl` reactor is driven by a timer with a 100 ms period and accepts new trajectories on its input port from
+The `ArmControl` reactor is driven by a periodic timer with a 100 ms period and accepts new trajectories on its input port from
 the `UserInterface` reactor. When the final pose of a trajectory is reached, the `ArmControl` reactor notifies the
 `UserInterface` that it can accept a new trajectory.
 
@@ -65,7 +65,7 @@ In the following, we will take a closer look at the two reactors.
 ## UserInterface reactor
 
 Open `user_interface.py`. The `UserInterface` reactor is an example of a generic reusable reactor. It declares four
-elements. Two ports, an internal event, and a physical event. A {class}`~PhysicalEvent` is useful for sending events to
+elements. Two ports, a programmable timer, and a physical event. A {class}`~PhysicalEvent` is useful for sending events to
 the xronos runtime from *external* contexts such as a thread. In the `__init__` method we initialize class variables
 including a thread and a semaphore.
 
@@ -105,8 +105,8 @@ semaphore at once.
 ## ArmControl reactor
 
 Open `arm.py`. The `ArmControl` reactor declares several reactor elements. An input port `new_trajectory` for accepting
-new trajectories from the user or a planner, a timer `_sample_timer` for sampling the servos, an internal event
-`_in_position_event` for detecting changes to the servo states, and finally an output port `trajectory_completed` for
+new trajectories from the user or a planner, a periodic timer `_sample_timer` for sampling the servos, a programmable timer
+`_in_position` for detecting changes to the servo states, and finally an output port `trajectory_completed` for
 notifying the user, or planner, that the trajectory was completed.
 
 Upon receiving a new trajectory on the input port we update the internal state of `ArmControl`.
@@ -117,7 +117,7 @@ Upon receiving a new trajectory on the input port we update the internal state o
 ```
 
 In response to timer events, the position of each servo is read through `self.read_pose()`. When a servo is within some
-small delta angle from its desired position, it is said to be *in-position*. The reaction schedules an internal event if
+small delta angle from its desired position, it is said to be *in-position*. The reaction schedules a programmable timer if
 in-position changes.
 
 ```{literalinclude} ../../examples/robot-arm/arm.py

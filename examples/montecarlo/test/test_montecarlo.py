@@ -15,11 +15,12 @@ def test_run_sim_point_count() -> None:
             pass
 
     queue = TestPointQueue()
-    expected_points = 1000
+    expected_points = 2000
     simulation_request: SimulationRequest = {
         "total_points": expected_points,
         "batch_size": 1000,
-        "batch_delay": 0,
+        "batch_delay": 1,
+        "enable_tracing": False,
     }
 
     run_sim(simulation_request, queue)

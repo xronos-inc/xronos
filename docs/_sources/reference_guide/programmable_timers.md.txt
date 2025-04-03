@@ -1,0 +1,73 @@
+# Programmable Timers
+
+Programmable timers provide a convenient way for reactors to schedule future
+behavior. While ports can be used to send messages to other reactors, programmable
+times can be seen as a mechanism for a reactor to send a delayed messages to
+its future self.
+
+The following example replicates the behavior of a {ref}`periodic
+timers` using a programmable timer.
+
+
+`````{tabs}
+````{group-tab} plain
+```{literalinclude} ../_examples/clock.py
+```
+````
+````{group-tab} with type hints
+```{literalinclude} ../_examples/clock_hints.py
+```
+````
+````{group-tab} diagram
+![diagram clock](./_img/diagram_event_clock.png){.bg-warning w="60%" align=center}
+````
+`````
+
+The `Clock` reactor declares a programmable timer called `_tick` using a
+{class}`~xronos.ProgrammableTimerDeclaration`. The reactor further defines two
+reactions. The `on_tick` reaction is triggered by `_tick` and prints a message
+that includes the current time. The `next` reaction is triggered both by
+{attr}`~xronos.Reactor.startup` and by `_tick`. It also declares an effect on
+`_tick`. Using the {class}`~xronos.ProgrammableTimerEffect` object, the reaction
+may call {func}`~xronos.ProgrammableTimerEffect.schedule` to schedule a future event. In
+this example, the reaction handler calls `_schedule_next_tick()` which in turn
+calls {func}`~xronos.ProgrammableTimerEffect.schedule` using `self._period` as
+delay.
+
+The `next` reaction ensures that `_tick` triggers in regular intervals. The
+first invocation of the `next` reaction handler is triggered by
+{attr}`~xronos.Reactor.startup`. In this first invocation, the handler schedules
+the first event on `_tick`. All subsequent invocations of `next` will be
+triggered by `_tick` itself.
+
+When executed, the program produces the following output.
+```{literalinclude} ../_examples/clock_out.txt
+:language: console
+```
+
+While we can use programmable timers to replicate the behavior of periodic timers, they are a
+lot more versatile. Since new events are scheduled by reactions, the reaction
+handlers gain full control over when events occur. This allows us to implement
+more interesting behavior. For instance, the following example implements a
+clock that slows down with each tick.
+
+`````{tabs}
+````{group-tab} plain
+```{literalinclude} ../_examples/slowing_clock.py
+:start-at: class SlowingClock
+```
+````
+````{group-tab} with type hints
+```{literalinclude} ../_examples/slowing_clock_hints.py
+:start-at: class SlowingClock
+```
+````
+````{group-tab} diagram
+![diagram slowing clock](./_img/diagram_event_slowing_clock.png){.bg-warning w="60%" align=center}
+````
+`````
+
+With this modification, the program produces the following output.
+```{literalinclude} ../_examples/slowing_clock_out.txt
+:language: console
+```

@@ -40,12 +40,12 @@ This creates the following reactor program.
 In the following we will go through each of the three reactors.
 
 ## WebCam reactor
-Open `WebCam.py`. The `WebCam` reactor declares two reactor elements, using an {class}`~xronos.InternalEventDeclaration` called
-`_sample_webcam` and an {class}`~xronos.OutputPortDeclaration` called `frame`. Internal events are objects on which the program
-can schedule future events. Unlike timers, where the timestamps of the events are periodic, internal events can be
-scheduled at arbitrary timestamps and are, as such, more expressive than timers. It is called *internal* because the
-events are scheduled from within the program. Reactors communicate by exchanging events via ports. In this case,
-`WebCam` can send events containing `cv2` matrices.
+Open `WebCam.py`. The `WebCam` reactor declares two reactor elements, using an {class}`~xronos.ProgrammableTimerDeclaration` called
+`_sample_webcam` and an {class}`~xronos.OutputPortDeclaration` called `frame`. Programmable timers are objects which the program
+can use to schedule future events. Unlike periodic timers, where the timestamps of the events are periodic, programmable timers can be
+scheduled at arbitrary intervals and are, as such, more expressive than periodic timers.
+Reactors communicate by exchanging events via ports. In this case, `WebCam` can
+send events containing `cv2` matrices.
 
 ```{literalinclude} ../../examples/YOLO/WebCam.py
 :pyobject: WebCam
@@ -64,7 +64,7 @@ stream using `cv2`.
 The reactor contains three reactions. `on_startup` is triggered by
 {attr}`~xronos.Reactor.startup`. The startup reaction uses
 {func}`~xronos.ReactionInterface.add_effect` to declare an effect on the
-internal event `_sample_webcam`. This allows the reaction handler to schedule
+programmable timer `_sample_webcam`. This allows the reaction handler to schedule
 the first occurrence of `_sample_webcam` event. Instead of invoking
 {func}`~xronos.ActionEffect.schedule` directly, the reaction handler uses the
 convenience function `reschedule_sample_webcam` to schedule the first event. We
