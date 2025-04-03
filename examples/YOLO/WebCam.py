@@ -17,7 +17,7 @@ import xronos
 
 
 class WebCam(xronos.Reactor):
-    _sample_webcam = xronos.InternalEventDeclaration[None]()
+    _sample_webcam = xronos.ProgrammableTimerDeclaration[None]()
     frame = xronos.OutputPortDeclaration[cv2.typing.MatLike]()
 
     def __init__(
@@ -39,7 +39,7 @@ class WebCam(xronos.Reactor):
         self.stream.set(cv2.CAP_PROP_FPS, frames_per_second)
 
     def reschedule_sample_webcam(
-        self, action: xronos.InternalEventEffect[None]
+        self, action: xronos.ProgrammableTimerEffect[None]
     ) -> None:
         next_sample_time = self.sample_period + self.sample_period * math.floor(
             self.get_lag() / self.sample_period

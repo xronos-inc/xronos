@@ -1,0 +1,44 @@
+VERSION 0.8
+
+IMPORT ../base-images AS base-images
+IMPORT ../xronos AS xronos
+
+test:
+    BUILD +test-examples --python_version=3.10 --python_version=3.11 --python_version=3.12 --python_version=3.13
+
+test-examples:
+    FROM --pass-args base-images+python-venv
+    BUILD --pass-args ./montecarlo+test
+    BUILD --pass-args ./style-guide+test
+    # ultralytics (needed by YOLO) is incompatible with Python 3.13 as of 14/1/24
+    IF [ "$python_version" != "3.13" ]
+      BUILD --pass-args ./YOLO+test
+    END
+
+lint:
+    BUILD ./montecarlo+lint
+    BUILD ./robot-arm+lint
+    BUILD ./simple-neural-net+lint
+    BUILD ./style-guide+lint
+    BUILD ./YOLO+lint
+
+copy:
+    # Copies the examples directory to the root of the image and exports it as an artifact.
+    # This is used in the docs build to get access to the examples.
+    FROM alpine:3.20.3
+    COPY --dir . ./examples
+    SAVE ARTIFACT examples
+
+configs:
+    FROM alpine:3.20.3
+    WORKDIR /xronos/examples
+    COPY mypy.ini ruff.toml pyrightconfig.json pytest.ini .
+    WORKDIR /xronos
+    SAVE ARTIFACT examples
+
+common-base:
+    FROM --pass-args base-images+python-venv
+    WORKDIR /xronos
+    RUN mkdir wheels
+    COPY --pass-args xronos+wheel/xronos-*.whl ./wheels
+    COPY +configs/examples examples

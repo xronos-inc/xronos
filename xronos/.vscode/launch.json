@@ -1,0 +1,16 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "pylf: Generate diagrams",
+            "type": "debugpy",
+            "program": "${file}",
+            "request": "launch",
+            "console": "integratedTerminal",
+            "args": [],
+            "env": {
+                "XRONOS_GENERATE_DIAGRAMS_ONLY": "true"
+            }
+        }
+    ]
+}
