@@ -1,0 +1,175 @@
+(dashboard)=
+
+# Trace Dashboard
+
+The runtime behavior of xronos programs can be observed using the Xronos
+Dashboard. The dashboard consists of a user interface based on
+[Grafana](https://grafana.com/) and a time series database that stores
+trace data of reaction executions and any values recorded using {ref}`metrics
+<metrics>`.
+
+## System Requirements
+
+- A running Docker daemon. The Xronos Dashboard has been tested with Docker
+  Engine version 27.2.1.
+
+## Installation
+
+Create a new virtual environment or activate the same environment in which you
+installed the `xronos` package. Install the dashboard using the following
+command:
+
+```console
+$ pip install xronos[dashboard]
+```
+
+## Usage
+
+Use the following command to start the dashboard:
+
+```console
+$ xronos-dashboard start
+✔ dashboard available at http://localhost:3000
+```
+
+Open [`http://localhost:3000`](http://localhost:3000) in your browser. This will
+open the Grafana-based dashboard. On first usage, you need to log in using the
+username `admin` and password `xronos`.
+
+![dashboard login](./_img/dashboard_login.png)
+
+After logging in, the trace view opens. Initially, it will be empty.
+
+![empty dashboard](./_img/dashboard_empty.png)
+
+To show trace data in the dashboard, we need to run a xronos application that
+has tracing enabled. Tracing can be enabled on any application by calling
+{func}`~xronos.Environment.enable_tracing` on the environment. Note that this
+has to happen before calling execute {func}`~xronos.Environment.execute`.
+
+Modify the {ref}`hello_world` example like shown below.
+
+```python
+env = xronos.Environment()
+env.create_reactor("hello", Hello)
+env.enable_tracing()
+env.execute()
+```
+
+Then execute the program.
+
+```console
+$ python hello.py
+```
+
+Hit the {guilabel}`🗘 Refresh` button in the dashboard. The trace view should now show a single
+execution of the `hello` reaction.
+
+![dashboard hello](./_img/dashboard_hello.png)
+
+If the trace view is still empty, you were likely not quick enough. By default,
+the trace view shows the last 5 seconds. Try extending the time window using the
+drop-down menu on the left of the {guilabel}`🗘 Refresh` button. For instance,
+you can select {guilabel}`Last 5 minutes`.
+
+The trace view is most useful for analyzing the execution of more complex
+applications. For instance, below you can see the trace view for the
+{ref}`YOLO<yolo>` example, when run with the `--trace` argument. Note that you
+can use the drop-down just next to the {guilabel}`🗘 Refresh` button and select
+{guilabel}`Auto` to enable automatic refreshing, which provides a live view of
+the collected data.
+
+![dashboard yolo](./tutorials/_img/dashboard_yolo.png)
+
+(queries)=
+## Visualizing Metrics
+
+We can also use the dashboard to visualize data values recorded for
+{ref}`metrics <metrics>`. When you run an application that uses {ref}`metrics`
+while the dashboard is running and tracing is enabled, this will also store any
+values recorded by the application in the database. For instance, you can run
+the [Monte Carlo
+example](https://github.com/xronos-inc/xronos/tree/main/examples/montecarlo),
+which already includes a few metrics. The example estimates the value of pi and
+includes metrics for the current estimate, the estimation error, and the number
+of processed points.
+
+When running a simulation with tracing set to enabled in the web interface, the
+traces of executed reactions should be shown in the default dashboard.
+
+![montecarlo dashboard](./_img/dashboard_montecarlo.png)
+
+
+Click the "Edit" button in the top-right corner of the Grafana UI to customize
+your dashboard.
+
+![dashboard enter edit mode](./_img/dashboard_enter_edit_mode.png)
+
+You can then add visualizations to select any time series of interest from your
+application.
+
+![dashboard add visualization](./_img/dashboard_add_visualization.png)
+
+We use [InfluxDB](https://www.influxdata.com/) for storing the collected data.
+InfluxDB supports two query languages:
+[InfluxQL](https://docs.influxdata.com/influxdb/v2/query-data/influxql/)
+and
+[Flux](https://docs.influxdata.com/influxdb/cloud/query-data/flux/).
+We recommend InfluxQL as it is similar to other database query languages and is
+forward-compatible to upcoming versions of InfluxDB, but you may also select the
+Flux data source if you prefer.
+
+Choose the InfluxDB InfluxQL data source to use the graphical InfluxQL editor.
+
+![dashboard InfluxQL data source](./_img/dashboard_influxql_data_source.png)
+
+Select "metrics" in the `FROM` clause to visualize metrics.
+
+![dashboard metrics measurement](./_img/dashboard_metrics_measurement.png)
+
+Delete the default `GROUP BY` clause. If you would like to visualize multiple
+metrics, you might want to group them by the `xronos.fqn` tag.
+
+![dashboard group by](./_img/dashboard_group_by.png)
+
+Finally, select the `xronos.value` field which holds the value of any recorded metric.
+
+![dashboard xronos value field](./_img/dashboard_xronos_value_field.png)
+
+You should now see a line plot like the one below.
+
+![dashboard montecarlo plot](./_img/dashboard_montecarlo_plot.png)
+
+Adjust the time window to your liking to zoom in on the data. Note that you may click and hold to select a time range that interests you.
+
+![dashboard montecarlo plot zoom](./_img/dashboard_montecarlo_plot_zoom.png)
+
+You may use the `WHERE` clause to apply a filter. For instance, in the image below only the current estimate of pi is visualized.
+
+![dashboard montecarlo plot estimat](./_img/dashboard_montecarlo_plot_estimate.png)
+
+If you wish to see it in real time, you should
+set a refresh interval.
+
+![dashboard set refresh interval](./_img/dashboard_refresh_interval.png)
+
+Save your changes to ensure that they persist, even when stopping the dashboard.
+
+![dashboard save panel](./_img/dashboard_save_panel.png)
+
+## Closing the Dashboard
+
+When you are done, you may stop the dashboard.
+
+```console
+$ xronos-dashboard stop
+✔ stopped
+```
+
+In case you want to delete all state, including all collected trace data and
+custom queries, you can use the following command.
+
+```console
+$ xronos-dashboard delete
+✔ stopped
+```

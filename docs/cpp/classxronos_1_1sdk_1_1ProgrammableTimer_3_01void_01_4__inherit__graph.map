@@ -1,0 +1,16 @@
+<map id="xronos::sdk::ProgrammableTimer&lt; void &gt;" name="xronos::sdk::ProgrammableTimer&lt; void &gt;">
+<area shape="rect" id="Node000001" title="An element for scheduling new events." alt="" coords="652,67,853,107"/>
+<area shape="rect" id="Node000002" href="$classxronos_1_1sdk_1_1Element.html" title="Base class for all reactor elements." alt="" coords="38,5,197,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="195,30,542,65,628,77,652,80,651,86,628,82,541,70,194,35"/>
+<area shape="poly" id="edge4_Node000001_Node000002" title=" " alt="" coords="210,13,365,23,542,41,628,53,698,65,698,70,628,58,541,46,365,29,210,18"/>
+<area shape="rect" id="Node000005" href="$classxronos_1_1sdk_1_1ProgrammableTimer.html" title="A reactor element for scheduling new events." alt="" coords="340,67,541,107"/>
+<area shape="poly" id="edge7_Node000005_Node000002" title=" " alt="" coords="191,31,347,65,346,70,190,36"/>
+<area shape="rect" id="Node000003" href="$classxronos_1_1sdk_1_1EventSource_3_01void_01_4.html" title="Base class for reactor elements that can be used as sources or triggers of reactions." alt="" coords="347,131,534,171"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="547,135,689,105,690,110,548,141"/>
+<area shape="poly" id="edge5_Node000001_Node000003" title=" " alt="" coords="516,125,651,97,652,102,517,131"/>
+<area shape="rect" id="Node000004" href="$classxronos_1_1sdk_1_1EventSource.html" title="Base class for reactor elements that can be used as sources or triggers of reactions." alt="" coords="5,139,229,164"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="243,149,347,149,347,154,243,154"/>
+<area shape="poly" id="edge6_Node000001_Node000005" title=" " alt="" coords="555,85,652,85,652,90,555,90"/>
+<area shape="rect" id="Node000006" href="$classxronos_1_1sdk_1_1EventSource.html" title="Base class for reactor elements that can be used as sources or triggers of reactions." alt="" coords="5,84,229,109"/>
+<area shape="poly" id="edge8_Node000005_Node000006" title=" " alt="" coords="243,90,340,88,340,93,243,96"/>
+</map>

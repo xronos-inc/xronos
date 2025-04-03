@@ -1,0 +1,452 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Object Detection with YOLO &mdash; xronos  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../_static/fix_stacking.css?v=30aa6f93" />
+
+  
+    <link rel="shortcut icon" href="../_static/logo.svg"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../_static/copybutton.js?v=35a8b989"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Yahboom Robot Arm Controller" href="robot_arm.html" />
+    <link rel="prev" title="Tutorials" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/logo_written.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference_guide/index.html">Reference Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../diagrams.html">Diagram View</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../telemetry.html">Telemetry</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dashboard.html">Trace Dashboard</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Tutorials</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Object Detection with YOLO</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#clone-the-yolo-example-and-install-dependencies">Clone the YOLO example and install dependencies</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#webcam-reactor">WebCam reactor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#dnn-reactor">DNN reactor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#display-reactor">Display reactor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#bringing-it-all-together">Bringing it all together</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="robot_arm.html">Yahboom Robot Arm Controller</a></li>
+<li class="toctree-l2"><a class="reference internal" href="external_input.html">External Input</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html">API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../lib.html">Library Reactors</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">xronos</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Tutorials</a></li>
+      <li class="breadcrumb-item active">Object Detection with YOLO</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/tutorials/yolo.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="object-detection-with-yolo">
+<span id="yolo"></span><h1>Object Detection with YOLO<a class="headerlink" href="#object-detection-with-yolo" title="Link to this heading"></a></h1>
+<p><a class="reference external" href="https://docs.ultralytics.com/">YOLO11</a> is a popular image detection framework
+for Python. In this tutorial, you will see how we can implement an object
+detection flow using xronos.</p>
+<section id="clone-the-yolo-example-and-install-dependencies">
+<h2>Clone the YOLO example and install dependencies<a class="headerlink" href="#clone-the-yolo-example-and-install-dependencies" title="Link to this heading"></a></h2>
+<p>Begin by cloning the <code class="docutils literal notranslate"><span class="pre">xronos</span></code> repository and navigating to the YOLO example.</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/xronos-inc/xronos
+<span class="gp">$ </span><span class="nb">cd</span><span class="w"> </span>xronos/examples/YOLO
+</pre></div>
+</div>
+<p>Set up a virtual environment and install xronos, see <a class="reference internal" href="../getting_started.html#xronos-installation"><span class="std std-ref">Installation</span></a> instructions.</p>
+<p>Install the dependencies of the YOLOv11 example.</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>apt-get<span class="w"> </span>install<span class="w"> </span>libgl1
+<span class="gp">$ </span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+</pre></div>
+</div>
+</section>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading"></a></h2>
+<p>Familiarize yourself with the main program in <code class="docutils literal notranslate"><span class="pre">YOLO.py</span></code>. After parsing some
+command line arguments, the <code class="docutils literal notranslate"><span class="pre">main()</span></code> function assembles the reactor program.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span>
+    <span class="n">video_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">no_display</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">trace</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">env</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">Environment</span><span class="p">()</span>
+    <span class="n">webCam</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span>
+        <span class="s2">&quot;WebCam&quot;</span><span class="p">,</span> <span class="n">WebCam</span><span class="p">,</span> <span class="n">frames_per_second</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">video_stream_path</span><span class="o">=</span><span class="n">video_path</span>
+    <span class="p">)</span>
+    <span class="n">dnn</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;DNN&quot;</span><span class="p">,</span> <span class="n">DNN</span><span class="p">,</span> <span class="n">model_path</span><span class="o">=</span><span class="s2">&quot;yolo11n.pt&quot;</span><span class="p">)</span>
+    <span class="n">display</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;Display&quot;</span><span class="p">,</span> <span class="n">Display</span><span class="p">,</span> <span class="n">no_display</span><span class="o">=</span><span class="n">no_display</span><span class="p">)</span>
+
+    <span class="n">env</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">webCam</span><span class="o">.</span><span class="n">frame</span><span class="p">,</span> <span class="n">display</span><span class="o">.</span><span class="n">frame</span><span class="p">)</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">webCam</span><span class="o">.</span><span class="n">frame</span><span class="p">,</span> <span class="n">dnn</span><span class="o">.</span><span class="n">frame</span><span class="p">)</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">dnn</span><span class="o">.</span><span class="n">result</span><span class="p">,</span> <span class="n">display</span><span class="o">.</span><span class="n">dnn_result</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">trace</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;enable tracing&quot;</span><span class="p">)</span>
+        <span class="n">env</span><span class="o">.</span><span class="n">enable_tracing</span><span class="p">()</span>
+
+    <span class="n">env</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>This creates the following reactor program.</p>
+<p><img alt="YOLO diagram" src="../_images/diagram_yolo.png" /></p>
+<p>In the following we will go through each of the three reactors.</p>
+</section>
+<section id="webcam-reactor">
+<h2>WebCam reactor<a class="headerlink" href="#webcam-reactor" title="Link to this heading"></a></h2>
+<p>Open <code class="docutils literal notranslate"><span class="pre">WebCam.py</span></code>. The <code class="docutils literal notranslate"><span class="pre">WebCam</span></code> reactor declares two reactor elements, using an <a class="reference internal" href="../api.html#xronos.ProgrammableTimerDeclaration" title="xronos.ProgrammableTimerDeclaration"><code class="xref py py-class docutils literal notranslate"><span class="pre">ProgrammableTimerDeclaration</span></code></a> called
+<code class="docutils literal notranslate"><span class="pre">_sample_webcam</span></code> and an <a class="reference internal" href="../api.html#xronos.OutputPortDeclaration" title="xronos.OutputPortDeclaration"><code class="xref py py-class docutils literal notranslate"><span class="pre">OutputPortDeclaration</span></code></a> called <code class="docutils literal notranslate"><span class="pre">frame</span></code>. Programmable timers are objects which the program
+can use to schedule future events. Unlike periodic timers, where the timestamps of the events are periodic, programmable timers can be
+scheduled at arbitrary intervals and are, as such, more expressive than periodic timers.
+Reactors communicate by exchanging events via ports. In this case, <code class="docutils literal notranslate"><span class="pre">WebCam</span></code> can
+send events containing <code class="docutils literal notranslate"><span class="pre">cv2</span></code> matrices.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">WebCam</span><span class="p">(</span><span class="n">xronos</span><span class="o">.</span><span class="n">Reactor</span><span class="p">):</span>
+    <span class="n">_sample_webcam</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">ProgrammableTimerDeclaration</span><span class="p">[</span><span class="kc">None</span><span class="p">]()</span>
+    <span class="n">frame</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">OutputPortDeclaration</span><span class="p">[</span><span class="n">cv2</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">MatLike</span><span class="p">]()</span>
+
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">__init__</span></code> method defines the <code class="docutils literal notranslate"><span class="pre">sample_period</span></code> attribute and opens a <code class="docutils literal notranslate"><span class="pre">VideoCapture</span></code>
+stream using <code class="docutils literal notranslate"><span class="pre">cv2</span></code>.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span> <span class="n">frames_per_second</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">video_stream_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">sample_period</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">frames_per_second</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sample_period</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">video_stream_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stream</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">VideoCapture</span><span class="p">(</span><span class="n">video_stream_path</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stream</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">VideoCapture</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">cv2</span><span class="o">.</span><span class="n">CAP_ANY</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">stream</span><span class="o">.</span><span class="n">isOpened</span><span class="p">():</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;ERROR: Could not open VideoCapture stream&quot;</span><span class="p">)</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">stream</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">cv2</span><span class="o">.</span><span class="n">CAP_PROP_FPS</span><span class="p">,</span> <span class="n">frames_per_second</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The reactor contains three reactions. <code class="docutils literal notranslate"><span class="pre">on_startup</span></code> is triggered by
+<a class="reference internal" href="../api.html#xronos.Reactor.startup" title="xronos.Reactor.startup"><code class="xref py py-attr docutils literal notranslate"><span class="pre">startup</span></code></a>. The startup reaction uses
+<a class="reference internal" href="../api.html#xronos.ReactionInterface.add_effect" title="xronos.ReactionInterface.add_effect"><code class="xref py py-func docutils literal notranslate"><span class="pre">add_effect()</span></code></a> to declare an effect on the
+programmable timer <code class="docutils literal notranslate"><span class="pre">_sample_webcam</span></code>. This allows the reaction handler to schedule
+the first occurrence of <code class="docutils literal notranslate"><span class="pre">_sample_webcam</span></code> event. Instead of invoking
+<code class="xref py py-func docutils literal notranslate"><span class="pre">schedule()</span></code> directly, the reaction handler uses the
+convenience function <code class="docutils literal notranslate"><span class="pre">reschedule_sample_webcam</span></code> to schedule the first event. We
+will explain this function in more detail later.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@xronos</span><span class="o">.</span><span class="n">reaction</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">on_startup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface</span><span class="p">:</span> <span class="n">xronos</span><span class="o">.</span><span class="n">ReactionInterface</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">]:</span>
+    <span class="n">interface</span><span class="o">.</span><span class="n">add_trigger</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">startup</span><span class="p">)</span>
+    <span class="n">sample_webcam_effect</span> <span class="o">=</span> <span class="n">interface</span><span class="o">.</span><span class="n">add_effect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sample_webcam</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">handler</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reschedule_sample_webcam</span><span class="p">(</span><span class="n">sample_webcam_effect</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">handler</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">on_sample_webcam</span></code> reaction is triggered by the <code class="docutils literal notranslate"><span class="pre">_sample_webcam</span></code> event and may have
+an effect on the <code class="docutils literal notranslate"><span class="pre">fame</span></code> output port. The main task of the handler is to read a
+frame from the camera and to forward this frame to the next reactor using the
+<code class="docutils literal notranslate"><span class="pre">frame</span></code> output port. A value is written to a port by calling <a class="reference internal" href="../api.html#xronos.PortEffect.set" title="xronos.PortEffect.set"><code class="xref py py-func docutils literal notranslate"><span class="pre">set()</span></code></a>
+on the declared port effect. If no frame could be read, the
+handler stops the program using <a class="reference internal" href="../api.html#xronos.Environment.request_shutdown" title="xronos.Environment.request_shutdown"><code class="xref py py-func docutils literal notranslate"><span class="pre">request_shutdown()</span></code></a>.
+Finally, the handler uses <code class="docutils literal notranslate"><span class="pre">reschedule_sample_webcam</span></code> to schedule the next
+occurrence of <code class="docutils literal notranslate"><span class="pre">_sample_webcam</span></code>, so that the reaction will be triggered again in
+the future.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@xronos</span><span class="o">.</span><span class="n">reaction</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">on_sample_webcam</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span> <span class="n">interface</span><span class="p">:</span> <span class="n">xronos</span><span class="o">.</span><span class="n">ReactionInterface</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">]:</span>
+    <span class="n">interface</span><span class="o">.</span><span class="n">add_trigger</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sample_webcam</span><span class="p">)</span>
+    <span class="n">sample_webcam_effect</span> <span class="o">=</span> <span class="n">interface</span><span class="o">.</span><span class="n">add_effect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sample_webcam</span><span class="p">)</span>
+    <span class="n">frame_effect</span> <span class="o">=</span> <span class="n">interface</span><span class="o">.</span><span class="n">add_effect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">frame</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">handler</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">ret</span><span class="p">,</span> <span class="n">_frame</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stream</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">ret</span><span class="p">:</span>
+            <span class="n">frame_effect</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">_frame</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;WARNING: Failed to read frames from videostream. Shutting down.&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">environment</span><span class="o">.</span><span class="n">request_shutdown</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reschedule_sample_webcam</span><span class="p">(</span><span class="n">sample_webcam_effect</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">handler</span>
+</pre></div>
+</div>
+<p>The function <code class="docutils literal notranslate"><span class="pre">reschedule_sample_webcam</span></code>, that is used for scheduling new occurrences of the <code class="docutils literal notranslate"><span class="pre">_sample_webcam</span></code> event,
+implements a simple adaptive load-balancing strategy. It uses <a class="reference internal" href="../api.html#xronos.Reactor.get_lag" title="xronos.Reactor.get_lag"><code class="xref py py-func docutils literal notranslate"><span class="pre">xronos.Reactor.get_lag()</span></code></a> to inspect how closely
+events are processed with respect to real-time. If the lag is greater than <code class="docutils literal notranslate"><span class="pre">sample_period</span></code> we skip a number of
+samples. Note that event itself is declared to carry no value. Therefore, it is scheduled using <code class="docutils literal notranslate"><span class="pre">value=None</span></code>.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">reschedule_sample_webcam</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="p">:</span> <span class="n">xronos</span><span class="o">.</span><span class="n">ProgrammableTimerEffect</span><span class="p">[</span><span class="kc">None</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">next_sample_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_period</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_period</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">get_lag</span><span class="p">()</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_period</span>
+    <span class="p">)</span>
+    <span class="n">action</span><span class="o">.</span><span class="n">schedule</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">delay</span><span class="o">=</span><span class="n">next_sample_time</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">on_shutdown</span></code> reaction is triggered by the <a class="reference internal" href="../api.html#xronos.Reactor.shutdown" title="xronos.Reactor.shutdown"><code class="xref py py-attr docutils literal notranslate"><span class="pre">shutdown</span></code></a>
+event. The handler frees up resources and gracefully shuts the camera stream
+down. Even in response to an unhandled exception or <kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">C</kbd>, the
+shutdown handler is invoked and closes the video stream.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@xronos</span><span class="o">.</span><span class="n">reaction</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">on_shutdown</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface</span><span class="p">:</span> <span class="n">xronos</span><span class="o">.</span><span class="n">ReactionInterface</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">]:</span>
+    <span class="n">interface</span><span class="o">.</span><span class="n">add_trigger</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shutdown</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">handler</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Cleaning up WebCam&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">stream</span><span class="o">.</span><span class="n">isOpened</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stream</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">handler</span>
+</pre></div>
+</div>
+</section>
+<section id="dnn-reactor">
+<h2>DNN reactor<a class="headerlink" href="#dnn-reactor" title="Link to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">DNN</span></code> reactor is found in <code class="docutils literal notranslate"><span class="pre">DNN.py</span></code>. It declares an input port called <code class="docutils literal notranslate"><span class="pre">frame</span></code> and output port called <code class="docutils literal notranslate"><span class="pre">result</span></code>.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">DNN</span><span class="p">(</span><span class="n">xronos</span><span class="o">.</span><span class="n">Reactor</span><span class="p">):</span>
+    <span class="n">frame</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">InputPortDeclaration</span><span class="p">[</span><span class="n">cv2</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">MatLike</span><span class="p">]()</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">OutputPortDeclaration</span><span class="p">[</span>
+        <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">],</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">]]</span>
+    <span class="p">]()</span>
+
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">__init__</span></code> method checks whether there is a GPU with CUDA support and loads
+the YOLO model parameters using the <code class="docutils literal notranslate"><span class="pre">ultralytics</span></code> module.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">():</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Using CUDA for inference&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="s2">&quot;cuda&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Using CPU for inference&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="s2">&quot;cpu&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">:</span> <span class="n">ultralytics</span><span class="o">.</span><span class="n">YOLO</span> <span class="o">=</span> <span class="n">ultralytics</span><span class="o">.</span><span class="n">YOLO</span><span class="p">(</span><span class="n">model_path</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
+</pre></div>
+</div>
+<p>The reactor defines a single reaction. It is triggered by the <code class="docutils literal notranslate"><span class="pre">frame</span></code> input
+port and has the output port <code class="docutils literal notranslate"><span class="pre">result</span></code> as an effect. Upon receiving a frame it
+does inference using the YOLO model and extracts bounding boxes, confidence
+values and names. The result is written to the output port.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@xronos</span><span class="o">.</span><span class="n">reaction</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">on_frame</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface</span><span class="p">:</span> <span class="n">xronos</span><span class="o">.</span><span class="n">ReactionInterface</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">]:</span>
+    <span class="n">frame_trigger</span> <span class="o">=</span> <span class="n">interface</span><span class="o">.</span><span class="n">add_trigger</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">frame</span><span class="p">)</span>
+    <span class="n">result_effect</span> <span class="o">=</span> <span class="n">interface</span><span class="o">.</span><span class="n">add_effect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">result</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">handler</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># Run the model on the frame</span>
+        <span class="n">results</span><span class="p">:</span> <span class="n">ultralytics</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">results</span><span class="o">.</span><span class="n">Results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span>  <span class="c1"># type: ignore</span>
+            <span class="p">[</span><span class="n">frame_trigger</span><span class="o">.</span><span class="n">get</span><span class="p">()]</span>
+        <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="c1"># Extract names, bounding boxes and confidences scores from the results.</span>
+        <span class="n">boundingBoxes</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">boxes</span><span class="o">.</span><span class="n">xyxyn</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+        <span class="n">confidences</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">boxes</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="n">results</span><span class="o">.</span><span class="n">names</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">results</span><span class="o">.</span><span class="n">boxes</span><span class="o">.</span><span class="n">cls</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()]</span>
+        <span class="n">result_effect</span><span class="o">.</span><span class="n">set</span><span class="p">((</span><span class="n">names</span><span class="p">,</span> <span class="n">confidences</span><span class="p">,</span> <span class="n">boundingBoxes</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">handler</span>
+</pre></div>
+</div>
+</section>
+<section id="display-reactor">
+<h2>Display reactor<a class="headerlink" href="#display-reactor" title="Link to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">Display</span></code> reactor is found in <code class="docutils literal notranslate"><span class="pre">Display.py</span></code>. It declares two input ports <code class="docutils literal notranslate"><span class="pre">frame</span></code> and <code class="docutils literal notranslate"><span class="pre">dnn_result</span></code>.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Display</span><span class="p">(</span><span class="n">xronos</span><span class="o">.</span><span class="n">Reactor</span><span class="p">):</span>
+    <span class="c1"># Display requires events frame and dnn_result to be simultaneous.</span>
+    <span class="n">frame</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">InputPortDeclaration</span><span class="p">[</span><span class="n">cv2</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">MatLike</span><span class="p">]()</span>
+    <span class="n">dnn_result</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">InputPortDeclaration</span><span class="p">[</span>
+        <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">],</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">]]</span>
+    <span class="p">]()</span>
+
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">__init__</span></code> method initializes a few attributes.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span> <span class="n">confidence_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.7</span><span class="p">,</span> <span class="n">no_display</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">confidence_threshold</span> <span class="o">=</span> <span class="n">confidence_threshold</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">label_color</span> <span class="o">=</span> <span class="n">LABEL_COLOR</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">no_display</span> <span class="o">=</span> <span class="n">no_display</span>
+</pre></div>
+</div>
+<p>The reactor defines two reactions. <code class="docutils literal notranslate"><span class="pre">on_frame</span></code> is triggered by both input ports.
+This means that if a message is received on either input port, the reaction will
+be executed. If both input ports receive a message with identical timestamps, the
+xronos runtime ensures that the reaction is only executed once, with both input
+ports present. In this case, the messages arrive <em>simultaneously</em>. The presence of
+an event can be checked using the <code class="xref py py-func docutils literal notranslate"><span class="pre">Source.is_present()</span></code> method. The ability
+to align events on multiple input port simplifies the application logic needed.
+The reaction handler can fully focus on sensor fusion.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@xronos</span><span class="o">.</span><span class="n">reaction</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">on_frame</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface</span><span class="p">:</span> <span class="n">xronos</span><span class="o">.</span><span class="n">ReactionInterface</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">]:</span>
+    <span class="n">frame_trigger</span> <span class="o">=</span> <span class="n">interface</span><span class="o">.</span><span class="n">add_trigger</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">frame</span><span class="p">)</span>
+    <span class="n">dnn_result_trigger</span> <span class="o">=</span> <span class="n">interface</span><span class="o">.</span><span class="n">add_trigger</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dnn_result</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">handler</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">frame_trigger</span><span class="o">.</span><span class="n">is_present</span><span class="p">()</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">dnn_result_trigger</span><span class="o">.</span><span class="n">is_present</span><span class="p">():</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="s2">&quot;ERROR: Display requires events frame and dnn_result simultaneously&quot;</span>
+            <span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="n">current_frame</span> <span class="o">=</span> <span class="n">frame_trigger</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+        <span class="n">current_dnn_result</span> <span class="o">=</span> <span class="n">dnn_result_trigger</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+
+        <span class="n">x_shape</span><span class="p">,</span> <span class="n">y_shape</span> <span class="o">=</span> <span class="n">current_frame</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">current_frame</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="c1"># Draw all the object detection triangles and dnn_result</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">confidence</span><span class="p">,</span> <span class="n">coordinate</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">current_dnn_result</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">confidence</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">confidence_threshold</span><span class="p">:</span>
+                <span class="n">x1</span><span class="p">,</span> <span class="n">y1</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">coordinate</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">x_shape</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">coordinate</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">y_shape</span><span class="p">)</span>  <span class="c1"># type: ignore[index]</span>
+                <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">coordinate</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="n">x_shape</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">coordinate</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">*</span> <span class="n">y_shape</span><span class="p">)</span>  <span class="c1"># type: ignore[index]</span>
+                <span class="n">cv2</span><span class="o">.</span><span class="n">rectangle</span><span class="p">(</span>
+                    <span class="n">current_frame</span><span class="p">,</span> <span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">),</span> <span class="p">(</span><span class="n">x2</span><span class="p">,</span> <span class="n">y2</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">label_color</span><span class="p">,</span> <span class="mi">2</span>
+                <span class="p">)</span>
+                <span class="n">cv2</span><span class="o">.</span><span class="n">putText</span><span class="p">(</span>
+                    <span class="n">current_frame</span><span class="p">,</span>
+                    <span class="n">name</span><span class="p">,</span>
+                    <span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">),</span>
+                    <span class="n">cv2</span><span class="o">.</span><span class="n">FONT_HERSHEY_SIMPLEX</span><span class="p">,</span>
+                    <span class="mf">0.9</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">label_color</span><span class="p">,</span>
+                    <span class="mi">2</span><span class="p">,</span>
+                <span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">no_display</span><span class="p">:</span>
+            <span class="c1"># Draw actual frame</span>
+            <span class="n">cv2</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="s2">&quot;frame&quot;</span><span class="p">,</span> <span class="n">current_frame</span><span class="p">)</span>
+            <span class="c1"># Terminate on press-q</span>
+            <span class="n">cv2</span><span class="o">.</span><span class="n">putText</span><span class="p">(</span>
+                <span class="n">current_frame</span><span class="p">,</span>
+                <span class="s2">&quot;Exit with `q`&quot;</span><span class="p">,</span>
+                <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">30</span><span class="p">),</span>
+                <span class="n">cv2</span><span class="o">.</span><span class="n">FONT_HERSHEY_SIMPLEX</span><span class="p">,</span>
+                <span class="mi">1</span><span class="p">,</span>
+                <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+                <span class="mi">2</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">cv2</span><span class="o">.</span><span class="n">waitKey</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="nb">ord</span><span class="p">(</span><span class="s2">&quot;q&quot;</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">environment</span><span class="o">.</span><span class="n">request_shutdown</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">handler</span>
+</pre></div>
+</div>
+<p>Finally, the <code class="docutils literal notranslate"><span class="pre">on_shutdown</span></code> reaction is triggered by the
+<a class="reference internal" href="../api.html#xronos.Reactor.shutdown" title="xronos.Reactor.shutdown"><code class="xref py py-attr docutils literal notranslate"><span class="pre">xronos.Reactor.shutdown</span></code></a> event and closes the window.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@xronos</span><span class="o">.</span><span class="n">reaction</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">on_shutdown</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface</span><span class="p">:</span> <span class="n">xronos</span><span class="o">.</span><span class="n">ReactionInterface</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">]:</span>
+    <span class="n">interface</span><span class="o">.</span><span class="n">add_trigger</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shutdown</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">handler</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Cleaning up Display&quot;</span><span class="p">)</span>
+        <span class="n">cv2</span><span class="o">.</span><span class="n">destroyAllWindows</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">handler</span>
+</pre></div>
+</div>
+</section>
+<section id="bringing-it-all-together">
+<h2>Bringing it all together<a class="headerlink" href="#bringing-it-all-together" title="Link to this heading"></a></h2>
+<p>Run the example application with disabled debug logging from torch:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span><span class="nv">YOLO_VERBOSE</span><span class="o">=</span>False<span class="w"> </span>python<span class="w"> </span>YOLO.py
+</pre></div>
+</div>
+<p>A window will appear displaying the video stream from your webcam and the object detection made by YOLO.</p>
+<p>Optionally, you can append the <code class="docutils literal notranslate"><span class="pre">--trace</span></code> argument to visualize the program
+execution in the <a class="reference internal" href="../dashboard.html#dashboard"><span class="std std-ref">Trace Dashboard</span></a>.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="Tutorials" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="robot_arm.html" class="btn btn-neutral float-right" title="Yahboom Robot Arm Controller" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Xronos Inc..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
