@@ -1,0 +1,164 @@
+THIRD-PARTY SOFTWARE NOTICES AND INFORMATION
+
+This project includes third-party software components, which are distributed under the
+following licenses. Full licenses and notices are provided in the
+[third-party-licenses](third-party-licenses) subdirectory.
+
+---
+
+Component: Abseil C++
+Version: Abseil LTS 20240116.1
+License: Apache License 2.0
+License text: https://www.apache.org/licenses/LICENSE-2.0
+Source: https://github.com/abseil/abseil-cpp
+
+For the full license text, see:
+[third-party-licenses/libabseil_LICENSE](third-party-licenses/libabseil_LICENSE)
+
+---
+
+Component address_sorting
+License: BSD 3-Clause License
+License text: https://opensource.org/licenses/BSD-3-Clause
+Source: https://github.com/grpc/grpc/tree/v1.67.1/third_party/address_sorting
+
+[third-party-licenses/address_sorting_LICENSE](third-party-licenses/address_sorting_LICENSE)
+
+---
+
+Component boringssl
+License: Mixed, see full license text
+Version dec0d8f681348af8bb675e07bd89989665fca8bc
+Source: https://boringssl.googlesource.com/boringssl
+
+[third-party-licenses/boringssl_LICENSE](third-party-licenses/boringssl_LICENSE)
+
+---
+
+Component: gRPC
+Version: v1.67.1
+License: Apache License 2.0
+License text: https://www.apache.org/licenses/LICENSE-2.0
+Source: https://github.com/grpc/grpc
+
+[third-party-licenses/grpc_LICENSE](third-party-licenses/grpc_LICENSE)
+
+---
+
+Component: myst_parser
+Version: v4.0.0
+License: MIT License
+License text: https://opensource.org/licenses/MIT
+Source: https://github.com/executablebooks/MyST-Parser
+
+For the full license text, see:
+[third-party-licenses/myst_parser_LICENSE](third-party-licenses/myst_parser_LICENSE)
+
+---
+
+Component: OpenTelemetry protcol (OLTP)
+Version: v1.3.2
+License: Apache License 2.0
+License text: https://www.apache.org/licenses/LICENSE-2.0
+Source: https://github.com/open-telemetry/opentelemetry-proto
+
+For the full license text, see:
+[third-party-licenses/opentelemetry_proto_LICENSE](third-party-licenses/opentelemetry_proto_LICENSE)
+
+---
+
+Component: OpenTelemetry C++
+Version: v1.17.0
+License: Apache License 2.0
+License text: https://www.apache.org/licenses/LICENSE-2.0
+Source: https://github.com/open-telemetry/opentelemetry-cpp
+
+For the full license text, see:
+[third-party-licenses/opentelemetry_cpp_LICENSE](third-party-licenses/opentelemetry_cpp_LICENSE)
+
+---
+
+Component: protobuf
+Version: v27.2
+License: BSD 3-Clause License
+License text: https://opensource.org/licenses/BSD-3-Clause
+Source: https://github.com/protocolbuffers/protobuf
+
+For the full license text, see:
+[third-party-licenses/protobuf_LICENSE](third-party-licenses/protobuf_LICENSE)
+
+---
+
+Component: pybind11
+Version: v2.13.6
+License: BSD 3-Clause License
+License text: https://opensource.org/licenses/BSD-3-Clause
+Source: https://github.com/pybind/pybind11
+
+For the full license text, see:
+[third-party-licenses/pybind11_LICENSE](third-party-licenses/pybind11_LICENSE)
+
+---
+
+Component: reactor-cpp
+Version: ae09ff11b131ff926bc4af3b4b4b466c6ca16c1d
+License: ISC License
+License text: https://opensource.org/licenses/ISC
+Source: https://github.com/lf-lang/reactor-cpp
+
+For the full license text, see:
+[third-party-licenses/reactor_cpp_LICENSE](third-party-licenses/reactor_cpp_LICENSE)
+
+---
+
+Component: re2
+Version: 2022-04-01
+License: BSD 3-Clause License
+License text: https://opensource.org/licenses/BSD-3-Clause
+Source: https://github.com/google/re2
+
+For the full license text, see:
+[third-party-licenses/re2_LICENSE](third-party-licenses/re2_LICENSE)
+
+---
+
+Component: sphinx-copybutton
+Version: v0.5.2
+License: MIT License
+License text: https://opensource.org/licenses/MIT
+Source: https://github.com/executablebooks/sphinx-copybutton
+
+For the full license text, see:
+[third-party-licenses/sphinx_copybutton_LICENSE](third-party-licenses/sphinx_copybutton_LICENSE)
+
+---
+
+Component: sphinx_rtd_theme
+Version: 3.0.2
+License: MIT License
+License text: https://opensource.org/licenses/MIT
+Source: https://github.com/readthedocs/sphinx_rtd_theme
+
+For the full license text, see:
+[third-party-licenses/sphinx_rtd_theme_LICENSE](third-party-licenses/sphinx_rtd_theme_LICENSE)
+
+---
+
+Component: sphinx-tabs
+Version: 3.4.7
+License: MIT License
+License text: https://opensource.org/licenses/MIT
+Source: https://github.com/executablebooks/sphinx-tabs
+
+For the full license text, see:
+[third-party-licenses/sphinx_tabs_LICENSE](third-party-licenses/sphinx_tabs_LICENSE)
+
+---
+
+Component: utf8_range
+License: MIT License
+License text: https://opensource.org/licenses/MIT
+Source: https://github.com/grpc/grpc/tree/v1.67.1/third_party/utf8_range
+
+For the full license text, see:
+[third-party-licenses/utf8_range_LICENSE](third-party-licenses/utf8_range_LICENSE)

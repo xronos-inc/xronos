@@ -42,6 +42,13 @@
                 <label for="delay">Delay per Batch (ms):</label>
                 <input type="number" id="delay" value="10" min="0">
             </div>
+            <div class="control-group">
+                <label for="tracing">Tracing:</label>
+                <select id="tracing">
+                    <option value="true">Enabled</option>
+                    <option value="false" selected>Disabled</option>
+                </select>
+            </div>
             <button onclick="startSimulation()">Start Simulation</button>
         </div>
 
@@ -159,8 +166,9 @@
             const totalPoints = document.getElementById("totalPoints").value;
             const batchSize = document.getElementById("batchSize").value;
             const delay = document.getElementById("delay").value;
+            const tracing = document.getElementById("tracing").value;
 
-            ws = new WebSocket(`ws://localhost:8000/ws/${totalPoints}/${batchSize}/${delay}`);
+            ws = new WebSocket(`ws://localhost:8000/ws/${totalPoints}/${batchSize}/${delay}/${tracing}`);
 
             // Buffer for batching points
             let pointBuffer = [];

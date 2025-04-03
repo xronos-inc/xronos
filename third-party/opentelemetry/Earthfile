@@ -1,0 +1,18 @@
+VERSION 0.8
+
+IMPORT ../../base-images AS base-images
+
+build:
+  FROM base-images+build-essential
+  COPY base-images+grpc/grpc-install /install
+  COPY CMakeLists.txt opentelemetry.cmake .
+  RUN cmake -S . -B build -DCMAKE_INSTALL_PREFIX=/install
+  RUN LD_LIBRARY_PATH=/install/lib  cmake --build build -j$(nproc)  --config Release
+
+install:
+  FROM +build
+  RUN cmake --build build --target install
+  RUN mkdir -p third-party/opentelemetry
+  COPY opentelemetry.cmake third-party/opentelemetry
+  SAVE ARTIFACT /install
+  SAVE ARTIFACT third-party

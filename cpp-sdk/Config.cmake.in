@@ -1,0 +1,9 @@
+@PACKAGE_INIT@
+
+message("-- Found xronos-sdk: ${CMAKE_CURRENT_LIST_DIR}")
+
+include(CMakeFindDependencyMacro)
+
+find_dependency(xronos-lib CONFIG REQUIRED)
+
+include("${CMAKE_CURRENT_LIST_DIR}/xronos-libTargets.cmake")
