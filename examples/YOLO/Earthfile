@@ -1,0 +1,39 @@
+VERSION 0.8
+
+IMPORT ../ AS examples
+IMPORT ../../base-images AS base-images
+
+dependencies:
+    # download wheels for all requirements except xronos
+    FROM --pass-args base-images+python-venv
+    COPY requirements.txt ./
+    RUN sed -i /^xronos/d requirements.txt
+    RUN . /xronos/.venv/bin/activate && pip wheel -r requirements.txt --wheel-dir=wheels
+    SAVE ARTIFACT wheels /wheels
+
+common:
+    FROM --pass-args examples+common-base
+ 
+    RUN apt update && apt -y install libgl1
+
+    COPY +dependencies/wheels wheels
+    COPY requirements.txt .
+    RUN echo "This echo command is used to invalidate build cache so that a particular corrupted Earthly data structure is not used."
+    RUN . /xronos/.venv/bin/activate && pip install --no-index --find-links=wheels -r requirements.txt 
+
+    WORKDIR /xronos/examples/YOLO
+    COPY *.py .
+    COPY --dir test test
+
+test:
+    FROM --pass-args +common
+    WORKDIR /xronos/examples/YOLO
+    RUN . /xronos/.venv/bin/activate && pytest --config-file=../pytest.ini
+
+lint:
+    FROM +common
+    WORKDIR /xronos/examples/YOLO
+    RUN . /xronos/.venv/bin/activate && ruff --config=../ruff.toml check
+    RUN . /xronos/.venv/bin/activate && ruff --config=../ruff.toml format --diff
+    RUN . /xronos/.venv/bin/activate && mypy --config-file=../mypy.ini .
+    RUN . /xronos/.venv/bin/activate && pyright --project .. .

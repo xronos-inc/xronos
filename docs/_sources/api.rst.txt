@@ -1,8 +1,0 @@
-API Documentation
-=================
-
-.. automodule:: xronos
-   :members:
-   :imported-members:
-   :inherited-members: Exception
-   :undoc-members:

@@ -24,8 +24,8 @@ class UserInterface(xronos.Reactor, Generic[T]):
 
     unblock = xronos.InputPortDeclaration[bool]()
     output = xronos.OutputPortDeclaration[T]()
-    _user_input_event = xronos.PhysicalEventDeclaration[str]()
-    _unblock_event = xronos.InternalEventDeclaration[None]()
+    _user_input = xronos.PhysicalEventDeclaration[str]()
+    _unblock = xronos.ProgrammableTimerDeclaration[None]()
 
     def __init__(
         self, blocking: bool, parser: Callable[[str], T | None | KeyboardInterrupt]
@@ -54,9 +54,9 @@ class UserInterface(xronos.Reactor, Generic[T]):
     @xronos.reaction
     def on_user_input(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
         """Parse the user input and output any parsed command on the output port."""
-        user_input_trigger = interface.add_trigger(self._user_input_event)
+        user_input_trigger = interface.add_trigger(self._user_input)
         output_effect = interface.add_effect(self.output)
-        unblock_effect = interface.add_effect(self._unblock_event)
+        unblock_effect = interface.add_effect(self._unblock)
 
         def handler() -> None:
             cmd = self.parser(user_input_trigger.get())
@@ -77,7 +77,7 @@ class UserInterface(xronos.Reactor, Generic[T]):
 
         Allows accepting new inputs from the conslole.
         """
-        interface.add_trigger(self._unblock_event)
+        interface.add_trigger(self._unblock)
         interface.add_trigger(self.unblock)
 
         def handler() -> None:
@@ -104,5 +104,5 @@ class UserInterface(xronos.Reactor, Generic[T]):
         """
         while not stop_event.is_set():
             cmd = input("> ")
-            self._user_input_event.schedule(cmd)
+            self._user_input.trigger(cmd)
             self.semaphore.acquire()
