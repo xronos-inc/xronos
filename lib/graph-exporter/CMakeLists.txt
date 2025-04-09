@@ -7,6 +7,7 @@ target_include_directories(
 target_link_libraries(xronos-graph-exporter
                       PRIVATE xronos-runtime
                               xronos-graph-messages)
+target_compile_options(xronos-graph-exporter PRIVATE -Wall -Wextra -pedantic -Werror -Wno-error=unused-parameter)
 
 if(XRONOS_LIB_RUN_CLANG_TIDY)
   set_target_properties(xronos-graph-exporter

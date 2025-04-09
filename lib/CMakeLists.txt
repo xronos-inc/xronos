@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.28)
 
-project(xronos-lib LANGUAGES CXX VERSION "0.1.0")
-set(PROJECT_VERSION "0.1.0")
+project(xronos-lib LANGUAGES CXX VERSION "0.2.0")
+set(PROJECT_VERSION "0.2.0")
 
 # require C++ 20
 set(CMAKE_CXX_STANDARD 20 CACHE STRING "The C++ standard." FORCE)
@@ -35,23 +35,6 @@ option(XRONOS_LIB_INSTALL_HEADERS "Generate installation target for header files
 option(XRONOS_LIB_BUILD_TESTS "Build the tests" ${BUILD_TESTS_DEFAULT})
 option(XRONOS_LIB_RUN_CLANG_TIDY "Enable building with clang-tidy" ${RUN_CLANG_TIDY_DEFAULT})
 
-find_package(Protobuf CONFIG)
-# On Ubuntu, there is no cmake config available for Protobuf.
-# We use the FindProtobuf module as fallback.
-if(NOT Protobuf_FOUND)
-  find_package(Protobuf REQUIRED)
-endif()
-
-find_package(gRPC CONFIG)
-# on Ubuntu, there is no cmake config available for gRPC.
-# We use pkg-config as fallback.
-if(NOT gRPC_FOUND)
-  find_package(PkgConfig REQUIRED)
-  pkg_search_module(gRPC::grpc REQUIRED grpc)
-  pkg_search_module(gRPC::grpc++ REQUIRED grpc)
-  pkg_search_module(gRPC::grpc_cpp_plugin REQUIRED grpc)
-endif()
-
 if(XRONOS_LIB_RUN_CLANG_TIDY)
   find_program(CLANG_TIDY ${CLANG_TIDY_COMMAND} REQUIRED)
   if(CLANG_TIDY_ERROR)
@@ -72,8 +55,6 @@ if(XRONOS_LIB_BUILD_TESTS)
   include(Catch)
 endif()
 
-add_compile_options(-Wall -Wextra -pedantic -Werror)
-
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 if(DEFINED XRONOS_RUNTIME_SOURCE_DIRECTORY)
@@ -88,7 +69,13 @@ else()
 endif()
 
 set(OPENTELEMETRY_INSTALL ${XRONOS_LIB_INSTALL})
+include(../third-party/absl/absl.cmake)
+include(../third-party/protobuf/protobuf.cmake)
+include(../third-party/grpc/grpc.cmake)
 include(../third-party/opentelemetry/opentelemetry.cmake)
+
+find_package(Protobuf CONFIG REQUIRED)
+find_package(gRPC CONFIG REQUIRED)
 
 add_subdirectory(graph-exporter)
 add_subdirectory(graph-messages)

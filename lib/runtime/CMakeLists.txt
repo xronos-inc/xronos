@@ -12,6 +12,7 @@ add_library(xronos-runtime
 
 find_package(Threads)
 target_link_libraries(xronos-runtime PUBLIC ${CMAKE_THREAD_LIBS_INIT})
+target_compile_options(xronos-runtime PRIVATE -Wall -Wextra -pedantic -Werror)
 
 find_package(Backtrace)
 set(RUNTIME_USE_BACKTRACE ${Backtrace_FOUND})

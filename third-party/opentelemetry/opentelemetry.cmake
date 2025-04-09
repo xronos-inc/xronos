@@ -1,14 +1,5 @@
-set(OPENTELEMETRY_VERSION "1.17.0" CACHE STRING "Opentelemetry version")
-option(OPENTELEMETRY_FORCE_BUILD "Force building Opentelemetry from source" OFF)
-option(OPENTELEMETRY_INSTALL "Add Opentelemetry to the install target" OFF)
-
-if(NOT ${OPENTELEMETRY_INSTALL})
-  set(OPENTELEMETRY_EXCLUDE_FROM_ALL EXCLUDE_FROM_ALL)
-endif()
-
-if(NOT ${OPENTELEMETRY_FORCE_BUILD})
-  set(OPENTELEMETRY_FIND_PACKAGE_ARGS FIND_PACKAGE_ARGS ${OPENTELEMETRY_VERSION} EXACT CONFIG)
-endif()
+set(XRONOS_OPENTELEMETRY_VERSION "1.17.0" CACHE STRING "Opentelemetry version")
+set(XRONOS_OPENTELEMETRY_PROVIDER "module" CACHE STRING "opentelemetry provider (module|package|none)")
 
 function(add_opentelemetry)
   include(FetchContent)
@@ -24,29 +15,30 @@ function(add_opentelemetry)
   set(WITH_EXAMPLES OFF)
   set(WITH_DEPRECATED_SDK_FACTORY OFF)
   set(BUILD_TESTING OFF)
+  set(BUILD_SHARED_LIBS OFF)
   # cloning may take a moment and this shows progress
   set(FETCHCONTENT_QUIET FALSE)
   FetchContent_Declare(
     opentelemetry-cpp
     GIT_REPOSITORY https://github.com/open-telemetry/opentelemetry-cpp.git
-    GIT_TAG "v${OPENTELEMETRY_VERSION}"
+    GIT_TAG "v${XRONOS_OPENTELEMETRY_VERSION}"
     GIT_SHALLOW TRUE
     GIT_SUBMODULES ""
-    ${OPENTELEMETRY_EXCLUDE_FROM_ALL}
-    ${OPENTELEMETRY_FIND_PACKAGE_ARGS}
   )
 
   FetchContent_MakeAvailable(opentelemetry-cpp)
 
-  if(NOT opentelemetry-cpp_FOUND)
-    # define alias targets so that it looks as if opentelemetry was installed
-    add_library(opentelemetry-cpp::api ALIAS opentelemetry_api)
-    add_library(opentelemetry-cpp::otlp_grpc_exporter ALIAS opentelemetry_exporter_otlp_grpc)
-    add_library(opentelemetry-cpp::proto ALIAS opentelemetry_proto)
-    add_library(opentelemetry-cpp::proto_grpc ALIAS opentelemetry_proto_grpc)
-    add_library(opentelemetry-cpp::sdk ALIAS opentelemetry_sdk)
-  endif()
+  # define alias targets so that it looks as if opentelemetry was installed
+  add_library(opentelemetry-cpp::api ALIAS opentelemetry_api)
+  add_library(opentelemetry-cpp::otlp_grpc_exporter ALIAS opentelemetry_exporter_otlp_grpc)
+  add_library(opentelemetry-cpp::proto ALIAS opentelemetry_proto)
+  add_library(opentelemetry-cpp::proto_grpc ALIAS opentelemetry_proto_grpc)
+  add_library(opentelemetry-cpp::sdk ALIAS opentelemetry_sdk)
 endfunction()
 
-add_opentelemetry()
+if(XRONOS_OPENTELEMETRY_PROVIDER STREQUAL "package")
+  find_package(opentelemetry-cpp CONFIG REQUIRED)
+elseif(XRONOS_OPENTELEMETRY_PROVIDER STREQUAL "module")
+  add_opentelemetry()
+endif()
 

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.28)
 
-project(xronos-sdk LANGUAGES CXX VERSION "0.1.0")
-set(PROJECT_VERSION "0.1.0")
+project(xronos-sdk LANGUAGES CXX VERSION "0.2.0")
+set(PROJECT_VERSION "0.2.0")
 
 # require C++ 20
 set(CMAKE_CXX_STANDARD 20 CACHE STRING "The C++ standard." FORCE)
@@ -18,7 +18,7 @@ option(BUILD_SHARED_LIBS "Build using shared libraries" Off)
 option(CLANG_TIDY_ERROR "clang-tidy warnings are errors" Off)
 set(CLANG_TIDY_COMMAND "clang-tidy" CACHE STRING "The clang-tidy command to use")
 
-set(INSTALL_DEFAULT ON)
+set(INSTALL_DEFAULT OFF)
 set(BUILD_TESTS_DEFAULT ON)
 set(RUN_CLANG_TIDY_DEFAULT OFF)
 set(BUILD_DOCS_DEFAULT OFF)
@@ -58,7 +58,6 @@ if(XRONOS_SDK_RUN_CLANG_TIDY)
     "${CLANG_TIDY_BASE_COMMAND};-header-filter=xronos/\(.*\)\\.hh")
 endif()
 
-add_compile_options(-Wall -Wextra -pedantic -Werror)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
@@ -84,6 +83,7 @@ target_link_libraries(xronos-sdk
   xronos::xronos-telemetry
   xronos::xronos-telemetry-otel
 )
+target_compile_options(xronos-sdk PRIVATE -Wall -Wextra -pedantic -Werror)
 
 if(XRONOS_SDK_RUN_CLANG_TIDY)
   set_target_properties(xronos-sdk PROPERTIES CXX_CLANG_TIDY

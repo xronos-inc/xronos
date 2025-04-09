@@ -11,6 +11,7 @@ target_link_libraries(
     opentelemetry-cpp::proto_grpc
     opentelemetry-cpp::otlp_grpc_exporter
 )
+target_compile_options(xronos-telemetry-otel PRIVATE -Wall -Wextra -pedantic -Werror)
 target_include_directories(
   xronos-telemetry-otel
   PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include>"

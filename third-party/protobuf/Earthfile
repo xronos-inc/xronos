@@ -1,19 +1,19 @@
 VERSION 0.8
 
 IMPORT ../../base-images AS base-images
-IMPORT ../grpc AS grpc
+IMPORT ../absl AS absl
 
 build:
   FROM base-images+build-essential
-  COPY grpc+install/install /install
-  COPY CMakeLists.txt opentelemetry.cmake .
+  COPY absl+install/install /install
+  COPY CMakeLists.txt protobuf.cmake .
   RUN cmake -S . -B build -DCMAKE_INSTALL_PREFIX=/install
   RUN LD_LIBRARY_PATH=/install/lib  cmake --build build -j$(nproc)  --config Release
 
 install:
   FROM +build
   RUN cmake --build build --target install
-  RUN mkdir -p third-party/opentelemetry
-  COPY opentelemetry.cmake third-party/opentelemetry
+  RUN mkdir -p third-party/protobuf
+  COPY protobuf.cmake third-party/protobuf
   SAVE ARTIFACT /install
   SAVE ARTIFACT third-party

@@ -7,7 +7,7 @@ following licenses. Full licenses and notices are provided in the
 ---
 
 Component: Abseil C++
-Version: Abseil LTS 20240116.1
+Version: Abseil LTS 20240722.1
 License: Apache License 2.0
 License text: https://www.apache.org/licenses/LICENSE-2.0
 Source: https://github.com/abseil/abseil-cpp
@@ -28,7 +28,7 @@ Source: https://github.com/grpc/grpc/tree/v1.67.1/third_party/address_sorting
 
 Component boringssl
 License: Mixed, see full license text
-Version dec0d8f681348af8bb675e07bd89989665fca8bc
+Version c57adcf6947912fe17bc5bfaf0876225d1fe742d
 Source: https://boringssl.googlesource.com/boringssl
 
 [third-party-licenses/boringssl_LICENSE](third-party-licenses/boringssl_LICENSE)
@@ -36,7 +36,7 @@ Source: https://boringssl.googlesource.com/boringssl
 ---
 
 Component: gRPC
-Version: v1.67.1
+Version: v1.71.0
 License: Apache License 2.0
 License text: https://www.apache.org/licenses/LICENSE-2.0
 Source: https://github.com/grpc/grpc
@@ -79,7 +79,7 @@ For the full license text, see:
 ---
 
 Component: protobuf
-Version: v27.2
+Version: v29.4
 License: BSD 3-Clause License
 License text: https://opensource.org/licenses/BSD-3-Clause
 Source: https://github.com/protocolbuffers/protobuf

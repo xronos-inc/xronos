@@ -5,15 +5,12 @@ IMPORT ../xronos AS xronos
 
 test:
     BUILD +test-examples --python_version=3.10 --python_version=3.11 --python_version=3.12 --python_version=3.13
+    BUILD ./YOLO+test --python_version=3.12
 
 test-examples:
     FROM --pass-args base-images+python-venv
     BUILD --pass-args ./montecarlo+test
     BUILD --pass-args ./style-guide+test
-    # ultralytics (needed by YOLO) is incompatible with Python 3.13 as of 14/1/24
-    IF [ "$python_version" != "3.13" ]
-      BUILD --pass-args ./YOLO+test
-    END
 
 lint:
     BUILD ./montecarlo+lint

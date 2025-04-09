@@ -16,10 +16,16 @@ See [docs.xronos.com](https://docs.xronos.com) for the most up-to-date system re
 
 ## Install Prerequisites
 
+### Install build dependencies
+
+```shell
+sudo apt install build-essential zlib1g-dev git
+```
+
 ### Install CMake
 
-Ubuntu 24.04 (Noble) apt repositories include CMake 3.28 or later. If on an earlier
-version of Ubuntu, first add the Kitware apt repository:
+On systems older than Ubuntu 24.04, CMake 3.28 needs to be installed from the Kitware ppa.
+The following shows how to install CMake 3.28 on Ubuntu 22.04.
 
 ```shell
 wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | sudo tee /usr/share/keyrings/kitware-archive-keyring.gpg >/dev/null
@@ -30,15 +36,7 @@ sudo apt update
 Install CMake:
 
 ```shell
-sudo apt install cmake
-```
-
-### Install gRPC
-
-Install gRPC (1.30 or later):
-
-```shell
-sudo apt install libgrpc++-dev
+sudo apt install -y cmake=3.28.6-0kitware1ubuntu22.04.1 cmake-data=3.28.6-0kitware1ubuntu22.04.1
 ```
 
 ## Create a Xronos C++ application
@@ -100,7 +98,7 @@ Generate the CMake project and build the Xronos SDK:
 
 ```shell
 cmake -B build
-cmake --build build --target xronos-sdk -j
+cmake --build build --target xronos-sdk -j$(nproc)
 ```
 
 then compile and run the hello world application:
@@ -118,4 +116,4 @@ You should see the output
 
 ## Additional Examples
 
-See [https://github.com/xronos-inc/xronos/cpp-sdk/examples](https://github.com/xronos-inc/xronos/cpp-sdk/examples) for additional examples.
+See [https://github.com/xronos-inc/xronos/tree/main/cpp-sdk/examples](https://github.com/xronos-inc/xronos/tree/main/cpp-sdk/examples) for additional examples.
