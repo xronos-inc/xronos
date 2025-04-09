@@ -4,6 +4,8 @@ target_include_directories(
   PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include>"
          "$<INSTALL_INTERFACE:include>")
 target_link_libraries(xronos-telemetry PRIVATE xronos-runtime)
+target_compile_options(xronos-telemetry PRIVATE -Wall -Wextra -pedantic -Werror)
+
 if(XRONOS_LIB_RUN_CLANG_TIDY)
   set_target_properties(xronos-telemetry
                         PROPERTIES CXX_CLANG_TIDY "${XRONOS_CLANG_TIDY_COMMAND}")

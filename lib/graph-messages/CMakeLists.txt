@@ -9,19 +9,18 @@ target_link_libraries(xronos-graph-messages PUBLIC protobuf::libprotobuf
                                                    gRPC::grpc gRPC::grpc++)
 set_target_properties(xronos-graph-messages PROPERTIES VERSION "${PROJECT_VERSION}" SOVERSION 1)
 
-get_target_property(grpc_cpp_plugin_location gRPC::grpc_cpp_plugin LOCATION)
-
-protobuf_generate(TARGET xronos-graph-messages LANGUAGE cpp)
 protobuf_generate(
-  TARGET
-  xronos-graph-messages
-  LANGUAGE
-  grpc
-  GENERATE_EXTENSIONS
-  .grpc.pb.h
-  .grpc.pb.cc
-  PLUGIN
-  "protoc-gen-grpc=${grpc_cpp_plugin_location}")
+  TARGET xronos-graph-messages
+  LANGUAGE cpp
+  PROTOC_OPTIONS "-I${protobuf_SOURCE_DIR}/src"
+)
+protobuf_generate(
+  TARGET xronos-graph-messages
+  LANGUAGE grpc
+  GENERATE_EXTENSIONS .grpc.pb.h .grpc.pb.cc
+  PLUGIN "protoc-gen-grpc=\$<TARGET_FILE:gRPC::grpc_cpp_plugin>"
+  PROTOC_OPTIONS "-I${protobuf_SOURCE_DIR}/src"
+)
 
 if(XRONOS_LIB_INSTALL_HEADERS)
   install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/xronos" DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")

@@ -3,6 +3,9 @@ VERSION 0.8
 IMPORT ../base-images AS base-images
 IMPORT ../ AS root
 IMPORT ../third-party/catch2 AS catch2
+IMPORT ../third-party/absl AS absl
+IMPORT ../third-party/protobuf AS protobuf
+IMPORT ../third-party/grpc AS grpc
 IMPORT ../third-party/opentelemetry AS opentelemetry
 
 common:
@@ -16,8 +19,19 @@ common:
 build:
   FROM +common
   COPY opentelemetry+install/install /install
+  COPY absl+install/third-party ../third-party
+  COPY protobuf+install/third-party ../third-party
+  COPY grpc+install/third-party ../third-party
   COPY opentelemetry+install/third-party ../third-party
-  RUN cmake -S . -B build -DCMAKE_INSTALL_PREFIX=/install -DXRONOS_LIB_RUN_CLANG_TIDY=ON -DCLANG_TIDY_ERROR=ON -DXRONOS_LIB_BUILD_TESTS=OFF
+  RUN cmake -S . -B build \
+    -DCMAKE_INSTALL_PREFIX=/install \
+    -DXRONOS_LIB_RUN_CLANG_TIDY=ON \
+    -DCLANG_TIDY_ERROR=ON \
+    -DXRONOS_LIB_BUILD_TESTS=OFF \
+    -DXRONOS_ABSL_PROVIDER=package \
+    -DXRONOS_PROTOBUF_PROVIDER=package \
+    -DXRONOS_GRPC_PROVIDER=package \
+    -DXRONOS_OPENTELEMETRY_PROVIDER=package
   RUN export LD_LIBRARY_PATH=/install/lib && cmake --build build --target all -j$(nproc) --config Release
 
 install:
