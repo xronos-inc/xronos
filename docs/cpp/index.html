@@ -34,7 +34,7 @@
  <tr id="projectrow">
   <td id="projectlogo"><img alt="Logo" src="logo-banner.jpg"/></td>
   <td id="projectalign">
-   <div id="projectname">xronos-sdk<span id="projectnumber">&#160;0.1.0</span>
+   <div id="projectname">xronos-sdk<span id="projectnumber">&#160;0.2.0</span>
    </div>
    <div id="projectbrief">Xronos C++ SDK</div>
   </td>
@@ -126,17 +126,16 @@ System Requirements</h1>
 <h1><a class="anchor" id="autotoc_md2"></a>
 Install Prerequisites</h1>
 <h2><a class="anchor" id="autotoc_md3"></a>
+Install build dependencies</h2>
+<div class="fragment"><div class="line">sudo apt install build-essential zlib1g-dev git</div>
+</div><!-- fragment --><h2><a class="anchor" id="autotoc_md4"></a>
 Install CMake</h2>
-<p>Ubuntu 24.04 (Noble) apt repositories include CMake 3.28 or later. If on an earlier version of Ubuntu, first add the Kitware apt repository:</p>
+<p>On systems older than Ubuntu 24.04, CMake 3.28 needs to be installed from the Kitware ppa. The following shows how to install CMake 3.28 on Ubuntu 22.04.</p>
 <div class="fragment"><div class="line">wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2&gt;/dev/null | gpg --dearmor - | sudo tee /usr/share/keyrings/kitware-archive-keyring.gpg &gt;/dev/null</div>
 <div class="line">echo &quot;deb [signed-by=/usr/share/keyrings/kitware-archive-keyring.gpg] https://apt.kitware.com/ubuntu/ $(lsb_release -sc) main&quot; | sudo tee /etc/apt/sources.list.d/kitware.list &gt;/dev/null</div>
 <div class="line">sudo apt update</div>
 </div><!-- fragment --><p>Install CMake:</p>
-<div class="fragment"><div class="line">sudo apt install cmake</div>
-</div><!-- fragment --><h2><a class="anchor" id="autotoc_md4"></a>
-Install gRPC</h2>
-<p>Install gRPC (1.30 or later):</p>
-<div class="fragment"><div class="line">sudo apt install libgrpc++-dev</div>
+<div class="fragment"><div class="line">sudo apt install -y cmake=3.28.6-0kitware1ubuntu22.04.1 cmake-data=3.28.6-0kitware1ubuntu22.04.1</div>
 </div><!-- fragment --><h1><a class="anchor" id="autotoc_md5"></a>
 Create a Xronos C++ application</h1>
 <h2><a class="anchor" id="autotoc_md6"></a>
@@ -186,7 +185,7 @@ Create the Hello World application</h2>
 Build and Run</h2>
 <p>Generate the CMake project and build the Xronos SDK:</p>
 <div class="fragment"><div class="line">cmake -B build</div>
-<div class="line">cmake --build build --target xronos-sdk -j</div>
+<div class="line">cmake --build build --target xronos-sdk -j$(nproc)</div>
 </div><!-- fragment --><p>then compile and run the hello world application:</p>
 <div class="fragment"><div class="line">cmake --build build --target hello_world</div>
 <div class="line">./build/hello_world</div>
@@ -194,7 +193,7 @@ Build and Run</h2>
 <div class="fragment"><div class="line">&gt; Hello, World!</div>
 </div><!-- fragment --><h1><a class="anchor" id="autotoc_md8"></a>
 Additional Examples</h1>
-<p>See <a href="https://github.com/xronos-inc/xronos/cpp-sdk/examples">https://github.com/xronos-inc/xronos/cpp-sdk/examples</a> for additional examples. </p>
+<p>See <a href="https://github.com/xronos-inc/xronos/tree/main/cpp-sdk/examples">https://github.com/xronos-inc/xronos/tree/main/cpp-sdk/examples</a> for additional examples. </p>
 </div></div><!-- PageDoc -->
 <a href="doxygen_crawl.html"></a>
 </div><!-- contents -->
