@@ -10,5 +10,5 @@ var classxronos_1_1sdk_1_1Environment =
     [ "connect", "classxronos_1_1sdk_1_1Environment.html#adf7636777d5535a52a3731266a48cce9", null ],
     [ "connect", "classxronos_1_1sdk_1_1Environment.html#a756947e2c1100e9960bdba45e1ccc211", null ],
     [ "connect", "classxronos_1_1sdk_1_1Environment.html#a9237523aef8e8045aee999b175dd48c7", null ],
-    [ "enable_tracing", "classxronos_1_1sdk_1_1Environment.html#a831850c45239087b177829bbfc3a998b", null ]
+    [ "enable_telemetry", "classxronos_1_1sdk_1_1Environment.html#a8dce31796ab3fc4a19f71b020f71fc5c", null ]
 ];

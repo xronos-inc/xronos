@@ -1,5 +1,5 @@
 <map id="xronos::sdk::EventSource&lt; void &gt;" name="xronos::sdk::EventSource&lt; void &gt;">
-<area shape="rect" id="Node000001" title="Base class for reactor elements that can be used as sources or triggers of reactions." alt="" coords="340,133,527,173"/>
+<area shape="rect" id="Node000001" title="Base class for reactor elements that can be used as triggers of reactions." alt="" coords="340,133,527,173"/>
 <area shape="rect" id="Node000003" href="$classxronos_1_1sdk_1_1PhysicalEvent_3_01void_01_4.html" title="An element for scheduling new events from external contexts." alt="" coords="579,5,775,45"/>
 <area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="482,123,526,94,575,67,637,43,639,48,577,72,529,99,485,128"/>
 <area shape="poly" id="edge6_Node000001_Node000003" title=" " alt="" coords="459,122,511,81,575,43,577,42,580,47,577,48,514,86,462,126"/>
@@ -15,6 +15,6 @@
 <area shape="poly" id="edge9_Node000001_Node000007" title=" " alt="" coords="476,179,523,207,577,234,611,245,610,250,575,238,521,212,473,183"/>
 <area shape="rect" id="Node000008" href="$classxronos_1_1sdk_1_1Startup.html" title="An event that triggers when the program starts executing." alt="" coords="601,297,753,322"/>
 <area shape="poly" id="edge10_Node000001_Node000008" title=" " alt="" coords="461,182,511,235,543,261,577,283,604,294,602,299,575,288,540,265,508,238,457,186"/>
-<area shape="rect" id="Node000002" href="$classxronos_1_1sdk_1_1EventSource.html" title="Base class for reactor elements that can be used as sources or triggers of reactions." alt="" coords="5,141,229,166"/>
+<area shape="rect" id="Node000002" href="$classxronos_1_1sdk_1_1EventSource.html" title="Base class for reactor elements that can be used as triggers of reactions." alt="" coords="5,141,229,166"/>
 <area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="243,151,340,151,340,156,243,156"/>
 </map>

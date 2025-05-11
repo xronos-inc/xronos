@@ -58,7 +58,7 @@
 <!-- Node3 -->
 <g id="Node000003" class="node">
 <title>Node3</title>
-<g id="a_Node000003"><a xlink:href="classxronos_1_1sdk_1_1EventSource.html" target="_top" xlink:title="Base class for reactor elements that can be used as sources or triggers of reactions.">
+<g id="a_Node000003"><a xlink:href="classxronos_1_1sdk_1_1EventSource.html" target="_top" xlink:title="Base class for reactor elements that can be used as triggers of reactions.">
 <polygon fill="white" stroke="#666666" points="305.5,-152 137.5,-152 137.5,-133 305.5,-133 305.5,-152"/>
 <text text-anchor="middle" x="221.5" y="-140" font-family="Helvetica,sans-Serif" font-size="10.00">xronos::sdk::EventSource&lt; T &gt;</text>
 </a>

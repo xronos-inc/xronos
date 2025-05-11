@@ -2,7 +2,7 @@ var searchData=
 [
   ['element_0',['Element',['../classxronos_1_1sdk_1_1Element.html',1,'xronos::sdk']]],
   ['element_2ehh_1',['element.hh',['../element_8hh.html',1,'']]],
-  ['enable_5ftracing_2',['enable_tracing',['../classxronos_1_1sdk_1_1Environment.html#a831850c45239087b177829bbfc3a998b',1,'xronos::sdk::Environment']]],
+  ['enable_5ftelemetry_2',['enable_telemetry',['../classxronos_1_1sdk_1_1Environment.html#a8dce31796ab3fc4a19f71b020f71fc5c',1,'xronos::sdk::Environment']]],
   ['environment_3',['Environment',['../classxronos_1_1sdk_1_1Environment.html',1,'xronos::sdk::Environment'],['../classxronos_1_1sdk_1_1Environment.html#af69bc9048a8d9da4ef0c01b47b0e87e0',1,'xronos::sdk::Environment::Environment()']]],
   ['environment_2ehh_4',['environment.hh',['../environment_8hh.html',1,'']]],
   ['environmentcontext_5',['EnvironmentContext',['../classxronos_1_1sdk_1_1EnvironmentContext.html',1,'xronos::sdk']]],

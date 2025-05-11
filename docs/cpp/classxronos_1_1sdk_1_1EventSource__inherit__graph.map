@@ -1,12 +1,12 @@
 <map id="xronos::sdk::EventSource&lt; T &gt;" name="xronos::sdk::EventSource&lt; T &gt;">
-<area shape="rect" id="Node000001" title="Base class for reactor elements that can be used as sources or triggers of reactions." alt="" coords="5,253,229,279"/>
+<area shape="rect" id="Node000001" title="Base class for reactor elements that can be used as triggers of reactions." alt="" coords="5,253,229,279"/>
 <area shape="rect" id="Node000002" href="$classxronos_1_1sdk_1_1PhysicalEvent.html" title="An element for scheduling new events from external contexts." alt="" coords="340,152,575,177"/>
 <area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="173,247,413,175,414,180,175,252"/>
 <area shape="rect" id="Node000004" href="$classxronos_1_1sdk_1_1Port.html" title="Base class for inputs and outputs of reactors." alt="" coords="373,73,542,99"/>
 <area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="150,244,235,194,339,137,425,96,427,101,341,142,237,199,153,248"/>
 <area shape="rect" id="Node000008" href="$classxronos_1_1sdk_1_1ProgrammableTimer.html" title="A reactor element for scheduling new events." alt="" coords="357,389,558,429"/>
 <area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="163,282,409,386,407,391,161,287"/>
-<area shape="rect" id="Node000010" href="$classxronos_1_1sdk_1_1EventSource_3_01void_01_4.html" title="Base class for reactor elements that can be used as sources or triggers of reactions." alt="" coords="364,278,551,318"/>
+<area shape="rect" id="Node000010" href="$classxronos_1_1sdk_1_1EventSource_3_01void_01_4.html" title="Base class for reactor elements that can be used as triggers of reactions." alt="" coords="364,278,551,318"/>
 <area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="243,275,364,287,363,292,243,280"/>
 <area shape="rect" id="Node000003" href="$classxronos_1_1sdk_1_1PhysicalEvent_3_01void_01_4.html" title="An element for scheduling new events from external contexts." alt="" coords="694,213,890,253"/>
 <area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="535,178,694,210,693,215,534,183"/>

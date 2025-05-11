@@ -111,10 +111,10 @@ development or development on a virtual machine using SSH.
 See {ref}`diagram` for instructions on how to install the xronos VS Code
 extension and for the VS Code extension's system requirements.
 
-### Tracing dashboard
+### Telemetry dashboard
 
 See {ref}`dashboard` for setup instructions and system requirements for viewing
-trace data from xronos applications.
+telemetry data from xronos applications.
 
 ### Enabling type checking
 

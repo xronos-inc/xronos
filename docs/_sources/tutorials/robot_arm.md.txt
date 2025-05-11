@@ -156,13 +156,13 @@ To move the robot, provide a trajectory, e.g.:
 $ > moveto red yellow green init
 ```
 
-## On-device tracing
+## Telemetry
 
 The Xronos Dashboard can provide invaluable runtime observability into the program. Bring it up on the Jetson by
-following the instructions in {ref}`dashboard`. Then start the robot arm with tracing enabled.
+following the instructions in {ref}`dashboard`. Then start the robot arm with telemetry enabled.
 
 ```console
-$ python arm.py --trace
+$ python arm.py --telemetry
 ```
 
 There are now two options for viewing the dashboard. If you are within a desktop environment on the Jetson, either
@@ -171,7 +171,7 @@ web browser to `localhost:3000` as explained in {ref}`dashboard`. If you only ha
 can point the browser on your host computer to `JETSON_IP_ADDR:3000` where `JETSON_IP_ADDR` is the IP address or
 hostname of the Jetson.
 
-The trace viewer should look something like this.
+The trace view should look something like this.
 
 ![Xronos Dashboard for robot arm](./_img/dashboard_arm.png)
 

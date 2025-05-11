@@ -5,12 +5,12 @@
 <area shape="poly" id="edge4_Node000001_Node000002" title=" " alt="" coords="100,43,114,86,136,132,167,167,200,194,197,198,164,171,132,135,109,88,95,45"/>
 <area shape="rect" id="Node000005" href="$classxronos_1_1sdk_1_1Port.html" title="Base class for inputs and outputs of reactors." alt="" coords="135,101,304,126"/>
 <area shape="poly" id="edge7_Node000005_Node000002" title=" " alt="" coords="114,36,204,98,201,103,111,41"/>
-<area shape="rect" id="Node000003" href="$classxronos_1_1sdk_1_1EventSource_3_01void_01_4.html" title="Base class for reactor elements that can be used as sources or triggers of reactions." alt="" coords="329,93,515,133"/>
+<area shape="rect" id="Node000003" href="$classxronos_1_1sdk_1_1EventSource_3_01void_01_4.html" title="Base class for reactor elements that can be used as triggers of reactions." alt="" coords="329,93,515,133"/>
 <area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="366,142,251,198,249,194,363,137"/>
 <area shape="poly" id="edge5_Node000001_Node000003" title=" " alt="" coords="380,142,266,198,263,194,378,137"/>
-<area shape="rect" id="Node000004" href="$classxronos_1_1sdk_1_1EventSource.html" title="Base class for reactor elements that can be used as sources or triggers of reactions." alt="" coords="437,5,661,31"/>
+<area shape="rect" id="Node000004" href="$classxronos_1_1sdk_1_1EventSource.html" title="Base class for reactor elements that can be used as triggers of reactions." alt="" coords="437,5,661,31"/>
 <area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="524,41,449,95,446,91,520,37"/>
 <area shape="poly" id="edge6_Node000001_Node000005" title=" " alt="" coords="222,140,222,196,217,196,217,140"/>
-<area shape="rect" id="Node000006" href="$classxronos_1_1sdk_1_1EventSource.html" title="Base class for reactor elements that can be used as sources or triggers of reactions." alt="" coords="189,5,413,31"/>
+<area shape="rect" id="Node000006" href="$classxronos_1_1sdk_1_1EventSource.html" title="Base class for reactor elements that can be used as triggers of reactions." alt="" coords="189,5,413,31"/>
 <area shape="poly" id="edge8_Node000005_Node000006" title=" " alt="" coords="284,43,231,102,227,99,280,39"/>
 </map>
