@@ -2,9 +2,12 @@
 // SPDX-License-Identifier: BSD-3-Clause
 
 #include <cassert>
+#include <functional>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <utility>
+#include <variant>
 
 #include "xronos/graph_exporter/detail/exporter.hh"
 #include "xronos/graph_exporter/exporter.hh"
@@ -15,6 +18,8 @@
 #include "xronos/runtime/port.hh"
 #include "xronos/runtime/reaction.hh"
 #include "xronos/runtime/reactor.hh"
+#include "xronos/telemetry/attribute_manager.hh"
+#include "xronos/telemetry/metric.hh"
 
 #include "xronos/messages/reactor_graph.pb.h"
 #include "xronos/messages/source_info.pb.h"
@@ -33,31 +38,10 @@ using namespace xronos::services;
 using namespace xronos::runtime;
 
 void export_containment(const Reactor& reactor, reactor_graph::Graph& graph) {
-  // Must be kept in sync with the GraphExporterVisitor to export a UID if and
-  // only if the element is exported to the graph's element list.
-  class MaybeExportUid : public ReactorElementVisitor {
-  private:
-    std::function<void(const ReactorElement&)> export_uid;
-
-  public:
-    MaybeExportUid(std::function<void(const ReactorElement&)> export_uid)
-        : export_uid{std::move(export_uid)} {}
-
-    void visit(const Reactor& element) final { export_uid(element); }
-    void visit(const Reaction& element) final { export_uid(element); }
-    void visit(const BaseAction& element) final { export_uid(element); }
-    void visit(const BasePort& element) final { export_uid(element); }
-    void visit(const Timer& element) final { export_uid(element); }
-    void visit(const StartupTrigger& element) final { export_uid(element); }
-    void visit(const ShutdownTrigger& element) final { export_uid(element); }
-    void visit([[maybe_unused]] const MiscElement& misc) final {} // do not export misc elements
-  };
   auto& containment = *graph.add_containments();
   containment.set_container_uid(reactor.uid());
   for (const auto* element : reactor.elements()) {
-    MaybeExportUid visitor{
-        [&containment](const ReactorElement& element) { containment.add_containee_uids(element.uid()); }};
-    element->visit(visitor);
+    containment.add_containee_uids(element->uid());
   }
 }
 
@@ -153,6 +137,49 @@ void export_action(const BaseAction& action, reactor_graph::Graph& graph) {
   // FIXME There is currently no way to get the action data type
 }
 
+void export_misc(const MiscElement& misc, reactor_graph::Graph& graph,
+                 std::optional<std::reference_wrapper<const xronos::telemetry::AttributeManager>> attribute_manager) {
+  auto& elem = add_new_element(misc, graph);
+  if (misc.element_type() == "metric") {
+    const auto& metric = dynamic_cast<const xronos::telemetry::Metric&>(misc);
+    auto& metric_proto = *elem.mutable_metric();
+    metric_proto.set_unit(metric.unit());
+    metric_proto.set_description(metric.description());
+    if (attribute_manager == std::nullopt) {
+      return;
+    }
+    auto attributes = attribute_manager.value().get().get_attributes(misc);
+    if (attributes == std::nullopt) {
+      return;
+    }
+    for (auto& [key, value] : attributes.value()) {
+      if (std::holds_alternative<std::string>(value)) {
+        auto& attrs_proto = *metric_proto.add_attributes();
+        attrs_proto.set_key(key);
+        attrs_proto.set_string(std::get<std::string>(value));
+      }
+      if (std::holds_alternative<bool>(value)) {
+        auto& attrs_proto = *metric_proto.add_attributes();
+        attrs_proto.set_key(key);
+        attrs_proto.set_boolean(std::get<bool>(value));
+      }
+      if (std::holds_alternative<long>(value)) {
+        auto& attrs_proto = *metric_proto.add_attributes();
+        attrs_proto.set_key(key);
+        attrs_proto.set_integer(std::get<long>(value));
+      }
+      if (std::holds_alternative<double>(value)) {
+        auto& attrs_proto = *metric_proto.add_attributes();
+        attrs_proto.set_key(key);
+        attrs_proto.set_floatingpoint(std::get<double>(value));
+      }
+      // one of the above should hold, but if not, the attribute is silently ignored
+    }
+  } else {
+    // silently ignore the misc element
+  }
+}
+
 void export_reactor(const Reactor& reactor, reactor_graph::Graph& graph) {
   auto& elem = add_new_element(reactor, graph);
   elem.mutable_reactor();
@@ -182,10 +209,14 @@ void export_connections(const Environment& environment, reactor_graph::Graph& gr
 class GraphExporterVisitor : public ReactorElementVisitor {
 private:
   std::reference_wrapper<reactor_graph::Graph> graph;
+  std::optional<std::reference_wrapper<const xronos::telemetry::AttributeManager>> attribute_manager;
 
 public:
-  GraphExporterVisitor(reactor_graph::Graph& graph)
-      : graph{graph} {}
+  GraphExporterVisitor(
+      reactor_graph::Graph& graph,
+      std::optional<std::reference_wrapper<const xronos::telemetry::AttributeManager>> attribute_manager)
+      : graph{graph}
+      , attribute_manager(attribute_manager) {}
 
   void visit(const Reactor& reactor) final { export_reactor(reactor, graph); }
   void visit(const Reaction& reaction) final { export_reaction(reaction, graph); }
@@ -194,29 +225,34 @@ public:
   void visit(const Timer& timer) final { export_timer(timer, graph); }
   void visit(const StartupTrigger& startup) final { export_startup(startup, graph); }
   void visit(const ShutdownTrigger& shutdown) final { export_shutdown(shutdown, graph); }
-  void visit([[maybe_unused]] const MiscElement& misc) final {}
+  void visit(const MiscElement& misc) final { export_misc(misc, graph, attribute_manager); }
 };
 
-auto export_reactor_graph(const Environment& environment, reactor_graph::Graph& graph) {
-  GraphExporterVisitor visitor{graph};
+auto export_reactor_graph(
+    const Environment& environment, reactor_graph::Graph& graph,
+    std::optional<std::reference_wrapper<const xronos::telemetry::AttributeManager>> attribute_manager) {
+  GraphExporterVisitor visitor{graph, attribute_manager};
   environment.visit_all_elements(visitor);
   export_connections(environment, graph);
 }
 
 namespace xronos::graph_exporter {
 
-auto export_reactor_graph_to_proto(const Environment& environment) -> std::string {
+auto export_reactor_graph_to_proto(
+    const Environment& environment,
+    std::optional<std::reference_wrapper<const telemetry::AttributeManager>> attribute_manager) -> std::string {
   reactor_graph::Graph graph;
-  export_reactor_graph(environment, graph);
+  export_reactor_graph(environment, graph, attribute_manager);
 
   std::string buffer;
   graph.SerializeToString(&buffer);
   return buffer;
 }
 
-auto export_reactor_graph_to_json(const Environment& environment,
-                                  const std::optional<source_info::SourceInfo>& source_info,
-                                  bool pretty) -> std::string {
+auto export_reactor_graph_to_json(
+    const Environment& environment, const std::optional<source_info::SourceInfo>& source_info,
+    std::optional<std::reference_wrapper<const telemetry::AttributeManager>> attribute_manager,
+    bool pretty) -> std::string {
   using namespace google::protobuf::util;
 
   diagram_generator::GraphWithMetadata gwm;
@@ -225,7 +261,7 @@ auto export_reactor_graph_to_json(const Environment& environment,
   }
 
   reactor_graph::Graph graph;
-  export_reactor_graph(environment, graph);
+  export_reactor_graph(environment, graph, attribute_manager);
 
   *gwm.mutable_graph() = graph;
 
@@ -253,9 +289,10 @@ auto get_diagram_server_endpoint() -> std::string {
 
 namespace detail {
 
-auto send_reactor_graph_to_diagram_server(const Environment& environment,
-                                          const std::optional<source_info::SourceInfo>& source_info,
-                                          const std::string& host) -> ::grpc::Status {
+auto send_reactor_graph_to_diagram_server(
+    const Environment& environment, const std::optional<source_info::SourceInfo>& source_info,
+    std::optional<std::reference_wrapper<const telemetry::AttributeManager>> attribute_manager,
+    const std::string& host) -> ::grpc::Status {
 
   auto channel = grpc::CreateChannel(host, grpc::InsecureChannelCredentials());
   auto stub = diagram_generator::DiagramGenerator::NewStub(channel);
@@ -267,7 +304,7 @@ auto send_reactor_graph_to_diagram_server(const Environment& environment,
   }
 
   reactor_graph::Graph graph;
-  export_reactor_graph(environment, graph);
+  export_reactor_graph(environment, graph, attribute_manager);
 
   *gwm.mutable_graph() = graph;
 
@@ -279,12 +316,13 @@ auto send_reactor_graph_to_diagram_server(const Environment& environment,
 
 } // namespace detail
 
-void send_reactor_graph_to_diagram_server(const Environment& environment,
-                                          const std::optional<source_info::SourceInfo>& source_info) {
+void send_reactor_graph_to_diagram_server(
+    const Environment& environment, const std::optional<source_info::SourceInfo>& source_info,
+    std::optional<std::reference_wrapper<const telemetry::AttributeManager>> attribute_manager) {
   std::string host{get_diagram_server_endpoint()};
   log::Debug() << "Sending reactor graph to diagram server endpoint at " << host;
 
-  auto status = detail::send_reactor_graph_to_diagram_server(environment, source_info, host);
+  auto status = detail::send_reactor_graph_to_diagram_server(environment, source_info, attribute_manager, host);
 
   constexpr int ERROR_CODE_FAILED_TO_CONNECT = 14;
   if (!status.ok() && status.error_code() != ERROR_CODE_FAILED_TO_CONNECT) {

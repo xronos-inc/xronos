@@ -1,9 +1,9 @@
-
 VERSION 0.8
 
-FROM ubuntu:24.04
+IMPORT ./base-images AS base-images
 
 configs:
+    FROM base-images+common-base
     WORKDIR /xronos
     COPY .clang-format .clang-tidy dev-requirements.txt ./
     SAVE ARTIFACT .clang-format

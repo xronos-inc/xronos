@@ -58,7 +58,6 @@ private:
   [[nodiscard]] auto is_present() const noexcept -> bool final;
 
   void register_as_trigger_of(runtime::Reaction& reaction) const noexcept final;
-  void register_as_source_of(runtime::Reaction& reaction) const noexcept final;
 };
 
 } // namespace xronos::sdk

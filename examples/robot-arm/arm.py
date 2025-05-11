@@ -184,7 +184,7 @@ def goal_to_pose(goal: str) -> Pose | None:
     return pose
 
 
-def main(device: Arm_Device, enable_tracing: bool) -> None:
+def main(device: Arm_Device, enable_telemetry: bool) -> None:
     env = xronos.Environment()
     arm = env.create_reactor("arm_control", ArmControl, device)
     ui = env.create_reactor(
@@ -193,9 +193,9 @@ def main(device: Arm_Device, enable_tracing: bool) -> None:
     env.connect(ui.output, arm.new_trajectory)
     env.connect(arm.trajectory_completed, ui.unblock)
 
-    if enable_tracing:
-        print("Enabling tracing.")
-        env.enable_tracing()
+    if enable_telemetry:
+        print("Enabling telemetry.")
+        env.enable_telemetry()
 
     env.execute()
 
@@ -203,12 +203,12 @@ def main(device: Arm_Device, enable_tracing: bool) -> None:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Yahboom robot arm controller")
     parser.add_argument(
-        "--trace",
+        "--telemetry",
         action="store_true",
-        help="Enable the xronos tracing feature.",
+        help="Enable the xronos telemetry feature.",
     )
     args = parser.parse_args()
 
     device = Arm_Device()
     time.sleep(0.1)
-    main(device, enable_tracing=args.trace)
+    main(device, enable_telemetry=args.telemetry)

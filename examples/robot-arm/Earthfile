@@ -5,16 +5,17 @@ IMPORT ../../base-images AS base-images
 
 dependencies:
     # download wheels for all requirements except xronos
-    FROM --pass-args base-images+python-venv
+    ARG --required python_version
+    FROM base-images+python-venv --python_version=$python_version
     COPY requirements.txt ./
     RUN sed -i /^xronos/d requirements.txt
     RUN . /xronos/.venv/bin/activate && pip wheel -r requirements.txt --wheel-dir=wheels
     SAVE ARTIFACT wheels /wheels
 
 common:
-    FROM --pass-args examples+common-base
- 
-    COPY +dependencies/wheels wheels
+    ARG --required python_version
+    FROM examples+common-base --python_version=$python_version
+    COPY (+dependencies/wheels --python_version=$python_version) wheels
     COPY requirements.txt .
     RUN . /xronos/.venv/bin/activate && pip install --no-index --find-links=wheels -r requirements.txt
     
@@ -23,7 +24,7 @@ common:
     COPY --dir Arm_Lib .
 
 lint:
-    FROM +common
+    FROM +common --python_version=3.12
     WORKDIR /xronos/examples/robot-arm
     RUN . /xronos/.venv/bin/activate && ruff --config=../ruff.toml check
     RUN . /xronos/.venv/bin/activate && ruff --config=../ruff.toml format --diff

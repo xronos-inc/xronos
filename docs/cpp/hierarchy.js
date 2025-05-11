@@ -47,7 +47,5 @@ var hierarchy =
     [ "xronos::sdk::BaseReaction::ProgrammableTimerEffect< T >", "classxronos_1_1sdk_1_1BaseReaction_1_1ProgrammableTimerEffect.html", null ],
     [ "xronos::sdk::ReactionContext", "classxronos_1_1sdk_1_1ReactionContext.html", null ],
     [ "xronos::sdk::ReactorContext", "classxronos_1_1sdk_1_1ReactorContext.html", null ],
-    [ "Source", null, [
-      [ "xronos::sdk::BaseReaction::Trigger< T >", "classxronos_1_1sdk_1_1BaseReaction_1_1Trigger.html", null ]
-    ] ]
+    [ "xronos::sdk::BaseReaction::Trigger< T >", "classxronos_1_1sdk_1_1BaseReaction_1_1Trigger.html", null ]
 ];

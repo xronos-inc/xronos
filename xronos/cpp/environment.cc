@@ -51,10 +51,11 @@ void export_source_info(const std::vector<SourceInfo>& source_infos_vector,
   }
 }
 
-void send_program_info_assembled(Environment* environment, const std::vector<SourceInfo>& source_infos) {
+void send_program_info_assembled(Environment* environment, const std::vector<SourceInfo>& source_infos,
+                                 const xronos::telemetry::AttributeManager& attribute_manager) {
   xronos::messages::source_info::SourceInfo source_info;
   export_source_info(source_infos, source_info);
-  send_reactor_graph_to_diagram_server(*environment, source_info);
+  send_reactor_graph_to_diagram_server(*environment, source_info, attribute_manager);
 }
 
 class SigintHandler {
@@ -157,7 +158,7 @@ public:
     try {
       telemetry_backend_->initialize();
       assemble();
-      send_program_info_assembled(this, source_infos);
+      send_program_info_assembled(this, source_infos, attribute_manager_);
       startup_thread = startup();
     } catch (const std::exception& e) {
       set_exception(); // exception will be re-thrown after cleanup

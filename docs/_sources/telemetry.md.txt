@@ -8,12 +8,12 @@ into an application.
 ## Enabling Telemetry
 
 An application needs to explicitly enable the collection of telemetry data by
-calling {func}`~xronos.Environment.enable_tracing` on the environment.
+calling {func}`~xronos.Environment.enable_telemetry` on the environment.
 By default, this records trace data for each reaction handler that executes.
 
 For instance, you can modify the {ref}`hello_world` example like shown below.
 
-```{literalinclude} _examples/hello_tracing.py
+```{literalinclude} _examples/hello_telemetry.py
 :pyobject: main
 ```
 
@@ -25,7 +25,7 @@ Hello, World!
 [Error] File: /xronos/xronos-telemetry/build/_deps/opentelemetry-cpp-src/exporters/otlp/src/otlp_grpc_exporter.cc:114 [OTLP TRACE GRPC Exporter] Export() failed with status_code: "UNAVAILABLE" error_message: "failed to connect to all addresses; last error: UNKNOWN: ipv4:127.0.0.1:4317: Failed to connect to remote host: connect: Connection refused (111)"
 ```
 
-This prints an error because we ran the program with tracing enabled, but did
+This prints an error because we ran the program with telemetry enabled, but did
 not provide an endpoint for receiving the telemetry data. See {ref}`dashboard`
 for instructions on how to start and use the dashboard for receiving and
 visualizing telemetry data.
@@ -40,11 +40,11 @@ By default, the following attributes are recorded:
 
 - `host.name`: Name of the host executing the xronos program.
 - `process.pid`: The process ID of the running xronos program.
-- `service.name`: Name of the application as given provided in the call to {func}`~xronos.Environment.enable_tracing`.
-- `xronos.fqn`: Fully qualified name of the element that produces trace data.
-- `xronos.name`: Name of the element that produces trace data.
-- `xronos.element_type`: Type of the element that produces trace data (e.g., "reactor", "reaction", "metric")
-- `xronos.container_fqn`: Fully qualified name of the reactor that contains the element that produces trace data.
+- `service.name`: Name of the application as given provided in the call to {func}`~xronos.Environment.enable_telemetry`.
+- `xronos.fqn`: Fully qualified name of the element that produces telemetry data.
+- `xronos.name`: Name of the element that produces telemetry data.
+- `xronos.element_type`: Type of the element that produces telemetry data (e.g., "reactor", "reaction", "metric")
+- `xronos.container_fqn`: Fully qualified name of the reactor that contains the element that produces telemetry data.
 
 This set of attributes is sufficient to uniquely identify the origin of each
 datapoint. However, you may specify additional attributes that will help you

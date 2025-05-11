@@ -54,12 +54,13 @@
 <li class="toctree-l1"><a class="reference internal" href="reference_guide/index.html">Reference Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="diagrams.html">Diagram View</a></li>
 <li class="toctree-l1"><a class="reference internal" href="telemetry.html">Telemetry</a></li>
-<li class="toctree-l1"><a class="reference internal" href="dashboard.html">Trace Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dashboard.html">Dashboard</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorials/index.html">Tutorials</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">API Documentation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#xronos.Environment"><code class="docutils literal notranslate"><span class="pre">Environment</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#xronos.Environment.connect"><code class="docutils literal notranslate"><span class="pre">Environment.connect()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#xronos.Environment.create_reactor"><code class="docutils literal notranslate"><span class="pre">Environment.create_reactor()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#xronos.Environment.enable_telemetry"><code class="docutils literal notranslate"><span class="pre">Environment.enable_telemetry()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#xronos.Environment.enable_tracing"><code class="docutils literal notranslate"><span class="pre">Environment.enable_tracing()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#xronos.Environment.execute"><code class="docutils literal notranslate"><span class="pre">Environment.execute()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#xronos.Environment.request_shutdown"><code class="docutils literal notranslate"><span class="pre">Environment.request_shutdown()</span></code></a></li>
@@ -136,7 +137,6 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#xronos.ReactionInterface"><code class="docutils literal notranslate"><span class="pre">ReactionInterface</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#xronos.ReactionInterface.add_effect"><code class="docutils literal notranslate"><span class="pre">ReactionInterface.add_effect()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#xronos.ReactionInterface.add_source"><code class="docutils literal notranslate"><span class="pre">ReactionInterface.add_source()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#xronos.ReactionInterface.add_trigger"><code class="docutils literal notranslate"><span class="pre">ReactionInterface.add_trigger()</span></code></a></li>
 </ul>
 </li>
@@ -160,11 +160,6 @@
 <li class="toctree-l3"><a class="reference internal" href="#xronos.Shutdown.add_attributes"><code class="docutils literal notranslate"><span class="pre">Shutdown.add_attributes()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#xronos.Shutdown.fqn"><code class="docutils literal notranslate"><span class="pre">Shutdown.fqn</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#xronos.Shutdown.name"><code class="docutils literal notranslate"><span class="pre">Shutdown.name</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#xronos.Source"><code class="docutils literal notranslate"><span class="pre">Source</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#xronos.Source.get"><code class="docutils literal notranslate"><span class="pre">Source.get()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#xronos.Source.is_present"><code class="docutils literal notranslate"><span class="pre">Source.is_present()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#xronos.Startup"><code class="docutils literal notranslate"><span class="pre">Startup</span></code></a><ul>
@@ -284,24 +279,30 @@ argument.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="xronos.Environment.enable_tracing">
-<span class="sig-name descname"><span class="pre">enable_tracing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">application_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'xronos'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">endpoint</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'localhost:4317'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></span><a class="headerlink" href="#xronos.Environment.enable_tracing" title="Link to this definition"></a></dt>
-<dd><p>Enable the collection of trace data during program execution.</p>
-<p>See <a class="reference internal" href="telemetry.html#telemetry"><span class="std std-ref">Telemetry</span></a> for more information on tracing and
-<a class="reference internal" href="dashboard.html#dashboard"><span class="std std-ref">Trace Dashboard</span></a> for information on how to visualize the trace data.</p>
+<dt class="sig sig-object py" id="xronos.Environment.enable_telemetry">
+<span class="sig-name descname"><span class="pre">enable_telemetry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">application_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'xronos'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">endpoint</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'localhost:4317'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></span><a class="headerlink" href="#xronos.Environment.enable_telemetry" title="Link to this definition"></a></dt>
+<dd><p>Enable the collection of telemetry data during program execution.</p>
+<p>See <a class="reference internal" href="telemetry.html#telemetry"><span class="std std-ref">Telemetry</span></a> and  <a class="reference internal" href="dashboard.html#dashboard"><span class="std std-ref">Dashboard</span></a> for more information on
+producing, collecting and visualizing telemetry data.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>application_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – The name of the application as it should appear
-in the trace data.</p></li>
-<li><p><strong>endpoint</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – The network endpoint to send trace data to. This is
-typically port 4137 on the host running the <a class="reference internal" href="dashboard.html#dashboard"><span class="std std-ref">Trace Dashboard</span></a>.</p></li>
+in the telemetry metadata.</p></li>
+<li><p><strong>endpoint</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – The network endpoint to send telemetry data to. This is
+typically port 4137 on the host running the <a class="reference internal" href="dashboard.html#dashboard"><span class="std std-ref">Dashboard</span></a>.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#RuntimeError" title="(in Python v3.13)"><strong>RuntimeError</strong></a> – If the telemetry backend is not installed.
-    (See <a class="reference internal" href="telemetry.html#telemetry"><span class="std std-ref">Telemetry</span></a>)</p>
-</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="xronos.Environment.enable_tracing">
+<span class="sig-name descname"><span class="pre">enable_tracing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">application_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'xronos'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">endpoint</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'localhost:4317'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></span><a class="headerlink" href="#xronos.Environment.enable_tracing" title="Link to this definition"></a></dt>
+<dd><div class="deprecated">
+<p><span class="versionmodified deprecated">Deprecated since version 0.3.0: </span>Use <a class="reference internal" href="#xronos.Environment.enable_telemetry" title="xronos.Environment.enable_telemetry"><code class="xref py py-func docutils literal notranslate"><span class="pre">enable_telemetry()</span></code></a> instead.</p>
+</div>
+<dl class="field-list simple">
 </dl>
 </dd></dl>
 
@@ -337,7 +338,7 @@ processing all reactions triggered by <a class="reference internal" href="#xrono
 <dd><p>A port that receives values from other reactors.</p>
 <p>The input port does not provide direct access to received values. A
 <a class="reference internal" href="#xronos.reaction" title="xronos.reaction"><code class="xref py py-attr docutils literal notranslate"><span class="pre">reaction</span></code></a> may declare an input port as a <a class="reference internal" href="#xronos.Trigger" title="xronos.Trigger"><code class="xref py py-class docutils literal notranslate"><span class="pre">Trigger</span></code></a> or
-<a class="reference internal" href="#xronos.Source" title="xronos.Source"><code class="xref py py-class docutils literal notranslate"><span class="pre">Source</span></code></a> to read its value.</p>
+<code class="xref py py-class docutils literal notranslate"><span class="pre">Effect</span></code> to read or write its value.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>T</strong> (<em>optional</em>) – The type of values carried by the port.</p>
@@ -509,8 +510,9 @@ processing all reactions triggered by <a class="reference internal" href="#xrono
 <dt class="sig sig-object py" id="xronos.OutputPort">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xronos.</span></span><span class="sig-name descname"><span class="pre">OutputPort</span></span><span class="sig-paren">[</span><em class="sig-param"><span class="n"><span class="pre">T</span></span></em><span class="sig-paren">]</span><a class="headerlink" href="#xronos.OutputPort" title="Link to this definition"></a></dt>
 <dd><p>A port that sends values to other reactors.</p>
-<p>The output port does not provide direct access for writing values. A
-<a class="reference internal" href="#xronos.reaction" title="xronos.reaction"><code class="xref py py-attr docutils literal notranslate"><span class="pre">reaction</span></code></a> may declare a <a class="reference internal" href="#xronos.PortEffect" title="xronos.PortEffect"><code class="xref py py-class docutils literal notranslate"><span class="pre">PortEffect</span></code></a> to send a value.</p>
+<p>The output port does not provide direct access to received values. A
+<a class="reference internal" href="#xronos.reaction" title="xronos.reaction"><code class="xref py py-attr docutils literal notranslate"><span class="pre">reaction</span></code></a> may declare an output port as a <a class="reference internal" href="#xronos.Trigger" title="xronos.Trigger"><code class="xref py py-class docutils literal notranslate"><span class="pre">Trigger</span></code></a> or
+<code class="xref py py-class docutils literal notranslate"><span class="pre">Effect</span></code> to read or write its value.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>T</strong> (<em>optional</em>) – The type of values carried by the port.</p>
@@ -668,7 +670,7 @@ and the first event emitted by the timer (optional).</p></li>
 outside of the scope of the reactor program. These could be external event
 handlers that respond to sensor inputs. Physical events do not provide
 direct access to their values. A <a class="reference internal" href="#xronos.reaction" title="xronos.reaction"><code class="xref py py-attr docutils literal notranslate"><span class="pre">reaction</span></code></a> may declare a
-<a class="reference internal" href="#xronos.Trigger" title="xronos.Trigger"><code class="xref py py-class docutils literal notranslate"><span class="pre">Trigger</span></code></a> or <a class="reference internal" href="#xronos.Source" title="xronos.Source"><code class="xref py py-class docutils literal notranslate"><span class="pre">Source</span></code></a> to access the value associated with an
+<a class="reference internal" href="#xronos.Trigger" title="xronos.Trigger"><code class="xref py py-class docutils literal notranslate"><span class="pre">Trigger</span></code></a> to access the value associated with an
 active event.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type Parameters<span class="colon">:</span></dt>
@@ -797,7 +799,7 @@ previous value is overwritten.</p>
 <p>Programmable timers may be used by reactions to schedule new events in the
 future. Events are not scheduled or read directly. Instead,
 <a class="reference internal" href="#xronos.reaction" title="xronos.reaction"><code class="xref py py-attr docutils literal notranslate"><span class="pre">reaction</span></code></a>’s may declare a <a class="reference internal" href="#xronos.ProgrammableTimerEffect" title="xronos.ProgrammableTimerEffect"><code class="xref py py-class docutils literal notranslate"><span class="pre">ProgrammableTimerEffect</span></code></a> to
-schedule new events, or a <a class="reference internal" href="#xronos.Trigger" title="xronos.Trigger"><code class="xref py py-class docutils literal notranslate"><span class="pre">Trigger</span></code></a> or <a class="reference internal" href="#xronos.Source" title="xronos.Source"><code class="xref py py-class docutils literal notranslate"><span class="pre">Source</span></code></a> to access the
+schedule new events, or a <a class="reference internal" href="#xronos.Trigger" title="xronos.Trigger"><code class="xref py py-class docutils literal notranslate"><span class="pre">Trigger</span></code></a> to access the
 value associated with an active event.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type Parameters<span class="colon">:</span></dt>
@@ -937,25 +939,6 @@ does not trigger the reaction.</p>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>A new effect object that can be used by the reaction handler to
 write to ports or schedule events.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="xronos.ReactionInterface.add_source">
-<span class="sig-name descname"><span class="pre">add_source</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#xronos.InputPort" title="xronos._core.InputPort"><span class="pre">InputPort</span></a><span class="p"><span class="pre">[</span></span><span class="pre">T</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#xronos.OutputPort" title="xronos._core.OutputPort"><span class="pre">OutputPort</span></a><span class="p"><span class="pre">[</span></span><span class="pre">T</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#xronos.ProgrammableTimer" title="xronos._core.ProgrammableTimer"><span class="pre">ProgrammableTimer</span></a><span class="p"><span class="pre">[</span></span><span class="pre">T</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#xronos.PhysicalEvent" title="xronos._core.PhysicalEvent"><span class="pre">PhysicalEvent</span></a><span class="p"><span class="pre">[</span></span><span class="pre">T</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#xronos.Source" title="xronos._core.Source"><span class="pre">Source</span></a><span class="p"><span class="pre">[</span></span><span class="pre">T</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#xronos.ReactionInterface.add_source" title="Link to this definition"></a></dt>
-<dt class="sig sig-object py">
-<span class="sig-name descname"><span class="pre">add_source</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#xronos.PeriodicTimer" title="xronos._core.PeriodicTimer"><span class="pre">PeriodicTimer</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#xronos.Startup" title="xronos._core.Startup"><span class="pre">Startup</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#xronos.Shutdown" title="xronos._core.Shutdown"><span class="pre">Shutdown</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#xronos.Source" title="xronos._core.Source"><span class="pre">Source</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a><span class="p"><span class="pre">]</span></span></span></span></dt>
-<dd><p>Declare a reaction source.</p>
-<p>A source provides read access to the referenced element but does not
-trigger the reaction.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>source</strong> – The reactor element to declare as the reaction source.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A new source object that can be used by the reaction handler to
-check presence and read values.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1199,35 +1182,6 @@ internal clock.</p>
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="xronos.Source">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xronos.</span></span><span class="sig-name descname"><span class="pre">Source</span></span><span class="sig-paren">[</span><em class="sig-param"><span class="n"><span class="pre">T</span></span></em><span class="sig-paren">]</span><a class="headerlink" href="#xronos.Source" title="Link to this definition"></a></dt>
-<dd><p>Access to a reactor element that a reaction may read.</p>
-<p>This class is not intended to be instantiated directly. Use
-<a class="reference internal" href="#xronos.ReactionInterface.add_source" title="xronos.ReactionInterface.add_source"><code class="xref py py-func docutils literal notranslate"><span class="pre">add_source()</span></code></a> instead.</p>
-<dl class="field-list simple">
-</dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="xronos.Source.get">
-<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">T</span></span></span><a class="headerlink" href="#xronos.Source.get" title="Link to this definition"></a></dt>
-<dd><p>Get the current value of the referenced reactor element.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Raises<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>AbsentException</strong> – If called and <a class="reference internal" href="#xronos.Source.is_present" title="xronos.Source.is_present"><code class="xref py py-func docutils literal notranslate"><span class="pre">is_present()</span></code></a> returns <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="xronos.Source.is_present">
-<span class="sig-name descname"><span class="pre">is_present</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a></span></span><a class="headerlink" href="#xronos.Source.is_present" title="Link to this definition"></a></dt>
-<dd><p>Check if the referenced element has triggered.</p>
-<dl class="field-list simple">
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
 <dt class="sig sig-object py" id="xronos.Startup">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xronos.</span></span><span class="sig-name descname"><span class="pre">Startup</span></span><a class="headerlink" href="#xronos.Startup" title="Link to this definition"></a></dt>
 <dd><p>An event that triggers when the program starts executing.</p>
@@ -1281,7 +1235,7 @@ internal clock.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="xronos.Trigger">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xronos.</span></span><span class="sig-name descname"><span class="pre">Trigger</span></span><span class="sig-paren">[</span><em class="sig-param"><span class="n"><span class="pre">T</span></span></em><span class="sig-paren">]</span><a class="headerlink" href="#xronos.Trigger" title="Link to this definition"></a></dt>
-<dd><p>Access to a reactor element that a reaction may read and be triggered by.</p>
+<dd><p>Access to a reactor element that a reaction is triggered by and may read.</p>
 <p>This class is not intended to be instantiated directly. Use
 <a class="reference internal" href="#xronos.ReactionInterface.add_trigger" title="xronos.ReactionInterface.add_trigger"><code class="xref py py-func docutils literal notranslate"><span class="pre">add_trigger()</span></code></a> instead.</p>
 <dl class="field-list simple">
@@ -1321,7 +1275,8 @@ internal clock.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>declaration</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.13)"><em>Callable</em></a><em>[</em><em>[</em><em>R</em><em>, </em><a class="reference internal" href="#xronos.ReactionInterface" title="xronos._core.ReactionInterface"><em>ReactionInterface</em></a><em>]</em><em>, </em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.13)"><em>Callable</em></a><em>[</em><em>[</em><em>]</em><em>, </em><em>None</em><em>]</em><em>]</em>) – The decorated method. Must accept an
 <a class="reference internal" href="#xronos.ReactionInterface" title="xronos.ReactionInterface"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReactionInterface</span></code></a> as its first argument and return
-a reaction handler.</p>
+a reaction handler. Failing to return a handler will result in an
+exception when the reactor containing the reaction is initialized.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1339,7 +1294,7 @@ a reaction handler.</p>
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2024, Xronos Inc..</p>
+    <p>&#169; Copyright 2025, Xronos Inc..</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

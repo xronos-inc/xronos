@@ -36,20 +36,22 @@ protected:
     class MatchWithTimer : public Reaction<TestProgrammableTimerReactor> {
       using Reaction<TestProgrammableTimerReactor>::Reaction;
       Trigger<void> reference_trigger{self().reference_, context()};
-      Source<void> void_source{self().programmable_timer_void_, context()};
-      Source<int> int_source{self().programmable_timer_int_, context()};
+      Trigger<void> void_trigger{self().programmable_timer_void_, context()};
+      Trigger<int> int_trigger{self().programmable_timer_int_, context()};
       void handler() final {
-        EXPECT_TRUE(reference_trigger.is_present());
-        if (self().get_time_since_startup() == 0s) {
+        if (self().get_time_since_startup() == 0s && reference_trigger.is_present()) {
           // The first iteration does not align with the first timer triggering
-          EXPECT_FALSE(void_source.is_present());
-          EXPECT_FALSE(int_source.is_present());
-          EXPECT_EQ(int_source.get(), nullptr);
+          EXPECT_FALSE(void_trigger.is_present());
+          EXPECT_FALSE(int_trigger.is_present());
+          EXPECT_EQ(int_trigger.get(), nullptr);
         } else {
-          EXPECT_TRUE(void_source.is_present());
-          EXPECT_TRUE(int_source.is_present());
-          ASSERT_NE(int_source.get(), nullptr);
-          EXPECT_EQ(*int_source.get(), self().expected_);
+          if (self().get_time_since_startup() > 0s) {
+            EXPECT_TRUE(reference_trigger.is_present());
+          }
+          EXPECT_TRUE(void_trigger.is_present());
+          EXPECT_TRUE(int_trigger.is_present());
+          ASSERT_NE(int_trigger.get(), nullptr);
+          EXPECT_EQ(*int_trigger.get(), self().expected_);
         }
       }
     };
@@ -58,25 +60,31 @@ protected:
       using Reaction<TestProgrammableTimerReactor>::Reaction;
       Trigger<void> void_trigger{self().programmable_timer_void_, context()};
       Trigger<int> int_trigger{self().programmable_timer_int_, context()};
-      Source<void> reference_source{self().reference_, context()};
+      Trigger<void> reference_trigger{self().reference_, context()};
       ProgrammableTimerEffect<void> void_effect{self().programmable_timer_void_, context()};
       ProgrammableTimerEffect<int> int_effect{self().programmable_timer_int_, context()};
       void handler() final {
-        EXPECT_TRUE(void_trigger.is_present());
-        EXPECT_TRUE(int_trigger.is_present());
-        if (self().get_time_since_startup() == 0s) {
+        if (self().get_time_since_startup() == 0s && reference_trigger.is_present()) {
           // The first iteration does not align with the first timer triggering
-          EXPECT_FALSE(reference_source.is_present());
+          EXPECT_FALSE(void_trigger.is_present());
+          EXPECT_FALSE(int_trigger.is_present());
+          EXPECT_EQ(int_trigger.get(), nullptr);
         } else {
-          EXPECT_TRUE(reference_source.is_present());
+          if (self().get_time_since_startup() > 0s) {
+            EXPECT_TRUE(reference_trigger.is_present());
+          }
+          EXPECT_TRUE(void_trigger.is_present());
+          EXPECT_TRUE(int_trigger.is_present());
+          ASSERT_NE(int_trigger.get(), nullptr);
+          EXPECT_EQ(*int_trigger.get(), self().expected_);
         }
-        ASSERT_NE(int_trigger.get(), nullptr);
-        EXPECT_EQ(*int_trigger.get(), self().expected_);
 
-        self().expected_++;
+        if (int_trigger.is_present() && void_trigger.is_present()) {
+          self().expected_++;
 
-        void_effect.schedule(GetParam());
-        int_effect.schedule(self().expected_, GetParam());
+          void_effect.schedule(GetParam());
+          int_effect.schedule(self().expected_, GetParam());
+        }
       }
     };
     void assemble() final {

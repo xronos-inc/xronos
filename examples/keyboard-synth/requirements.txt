@@ -1,0 +1,11 @@
+xronos==0.3.0
+numpy>=2.2.0
+
+# UI
+websockets>=15.0.1
+argparse>=1.4.0
+
+# sounddevice
+CFFI==1.17.1
+pycparser==2.22
+sounddevice==0.5.1

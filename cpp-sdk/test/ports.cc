@@ -290,14 +290,14 @@ private:
     using Reaction<Receiver>::Reaction;
     Trigger<void> expected_trigger{self().timer_expected_, context()};
     Trigger<void> offset_trigger{self().timer_offset_, context()};
-    Source<int> input_source{self().input_, context()};
+    Trigger<int> input_trigger{self().input_, context()};
     void handler() final {
       EXPECT_TRUE(expected_trigger.is_present() || offset_trigger.is_present());
       EXPECT_FALSE(expected_trigger.is_present() && offset_trigger.is_present());
       if (expected_trigger.is_present()) {
-        EXPECT_TRUE(input_source.is_present());
+        EXPECT_TRUE(input_trigger.is_present());
       } else {
-        EXPECT_FALSE(input_source.is_present());
+        EXPECT_FALSE(input_trigger.is_present());
       }
       self().check_timing_executed_ = true;
     }

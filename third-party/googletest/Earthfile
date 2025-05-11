@@ -3,7 +3,7 @@ VERSION 0.8
 IMPORT ../../base-images AS base-images
 
 install:
-  FROM base-images+build-essential
+  FROM base-images+common-base
   RUN mkdir -p third-party/googletest
   COPY googletest.cmake third-party/googletest
   SAVE ARTIFACT third-party

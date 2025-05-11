@@ -21,7 +21,7 @@ Pillow>=7.1.2
 PyYAML>=5.3.1
 scipy>=1.4.1
 ultralytics == 8.3.48
-xronos>=0.2.0
+xronos==0.3.0
 
 # Logging -------------------------------------
 tensorboard>=2.4.1

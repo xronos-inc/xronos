@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Trace Dashboard &mdash; xronos  documentation</title>
+  <title>Dashboard &mdash; xronos  documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
@@ -54,11 +54,12 @@
 <li class="toctree-l1"><a class="reference internal" href="reference_guide/index.html">Reference Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="diagrams.html">Diagram View</a></li>
 <li class="toctree-l1"><a class="reference internal" href="telemetry.html">Telemetry</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Trace Dashboard</a><ul>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Dashboard</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#system-requirements">System Requirements</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#usage">Usage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#visualizing-metrics">Visualizing Metrics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#upgrading-dashboard-versions">Upgrading Dashboard Versions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#closing-the-dashboard">Closing the Dashboard</a></li>
 </ul>
 </li>
@@ -81,7 +82,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Trace Dashboard</li>
+      <li class="breadcrumb-item active">Dashboard</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/dashboard.md.txt" rel="nofollow"> View page source</a>
       </li>
@@ -91,12 +92,13 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="trace-dashboard">
-<span id="dashboard"></span><h1>Trace Dashboard<a class="headerlink" href="#trace-dashboard" title="Link to this heading"></a></h1>
+  <section id="dashboard">
+<span id="id1"></span><h1>Dashboard<a class="headerlink" href="#dashboard" title="Link to this heading"></a></h1>
 <p>The runtime behavior of xronos programs can be observed using the Xronos
 Dashboard. The dashboard consists of a user interface based on
-<a class="reference external" href="https://grafana.com/">Grafana</a> and a time series database that stores
-trace data of reaction executions and any values recorded using <a class="reference internal" href="telemetry.html#metrics"><span class="std std-ref">metrics</span></a>.</p>
+<a class="reference external" href="https://grafana.com/">Grafana</a> and a time series database that stores telemetry
+data such as traces of reaction executions and values recorded using
+<a class="reference internal" href="telemetry.html#metrics"><span class="std std-ref">metrics</span></a>.</p>
 <section id="system-requirements">
 <h2>System Requirements<a class="headerlink" href="#system-requirements" title="Link to this heading"></a></h2>
 <ul class="simple">
@@ -127,13 +129,13 @@ username <code class="docutils literal notranslate"><span class="pre">admin</spa
 <p>After logging in, the trace view opens. Initially, it will be empty.</p>
 <p><img alt="empty dashboard" src="_images/dashboard_empty.png" /></p>
 <p>To show trace data in the dashboard, we need to run a xronos application that
-has tracing enabled. Tracing can be enabled on any application by calling
-<a class="reference internal" href="api.html#xronos.Environment.enable_tracing" title="xronos.Environment.enable_tracing"><code class="xref py py-func docutils literal notranslate"><span class="pre">enable_tracing()</span></code></a> on the environment. Note that this
+has telemetry enabled. Telemetry can be enabled on any application by calling
+<a class="reference internal" href="api.html#xronos.Environment.enable_telemetry" title="xronos.Environment.enable_telemetry"><code class="xref py py-func docutils literal notranslate"><span class="pre">enable_telemetry()</span></code></a> on the environment. Note that this
 has to happen before calling execute <a class="reference internal" href="api.html#xronos.Environment.execute" title="xronos.Environment.execute"><code class="xref py py-func docutils literal notranslate"><span class="pre">execute()</span></code></a>.</p>
 <p>Modify the <a class="reference internal" href="getting_started.html#hello-world"><span class="std std-ref">Hello World</span></a> example like shown below.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">env</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">Environment</span><span class="p">()</span>
 <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;hello&quot;</span><span class="p">,</span> <span class="n">Hello</span><span class="p">)</span>
-<span class="n">env</span><span class="o">.</span><span class="n">enable_tracing</span><span class="p">()</span>
+<span class="n">env</span><span class="o">.</span><span class="n">enable_telemetry</span><span class="p">()</span>
 <span class="n">env</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
 </pre></div>
 </div>
@@ -141,37 +143,33 @@ has to happen before calling execute <a class="reference internal" href="api.htm
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>python<span class="w"> </span>hello.py
 </pre></div>
 </div>
-<p>Hit the <span class="guilabel">🗘 Refresh</span> button in the dashboard. The trace view should now show a single
-execution of the <code class="docutils literal notranslate"><span class="pre">hello</span></code> reaction.</p>
+<p>The single reaction execution should register as a data point in the dashboard.</p>
 <p><img alt="dashboard hello" src="_images/dashboard_hello.png" /></p>
-<p>If the trace view is still empty, you were likely not quick enough. By default,
-the trace view shows the last 5 seconds. Try extending the time window using the
-drop-down menu on the left of the <span class="guilabel">🗘 Refresh</span> button. For instance,
-you can select <span class="guilabel">Last 5 minutes</span>.</p>
 <p>The trace view is most useful for analyzing the execution of more complex
 applications. For instance, below you can see the trace view for the
-<a class="reference internal" href="tutorials/yolo.html#yolo"><span class="std std-ref">YOLO</span></a> example, when run with the <code class="docutils literal notranslate"><span class="pre">--trace</span></code> argument. Note that you
-can use the drop-down just next to the <span class="guilabel">🗘 Refresh</span> button and select
-<span class="guilabel">Auto</span> to enable automatic refreshing, which provides a live view of
-the collected data.</p>
+<a class="reference internal" href="tutorials/yolo.html#yolo"><span class="std std-ref">YOLO</span></a> example, when run with the <code class="docutils literal notranslate"><span class="pre">--telemetry</span></code> argument.</p>
 <p><img alt="dashboard yolo" src="_images/dashboard_yolo.png" /></p>
 </section>
 <section id="visualizing-metrics">
 <span id="queries"></span><h2>Visualizing Metrics<a class="headerlink" href="#visualizing-metrics" title="Link to this heading"></a></h2>
 <p>We can also use the dashboard to visualize data values recorded for
 <a class="reference internal" href="telemetry.html#metrics"><span class="std std-ref">metrics</span></a>. When you run an application that uses <a class="reference internal" href="telemetry.html#metrics"><span class="std std-ref">Metrics</span></a>
-while the dashboard is running and tracing is enabled, this will also store any
+while the dashboard is running and telemetry is enabled, this will also store any
 values recorded by the application in the database. For instance, you can run
 the <a class="reference external" href="https://github.com/xronos-inc/xronos/tree/main/examples/montecarlo">Monte Carlo
 example</a>,
 which already includes a few metrics. The example estimates the value of pi and
 includes metrics for the current estimate, the estimation error, and the number
 of processed points.</p>
-<p>When running a simulation with tracing set to enabled in the web interface, the
+<p>When running a simulation with telemetry set to enabled in the web interface, the
 traces of executed reactions should be shown in the default dashboard.</p>
 <p><img alt="montecarlo dashboard" src="_images/dashboard_montecarlo.png" /></p>
-<p>Click the “Edit” button in the top-right corner of the Grafana UI to customize
-your dashboard.</p>
+<p>The default dashboard is pre-filled at the bottom with a basic time series view
+of your program’s metrics, if your program reports any. In the image above, the
+currently-selected metric is <code class="docutils literal notranslate"><span class="pre">SimulationAggregator._current_estimate</span></code>.</p>
+<p>However, it is also possible to customize the dashboard and write queries that
+might be better suited to your application. Click the “Edit” button in the
+top-right corner of the Grafana UI to customize the dashboard.</p>
 <p><img alt="dashboard enter edit mode" src="_images/dashboard_enter_edit_mode.png" /></p>
 <p>You can then add visualizations to select any time series of interest from your
 application.</p>
@@ -205,6 +203,24 @@ set a refresh interval.</p>
 <p>Save your changes to ensure that they persist, even when stopping the dashboard.</p>
 <p><img alt="dashboard save panel" src="_images/dashboard_save_panel.png" /></p>
 </section>
+<section id="upgrading-dashboard-versions">
+<h2>Upgrading Dashboard Versions<a class="headerlink" href="#upgrading-dashboard-versions" title="Link to this heading"></a></h2>
+<p>Updating the <code class="docutils literal notranslate"><span class="pre">xronos-dashboard</span></code> CLI tool will also update the versions of the
+Docker images that it depends on. Any time you update the underlying Docker
+images, you should keep the following in mind:</p>
+<ul class="simple">
+<li><p>By default, the state of your Grafana instance is preserved in a Docker volume,
+and upgrading the image does not cause that volume to be replaced. This ensures
+that data that you may need is preserved by default. However, it also means that
+some updates to the default dashboard released by Xronos will not propagate to
+your instance automatically unless you delete the existing Docker volume.</p></li>
+<li><p>When there is an update, your browser may cache the site content, which can
+create an inconsistency between the code running in your browser and the code
+running in the Docker image. As a result, you may need to clear the site data
+associated with <code class="docutils literal notranslate"><span class="pre">localhost</span></code>. In Firefox, you can do this by going to “Settings
+&gt; Privacy and Security &gt; Cookies and Site Data &gt; Manage Data.”</p></li>
+</ul>
+</section>
 <section id="closing-the-dashboard">
 <h2>Closing the Dashboard<a class="headerlink" href="#closing-the-dashboard" title="Link to this heading"></a></h2>
 <p>When you are done, you may stop the dashboard.</p>
@@ -212,7 +228,7 @@ set a refresh interval.</p>
 <span class="go">✔ stopped</span>
 </pre></div>
 </div>
-<p>In case you want to delete all state, including all collected trace data and
+<p>In case you want to delete all state, including all collected telemetry data and
 custom queries, you can use the following command.</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>xronos-dashboard<span class="w"> </span>delete
 <span class="go">✔ stopped</span>
@@ -232,7 +248,7 @@ custom queries, you can use the following command.</p>
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2024, Xronos Inc..</p>
+    <p>&#169; Copyright 2025, Xronos Inc..</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

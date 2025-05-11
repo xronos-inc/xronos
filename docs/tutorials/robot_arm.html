@@ -54,7 +54,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../reference_guide/index.html">Reference Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../diagrams.html">Diagram View</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../telemetry.html">Telemetry</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../dashboard.html">Trace Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dashboard.html">Dashboard</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="index.html">Tutorials</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="yolo.html">Object Detection with YOLO</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Yahboom Robot Arm Controller</a><ul>
@@ -64,7 +64,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#userinterface-reactor">UserInterface reactor</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#armcontrol-reactor">ArmControl reactor</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#running-the-program">Running the program</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#on-device-tracing">On-device tracing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#telemetry">Telemetry</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="external_input.html">External Input</a></li>
@@ -322,19 +322,19 @@ writes to the output port to notify the user.</p>
 </pre></div>
 </div>
 </section>
-<section id="on-device-tracing">
-<h2>On-device tracing<a class="headerlink" href="#on-device-tracing" title="Link to this heading"></a></h2>
+<section id="telemetry">
+<h2>Telemetry<a class="headerlink" href="#telemetry" title="Link to this heading"></a></h2>
 <p>The Xronos Dashboard can provide invaluable runtime observability into the program. Bring it up on the Jetson by
-following the instructions in <a class="reference internal" href="../dashboard.html#dashboard"><span class="std std-ref">Trace Dashboard</span></a>. Then start the robot arm with tracing enabled.</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>python<span class="w"> </span>arm.py<span class="w"> </span>--trace
+following the instructions in <a class="reference internal" href="../dashboard.html#dashboard"><span class="std std-ref">Dashboard</span></a>. Then start the robot arm with telemetry enabled.</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>python<span class="w"> </span>arm.py<span class="w"> </span>--telemetry
 </pre></div>
 </div>
 <p>There are now two options for viewing the dashboard. If you are within a desktop environment on the Jetson, either
 through a remote desktop, or by connecting a monitor and a keyboard directly to the Jetson, then you can simply point the
-web browser to <code class="docutils literal notranslate"><span class="pre">localhost:3000</span></code> as explained in <a class="reference internal" href="../dashboard.html#dashboard"><span class="std std-ref">Trace Dashboard</span></a>. If you only have an SSH connection to the Jetson you
+web browser to <code class="docutils literal notranslate"><span class="pre">localhost:3000</span></code> as explained in <a class="reference internal" href="../dashboard.html#dashboard"><span class="std std-ref">Dashboard</span></a>. If you only have an SSH connection to the Jetson you
 can point the browser on your host computer to <code class="docutils literal notranslate"><span class="pre">JETSON_IP_ADDR:3000</span></code> where <code class="docutils literal notranslate"><span class="pre">JETSON_IP_ADDR</span></code> is the IP address or
 hostname of the Jetson.</p>
-<p>The trace viewer should look something like this.</p>
+<p>The trace view should look something like this.</p>
 <p><img alt="Xronos Dashboard for robot arm" src="../_images/dashboard_arm.png" /></p>
 <p>Observe that <code class="docutils literal notranslate"><span class="pre">ui.on_user_input</span></code> reaction executes and triggers <code class="docutils literal notranslate"><span class="pre">arm_control.on_user_goal</span></code> which updates the current goal
 pose. In the following execution of <code class="docutils literal notranslate"><span class="pre">arm_control.on_sample_timer</span></code> the change in in-position is detected, and an internal
@@ -353,7 +353,7 @@ event is scheduled which triggers new commands to the servos.</p>
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2024, Xronos Inc..</p>
+    <p>&#169; Copyright 2025, Xronos Inc..</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

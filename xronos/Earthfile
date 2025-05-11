@@ -15,7 +15,8 @@ lint:
     BUILD +lint-cpp
 
 common:
-    FROM --pass-args base-images+python-venv
+    ARG python_version=3.12
+    FROM base-images+python-venv --python_version=$python_version
     COPY lib+install/install /install
     WORKDIR /xronos/xronos
     COPY --dir cpp src ./
@@ -24,7 +25,8 @@ common:
     COPY --dir third-party-licenses ./
 
 wheel:
-    FROM --pass-args +common
+    ARG python_version=3.12
+    FROM +common --python_version=$python_version
     RUN \
         export CMAKE_PREFIX_PATH="/install" && \
         export LD_LIBRARY_PATH=/install/lib && \
@@ -42,15 +44,16 @@ copy-tests:
     SAVE ARTIFACT test/ /test/
 
 test-py:
-    FROM --pass-args base-images+python-venv
+    ARG --required python_version
+    FROM base-images+python-venv --python_version=$python_version
     WORKDIR /xronos
-    COPY --pass-args +wheel/xronos-*.whl .
+    COPY (+wheel/xronos-*.whl --python_version=$python_version) .
     COPY --dir test src ./
     RUN . .venv/bin/activate && pip install xronos-*.whl
     RUN . .venv/bin/activate && pytest
 
 lint-py:
-    FROM base-images+python-venv
+    FROM base-images+python-venv --python_version=3.12
     COPY --dir src/ test/ ./
     COPY pyproject.toml ./
     RUN . .venv/bin/activate && ruff format --diff

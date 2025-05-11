@@ -26,7 +26,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Trace Dashboard" href="dashboard.html" />
+    <link rel="next" title="Dashboard" href="dashboard.html" />
     <link rel="prev" title="Diagram View" href="diagrams.html" /> 
 </head>
 
@@ -61,7 +61,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#metrics">Metrics</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="dashboard.html">Trace Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dashboard.html">Dashboard</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorials/index.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API Documentation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="lib.html">Library Reactors</a></li>
@@ -98,13 +98,13 @@ into an application.</p>
 <section id="enabling-telemetry">
 <h2>Enabling Telemetry<a class="headerlink" href="#enabling-telemetry" title="Link to this heading"></a></h2>
 <p>An application needs to explicitly enable the collection of telemetry data by
-calling <a class="reference internal" href="api.html#xronos.Environment.enable_tracing" title="xronos.Environment.enable_tracing"><code class="xref py py-func docutils literal notranslate"><span class="pre">enable_tracing()</span></code></a> on the environment.
+calling <a class="reference internal" href="api.html#xronos.Environment.enable_telemetry" title="xronos.Environment.enable_telemetry"><code class="xref py py-func docutils literal notranslate"><span class="pre">enable_telemetry()</span></code></a> on the environment.
 By default, this records trace data for each reaction handler that executes.</p>
 <p>For instance, you can modify the <a class="reference internal" href="getting_started.html#hello-world"><span class="std std-ref">Hello World</span></a> example like shown below.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
     <span class="n">env</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">Environment</span><span class="p">()</span>
     <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;hello&quot;</span><span class="p">,</span> <span class="n">Hello</span><span class="p">)</span>
-    <span class="n">env</span><span class="o">.</span><span class="n">enable_tracing</span><span class="p">(</span><span class="n">application_name</span><span class="o">=</span><span class="s2">&quot;hello&quot;</span><span class="p">)</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">enable_telemetry</span><span class="p">(</span><span class="n">application_name</span><span class="o">=</span><span class="s2">&quot;hello&quot;</span><span class="p">)</span>
     <span class="n">env</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
 </pre></div>
 </div>
@@ -114,8 +114,8 @@ By default, this records trace data for each reaction handler that executes.</p>
 <span class="go">[Error] File: /xronos/xronos-telemetry/build/_deps/opentelemetry-cpp-src/exporters/otlp/src/otlp_grpc_exporter.cc:114 [OTLP TRACE GRPC Exporter] Export() failed with status_code: &quot;UNAVAILABLE&quot; error_message: &quot;failed to connect to all addresses; last error: UNKNOWN: ipv4:127.0.0.1:4317: Failed to connect to remote host: connect: Connection refused (111)&quot;</span>
 </pre></div>
 </div>
-<p>This prints an error because we ran the program with tracing enabled, but did
-not provide an endpoint for receiving the telemetry data. See <a class="reference internal" href="dashboard.html#dashboard"><span class="std std-ref">Trace Dashboard</span></a>
+<p>This prints an error because we ran the program with telemetry enabled, but did
+not provide an endpoint for receiving the telemetry data. See <a class="reference internal" href="dashboard.html#dashboard"><span class="std std-ref">Dashboard</span></a>
 for instructions on how to start and use the dashboard for receiving and
 visualizing telemetry data.</p>
 </section>
@@ -128,11 +128,11 @@ By default, the following attributes are recorded:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">host.name</span></code>: Name of the host executing the xronos program.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">process.pid</span></code>: The process ID of the running xronos program.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">service.name</span></code>: Name of the application as given provided in the call to <a class="reference internal" href="api.html#xronos.Environment.enable_tracing" title="xronos.Environment.enable_tracing"><code class="xref py py-func docutils literal notranslate"><span class="pre">enable_tracing()</span></code></a>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">xronos.fqn</span></code>: Fully qualified name of the element that produces trace data.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">xronos.name</span></code>: Name of the element that produces trace data.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">xronos.element_type</span></code>: Type of the element that produces trace data (e.g., “reactor”, “reaction”, “metric”)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">xronos.container_fqn</span></code>: Fully qualified name of the reactor that contains the element that produces trace data.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">service.name</span></code>: Name of the application as given provided in the call to <a class="reference internal" href="api.html#xronos.Environment.enable_telemetry" title="xronos.Environment.enable_telemetry"><code class="xref py py-func docutils literal notranslate"><span class="pre">enable_telemetry()</span></code></a>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">xronos.fqn</span></code>: Fully qualified name of the element that produces telemetry data.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">xronos.name</span></code>: Name of the element that produces telemetry data.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">xronos.element_type</span></code>: Type of the element that produces telemetry data (e.g., “reactor”, “reaction”, “metric”)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">xronos.container_fqn</span></code>: Fully qualified name of the reactor that contains the element that produces telemetry data.</p></li>
 </ul>
 <p>This set of attributes is sufficient to uniquely identify the origin of each
 datapoint. However, you may specify additional attributes that will help you
@@ -323,13 +323,13 @@ example.</p>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="diagrams.html" class="btn btn-neutral float-left" title="Diagram View" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="dashboard.html" class="btn btn-neutral float-right" title="Trace Dashboard" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="dashboard.html" class="btn btn-neutral float-right" title="Dashboard" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2024, Xronos Inc..</p>
+    <p>&#169; Copyright 2025, Xronos Inc..</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

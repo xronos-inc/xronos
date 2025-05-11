@@ -4,6 +4,6 @@
 <area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="195,119,195,168,190,168,190,119"/>
 <area shape="rect" id="Node000002" href="$classxronos_1_1sdk_1_1Element.html" title="Base class for all reactor elements." alt="" coords="5,5,164,31"/>
 <area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="115,36,177,78,174,82,112,41"/>
-<area shape="rect" id="Node000003" href="$classxronos_1_1sdk_1_1EventSource.html" title="Base class for reactor elements that can be used as sources or triggers of reactions." alt="" coords="189,5,413,31"/>
+<area shape="rect" id="Node000003" href="$classxronos_1_1sdk_1_1EventSource.html" title="Base class for reactor elements that can be used as triggers of reactions." alt="" coords="189,5,413,31"/>
 <area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="273,41,211,82,208,78,270,36"/>
 </map>

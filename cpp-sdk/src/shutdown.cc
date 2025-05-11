@@ -17,8 +17,4 @@ void Shutdown::register_as_trigger_of(runtime::Reaction& reaction) const noexcep
   reaction.declare_trigger(&detail::get_runtime_instance<runtime::ShutdownTrigger>(*this));
 }
 
-void Shutdown::register_as_source_of(runtime::Reaction& reaction) const noexcept {
-  reaction.declare_dependency(&detail::get_runtime_instance<runtime::ShutdownTrigger>(*this));
-}
-
 } // namespace xronos::sdk

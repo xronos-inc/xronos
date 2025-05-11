@@ -54,7 +54,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../reference_guide/index.html">Reference Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../diagrams.html">Diagram View</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../telemetry.html">Telemetry</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../dashboard.html">Trace Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dashboard.html">Dashboard</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="index.html">Tutorials</a><ul class="current">
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Object Detection with YOLO</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#clone-the-yolo-example-and-install-dependencies">Clone the YOLO example and install dependencies</a></li>
@@ -124,7 +124,7 @@ command line arguments, the <code class="docutils literal notranslate"><span cla
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span>
     <span class="n">video_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">no_display</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="n">trace</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">telemetry</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="n">env</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">Environment</span><span class="p">()</span>
     <span class="n">webCam</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span>
@@ -137,9 +137,9 @@ command line arguments, the <code class="docutils literal notranslate"><span cla
     <span class="n">env</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">webCam</span><span class="o">.</span><span class="n">frame</span><span class="p">,</span> <span class="n">dnn</span><span class="o">.</span><span class="n">frame</span><span class="p">)</span>
     <span class="n">env</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">dnn</span><span class="o">.</span><span class="n">result</span><span class="p">,</span> <span class="n">display</span><span class="o">.</span><span class="n">dnn_result</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="n">trace</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;enable tracing&quot;</span><span class="p">)</span>
-        <span class="n">env</span><span class="o">.</span><span class="n">enable_tracing</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">telemetry</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;enable telemetry&quot;</span><span class="p">)</span>
+        <span class="n">env</span><span class="o">.</span><span class="n">enable_telemetry</span><span class="p">()</span>
 
     <span class="n">env</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
 </pre></div>
@@ -336,7 +336,7 @@ This means that if a message is received on either input port, the reaction will
 be executed. If both input ports receive a message with identical timestamps, the
 xronos runtime ensures that the reaction is only executed once, with both input
 ports present. In this case, the messages arrive <em>simultaneously</em>. The presence of
-an event can be checked using the <code class="xref py py-func docutils literal notranslate"><span class="pre">Source.is_present()</span></code> method. The ability
+an event can be checked using the <a class="reference internal" href="../api.html#xronos.Trigger.is_present" title="xronos.Trigger.is_present"><code class="xref py py-func docutils literal notranslate"><span class="pre">is_present()</span></code></a> method. The ability
 to align events on multiple input port simplifies the application logic needed.
 The reaction handler can fully focus on sensor fusion.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@xronos</span><span class="o">.</span><span class="n">reaction</span>
@@ -413,8 +413,8 @@ The reaction handler can fully focus on sensor fusion.</p>
 </pre></div>
 </div>
 <p>A window will appear displaying the video stream from your webcam and the object detection made by YOLO.</p>
-<p>Optionally, you can append the <code class="docutils literal notranslate"><span class="pre">--trace</span></code> argument to visualize the program
-execution in the <a class="reference internal" href="../dashboard.html#dashboard"><span class="std std-ref">Trace Dashboard</span></a>.</p>
+<p>Optionally, you can append the <code class="docutils literal notranslate"><span class="pre">--telemetry</span></code> argument to visualize the program
+execution in the <a class="reference internal" href="../dashboard.html#dashboard"><span class="std std-ref">Dashboard</span></a>.</p>
 </section>
 </section>
 
@@ -429,7 +429,7 @@ execution in the <a class="reference internal" href="../dashboard.html#dashboard
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2024, Xronos Inc..</p>
+    <p>&#169; Copyright 2025, Xronos Inc..</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

@@ -1,68 +1,61 @@
 VERSION 0.8
-ARG base_image=ubuntu:22.04
-FROM $base_image
 
 IMPORT ../ AS root
 
-WORKDIR /xronos
+common-base:
+    FROM ubuntu:22.04
+    WORKDIR /xronos
 
-build-essential:
-    # Warning: In QEMU emulation, this may crash with a segfault related to libc-bin
-    # until you follow steps listed at https://github.com/docker/buildx/issues/1170#issuecomment-1159350550
     ENV DEBIAN_FRONTEND=noninteractive
     ENV DISPLAY=localhost:0.0
+
+    LET clang_tools_version=18
+
     RUN apt-get update -qq
     RUN apt-get install -y -q --no-install-recommends apt-utils
     RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
 
+    # Some base packages required for adding ppas
     RUN apt-get install -y -q --no-install-recommends \
-            build-essential \
-            git \
-            libpthread-stubs0-dev \
-            software-properties-common \
-            lsb-release \
             ca-certificates \
+            gnupg \
             gpg \
-            wget \
-            zlib1g-dev \
-            gnupg
+            software-properties-common \
+            wget
+
+    # add kitware ppa for cmake
     RUN wget -qO- https://apt.kitware.com/keys/kitware-archive-latest.asc | gpg --dearmor - > /usr/share/keyrings/kitware-archive-keyring.gpg
     RUN echo "deb [signed-by=/usr/share/keyrings/kitware-archive-keyring.gpg] https://apt.kitware.com/ubuntu/ $(lsb_release -cs) main" > /etc/apt/sources.list.d/kitware.list
-    RUN apt-get update -qq
-    RUN apt-get install -y -q --no-install-recommends \
-            cmake=3.28.6-0kitware1ubuntu22.04.1 \
-            cmake-data=3.28.6-0kitware1ubuntu22.04.1
 
-clang-tools:
-    FROM +build-essential
-    ENV DEBIAN_FRONTEND=noninteractive
-    ENV DISPLAY=localhost:0.0
-    LET clang_tools_version=18
+    # add ppa for clang tools
     RUN wget -qO- https://apt.llvm.org/llvm.sh | bash -s -- ${clang_tools_version}
-    RUN update-alternatives --install /usr/bin/clang clang /usr/bin/clang-${clang_tools_version} 100
-    RUN update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-${clang_tools_version} 100
-    RUN apt-get install -y -q --no-install-recommends \
-            llvm-${clang_tools_version}-dev \
-            libclang-${clang_tools_version}-dev
-    RUN apt-get install -y -q --no-install-recommends \
-            clang-format-${clang_tools_version} \
-            clang-tidy-${clang_tools_version}
-    RUN update-alternatives --install /usr/bin/clang-format clang-format /usr/bin/clang-format-${clang_tools_version} 100
-    RUN update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-${clang_tools_version} 100
 
-python:
-    FROM +clang-tools
-    ENV DEBIAN_FRONTEND=noninteractive
-    ENV DISPLAY=localhost:0.0
+    # add ppa for Python
     RUN gpg --keyserver keyserver.ubuntu.com --recv-keys 6A755776
     RUN gpg --export 6A755776 | gpg --dearmor > /etc/apt/trusted.gpg.d/deadsnakes-ppa.gpg
     RUN echo "deb [signed-by=/etc/apt/trusted.gpg.d/deadsnakes-ppa.gpg] http://ppa.launchpad.net/deadsnakes/ppa/ubuntu $(lsb_release -cs) main" > /etc/apt/sources.list.d/deadsnakes-ppa.list
-    RUN apt-get update -qq
-    RUN apt-get install -y -q --no-install-recommends \
+
+    # install all packages
+    RUN apt-get update -qq && apt-get install -y -q --no-install-recommends \
+            build-essential \
+            cmake=3.28.6-0kitware1ubuntu22.04.1 \
+            cmake-data=3.28.6-0kitware1ubuntu22.04.1 \
+            clang-format-${clang_tools_version} \
+            clang-tidy-${clang_tools_version} \
+            git \
+            global \
+            gnupg \
+            graphviz \
+            llvm-${clang_tools_version}-dev \
+            libclang-${clang_tools_version}-dev \
+            libgl1 \
             python3.10-dev python3.10-venv \
             python3.11-dev python3.11-venv \
             python3.12-dev python3.12-venv \
-            python3.13-dev python3.13-venv python3.13-nogil
+            python3.13-dev python3.13-venv python3.13-nogil \
+            python3-pygments \
+            zlib1g-dev
+
     # This is a workaround for a gcc bug. See https://gcc.gnu.org/bugzilla/show_bug.cgi?id=118700
     RUN cp /usr/include/python3.13t/pyconfig.h ./
     RUN rm -rf /usr/include/python3.13t
@@ -70,12 +63,18 @@ python:
     RUN rm /usr/include/python3.13t/pyconfig.h
     RUN mv ./pyconfig.h /usr/include/python3.13t/pyconfig.h
 
+    RUN update-alternatives --install /usr/bin/clang clang /usr/bin/clang-${clang_tools_version} 100
+    RUN update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-${clang_tools_version} 100
+    RUN update-alternatives --install /usr/bin/clang-format clang-format /usr/bin/clang-format-${clang_tools_version} 100
+    RUN update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-${clang_tools_version} 100
+
 python-venv:
-    ARG python_version=3.12
-    FROM +python
+    ARG --required python_version
+    FROM +common-base
     WORKDIR /xronos
     COPY root+configs/dev-requirements.txt ./
     RUN python$python_version -m venv ./.venv
     RUN . .venv/bin/activate && pip install -r dev-requirements.txt
     # Run pyright once to install its node dependencies
     RUN . .venv/bin/activate && pyright --version
+    SAVE ARTIFACT .venv

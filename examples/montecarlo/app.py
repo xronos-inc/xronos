@@ -50,13 +50,13 @@ async def run_simulation_in_thread(
     await loop.run_in_executor(executor, run_sim, params, queue)
 
 
-@app.websocket("/ws/{total_points}/{batch_size}/{batch_delay}/{tracing}")
+@app.websocket("/ws/{total_points}/{batch_size}/{batch_delay}/{telemetry}")
 async def websocket_endpoint(
     websocket: WebSocket,
     total_points: int,
     batch_size: int,
     batch_delay: int,
-    tracing: bool,
+    telemetry: bool,
 ) -> None:
     queue = PointQueue()
     await websocket.accept()
@@ -70,7 +70,7 @@ async def websocket_endpoint(
                     "total_points": total_points,
                     "batch_size": batch_size,
                     "batch_delay": batch_delay,
-                    "enable_tracing": tracing,
+                    "enable_telemetry": telemetry,
                 },
                 queue=queue,
             )

@@ -38,7 +38,7 @@
 <!-- Node3 -->
 <g id="Node000003" class="node">
 <title>Node3</title>
-<g id="a_Node000003"><a xlink:href="classxronos_1_1sdk_1_1EventSource_3_01void_01_4.html" target="_top" xlink:title="Base class for reactor elements that can be used as sources or triggers of reactions.">
+<g id="a_Node000003"><a xlink:href="classxronos_1_1sdk_1_1EventSource_3_01void_01_4.html" target="_top" xlink:title="Base class for reactor elements that can be used as triggers of reactions.">
 <polygon fill="white" stroke="#666666" points="279,-86 139,-86 139,-56 279,-56 279,-86"/>
 <text text-anchor="start" x="147" y="-74" font-family="Helvetica,sans-Serif" font-size="10.00">xronos::sdk::EventSource</text>
 <text text-anchor="middle" x="209" y="-63" font-family="Helvetica,sans-Serif" font-size="10.00">&lt; void &gt;</text>
@@ -57,7 +57,7 @@
 <!-- Node4 -->
 <g id="Node000004" class="node">
 <title>Node4</title>
-<g id="a_Node000004"><a xlink:href="classxronos_1_1sdk_1_1EventSource.html" target="_top" xlink:title="Base class for reactor elements that can be used as sources or triggers of reactions.">
+<g id="a_Node000004"><a xlink:href="classxronos_1_1sdk_1_1EventSource.html" target="_top" xlink:title="Base class for reactor elements that can be used as triggers of reactions.">
 <polygon fill="white" stroke="#666666" points="293,-152 125,-152 125,-133 293,-133 293,-152"/>
 <text text-anchor="middle" x="209" y="-140" font-family="Helvetica,sans-Serif" font-size="10.00">xronos::sdk::EventSource&lt; T &gt;</text>
 </a>

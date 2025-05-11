@@ -4,7 +4,7 @@ IMPORT ../../base-images AS base-images
 IMPORT ../absl AS absl
 
 build:
-  FROM base-images+build-essential
+  FROM base-images+common-base
   COPY absl+install/install /install
   COPY CMakeLists.txt protobuf.cmake .
   RUN cmake -S . -B build -DCMAKE_INSTALL_PREFIX=/install

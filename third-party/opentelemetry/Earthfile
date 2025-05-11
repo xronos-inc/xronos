@@ -4,7 +4,7 @@ IMPORT ../../base-images AS base-images
 IMPORT ../grpc AS grpc
 
 build:
-  FROM base-images+build-essential
+  FROM base-images+common-base
   COPY grpc+install/install /install
   COPY CMakeLists.txt opentelemetry.cmake .
   RUN cmake -S . -B build -DCMAKE_INSTALL_PREFIX=/install

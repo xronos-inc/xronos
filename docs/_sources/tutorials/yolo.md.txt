@@ -160,7 +160,7 @@ This means that if a message is received on either input port, the reaction will
 be executed. If both input ports receive a message with identical timestamps, the
 xronos runtime ensures that the reaction is only executed once, with both input
 ports present. In this case, the messages arrive *simultaneously*. The presence of
-an event can be checked using the {func}`Source.is_present` method. The ability
+an event can be checked using the {func}`~xronos.Trigger.is_present` method. The ability
 to align events on multiple input port simplifies the application logic needed.
 The reaction handler can fully focus on sensor fusion.
 
@@ -184,5 +184,5 @@ $ YOLO_VERBOSE=False python YOLO.py
 ```
 A window will appear displaying the video stream from your webcam and the object detection made by YOLO.
 
-Optionally, you can append the `--trace` argument to visualize the program
+Optionally, you can append the `--telemetry` argument to visualize the program
 execution in the {ref}`dashboard`.

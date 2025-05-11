@@ -170,7 +170,7 @@ TEST_CASE("Serialization of a single empty reactor", "[exporter]") {
   Environment env{1};
   EmptyReactor empty{"empty", env};
   env.assemble();
-  auto buffer = export_reactor_graph_to_proto(env);
+  auto buffer = export_reactor_graph_to_proto(env, std::nullopt);
   reactor_graph::Graph graph;
   graph.ParseFromString(buffer);
 
@@ -193,7 +193,7 @@ TEST_CASE("Serialization of various reactor elements", "[exporter]") {
   Environment env{1};
   ElementsReactor elements{"elements", env};
   env.assemble();
-  auto buffer = export_reactor_graph_to_proto(env);
+  auto buffer = export_reactor_graph_to_proto(env, std::nullopt);
   reactor_graph::Graph graph;
   graph.ParseFromString(buffer);
 
@@ -304,7 +304,7 @@ TEST_CASE("Test serialization of port connections", "[exporter]") {
     env.draw_connection(src.output, sink1.input, {});
     env.assemble();
     reactor_graph::Graph graph;
-    graph.ParseFromString(export_reactor_graph_to_proto(env));
+    graph.ParseFromString(export_reactor_graph_to_proto(env, std::nullopt));
     REQUIRE(graph.connections_size() == 1);
     const auto& connection = graph.connections(0);
     REQUIRE(connection.from_uid() == src.output.uid());
@@ -319,7 +319,7 @@ TEST_CASE("Test serialization of port connections", "[exporter]") {
     env.draw_connection(src.output, sink1.input, {ConnectionType::Physical});
     env.assemble();
     reactor_graph::Graph graph;
-    graph.ParseFromString(export_reactor_graph_to_proto(env));
+    graph.ParseFromString(export_reactor_graph_to_proto(env, std::nullopt));
     REQUIRE(graph.connections_size() == 1);
     const auto& connection = graph.connections(0);
     REQUIRE(connection.from_uid() == src.output.uid());
@@ -334,7 +334,7 @@ TEST_CASE("Test serialization of port connections", "[exporter]") {
     env.draw_connection(src.output, sink1.input, {ConnectionType::Delayed, 2s});
     env.assemble();
     reactor_graph::Graph graph;
-    graph.ParseFromString(export_reactor_graph_to_proto(env));
+    graph.ParseFromString(export_reactor_graph_to_proto(env, std::nullopt));
     REQUIRE(graph.connections_size() == 1);
     const auto& connection = graph.connections(0);
     REQUIRE(connection.from_uid() == src.output.uid());
@@ -351,7 +351,7 @@ TEST_CASE("Test serialization of port connections", "[exporter]") {
     env.draw_connection(src.output, sink1.input, {ConnectionType::Delayed});
     env.assemble();
     reactor_graph::Graph graph;
-    graph.ParseFromString(export_reactor_graph_to_proto(env));
+    graph.ParseFromString(export_reactor_graph_to_proto(env, std::nullopt));
     REQUIRE(graph.connections_size() == 1);
     const auto& connection = graph.connections(0);
     REQUIRE(connection.from_uid() == src.output.uid());
@@ -370,7 +370,7 @@ TEST_CASE("Test serialization of port connections", "[exporter]") {
     env.draw_connection(src.output, sink3.input, {});
     env.assemble();
     reactor_graph::Graph graph;
-    graph.ParseFromString(export_reactor_graph_to_proto(env));
+    graph.ParseFromString(export_reactor_graph_to_proto(env, std::nullopt));
     REQUIRE(graph.connections_size() == 1);
     const auto& connection = graph.connections(0);
     REQUIRE(connection.from_uid() == src.output.uid());
@@ -390,7 +390,7 @@ TEST_CASE("Test serialization of port connections", "[exporter]") {
     env.draw_connection(src_src.output, src.output, {});
     env.assemble();
     reactor_graph::Graph graph;
-    graph.ParseFromString(export_reactor_graph_to_proto(env));
+    graph.ParseFromString(export_reactor_graph_to_proto(env, std::nullopt));
     REQUIRE(graph.connections_size() == 1);
     const auto& connection = graph.connections(0);
     REQUIRE(connection.from_uid() == src_src.output.uid());
@@ -406,7 +406,7 @@ TEST_CASE("Test serialization of port connections", "[exporter]") {
     env.draw_connection(sink1.input, sink1_sink2.input, {});
     env.assemble();
     reactor_graph::Graph graph;
-    graph.ParseFromString(export_reactor_graph_to_proto(env));
+    graph.ParseFromString(export_reactor_graph_to_proto(env, std::nullopt));
     REQUIRE(graph.connections_size() == 1);
     const auto& connection = graph.connections(0);
     REQUIRE(connection.from_uid() == sink1.input.uid());
@@ -431,7 +431,7 @@ TEST_CASE("Test serialization of port connections", "[exporter]") {
     env.draw_connection(sink1.input, sink1_sink2.input, {});
     env.assemble();
     reactor_graph::Graph graph;
-    graph.ParseFromString(export_reactor_graph_to_proto(env));
+    graph.ParseFromString(export_reactor_graph_to_proto(env, std::nullopt));
     REQUIRE(graph.connections_size() == 3);
     std::set<std::uint64_t> uids = {src_src.output.uid(), src.output.uid(), sink1.input.uid()};
     std::set<std::uint64_t> from_uids;
@@ -470,7 +470,7 @@ TEST_CASE("Test serialization of reaction dependencies", "[exporter]") {
   ReactionTest reactor("reactor", env);
   env.assemble();
   reactor_graph::Graph graph;
-  graph.ParseFromString(export_reactor_graph_to_proto(env));
+  graph.ParseFromString(export_reactor_graph_to_proto(env, std::nullopt));
   REQUIRE(graph.dependencies_size() == 5); // 2 ElementsReactors (one base class, one nested), each with 2 reactions,
                                            // plus one more reaction in the subclass
 
@@ -534,8 +534,8 @@ TEST_CASE("Check exporter grpc call", "[exporter]") {
   Environment env{1};
 
   SECTION("Invalid host") {
-    auto status =
-        xronos::graph_exporter::detail::send_reactor_graph_to_diagram_server(env, std::nullopt, "invalid_host:424242");
+    auto status = xronos::graph_exporter::detail::send_reactor_graph_to_diagram_server(env, std::nullopt, std::nullopt,
+                                                                                       "invalid_host:424242");
     REQUIRE(!status.ok());
   }
 
@@ -547,8 +547,8 @@ TEST_CASE("Check exporter grpc call", "[exporter]") {
     builder.RegisterService(&service);
     auto server = builder.BuildAndStart();
 
-    auto status =
-        xronos::graph_exporter::detail::send_reactor_graph_to_diagram_server(env, std::nullopt, server_address);
+    auto status = xronos::graph_exporter::detail::send_reactor_graph_to_diagram_server(env, std::nullopt, std::nullopt,
+                                                                                       server_address);
     REQUIRE(status.ok());
   }
 }

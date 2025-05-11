@@ -1,12 +1,13 @@
 VERSION 0.8
 
 IMPORT ../ AS root
+IMPORT ../base-images AS base-images
 IMPORT ../third-party/googletest AS googletest
 IMPORT ../third-party/doxygen AS doxygen
 IMPORT ../lib AS lib
 
 common:
-  FROM doxygen+clang-tools-doxygen
+  FROM base-images+common-base
   COPY root+configs/.clang-format ./
   COPY root+configs/.clang-tidy ./
   COPY CMakeLists.txt Config.cmake.in .
@@ -39,6 +40,7 @@ lint:
 
 docs:
   FROM +build
+  COPY doxygen+build/install /install
   RUN cmake -S . -B build -DCMAKE_INSTALL_PREFIX=/install -DXRONOS_SDK_BUILD_DOCS=ON
   RUN export LD_LIBRARY_PATH=/install/lib && cmake --build build --target docs --config Release
   SAVE ARTIFACT --keep-ts build/docs/html AS LOCAL build/docs/html

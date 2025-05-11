@@ -104,77 +104,19 @@ protected:
    */
   [[nodiscard]] auto context() noexcept -> ReactionContext;
 
-  template <class T> class Trigger;
-
   /**
-   * @cond Doxygen_Suppress
-   * @internal
-   * @brief Access to a reactor element that this reaction may read.
+   * @brief Access to a reactor element that triggers the reaction and that it
+   * may read.
    *
-   * @details Unlike a `Trigger`, a `Source` does not trigger the reaction
-   * handler to execute.
-   * @tparam T The type of value carried by the source.
-   */
-  template <class T> class Source {
-  public:
-    /**
-     * @internal
-     * @brief Construct a new Source object.
-     *
-     * @param source An event source of the containing reactor, which can be
-     * obtained using the `Reaction::self` method.
-     * @param context The current reaction's initialization context, which can
-     * be obtained using the `BaseReaction::context` method.
-     */
-    Source(const EventSource<T>& source, ReactionContext context)
-        : Source<T>{source} {
-      source.register_as_source_of(context.reaction_instance());
-    }
-
-    /**
-     * @internal
-     * @brief Get read access to the current value of the referenced reactor element.
-     *
-     * @return ImmutableValuePtr<T> A pointer to the current value of the reactor
-     * element, or `null` if the element is not present.
-     */
-    [[nodiscard]] auto get() const noexcept -> ImmutableValuePtr<T>
-      requires(!std::is_same_v<T, void>)
-    {
-      return event_source_.get().get();
-    }
-
-    /**
-     * @internal
-     * @brief Check if the referenced reactor element is present at the current
-     * timestamp.
-     *
-     * @return bool `true` if the element is present, `false` otherwise.
-     */
-    [[nodiscard]] auto is_present() const noexcept -> bool { return event_source_.get().is_present(); }
-
-  private:
-    Source(const EventSource<T>& event_source)
-        : event_source_{event_source} {}
-    std::reference_wrapper<const EventSource<T>> event_source_;
-
-    friend BaseReaction::Trigger<T>;
-  };
-  /**
-   * @endcond
-   */
-
-  /**
-   * @brief Access to a reactor element that this reaction may write to.
-   *
-   * @details Unlike a `Source`, a `Trigger` triggers the reaction handler to
-   * execute.
    * @tparam T The type of value carried by the trigger.
    */
-  template <class T> class Trigger : public Source<T> {
+  template <class T> class Trigger {
   public:
     /**
      * @brief Construct a new Trigger object.
+     *
+     * @details Constructing a Trigger object ensures that the corresponding
+     * reaction is invoked for every event on the given event source.
      *
      * @param trigger An event source of the containing reactor, which can be
      * obtained using the `Reaction::self` method.
@@ -182,9 +124,32 @@ protected:
      * be obtained using the `BaseReaction::context` method.
      */
     Trigger(const EventSource<T>& trigger, ReactionContext context)
-        : Source<T>{trigger} {
+        : trigger_{trigger} {
       trigger.register_as_trigger_of(context.reaction_instance());
     }
+
+    /**
+     * @brief Get read access to the current value of the referenced event source.
+     *
+     * @return ImmutableValuePtr<T> A pointer to the current value of the event
+     * source, or `null` if the element is not present.
+     */
+    [[nodiscard]] auto get() const noexcept -> ImmutableValuePtr<T>
+      requires(!std::is_same_v<T, void>)
+    {
+      return trigger_.get().get();
+    }
+
+    /**
+     * @brief Check if the referenced event source is present at the current
+     * timestamp.
+     *
+     * @return bool `true` if the element is present, `false` otherwise.
+     */
+    [[nodiscard]] auto is_present() const noexcept -> bool { return trigger_.get().is_present(); }
+
+  private:
+    std::reference_wrapper<const EventSource<T>> trigger_;
   };
 
   /**

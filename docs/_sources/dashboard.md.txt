@@ -1,12 +1,12 @@
 (dashboard)=
 
-# Trace Dashboard
+# Dashboard
 
 The runtime behavior of xronos programs can be observed using the Xronos
 Dashboard. The dashboard consists of a user interface based on
-[Grafana](https://grafana.com/) and a time series database that stores
-trace data of reaction executions and any values recorded using {ref}`metrics
-<metrics>`.
+[Grafana](https://grafana.com/) and a time series database that stores telemetry
+data such as traces of reaction executions and values recorded using
+{ref}`metrics <metrics>`.
 
 ## System Requirements
 
@@ -43,8 +43,8 @@ After logging in, the trace view opens. Initially, it will be empty.
 ![empty dashboard](./_img/dashboard_empty.png)
 
 To show trace data in the dashboard, we need to run a xronos application that
-has tracing enabled. Tracing can be enabled on any application by calling
-{func}`~xronos.Environment.enable_tracing` on the environment. Note that this
+has telemetry enabled. Telemetry can be enabled on any application by calling
+{func}`~xronos.Environment.enable_telemetry` on the environment. Note that this
 has to happen before calling execute {func}`~xronos.Environment.execute`.
 
 Modify the {ref}`hello_world` example like shown below.
@@ -52,7 +52,7 @@ Modify the {ref}`hello_world` example like shown below.
 ```python
 env = xronos.Environment()
 env.create_reactor("hello", Hello)
-env.enable_tracing()
+env.enable_telemetry()
 env.execute()
 ```
 
@@ -62,22 +62,13 @@ Then execute the program.
 $ python hello.py
 ```
 
-Hit the {guilabel}`🗘 Refresh` button in the dashboard. The trace view should now show a single
-execution of the `hello` reaction.
+The single reaction execution should register as a data point in the dashboard.
 
 ![dashboard hello](./_img/dashboard_hello.png)
 
-If the trace view is still empty, you were likely not quick enough. By default,
-the trace view shows the last 5 seconds. Try extending the time window using the
-drop-down menu on the left of the {guilabel}`🗘 Refresh` button. For instance,
-you can select {guilabel}`Last 5 minutes`.
-
 The trace view is most useful for analyzing the execution of more complex
 applications. For instance, below you can see the trace view for the
-{ref}`YOLO<yolo>` example, when run with the `--trace` argument. Note that you
-can use the drop-down just next to the {guilabel}`🗘 Refresh` button and select
-{guilabel}`Auto` to enable automatic refreshing, which provides a live view of
-the collected data.
+{ref}`YOLO<yolo>` example, when run with the `--telemetry` argument.
 
 ![dashboard yolo](./tutorials/_img/dashboard_yolo.png)
 
@@ -86,7 +77,7 @@ the collected data.
 
 We can also use the dashboard to visualize data values recorded for
 {ref}`metrics <metrics>`. When you run an application that uses {ref}`metrics`
-while the dashboard is running and tracing is enabled, this will also store any
+while the dashboard is running and telemetry is enabled, this will also store any
 values recorded by the application in the database. For instance, you can run
 the [Monte Carlo
 example](https://github.com/xronos-inc/xronos/tree/main/examples/montecarlo),
@@ -94,14 +85,18 @@ which already includes a few metrics. The example estimates the value of pi and
 includes metrics for the current estimate, the estimation error, and the number
 of processed points.
 
-When running a simulation with tracing set to enabled in the web interface, the
+When running a simulation with telemetry set to enabled in the web interface, the
 traces of executed reactions should be shown in the default dashboard.
 
 ![montecarlo dashboard](./_img/dashboard_montecarlo.png)
 
+The default dashboard is pre-filled at the bottom with a basic time series view
+of your program's metrics, if your program reports any. In the image above, the
+currently-selected metric is `SimulationAggregator._current_estimate`.
 
-Click the "Edit" button in the top-right corner of the Grafana UI to customize
-your dashboard.
+However, it is also possible to customize the dashboard and write queries that
+might be better suited to your application. Click the "Edit" button in the
+top-right corner of the Grafana UI to customize the dashboard.
 
 ![dashboard enter edit mode](./_img/dashboard_enter_edit_mode.png)
 
@@ -157,6 +152,22 @@ Save your changes to ensure that they persist, even when stopping the dashboard.
 
 ![dashboard save panel](./_img/dashboard_save_panel.png)
 
+## Upgrading Dashboard Versions
+
+Updating the `xronos-dashboard` CLI tool will also update the versions of the
+Docker images that it depends on. Any time you update the underlying Docker
+images, you should keep the following in mind:
+- By default, the state of your Grafana instance is preserved in a Docker volume,
+  and upgrading the image does not cause that volume to be replaced. This ensures
+  that data that you may need is preserved by default. However, it also means that
+  some updates to the default dashboard released by Xronos will not propagate to
+  your instance automatically unless you delete the existing Docker volume.
+- When there is an update, your browser may cache the site content, which can
+  create an inconsistency between the code running in your browser and the code
+  running in the Docker image. As a result, you may need to clear the site data
+  associated with `localhost`. In Firefox, you can do this by going to "Settings
+  \> Privacy and Security \> Cookies and Site Data \> Manage Data."
+
 ## Closing the Dashboard
 
 When you are done, you may stop the dashboard.
@@ -166,7 +177,7 @@ $ xronos-dashboard stop
 ✔ stopped
 ```
 
-In case you want to delete all state, including all collected trace data and
+In case you want to delete all state, including all collected telemetry data and
 custom queries, you can use the following command.
 
 ```console

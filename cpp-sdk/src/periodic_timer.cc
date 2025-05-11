@@ -38,8 +38,4 @@ void PeriodicTimer::register_as_trigger_of(runtime::Reaction& reaction) const no
   reaction.declare_trigger(&detail::get_runtime_instance<runtime::Timer>(*this));
 }
 
-void PeriodicTimer::register_as_source_of(runtime::Reaction& reaction) const noexcept {
-  reaction.declare_dependency(&detail::get_runtime_instance<runtime::Timer>(*this));
-}
-
 } // namespace xronos::sdk

@@ -20,7 +20,7 @@ def test_run_sim_point_count() -> None:
         "total_points": expected_points,
         "batch_size": 1000,
         "batch_delay": 1,
-        "enable_tracing": False,
+        "enable_telemetry": False,
     }
 
     run_sim(simulation_request, queue)
