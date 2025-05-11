@@ -6,7 +6,8 @@ target_include_directories(
 
 target_link_libraries(xronos-graph-exporter
                       PRIVATE xronos-runtime
-                              xronos-graph-messages)
+                              xronos-graph-messages
+                              xronos-telemetry)
 target_compile_options(xronos-graph-exporter PRIVATE -Wall -Wextra -pedantic -Werror -Wno-error=unused-parameter)
 
 if(XRONOS_LIB_RUN_CLANG_TIDY)
@@ -19,7 +20,7 @@ if(XRONOS_LIB_BUILD_TESTS)
   add_executable(xronos-graph-exporter-tests test/test.cc)
   target_link_libraries(
     xronos-graph-exporter-tests
-    PRIVATE xronos-runtime xronos-graph-exporter xronos-graph-messages
+    PRIVATE xronos-runtime xronos-graph-exporter xronos-graph-messages xronos-telemetry
             Catch2::Catch2WithMain)
   catch_discover_tests(xronos-graph-exporter-tests)
 endif()

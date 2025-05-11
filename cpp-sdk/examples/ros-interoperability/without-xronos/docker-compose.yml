@@ -1,0 +1,13 @@
+services:
+  publisher-without-xronos:
+    image: ros-example-without-xronos-publisher:latest
+    build:
+      context: publisher-without-xronos
+      dockerfile: Dockerfile
+    container_name: publisher-without-xronos
+  subscriber-without-xronos:
+    image: ros-example-without-xronos-subscriber:latest
+    build:
+      context: subscriber-without-xronos
+      dockerfile: Dockerfile
+    container_name: subscriber-without-xronos

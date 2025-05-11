@@ -44,6 +44,11 @@ Environment::Environment(bool fast_fwd_execution, Duration timeout, bool render_
 Environment::~Environment() = default;
 
 void Environment::execute() {
+  if (has_started_execute_) {
+    throw std::logic_error("Environment::execute cannot be called twice on the same environment. To correctly start a "
+                           "new instance of the program, create a new environment.");
+  }
+  has_started_execute_ = true;
   if (telemetry_backend_ != nullptr) {
     telemetry_backend_->initialize();
   }
@@ -52,7 +57,7 @@ void Environment::execute() {
   if (render_reactor_graph_) {
     xronos::messages::source_info::SourceInfo source_infos;
     detail::serialize_source_locations(source_locations_, source_infos);
-    graph_exporter::send_reactor_graph_to_diagram_server(*runtime_environment_, source_infos);
+    graph_exporter::send_reactor_graph_to_diagram_server(*runtime_environment_, source_infos, *attribute_manager_);
   }
   thread.join();
   if (telemetry_backend_ != nullptr) {
@@ -67,6 +72,10 @@ auto Environment::context(std::source_location source_location) noexcept -> Envi
 }
 
 void Environment::enable_tracing(std::string_view application_name, std::string_view endpoint) {
+  enable_telemetry(application_name, endpoint);
+};
+
+void Environment::enable_telemetry(std::string_view application_name, std::string_view endpoint) {
   reactor_assert(telemetry_backend_ == nullptr);
   constexpr std::size_t hostname_buffer_size = 128;
   std::array<char, hostname_buffer_size> hostname_buffer{};

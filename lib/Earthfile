@@ -9,7 +9,7 @@ IMPORT ../third-party/grpc AS grpc
 IMPORT ../third-party/opentelemetry AS opentelemetry
 
 common:
-  FROM base-images+clang-tools
+  FROM base-images+common-base
   COPY root+configs/.clang-format ./
   COPY root+configs/.clang-tidy ./
   COPY CMakeLists.txt Config.cmake.in .

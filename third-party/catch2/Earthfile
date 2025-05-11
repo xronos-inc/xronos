@@ -3,7 +3,7 @@ VERSION 0.8
 IMPORT ../../base-images AS base-images
 
 build:
-  FROM base-images+build-essential
+  FROM base-images+common-base
   COPY CMakeLists.txt catch2.cmake .
   RUN cmake -S . -B build -DCMAKE_INSTALL_PREFIX=/install
   RUN cmake --build build -j$(nproc)  --config Release

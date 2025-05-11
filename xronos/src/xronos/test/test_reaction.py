@@ -16,7 +16,7 @@ def test_decorator():
     reaction = object()
     descriptor = core.reaction(reaction)
     assert isinstance(descriptor, core.ReactionDescriptor)
-    assert descriptor._deceleration_func is reaction
+    assert descriptor._declaration_func is reaction
 
 
 class Reactor(core.Reactor):
@@ -28,7 +28,7 @@ class TestReactionDecorator:
     def test_init():
         reaction = object()
         desc = core.ReactionDescriptor(reaction, inspect.stack()[0])
-        assert desc._deceleration_func is reaction
+        assert desc._declaration_func is reaction
         assert desc._name is None
         assert desc._priority is None
         assert len(desc._instances) == 0

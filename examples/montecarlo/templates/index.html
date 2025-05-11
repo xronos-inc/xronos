@@ -43,8 +43,8 @@
                 <input type="number" id="delay" value="10" min="0">
             </div>
             <div class="control-group">
-                <label for="tracing">Tracing:</label>
-                <select id="tracing">
+                <label for="telemetry">Telemetry:</label>
+                <select id="telemetry">
                     <option value="true">Enabled</option>
                     <option value="false" selected>Disabled</option>
                 </select>
@@ -166,9 +166,9 @@
             const totalPoints = document.getElementById("totalPoints").value;
             const batchSize = document.getElementById("batchSize").value;
             const delay = document.getElementById("delay").value;
-            const tracing = document.getElementById("tracing").value;
+            const telemetry = document.getElementById("telemetry").value;
 
-            ws = new WebSocket(`ws://localhost:8000/ws/${totalPoints}/${batchSize}/${delay}/${tracing}`);
+            ws = new WebSocket(`ws://localhost:8000/ws/${totalPoints}/${batchSize}/${delay}/${telemetry}`);
 
             // Buffer for batching points
             let pointBuffer = [];

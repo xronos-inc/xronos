@@ -16,8 +16,8 @@
 namespace xronos::sdk {
 
 /**
- * @brief Base class for reactor elements that can be used as sources or
- * triggers of reactions.
+ * @brief Base class for reactor elements that can be used as triggers of
+ * reactions.
  *
  * @details This usually should not be subclassed or instantiated by application
  * code. Subclasses provided by the SDK should be instantiated instead.
@@ -35,14 +35,13 @@ private:
   [[nodiscard]] virtual auto is_present() const noexcept -> bool = 0;
 
   virtual void register_as_trigger_of(runtime::Reaction& reaction) const noexcept = 0;
-  virtual void register_as_source_of(runtime::Reaction& reaction) const noexcept = 0;
 
   friend BaseReaction;
 };
 
 /**
- * @brief Base class for reactor elements that can be used as sources or
- * triggers of reactions.
+ * @brief Base class for reactor elements that can be used as triggers of
+ * reactions.
  *
  * @details This usually should not be subclassed or instantiated by application
  * code. Subclasses provided by the SDK should be instantiated instead.
@@ -60,7 +59,6 @@ private:
   [[nodiscard]] virtual auto is_present() const noexcept -> bool = 0;
 
   virtual void register_as_trigger_of(runtime::Reaction& reaction) const noexcept = 0;
-  virtual void register_as_source_of(runtime::Reaction& reaction) const noexcept = 0;
 
   friend BaseReaction;
 };

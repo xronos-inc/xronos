@@ -20,7 +20,7 @@ from WebCam import WebCam
 def main(
     video_path: Optional[str] = None,
     no_display: bool = False,
-    trace: bool = False,
+    telemetry: bool = False,
 ) -> None:
     env = xronos.Environment()
     webCam = env.create_reactor(
@@ -33,9 +33,9 @@ def main(
     env.connect(webCam.frame, dnn.frame)
     env.connect(dnn.result, display.dnn_result)
 
-    if trace:
-        print("enable tracing")
-        env.enable_tracing()
+    if telemetry:
+        print("enable telemetry")
+        env.enable_telemetry()
 
     env.execute()
 
@@ -55,9 +55,9 @@ if __name__ == "__main__":
         help="Dont display the video stream, print values to stdout instead.",
     )
     parser.add_argument(
-        "--trace",
+        "--telemetry",
         action="store_true",
-        help="Enable the xronos tracing feature.",
+        help="Enable the xronos telemetry feature.",
     )
     args = parser.parse_args()
-    main(args.video_path, args.no_display, args.trace)
+    main(args.video_path, args.no_display, args.telemetry)

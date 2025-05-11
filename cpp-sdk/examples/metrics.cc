@@ -87,7 +87,7 @@ private:
 
 auto main() -> int {
   sdk::Environment env{};
-  env.enable_tracing();
+  env.enable_telemetry();
 
   Ramp ramp{"ramp", env.context()};
   ramp.add_attribute("reactor_category", "data source");

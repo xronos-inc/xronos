@@ -70,6 +70,7 @@ void recursive_assemble(Reactor* container) {
 }
 
 void Environment::assemble() { // NOLINT(readability-function-cognitive-complexity)
+  validate(phase_ == Phase::Construction, "assemble() called on a program that is already assembled");
   phase_ = Phase::Assembly;
 
   // constructing all the reactors

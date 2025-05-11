@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/x-icon" href="/images/favicon.svg">
+  <title>Keyboard Synthesizer</title>
+  <style>
+    body { font-family: sans-serif; }
+    #keyboard { display: flex; flex-direction: column; gap: 0.5em; margin-bottom: 1em; }
+    .row { display: grid; gap: 0.25em; }
+    .top-row { grid-template-columns: repeat(10, 3em); }
+    .bottom-row { grid-template-columns: repeat(8, 3em); }
+  
+    #keyboard button {
+      font-size: 1em;
+      padding: 0.75em;
+      text-align: center;
+      border: 1px solid #aaa;
+      background: #f4f4f4;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    #keyboard .active { background: #ffd !important; border-color: #cc0; }
+  </style>
+</head>
+<body>
+  <h1>Keyboard Synth</h1>
+
+  <p>
+  <label>
+    Audio Server:
+    <input type="text" id="ws-uri" placeholder="0.0.0.0:8001" />
+  </label>
+  <button id="connect-btn">Connect</button>
+  <span id="status-indicator" style="display:inline-block;width:10px;height:10px;border-radius:50%;margin-left:8px;background:#aaa;"></span>
+  </p>
+
+  <div id="keyboard"></div>
+
+  <button id="exit">exit</button>
+  
+  <script type="module" src="script/main.js"></script>
+</body>
+</html>

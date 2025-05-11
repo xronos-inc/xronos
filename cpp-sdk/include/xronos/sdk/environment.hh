@@ -154,13 +154,16 @@ public:
   }
 
   /**
-   * @brief Enable tracing for the environment.
+   * @brief Enable collecting and sending telemetry data from the application.
    *
    * @param application_name The name of the current application.
    * @param endpoint The endpoint to which the traces should be sent. This
    * should be a URI of the form `http://host:port` or `https://host:port`.
    */
-  void enable_tracing(std::string_view application_name = "xronos", std::string_view endpoint = "localhost:4317");
+  void enable_telemetry(std::string_view application_name = "xronos", std::string_view endpoint = "localhost:4317");
+
+  [[deprecated("Use enable_telemetry() instead")]] void enable_tracing(std::string_view application_name = "xronos",
+                                                                       std::string_view endpoint = "localhost:4317");
 
 protected:
   /**
@@ -182,6 +185,7 @@ private:
   std::unique_ptr<telemetry::TelemetryBackend> telemetry_backend_{nullptr};
 
   bool render_reactor_graph_;
+  bool has_started_execute_{false};
 
   [[nodiscard]] auto runtime_instance() noexcept -> runtime::Environment& { return *runtime_environment_; }
   [[nodiscard]] auto runtime_instance() const noexcept -> const runtime::Environment& { return *runtime_environment_; }

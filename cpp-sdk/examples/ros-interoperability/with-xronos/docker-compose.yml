@@ -1,0 +1,13 @@
+services:
+  publisher-with-xronos:
+    image: ros-example-with-xronos-publisher:latest
+    build:
+      context: publisher-with-xronos
+      dockerfile: Dockerfile
+    container_name: publisher-with-xronos
+  subscriber-with-xronos:
+    image: ros-example-with-xronos-subscriber:latest
+    build:
+      context: subscriber-with-xronos
+      dockerfile: Dockerfile
+    container_name: subscriber-with-xronos

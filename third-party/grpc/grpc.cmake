@@ -6,6 +6,12 @@ function(add_grpc)
 
   find_package(ZLIB REQUIRED)
 
+  # The cares submodule declares a minimum required cmake version of 3.5. This
+  # is incompatible with cmake 4.0 or newer. Since we don't control the cares
+  # code, we set the policy version minimum to instruct cmake to try configuring
+  # and building cares anyway.
+  set(CMAKE_POLICY_VERSION_MINIMUM "3.5")
+
   set(CMAKE_POSITION_INDEPENDENT_CODE ON)
   set(CMAKE_C_FLAGS "-w")
   set(CMAKE_CXX_FLAGS "-w")

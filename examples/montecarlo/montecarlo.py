@@ -26,7 +26,7 @@ class SimulationRequest(TypedDict):
     total_points: int
     batch_size: int
     batch_delay: int  # milliseconds between batches
-    enable_tracing: bool
+    enable_telemetry: bool
 
 
 class PointQueue:
@@ -213,8 +213,8 @@ class WebSocketDispatcher(xronos.Reactor):
 def run_sim(simulation_request: SimulationRequest, queue: PointQueue) -> None:
     start_time = int(time.time() * 1000)
     env = xronos.Environment()
-    if simulation_request["enable_tracing"]:
-        env.enable_tracing()
+    if simulation_request["enable_telemetry"]:
+        env.enable_telemetry()
     simulation_aggregator = env.create_reactor(
         "SimulationAggregator",
         SimulationAggregator,
@@ -251,7 +251,7 @@ if __name__ == "__main__":
             "total_points": 1000000,
             "batch_size": 10000,
             "batch_delay": 1,
-            "enable_tracing": False,
+            "enable_telemetry": False,
         },
         queue=PointQueue(),
     )

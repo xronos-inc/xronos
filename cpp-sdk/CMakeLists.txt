@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.28)
 
-project(xronos-sdk LANGUAGES CXX VERSION "0.2.0")
-set(PROJECT_VERSION "0.2.0")
+project(xronos-sdk LANGUAGES CXX VERSION "0.3.0")
+set(PROJECT_VERSION "0.3.0")
 
 # require C++ 20
 set(CMAKE_CXX_STANDARD 20 CACHE STRING "The C++ standard." FORCE)

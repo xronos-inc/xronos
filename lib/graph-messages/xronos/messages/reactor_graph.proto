@@ -51,6 +51,22 @@ message Reaction {
   optional google.protobuf.Duration deadline = 2;
 }
 
+message Metric {
+  string unit = 1;
+  string description = 2;
+  repeated Attribute attributes = 3;
+}
+
+message Attribute {
+  string key = 1;
+  oneof value {
+    string string = 2;
+    bool boolean = 3;
+    int64 integer = 4;
+    double floatingpoint = 5;
+  }
+}
+
 message ReactorElement {
   string name = 1;
   uint64 uid = 2;
@@ -60,6 +76,7 @@ message ReactorElement {
     Port port = 6;
     Action action = 7;
     Reaction reaction = 8;
+    Metric metric = 9;
   }
 }
 

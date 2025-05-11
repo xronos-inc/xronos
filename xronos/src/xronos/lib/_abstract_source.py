@@ -316,11 +316,14 @@ class AbstractTimerSource(AbstractSource[TOutput]):
     def __init__(
         self,
         period: Optional[datetime.timedelta] = None,
+        offset: Optional[datetime.timedelta] = None,
         inhibit: bool = False,
     ) -> None:
         super().__init__(inhibit)
         if period is not None:
             self.timer.period = period
+        if offset is not None:
+            self.timer.offset = offset
 
     @abstractmethod
     def _timer_handler(self) -> TOutput:

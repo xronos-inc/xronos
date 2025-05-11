@@ -32,6 +32,12 @@ try:
 except ImportError:
     from typing_extensions import Self
 
+# deprecated is only available for Python>=3.13
+try:
+    from warnings import deprecated
+except ImportError:
+    from typing_extensions import deprecated
+
 import xronos._runtime as runtime
 from xronos._runtime import TelemetryBackend, ValidationError
 
@@ -264,7 +270,7 @@ class InputPort(Generic[T], runtime.Input, AttributeMixin):
 
     The input port does not provide direct access to received values. A
     :attr:`reaction` may declare an input port as a :class:`Trigger` or
-    :class:`Source` to read its value.
+    :class:`Effect` to read or write its value.
 
     Type Parameters:
         T(optional): The type of values carried by the port.
@@ -306,8 +312,9 @@ class InputPortDeclaration(ElementDescriptor[InputPort[T]]):
 class OutputPort(Generic[T], runtime.Output, AttributeMixin):
     """A port that sends values to other reactors.
 
-    The output port does not provide direct access for writing values. A
-    :attr:`reaction` may declare a :class:`PortEffect` to send a value.
+    The output port does not provide direct access to received values. A
+    :attr:`reaction` may declare an output port as a :class:`Trigger` or
+    :class:`Effect` to read or write its value.
 
     Type Parameters:
         T(optional): The type of values carried by the port.
@@ -352,7 +359,7 @@ class ProgrammableTimer(Generic[T], runtime.ProgrammableTimer, AttributeMixin):
     Programmable timers may be used by reactions to schedule new events in the
     future. Events are not scheduled or read directly. Instead,
     :attr:`reaction`'s may declare a :class:`ProgrammableTimerEffect` to
-    schedule new events, or a :class:`Trigger` or :class:`Source` to access the
+    schedule new events, or a :class:`Trigger` to access the
     value associated with an active event.
 
     Type Parameters:
@@ -402,7 +409,7 @@ class PhysicalEvent(Generic[T], runtime.PhysicalEvent, AttributeMixin):
     outside of the scope of the reactor program. These could be external event
     handlers that respond to sensor inputs. Physical events do not provide
     direct access to their values. A :attr:`reaction` may declare a
-    :class:`Trigger` or :class:`Source` to access the value associated with an
+    :class:`Trigger` to access the value associated with an
     active event.
 
     Type Parameters:
@@ -697,25 +704,33 @@ class Environment(runtime.Environment):
         source_info = Environment.__frameinfo_to_sourceinfo(frame, element)
         self.__source_locations.append(source_info)
 
+    @deprecated("Use enable_telemetry() instead")
     def enable_tracing(
         self,
         application_name: str = "xronos",
         endpoint: str = "localhost:4317",
     ) -> None:
-        """Enable the collection of trace data during program execution.
+        """
+        .. deprecated:: 0.3.0
+           Use :func:`enable_telemetry` instead.
+        """  # noqa: D205, D212
+        self.enable_telemetry(application_name, endpoint)
 
-        See :ref:`telemetry` for more information on tracing and
-        :ref:`dashboard` for information on how to visualize the trace data.
+    def enable_telemetry(
+        self,
+        application_name: str = "xronos",
+        endpoint: str = "localhost:4317",
+    ) -> None:
+        """Enable the collection of telemetry data during program execution.
+
+        See :ref:`telemetry` and  :ref:`dashboard` for more information on
+        producing, collecting and visualizing telemetry data.
 
         Args:
             application_name: The name of the application as it should appear
-                in the trace data.
-            endpoint: The network endpoint to send trace data to. This is
+                in the telemetry metadata.
+            endpoint: The network endpoint to send telemetry data to. This is
                 typically port 4137 on the host running the :ref:`dashboard`.
-
-        Raises:
-           RuntimeError: If the telemetry backend is not installed.
-               (See :ref:`telemetry`)
         """
         backend = runtime.OtelTelemetryBackend(
             self._attribute_manager,
@@ -1078,19 +1093,13 @@ class _Dependency(Generic[T]):
 class AbsentError(Exception):
     """Indicates an attempt to read a value that is absent.
 
-    See :func:`Source.get`.
+    See :func:`Trigger.get`.
     """
 
     pass
 
 
-class Source(Generic[T], _Dependency[T]):
-    """Access to a reactor element that a reaction may read.
-
-    This class is not intended to be instantiated directly. Use
-    :func:`~xronos.ReactionInterface.add_source` instead.
-    """
-
+class _ReadableEvent(Generic[T], _Dependency[T]):
     def __init__(self, element: GenericEventSource[T]) -> None:
         super().__init__(element)
 
@@ -1114,8 +1123,8 @@ class Source(Generic[T], _Dependency[T]):
         return self._element._get()
 
 
-class Trigger(Generic[T], Source[T]):
-    """Access to a reactor element that a reaction may read and be triggered by.
+class Trigger(Generic[T], _ReadableEvent[T]):
+    """Access to a reactor element that a reaction is triggered by and may read.
 
     This class is not intended to be instantiated directly. Use
     :func:`~xronos.ReactionInterface.add_trigger` instead.
@@ -1124,7 +1133,7 @@ class Trigger(Generic[T], Source[T]):
     pass
 
 
-class PortEffect(Generic[T], Source[T]):
+class PortEffect(Generic[T], _ReadableEvent[T]):
     """Access to a port that a reaction may write to.
 
     This class is not intended to be instantiated directly. Use
@@ -1149,7 +1158,7 @@ class PortEffect(Generic[T], Source[T]):
         self._element._set(value)
 
 
-class ProgrammableTimerEffect(Generic[T], Source[T]):
+class ProgrammableTimerEffect(Generic[T], _ReadableEvent[T]):
     """Access to a programmable timer that a reaction may schedule events with.
 
     This class is not intended to be instantiated directly. Use
@@ -1202,7 +1211,6 @@ class ReactionInterface:
 
     def __init__(self) -> None:
         self._triggers = set[GenericEventSource[Any]]()
-        self._sources = set[GenericEventSource[Any]]()
         self._effects = set[Port[Any] | ProgrammableTimer[Any]]()
 
     @overload
@@ -1226,30 +1234,6 @@ class ReactionInterface:
         """
         self._triggers.add(trigger)
         return Trigger(trigger)
-
-    @overload
-    def add_source(self, source: TypedEventSource[T]) -> Source[T]: ...
-
-    @overload
-    def add_source(
-        self, source: PeriodicTimer | Startup | Shutdown
-    ) -> Source[None]: ...
-
-    def add_source(self, source: GenericEventSource[T]) -> Source[T]:
-        """Declare a reaction source.
-
-        A source provides read access to the referenced element but does not
-        trigger the reaction.
-
-        Args:
-            source: The reactor element to declare as the reaction source.
-
-        Returns:
-            A new source object that can be used by the reaction handler to
-            check presence and read values.
-        """
-        self._sources.add(source)
-        return Source(source)
 
     @overload
     def add_effect(self, target: Port[T]) -> PortEffect[T]: ...
@@ -1324,13 +1308,6 @@ class Reaction(runtime.Reaction):
                 self._declare_event_source_effect(effect)
             else:
                 self._declare_port_effect(effect)
-        for source in self._interface._sources:
-            if isinstance(source, runtime.EventSource):
-                raise NotImplementedError(
-                    "At the moment, only ports are supported as reaction sources."
-                )
-            else:
-                self._declare_port_source(source)
 
 
 class ReactionDescriptor(Generic[R]):
@@ -1376,7 +1353,7 @@ class ReactionDescriptor(Generic[R]):
 
         They are intended to use the reaction functionality.
         """
-        self._deceleration_func = declaration_func
+        self._declaration_func = declaration_func
         self._name: Optional[str] = None
         self._priority: Optional[int] = None
         self._instances: dict[Reactor, Reaction] = {}
@@ -1426,7 +1403,11 @@ class ReactionDescriptor(Generic[R]):
         registered as the owner of the reaction.
         """
         interface = ReactionInterface()
-        handler: Callable[[], None] = self._deceleration_func(reactor, interface)
+        handler: Callable[[], None] = self._declaration_func(reactor, interface)
+        if not callable(handler):
+            raise RuntimeError(
+                "Reaction declaration function did not return a callable"
+            )
         reaction = Reaction(
             name=self.name,
             priority=self.priority,
@@ -1449,6 +1430,7 @@ def reaction(
     Args:
         declaration: The decorated method. Must accept an
             :class:`~xronos.ReactionInterface` as its first argument and return
-            a reaction handler.
+            a reaction handler. Failing to return a handler will result in an
+            exception when the reactor containing the reaction is initialized.
     """
     return ReactionDescriptor[R](declaration, _get_calling_stack_frame())

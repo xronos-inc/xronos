@@ -7,16 +7,12 @@ VERSION 0.8
 IMPORT ../../base-images AS base-images
 
 build:
-  FROM base-images+clang-tools
+  FROM base-images+common-base
 
-  # configure apt
-  RUN export DEBIAN_FRONTEND=noninteractive && apt-get update -qq
-
-  # install build tools -- not needed once doxygen is built
-  RUN apt-get install -y -q --no-install-recommends bison flex
-
-  # static library dependencies -- not needed once doxygen is built
+  # install build dependencies -- not needed once doxygen is built
   RUN apt-get install -y -q --no-install-recommends \
+        bison \
+        flex \
         libz-dev \
         libzstd-dev \
         libcurl4-openssl-dev \
@@ -35,14 +31,4 @@ build:
   RUN cmake --build build --target install --config Release
   RUN /install/bin/doxygen --version
 
-  SAVE ARTIFACT /install
-
-clang-tools-doxygen:
-  FROM base-images+clang-tools
-  COPY +build/install /install
-
-  # install common packages required to build doxygen projects -- these aren't
-  # saved in artifacts but will be available if deriving from this image
-  RUN apt-get install -y -q --no-install-recommends graphviz python3-pygments global
-  
   SAVE ARTIFACT /install

@@ -50,10 +50,6 @@ private:
     reaction.declare_trigger(&detail::get_runtime_instance<runtime::BasePort>(*this));
   }
 
-  void register_as_source_of(runtime::Reaction& reaction) const noexcept final {
-    reaction.declare_dependency(&detail::get_runtime_instance<runtime::BasePort>(*this));
-  }
-
   friend BaseReaction;
 };
 
@@ -77,10 +73,6 @@ private:
 
   void register_as_trigger_of(runtime::Reaction& reaction) const noexcept final {
     reaction.declare_trigger(&detail::get_runtime_instance<runtime::BasePort>(*this));
-  }
-
-  void register_as_source_of(runtime::Reaction& reaction) const noexcept final {
-    reaction.declare_dependency(&detail::get_runtime_instance<runtime::BasePort>(*this));
   }
 
   friend BaseReaction;
