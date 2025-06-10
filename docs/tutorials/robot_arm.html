@@ -213,7 +213,7 @@ semaphore at once.</p>
     <span class="k">def</span><span class="w"> </span><span class="nf">handler</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">cmd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parser</span><span class="p">(</span><span class="n">user_input_trigger</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="ne">KeyboardInterrupt</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">environment</span><span class="o">.</span><span class="n">request_shutdown</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">request_shutdown</span><span class="p">()</span>
         <span class="k">elif</span> <span class="n">cmd</span><span class="p">:</span>
             <span class="n">output_effect</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span>
 

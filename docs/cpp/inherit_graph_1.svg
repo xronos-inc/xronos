@@ -11,10 +11,10 @@
 <!-- Node0 -->
 <g id="Node000000" class="node">
 <title>Node0</title>
-<g id="a_Node000000"><a xlink:href="classxronos_1_1sdk_1_1BaseReaction_1_1PortEffect.html" target="_top" xlink:title="Access to a port that this reaction may write to.">
+<g id="a_Node000000"><a xlink:href="classxronos_1_1sdk_1_1BaseReaction_1_1MetricEffect.html" target="_top" xlink:title="Access to a metric that can be recorded.">
 <polygon fill="white" stroke="#666666" points="146,-30 0,-30 0,0 146,0 146,-30"/>
 <text text-anchor="start" x="8" y="-18" font-family="Helvetica,sans-Serif" font-size="10.00">xronos::sdk::BaseReaction</text>
-<text text-anchor="middle" x="73" y="-7" font-family="Helvetica,sans-Serif" font-size="10.00">::PortEffect&lt; T &gt;</text>
+<text text-anchor="middle" x="73" y="-7" font-family="Helvetica,sans-Serif" font-size="10.00">::MetricEffect</text>
 </a>
 </g>
 </g>

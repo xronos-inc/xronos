@@ -1,9 +1,11 @@
 <map id="xronos::sdk::PeriodicTimer" name="xronos::sdk::PeriodicTimer">
-<area shape="rect" id="Node000001" title="A trigger that emits events in regular intervals." alt="" coords="5,183,200,208"/>
-<area shape="rect" id="Node000002" href="$classxronos_1_1sdk_1_1Element.html" title="Base class for all reactor elements." alt="" coords="7,101,166,126"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="94,139,103,182,98,183,89,140"/>
-<area shape="rect" id="Node000003" href="$classxronos_1_1sdk_1_1EventSource_3_01void_01_4.html" title="Base class for reactor elements that can be used as triggers of reactions." alt="" coords="191,93,377,133"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="230,141,130,185,128,180,228,136"/>
-<area shape="rect" id="Node000004" href="$classxronos_1_1sdk_1_1EventSource.html" title="Base class for reactor elements that can be used as triggers of reactions." alt="" coords="172,5,396,31"/>
-<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="287,44,287,93,281,93,281,44"/>
+<area shape="rect" id="Node000001" title="An event source that emits events in regular intervals." alt="" coords="5,257,200,283"/>
+<area shape="rect" id="Node000002" href="$classxronos_1_1sdk_1_1EventSource_3_01void_01_4.html" title="Base class for reactor elements that can be used as triggers of reactions." alt="" coords="9,168,196,208"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="105,222,105,257,100,257,100,222"/>
+<area shape="rect" id="Node000003" href="$classxronos_1_1sdk_1_1Element.html" title="Base class for all reactor elements." alt="" coords="23,5,182,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="99,44,96,107,99,168,94,168,91,107,93,44"/>
+<area shape="poly" id="edge3_Node000002_Node000003" title=" " alt="" coords="112,44,114,107,111,168,106,168,109,107,107,44"/>
+<area shape="rect" id="Node000004" href="$classxronos_1_1sdk_1_1EventSource.html" title="Base class for reactor elements that can be used as triggers of reactions." alt="" coords="152,80,376,105"/>
+<area shape="poly" id="edge5_Node000004_Node000003" title=" " alt="" coords="141,34,240,78,237,82,139,39"/>
+<area shape="poly" id="edge4_Node000002_Node000004" title=" " alt="" coords="234,114,137,170,134,166,231,110"/>
 </map>

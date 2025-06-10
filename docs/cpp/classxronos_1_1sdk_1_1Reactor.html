@@ -25,6 +25,7 @@
 /* @license-end */
 </script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
+<link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -34,7 +35,7 @@
  <tr id="projectrow">
   <td id="projectlogo"><img alt="Logo" src="logo-banner.jpg"/></td>
   <td id="projectalign">
-   <div id="projectname">xronos-sdk<span id="projectnumber">&#160;0.3.0</span>
+   <div id="projectname">xronos-sdk<span id="projectnumber">&#160;0.4.0</span>
    </div>
    <div id="projectbrief">Xronos C++ SDK</div>
   </td>
@@ -126,10 +127,6 @@ Inheritance diagram for xronos::sdk::Reactor:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a7d8bbf7d1924a332efd9d6bd72392f84" id="r_a7d8bbf7d1924a332efd9d6bd72392f84"><td class="memItemLeft" align="right" valign="top"><a id="a7d8bbf7d1924a332efd9d6bd72392f84" name="a7d8bbf7d1924a332efd9d6bd72392f84"></a>
-virtual&#160;</td><td class="memItemRight" valign="bottom"><b>~Reactor</b> ()=default</td></tr>
-<tr class="memdesc:a7d8bbf7d1924a332efd9d6bd72392f84"><td class="mdescLeft">&#160;</td><td class="mdescRight">Correct deletion of an instance of a derived class is permitted. <br /></td></tr>
-<tr class="separator:a7d8bbf7d1924a332efd9d6bd72392f84"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a08fdea7dec55e5c5fff9802dea6380e7" id="r_a08fdea7dec55e5c5fff9802dea6380e7"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a08fdea7dec55e5c5fff9802dea6380e7">Reactor</a> (std::string_view <a class="el" href="classxronos_1_1sdk_1_1Element.html#aa85c0cc3344ff5646dcac93cc0f25d41">name</a>, Context parent_context)</td></tr>
 <tr class="memdesc:a08fdea7dec55e5c5fff9802dea6380e7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a new <code><a class="el" href="classxronos_1_1sdk_1_1Reactor.html" title="An abstract reactor that can be subclassed to define new reactors.">Reactor</a></code> object.  <br /></td></tr>
 <tr class="separator:a08fdea7dec55e5c5fff9802dea6380e7"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -140,6 +137,10 @@ virtual&#160;</td><td class="memItemRight" valign="bottom"><b>~Reactor</b> ()=de
 <tr class="memitem:af93126c8a89905baf60a3c801da6fc55 inherit pub_methods_classxronos_1_1sdk_1_1Element" id="r_af93126c8a89905baf60a3c801da6fc55"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxronos_1_1sdk_1_1Element.html#af93126c8a89905baf60a3c801da6fc55">fqn</a> () const noexcept -&gt; const std::string &amp;</td></tr>
 <tr class="memdesc:af93126c8a89905baf60a3c801da6fc55 inherit pub_methods_classxronos_1_1sdk_1_1Element"><td class="mdescLeft">&#160;</td><td class="mdescRight">The fully qualified name of the current element.  <br /></td></tr>
 <tr class="separator:af93126c8a89905baf60a3c801da6fc55 inherit pub_methods_classxronos_1_1sdk_1_1Element"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac2a007cae1bd4d8456e258730e2d24f6 inherit pub_methods_classxronos_1_1sdk_1_1Element" id="r_ac2a007cae1bd4d8456e258730e2d24f6"><td class="memItemLeft" align="right" valign="top">
+virtual&#160;</td><td class="memItemRight" valign="bottom"><b>~Element</b> ()=default</td></tr>
+<tr class="memdesc:ac2a007cae1bd4d8456e258730e2d24f6 inherit pub_methods_classxronos_1_1sdk_1_1Element"><td class="mdescLeft">&#160;</td><td class="mdescRight">Virtual destructor. <br /></td></tr>
+<tr class="separator:ac2a007cae1bd4d8456e258730e2d24f6 inherit pub_methods_classxronos_1_1sdk_1_1Element"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pro-methods" name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
@@ -667,6 +668,13 @@ requires (std::is_base_of_v&lt;<a class="el" href="classxronos_1_1sdk_1_1BaseRea
 <p>This is intended to be invoked in <code><a class="el" href="#a26d392ae889a45767bbc4812b7794215" title="Method that sets up the internal topology of the reactor.">Reactor::assemble</a></code> and is the only way to correctly register a reaction for execution by the runtime. </p><dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">ReactionClass</td><td>The reaction to instantiate. This is typically a subclass of <code><a class="el" href="classxronos_1_1sdk_1_1Reaction.html" title="Reaction base class that is intended to be inherited by application code.">Reaction</a></code>. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">name</td><td>The name of the reaction </td></tr>
+    <tr><td class="paramname">source_location</td><td>Source location of the call site. Normally this should be omitted to use the default argument. </td></tr>
   </table>
   </dd>
 </dl>

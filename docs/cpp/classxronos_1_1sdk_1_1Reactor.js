@@ -1,6 +1,5 @@
 var classxronos_1_1sdk_1_1Reactor =
 [
-    [ "~Reactor", "classxronos_1_1sdk_1_1Reactor.html#a7d8bbf7d1924a332efd9d6bd72392f84", null ],
     [ "Reactor", "classxronos_1_1sdk_1_1Reactor.html#a08fdea7dec55e5c5fff9802dea6380e7", null ],
     [ "get_time", "classxronos_1_1sdk_1_1Reactor.html#a34f00f9cb17f870d0dd86bd8f759bfe4", null ],
     [ "get_lag", "classxronos_1_1sdk_1_1Reactor.html#a454f95f3179ee59dd74af15111f17c8b", null ],

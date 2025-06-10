@@ -25,6 +25,7 @@
 /* @license-end */
 </script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
+<link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -34,7 +35,7 @@
  <tr id="projectrow">
   <td id="projectlogo"><img alt="Logo" src="logo-banner.jpg"/></td>
   <td id="projectalign">
-   <div id="projectname">xronos-sdk<span id="projectnumber">&#160;0.3.0</span>
+   <div id="projectname">xronos-sdk<span id="projectnumber">&#160;0.4.0</span>
    </div>
    <div id="projectbrief">Xronos C++ SDK</div>
   </td>
@@ -116,17 +117,24 @@ $(function(){initNavTree('environment_8hh.html',''); initResizable(true); });
 <div class="textblock"><code>#include &lt;cstdint&gt;</code><br />
 <code>#include &lt;memory&gt;</code><br />
 <code>#include &lt;source_location&gt;</code><br />
+<code>#include &lt;stdexcept&gt;</code><br />
 <code>#include &lt;string_view&gt;</code><br />
+<code>#include &lt;thread&gt;</code><br />
 <code>#include &lt;unordered_map&gt;</code><br />
 <code>#include &quot;<a class="el" href="context_8hh.html">xronos/sdk/context.hh</a>&quot;</code><br />
+<code>#include &quot;xronos/sdk/detail/source_location.hh&quot;</code><br />
 <code>#include &quot;<a class="el" href="element_8hh.html">xronos/sdk/element.hh</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="fwd_8hh.html">xronos/sdk/fwd.hh</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="time_8hh.html">xronos/sdk/time.hh</a>&quot;</code><br />
+<code>#include &quot;xronos/runtime/assert.hh&quot;</code><br />
 <code>#include &quot;xronos/runtime/connection_properties.hh&quot;</code><br />
 <code>#include &quot;xronos/runtime/environment.hh&quot;</code><br />
 </div><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxronos_1_1sdk_1_1ValidationError.html">xronos::sdk::ValidationError</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exception that is thrown when a program reaches an invalid state.  <a href="classxronos_1_1sdk_1_1ValidationError.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxronos_1_1sdk_1_1Environment.html">xronos::sdk::Environment</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The entry point for assembling and executing reactor programs.  <a href="classxronos_1_1sdk_1_1Environment.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
