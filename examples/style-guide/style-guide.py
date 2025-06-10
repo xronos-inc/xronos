@@ -73,7 +73,7 @@ class MyReactor(xronos.Reactor):
                 self._sensor.trigger(42)  # imagine this is a value from a sensor
                 output_count = output_count + 1
                 last_output_time = self.get_time_since_startup()
-        self.environment.request_shutdown()
+        self.request_shutdown()
 
     # reaction specifications begin with the event and have prefix `on`
     @xronos.reaction

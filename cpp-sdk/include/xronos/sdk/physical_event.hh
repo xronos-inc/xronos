@@ -13,7 +13,6 @@
 #include <memory>
 
 #include "xronos/sdk/context.hh"
-#include "xronos/sdk/element.hh"
 #include "xronos/sdk/event_source.hh"
 #include "xronos/sdk/value_ptr.hh"
 
@@ -33,7 +32,7 @@ namespace xronos::sdk {
  *
  * @tparam T The type of values carried by the event.
  */
-template <class T> class PhysicalEvent final : public Element, public EventSource<T> {
+template <class T> class PhysicalEvent final : public EventSource<T> {
 public:
   /**
    * @brief Construct a new `PhysicalEvent`.
@@ -43,7 +42,8 @@ public:
    * containing reactor.
    */
   PhysicalEvent(std::string_view name, ReactorContext context)
-      : Element{std::make_unique<runtime::PhysicalAction<T>>(name, detail::get_reactor_instance(context)), context} {}
+      : EventSource<T>{std::make_unique<runtime::PhysicalAction<T>>(name, detail::get_reactor_instance(context)),
+                       context} {}
 
   /**
    * @brief Create a new event.
@@ -98,7 +98,7 @@ private:
  * @details This specialization is used for physical events that do not convey
  * any values.
  */
-template <> class PhysicalEvent<void> final : public Element, public EventSource<void> {
+template <> class PhysicalEvent<void> final : public EventSource<void> {
 public:
   /**
    * @brief Construct a new `PhysicalEvent`.
@@ -108,8 +108,8 @@ public:
    * containing reactor.
    */
   PhysicalEvent(std::string_view name, ReactorContext context)
-      : Element{std::make_unique<runtime::PhysicalAction<void>>(name, detail::get_reactor_instance(context)), context} {
-  }
+      : EventSource<void>{std::make_unique<runtime::PhysicalAction<void>>(name, detail::get_reactor_instance(context)),
+                          context} {}
   /**
    * @brief Create a new (valueless) event.
    *

@@ -30,10 +30,10 @@ namespace xronos::sdk {
  * application code. Instead, use `InputPort` or `OutputPort`.
  * @tparam T The type of values carried by the port.
  */
-template <class T> class Port : public Element, public EventSource<T> {
+template <class T> class Port : public EventSource<T> {
 protected:
   Port(std::unique_ptr<runtime::Port<T>> runtime_instance, ReactorContext context)
-      : Element(std::move(runtime_instance), context) {}
+      : EventSource<T>(std::move(runtime_instance), context) {}
 
 private:
   [[nodiscard]] auto is_present() const noexcept -> bool final {
@@ -60,10 +60,10 @@ private:
  * @details Ports of this type serve only to trigger activity or to signal
  * presence or absence of an event.
  */
-template <> class Port<void> : public Element, public EventSource<void> {
+template <> class Port<void> : public EventSource<void> {
 protected:
   Port(std::unique_ptr<runtime::Port<void>> runtime_instance, ReactorContext context)
-      : Element(std::move(runtime_instance), context) {}
+      : EventSource<void>(std::move(runtime_instance), context) {}
 
 private:
   [[nodiscard]] auto is_present() const noexcept -> bool final {

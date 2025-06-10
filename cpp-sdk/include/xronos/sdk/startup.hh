@@ -11,14 +11,13 @@
 #define XRONOS_SDK_STARTUP_HH
 
 #include "xronos/sdk/context.hh"
-#include "xronos/sdk/element.hh"
 #include "xronos/sdk/event_source.hh"
 
 namespace xronos::sdk {
 /**
  * @brief An event that triggers when the program starts executing.
  */
-class Startup final : public Element, public EventSource<void> {
+class Startup final : public EventSource<void> {
 public:
   /**
    * @brief Construct a new `Startup` object.

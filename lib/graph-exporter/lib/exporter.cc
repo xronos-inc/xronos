@@ -6,6 +6,7 @@
 #include <optional>
 #include <stdexcept>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <variant>
 
@@ -148,11 +149,10 @@ void export_misc(const MiscElement& misc, reactor_graph::Graph& graph,
     if (attribute_manager == std::nullopt) {
       return;
     }
-    auto attributes = attribute_manager.value().get().get_attributes(misc);
-    if (attributes == std::nullopt) {
-      return;
-    }
-    for (auto& [key, value] : attributes.value()) {
+    auto attributes =
+        xronos::telemetry::get_merged_attributes<xronos::telemetry::AttributeMap, xronos::telemetry::AttributeValue>(
+            attribute_manager->get(), misc, [](auto value) { return value; });
+    for (auto& [key, value] : attributes) {
       if (std::holds_alternative<std::string>(value)) {
         auto& attrs_proto = *metric_proto.add_attributes();
         attrs_proto.set_key(key);

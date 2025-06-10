@@ -32,9 +32,7 @@ class TimerSource(abstract_source.AbstractTimerSource[None]):
         inhibit: Initialize with output inhibited.
     """
 
-    def __init__(
-        self, period: Optional[datetime.timedelta] = None, inhibit: bool = False
-    ) -> None:
+    def __init__(self, period: datetime.timedelta, inhibit: bool = False) -> None:
         super().__init__(period=period, inhibit=inhibit)
 
     @final

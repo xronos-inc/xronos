@@ -80,7 +80,7 @@ class Display(xronos.Reactor):
                     2,
                 )
                 if cv2.waitKey(1) == ord("q"):
-                    self.environment.request_shutdown()
+                    self.request_shutdown()
 
         return handler
 

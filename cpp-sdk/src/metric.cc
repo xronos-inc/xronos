@@ -20,4 +20,12 @@ void Metric::record(std::int64_t value) noexcept {
   detail::get_runtime_instance<telemetry::Metric>(*this).record(value);
 }
 
+auto Metric::description() const noexcept -> const std::string& {
+  return detail::get_runtime_instance<telemetry::Metric>(*this).description();
+}
+
+auto Metric::unit() const noexcept -> const std::string& {
+  return detail::get_runtime_instance<telemetry::Metric>(*this).unit();
+}
+
 } // namespace xronos::sdk

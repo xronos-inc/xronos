@@ -24,7 +24,7 @@ def run(env: xronos.Environment) -> None:
 
 
 def main(fast: bool = False) -> None:
-    env = xronos.Environment(fast=fast)
+    env = xronos.Environment(fast)
     run(env)
 
 

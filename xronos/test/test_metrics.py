@@ -60,6 +60,8 @@ class Hello(xronos.Reactor):
         def handler() -> None:
             hello_metric_writable.record(42.93)
             print(f"{self.fqn} says hello!")
+            assert self.hello_metric.description == "hello description"
+            assert self.hello_metric.unit == ""
 
         return handler
 
@@ -72,6 +74,11 @@ def run(env: xronos.Environment) -> None:
 
 def main(fast: bool = False) -> None:
     env = xronos.Environment(fast=fast)
+    run(env)
+
+
+def test_metrics() -> None:
+    env = xronos.Environment(fast=True)
     run(env)
 
 

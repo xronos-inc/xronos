@@ -2,8 +2,11 @@
 // SPDX-License-Identifier: BSD-3-Clause
 
 #include "xronos/sdk.hh"
+#include "xronos/sdk/context.hh"
+#include "xronos/sdk/fwd.hh"
 
 #include "gtest/gtest.h"
+#include <string_view>
 
 using namespace std::literals::chrono_literals;
 
@@ -364,5 +367,55 @@ TEST(ports, SendingRepeatedlyMixedDelay2Receivers) {
 }
 
 } // namespace sending_repeatedly
+
+namespace nested {
+
+class SenderWrapper : public Reactor {
+public:
+  using Reactor::Reactor;
+
+  [[nodiscard]] auto output() const noexcept -> auto& { return output_; }
+
+private:
+  simple_int::Sender sender_{"sender", context()};
+  OutputPort<int> output_{"output", context()};
+
+  void assemble() final { connect(sender_.output(), output_); }
+};
+
+class ReceiverWrapper : public Reactor {
+public:
+  using Reactor::Reactor;
+
+  [[nodiscard]] auto input() const noexcept -> auto& { return input_; }
+
+  void check_post_conditions(Duration expected_time) { receiver_.check_post_conditions(expected_time); }
+
+private:
+  simple_int::Receiver receiver_{"receiver", context()};
+  InputPort<int> input_{"input", context()};
+
+  void assemble() final { connect(input_, receiver_.input()); }
+};
+
+TEST(ports, NestedNoDelay) {
+  TestEnvironment env{};
+  SenderWrapper sender{"sender", env.context()};
+  ReceiverWrapper receiver{"receiver", env.context()};
+  env.connect(sender.output(), receiver.input());
+  env.execute();
+  receiver.check_post_conditions(0s);
+}
+
+TEST(ports, Nested1sDelay) {
+  TestEnvironment env{};
+  SenderWrapper sender{"sender", env.context()};
+  ReceiverWrapper receiver{"receiver", env.context()};
+  env.connect(sender.output(), receiver.input(), 1s);
+  env.execute();
+  receiver.check_post_conditions(1s);
+}
+
+} // namespace nested
 
 } // namespace xronos::sdk::test

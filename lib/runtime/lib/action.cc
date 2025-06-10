@@ -8,6 +8,7 @@
 #include "xronos/runtime/environment.hh"
 #include "xronos/runtime/reaction.hh"
 #include "xronos/runtime/time.hh"
+#include <stdexcept>
 
 namespace xronos::runtime {
 
@@ -41,9 +42,11 @@ void BaseAction::register_scheduler(Reaction* reaction) {
 }
 
 void Timer::startup() {
-  // abort if the offset is the maximum duration
-  if (offset_ == Duration::max()) {
-    return;
+  if (period_ <= Duration::zero()) {
+    throw std::runtime_error("Timer period must be greater than zero.");
+  }
+  if (offset_ < Duration::zero()) {
+    throw std::runtime_error("Timer offset must be greater than or equal to zero.");
   }
 
   const Tag& start_tag = environment().start_tag();
@@ -57,17 +60,37 @@ void Timer::startup() {
 void Timer::cleanup() noexcept {
   BaseAction::cleanup();
   // schedule the timer again
-  if (period_ != Duration::zero()) {
-    Tag now = Tag::from_logical_time(environment().logical_time());
-    Tag next = now.delay(period_);
-    environment().scheduler()->schedule_sync(this, next);
-  }
+  Tag now = Tag::from_logical_time(environment().logical_time());
+  Tag next = now.delay(period_);
+  environment().scheduler()->schedule_sync(this, next);
 }
 
-ShutdownTrigger::ShutdownTrigger(std::string_view name, Reactor& container)
-    : Timer(name, container, Duration::zero(), container.environment().timeout()) {}
+void Timer::set_offset(Duration offset) {
+  if (this->environment().phase() != Phase::Construction) {
+    throw std::runtime_error("The offset may only be set during program initialization.");
+  }
+  this->offset_ = offset;
+}
+void Timer::set_period(Duration period) {
+  if (this->environment().phase() != Phase::Construction) {
+    throw std::runtime_error("The offset may only be set during program initialization.");
+  }
+  this->period_ = period;
+}
 
-void ShutdownTrigger::setup() noexcept { BaseAction::setup(); }
+void StartupTrigger::startup() {
+  const Tag& start_tag = environment().start_tag();
+  environment().scheduler()->schedule_sync(this, start_tag);
+}
+
+void ShutdownTrigger::startup() {
+  auto timeout = environment().timeout();
+
+  if (timeout >= Duration::zero() && timeout != Duration::max()) {
+    const Tag& start_tag = environment().start_tag();
+    environment().scheduler()->schedule_sync(this, start_tag.delay(timeout));
+  }
+}
 
 void ShutdownTrigger::shutdown() {
   Tag tag = Tag::from_logical_time(environment().logical_time()).delay();

@@ -9,12 +9,20 @@ import xronos
 
 class MainReactor(xronos.Reactor):
     check_shutdown = xronos.ProgrammableTimerDeclaration[bool]()
-    _request_shutdown = xronos.PeriodicTimerDeclaration(
-        offset=datetime.timedelta(seconds=1)
-    )
-    _after_shutdown = xronos.PeriodicTimerDeclaration(
-        offset=datetime.timedelta(seconds=2)
-    )
+    _request_shutdown = xronos.ProgrammableTimerDeclaration[None]()
+    _after_shutdown = xronos.ProgrammableTimerDeclaration[None]()
+
+    @xronos.reaction
+    def on_startup(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
+        _ = interface.add_trigger(self.startup)
+        request_shutdown_effect = interface.add_effect(self._request_shutdown)
+        after_shutdown_effect = interface.add_effect(self._after_shutdown)
+
+        def handler() -> None:
+            request_shutdown_effect.schedule(None, datetime.timedelta(seconds=1))
+            after_shutdown_effect.schedule(None, datetime.timedelta(seconds=2))
+
+        return handler
 
     @xronos.reaction
     def on_request_shutdown(
@@ -24,7 +32,7 @@ class MainReactor(xronos.Reactor):
         check_shutdown = interface.add_effect(self.check_shutdown)
 
         def handler() -> None:
-            self.environment.request_shutdown()
+            self.request_shutdown()
             check_shutdown.schedule(True)
 
         return handler
@@ -34,7 +42,7 @@ class MainReactor(xronos.Reactor):
         self, interface: xronos.ReactionInterface
     ) -> Callable[[], None]:
         shutdown = interface.add_trigger(self.shutdown)
-        check_shutdown = interface.add_effect(self.check_shutdown)
+        check_shutdown = interface.add_trigger(self.check_shutdown)
 
         def handler() -> None:
             if (not shutdown.is_present()) and check_shutdown.is_present():
@@ -44,7 +52,7 @@ class MainReactor(xronos.Reactor):
                     "Shutdown occurred but check_shutdown was not triggered"
                 )
             else:
-                print(f"Success: stopping at {self.get_time}")
+                print(f"Success: stopping at {self.get_time()}")
 
         return handler
 
@@ -61,10 +69,7 @@ def main(fast: bool = False) -> None:
 
 def test_stop() -> None:
     env = xronos.Environment(fast=True, timeout=datetime.timedelta(seconds=5))
-    try:
-        run(env)
-    except RuntimeError as e:
-        print(e)
+    run(env)
 
 
 if __name__ == "__main__":

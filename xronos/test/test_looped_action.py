@@ -79,7 +79,7 @@ class ActionReceiver(xronos.Reactor):
             # equal to the length of break * number of breaks taken.
 
             assert (
-                self._get_elapsed_logical_time().microseconds
+                self.get_time_since_startup().microseconds
                 / self.length_of_break.microseconds
             ) == self.delays_recorded
 

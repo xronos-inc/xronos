@@ -7,7 +7,8 @@
 namespace xronos::sdk {
 
 Shutdown::Shutdown(std::string_view name, ReactorContext context)
-    : Element{std::make_unique<runtime::ShutdownTrigger>(name, detail::get_reactor_instance(context)), context} {}
+    : EventSource<void>{std::make_unique<runtime::ShutdownTrigger>(name, detail::get_reactor_instance(context)),
+                        context} {}
 
 [[nodiscard]] auto Shutdown::is_present() const noexcept -> bool {
   return detail::get_runtime_instance<runtime::ShutdownTrigger>(*this).is_present();

@@ -13,9 +13,12 @@
 #include <memory>
 #include <source_location>
 #include <string_view>
+#include <utility>
 
 #include "xronos/sdk/context.hh"
+#include "xronos/sdk/detail/source_location.hh"
 #include "xronos/sdk/element.hh"
+#include "xronos/sdk/environment.hh"
 #include "xronos/sdk/fwd.hh"
 #include "xronos/sdk/shutdown.hh"
 #include "xronos/sdk/startup.hh"
@@ -26,15 +29,20 @@
 
 namespace xronos::sdk {
 
+namespace detail {
+
+template <class ReactionClass>
+  requires(std::is_base_of_v<BaseReaction, ReactionClass>)
+auto add_reaction(Reactor& reactor, std::string_view name,
+                  detail::SourceLocationView source_location) -> ReactionClass&;
+
+} // namespace detail
+
 /**
  * @brief An abstract reactor that can be subclassed to define new reactors.
  */
 class Reactor : public Element {
 public:
-  /**
-   * @brief Correct deletion of an instance of a derived class is permitted.
-   */
-  virtual ~Reactor() = default;
   /**
    * @brief Construct a new `Reactor` object.
    *
@@ -45,7 +53,7 @@ public:
    */
   Reactor(std::string_view name, Context parent_context);
 
-  // Reactors may not be moved or copied. Copying is implicitly delete due to
+  // Reactors may not be moved or copied. Copying is implicitly deleted due to
   // the unique_ptr to the runtime instance in Element. We also need to delete
   // the move constructor and assignment operator to avoid dangling references
   // in the ReactorContext objects.
@@ -53,6 +61,7 @@ public:
   Reactor(const Reactor&) = delete;
   auto operator=(Reactor&&) = delete;
   auto operator=(const Reactor&) = delete;
+  ~Reactor() override = default;
 
 protected:
   [[nodiscard]] auto
@@ -122,22 +131,34 @@ protected:
    * @param to The port to draw the connection to.
    */
   template <class T> void connect(const InputPort<T>& from, const InputPort<T>& to) {
-    detail::get_runtime_instance<runtime::Reactor>(*this).environment().draw_connection(
-        detail::get_runtime_instance<runtime::Port<T>>(from), detail::get_runtime_instance<runtime::Port<T>>(to), {});
+    try {
+      detail::get_runtime_instance<runtime::Reactor>(*this).environment().draw_connection(
+          detail::get_runtime_instance<runtime::Port<T>>(from), detail::get_runtime_instance<runtime::Port<T>>(to), {});
+    } catch (const runtime::ValidationError& e) {
+      throw ValidationError(e.what());
+    }
   }
   /**
    * @overload
    */
   template <class T> void connect(const OutputPort<T>& from, const OutputPort<T>& to) {
-    detail::get_runtime_instance<runtime::Reactor>(*this).environment().draw_connection(
-        detail::get_runtime_instance<runtime::Port<T>>(from), detail::get_runtime_instance<runtime::Port<T>>(to), {});
+    try {
+      detail::get_runtime_instance<runtime::Reactor>(*this).environment().draw_connection(
+          detail::get_runtime_instance<runtime::Port<T>>(from), detail::get_runtime_instance<runtime::Port<T>>(to), {});
+    } catch (const runtime::ValidationError& e) {
+      throw ValidationError(e.what());
+    }
   }
   /**
    * @overload
    */
   template <class T> void connect(const OutputPort<T>& from, const InputPort<T>& to) {
-    detail::get_runtime_instance<runtime::Reactor>(*this).environment().draw_connection(
-        detail::get_runtime_instance<runtime::Port<T>>(from), detail::get_runtime_instance<runtime::Port<T>>(to), {});
+    try {
+      detail::get_runtime_instance<runtime::Reactor>(*this).environment().draw_connection(
+          detail::get_runtime_instance<runtime::Port<T>>(from), detail::get_runtime_instance<runtime::Port<T>>(to), {});
+    } catch (const runtime::ValidationError& e) {
+      throw ValidationError(e.what());
+    }
   }
   /**
    * @brief Connect two ports with a delay.
@@ -152,25 +173,37 @@ protected:
    * to @p to.
    */
   template <class T> void connect(const InputPort<T>& from, const InputPort<T>& to, Duration delay) {
-    detail::get_runtime_instance<runtime::Reactor>(*this).environment().draw_connection(
-        detail::get_runtime_instance<runtime::Port<T>>(from), detail::get_runtime_instance<runtime::Port<T>>(to),
-        {runtime::ConnectionType::Delayed, delay});
+    try {
+      detail::get_runtime_instance<runtime::Reactor>(*this).environment().draw_connection(
+          detail::get_runtime_instance<runtime::Port<T>>(from), detail::get_runtime_instance<runtime::Port<T>>(to),
+          {runtime::ConnectionType::Delayed, delay});
+    } catch (const runtime::ValidationError& e) {
+      throw ValidationError(e.what());
+    }
   }
   /**
    * @overload
    */
   template <class T> void connect(const OutputPort<T>& from, const OutputPort<T>& to, Duration delay) {
-    detail::get_runtime_instance<runtime::Reactor>(*this).environment().draw_connection(
-        detail::get_runtime_instance<runtime::Port<T>>(from), detail::get_runtime_instance<runtime::Port<T>>(to),
-        {runtime::ConnectionType::Delayed, delay});
+    try {
+      detail::get_runtime_instance<runtime::Reactor>(*this).environment().draw_connection(
+          detail::get_runtime_instance<runtime::Port<T>>(from), detail::get_runtime_instance<runtime::Port<T>>(to),
+          {runtime::ConnectionType::Delayed, delay});
+    } catch (const runtime::ValidationError& e) {
+      throw ValidationError(e.what());
+    }
   }
   /**
    * @overload
    */
   template <class T> void connect(const OutputPort<T>& from, const InputPort<T>& to, Duration delay) {
-    detail::get_runtime_instance<runtime::Reactor>(*this).environment().draw_connection(
-        detail::get_runtime_instance<runtime::Port<T>>(from), detail::get_runtime_instance<runtime::Port<T>>(to),
-        {runtime::ConnectionType::Delayed, delay});
+    try {
+      detail::get_runtime_instance<runtime::Reactor>(*this).environment().draw_connection(
+          detail::get_runtime_instance<runtime::Port<T>>(from), detail::get_runtime_instance<runtime::Port<T>>(to),
+          {runtime::ConnectionType::Delayed, delay});
+    } catch (const runtime::ValidationError& e) {
+      throw ValidationError(e.what());
+    }
   }
 
   /**
@@ -180,10 +213,15 @@ protected:
    * only way to correctly register a reaction for execution by the runtime.
    * @tparam ReactionClass The reaction to instantiate. This is typically a
    * subclass of `Reaction`.
+   * @param name The name of the reaction
+   * @param source_location Source location of the call site. Normally this
+   * should be omitted to use the default argument.
    */
   template <class ReactionClass>
     requires(std::is_base_of_v<BaseReaction, ReactionClass>)
-  void add_reaction(std::string_view name, std::source_location source_location = std::source_location::current());
+  void add_reaction(std::string_view name, std::source_location source_location = std::source_location::current()) {
+    detail::add_reaction<ReactionClass>(*this, name, detail::SourceLocationView::from_std(source_location));
+  }
 
 private:
   std::reference_wrapper<Environment> environment_;
@@ -203,21 +241,64 @@ private:
   std::vector<std::unique_ptr<BaseReaction>> reactions_{};
 
   friend BaseReaction;
+  friend auto detail::create_context(Reactor& reactor, detail::SourceLocationView source_location) -> ReactorContext;
+  template <class ReactionClass>
+    requires(std::is_base_of_v<BaseReaction, ReactionClass>)
+  friend auto detail::add_reaction(Reactor& reactor, std::string_view name,
+                                   detail::SourceLocationView source_location) -> ReactionClass&;
 };
+
+/**
+ * @cond Doxygen_Suppress
+ * @internal
+ * @brief Internal properties of a reaction.
+ *
+ * @details `ReactionProperties` objects should not be constructed or accessed
+ * directly by application code.
+ */
+class ReactionProperties {
+  constexpr ReactionProperties(std::string_view name, std::uint64_t reaction_id,
+                               std::reference_wrapper<Reactor> container, ReactorContext context)
+      : name_(name)
+      , reaction_id_(reaction_id)
+      , container_(container)
+      , context_(context) {}
+
+  std::string_view name_;
+  std::uint64_t reaction_id_;
+  std::reference_wrapper<Reactor> container_;
+  ReactorContext context_;
+
+  [[nodiscard]] auto container() noexcept -> Reactor& { return container_; }
+
+  friend BaseReaction;
+  template <class R> friend class Reaction;
+  template <class ReactionClass>
+    requires(std::is_base_of_v<BaseReaction, ReactionClass>)
+  friend auto detail::add_reaction(Reactor& reactor, std::string_view name,
+                                   detail::SourceLocationView source_location) -> ReactionClass&;
+};
+/**
+ * @endcond
+ */
 
 } // namespace xronos::sdk
 
 #include "xronos/sdk/reaction.hh"
 
-namespace xronos::sdk {
+namespace xronos::sdk::detail {
 
 template <class ReactionClass>
   requires(std::is_base_of_v<BaseReaction, ReactionClass>)
-void Reactor::add_reaction(std::string_view name, std::source_location source_location) {
-  reactions_.emplace_back(std::make_unique<ReactionClass>(
-      ReactionProperties{name, reactions_.size() + 1, *this, context(source_location)}));
+auto add_reaction(Reactor& reactor, std::string_view name,
+                  detail::SourceLocationView source_location) -> ReactionClass& {
+  auto reaction = std::make_unique<ReactionClass>(ReactionProperties{name, reactor.reactions_.size() + 1, reactor,
+                                                                     detail::create_context(reactor, source_location)});
+  auto& ref = *reaction;
+  reactor.reactions_.emplace_back(std::move(reaction));
+  return ref;
 }
 
-} // namespace xronos::sdk
+} // namespace xronos::sdk::detail
 
 #endif // XRONOS_SDK_REACTOR_HH

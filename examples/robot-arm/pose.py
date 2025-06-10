@@ -23,7 +23,7 @@ class Pose:
 
     in_position_tolerance_deg: ClassVar[int] = 5
 
-    positions: Dict[Actuator, int] = field(default_factory=dict)
+    positions: Dict[Actuator, int] = field(default_factory=dict[Actuator, int])
     name: Optional[str] = field(default="")
 
     def validate(self) -> None:

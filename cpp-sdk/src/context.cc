@@ -3,8 +3,13 @@
 
 #include "xronos/sdk/context.hh"
 #include "xronos/sdk/environment.hh"
+#include "xronos/sdk/reactor.hh"
 
 namespace xronos::sdk::detail {
+
+[[nodiscard]] auto create_context(Reactor& reactor, SourceLocationView source_location) -> ReactorContext {
+  return {get_runtime_instance<runtime::Reactor>(reactor), reactor.environment_, source_location};
+}
 
 void store_source_location(ReactorContext context, std::uint64_t uid, std::string_view fqn) {
   store_source_location(context.environment_, uid, fqn, context.source_location_);

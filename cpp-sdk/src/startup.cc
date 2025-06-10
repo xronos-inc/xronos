@@ -6,7 +6,8 @@
 namespace xronos::sdk {
 
 Startup::Startup(std::string_view name, ReactorContext context)
-    : Element{std::make_unique<runtime::StartupTrigger>(name, detail::get_reactor_instance(context)), context} {}
+    : EventSource<void>{std::make_unique<runtime::StartupTrigger>(name, detail::get_reactor_instance(context)),
+                        context} {}
 
 [[nodiscard]] auto Startup::is_present() const noexcept -> bool {
   return detail::get_runtime_instance<runtime::StartupTrigger>(*this).is_present();

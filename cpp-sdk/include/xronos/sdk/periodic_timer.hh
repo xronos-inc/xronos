@@ -16,10 +16,18 @@
 #include "xronos/sdk/time.hh"
 
 namespace xronos::sdk {
+
+namespace detail {
+
+void set_timer_period(PeriodicTimer& timer, Duration period);
+void set_timer_offset(PeriodicTimer& timer, Duration offset);
+
+} // namespace detail
+
 /**
- * @brief A trigger that emits events in regular intervals.
+ * @brief An event source that emits events in regular intervals.
  */
-class PeriodicTimer final : public Element, public EventSource<void> {
+class PeriodicTimer final : public EventSource<void> {
 public:
   /**
    * @brief Construct a new `PeriodicTimer` object.
@@ -58,6 +66,9 @@ private:
   [[nodiscard]] auto is_present() const noexcept -> bool final;
 
   void register_as_trigger_of(runtime::Reaction& reaction) const noexcept final;
+
+  friend void detail::set_timer_period(PeriodicTimer& timer, Duration period);
+  friend void detail::set_timer_offset(PeriodicTimer& timer, Duration offset);
 };
 
 } // namespace xronos::sdk

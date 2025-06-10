@@ -10,8 +10,12 @@
 #ifndef XRONOS_SDK_EVENT_SOURCE_HH
 #define XRONOS_SDK_EVENT_SOURCE_HH
 
+#include "xronos/sdk/context.hh"
+#include "xronos/sdk/element.hh"
 #include "xronos/sdk/fwd.hh"
 #include "xronos/sdk/value_ptr.hh"
+
+#include "xronos/runtime/reactor_element.hh"
 
 namespace xronos::sdk {
 
@@ -23,12 +27,10 @@ namespace xronos::sdk {
  * code. Subclasses provided by the SDK should be instantiated instead.
  * @tparam T The type of values conveyed by the event source.
  */
-template <class T> class EventSource {
-public:
-  /**
-   * @brief Correct deletion of an instance of a derived class is permitted.
-   */
-  virtual ~EventSource() = default;
+template <class T> class EventSource : public Element {
+protected:
+  EventSource(std::unique_ptr<runtime::ReactorElement> runtime_instance, ReactorContext context)
+      : Element{std::move(runtime_instance), context} {}
 
 private:
   [[nodiscard]] virtual auto get() const noexcept -> const ImmutableValuePtr<T>& = 0;
@@ -48,12 +50,10 @@ private:
  * @details This specialization is used for event sources that do not convey any
  * values.
  */
-template <> class EventSource<void> {
-public:
-  /**
-   * @brief Correct deletion of an instance of a derived class is permitted.
-   */
-  virtual ~EventSource() = default;
+template <> class EventSource<void> : public Element {
+protected:
+  EventSource(std::unique_ptr<runtime::ReactorElement> runtime_instance, ReactorContext context)
+      : Element{std::move(runtime_instance), context} {}
 
 private:
   [[nodiscard]] virtual auto is_present() const noexcept -> bool = 0;

@@ -43,18 +43,14 @@ def class_(request: pytest.FixtureRequest) -> typing.Type[xronos.Reactor]:
 class TestBaseReactor:
     @staticmethod
     def test_init(class_: typing.Type[xronos.Reactor]) -> None:
-        assert hasattr(class_, "_Reactor__reaction_priority_counter")
-        assert isinstance(class_._Reactor__reaction_priority_counter, int)
-        assert class_._Reactor__reaction_priority_counter == 0
-
-        assert hasattr(class_, "_Reactor__reaction_descriptors")
-        assert isinstance(class_._Reactor__reaction_descriptors, list)
-        assert len(class_._Reactor__reaction_descriptors) == 0
+        assert hasattr(class_, "_Reactor__element_descriptors")
+        assert isinstance(class_._Reactor__element_descriptors, list)
+        assert len(class_._Reactor__element_descriptors) == 0
 
     @staticmethod
     def test_get_base() -> None:
         assert xronos.Reactor._Reactor__get_base_reactor() is None
-        assert BaseClass._Reactor__get_base_reactor() is xronos.Reactor
+        assert BaseClass._Reactor__get_base_reactor() is None
         assert Class._Reactor__get_base_reactor() is BaseClass
         assert ChildClass._Reactor__get_base_reactor() is Class
         assert MixinClass._Reactor__get_base_reactor() is Class
@@ -71,29 +67,35 @@ class TestBaseReactor:
         dummy_desc_1 = object()
         dummy_desc_2 = object()
         dummy_desc_3 = object()
-        assert Class._register_reaction_descriptor(dummy_desc_1) == 1
-        assert Class._register_reaction_descriptor(dummy_desc_2) == 2
-        assert Class._register_reaction_descriptor(dummy_desc_3) == 3
-        assert Class._Reactor__reaction_priority_counter == 3
-        assert len(Class._Reactor__reaction_descriptors) == 3
-        assert len(BaseClass._Reactor__reaction_descriptors) == 0
-        assert dummy_desc_1 in Class._Reactor__reaction_descriptors
-        assert dummy_desc_2 in Class._Reactor__reaction_descriptors
-        assert dummy_desc_3 in Class._Reactor__reaction_descriptors
-
-    @staticmethod
-    def test_base_priority():
-        assert BaseClass._Reactor__get_base_priority() == 0
-        assert Class._Reactor__get_base_priority() == 0
-        assert ChildClass._Reactor__get_base_priority() == 3
-        assert MixinClass._Reactor__get_base_priority() == 3
+        Class._register_element_descriptor(dummy_desc_1)
+        Class._register_element_descriptor(dummy_desc_2)
+        Class._register_element_descriptor(dummy_desc_3)
+        assert len(Class._Reactor__element_descriptors) == 3
+        assert len(BaseClass._Reactor__element_descriptors) == 0
+        assert dummy_desc_1 is Class._Reactor__element_descriptors[0]
+        assert dummy_desc_2 is Class._Reactor__element_descriptors[1]
+        assert dummy_desc_3 is Class._Reactor__element_descriptors[2]
 
     @staticmethod
     def test_base_descriptors():
-        assert len(BaseClass._Reactor__get_base_reaction_descriptors()) == 0
-        assert len(Class._Reactor__get_base_reaction_descriptors()) == 0
-        assert len(ChildClass._Reactor__get_base_reaction_descriptors()) == 3
-        assert len(MixinClass._Reactor__get_base_reaction_descriptors()) == 3
+        assert len(BaseClass._Reactor__get_base_element_descriptors()) == 0
+        assert len(Class._Reactor__get_base_element_descriptors()) == 0
+        assert len(ChildClass._Reactor__get_base_element_descriptors()) == 3
+        assert len(MixinClass._Reactor__get_base_element_descriptors()) == 3
+
+
+def test_direct_initialization():
+    # Assert that TypeError is raised when a reactor is instantiated directly
+    with pytest.raises(TypeError):
+
+        class Reactor(xronos.Reactor):
+            pass
+
+        Reactor()
+
+    # But using create_reactor works
+    env = xronos.Environment()
+    env.create_reactor("reactor", Reactor)
 
 
 def test_init_called():
@@ -104,7 +106,8 @@ def test_init_called():
             def __init__(self) -> None:
                 pass
 
-        Reactor()
+        env = xronos.Environment()
+        env.create_reactor("reactor", Reactor)
 
     # Assert that TypeError is raised when user forgets calling
     # `super.__init__()` or calls it only after accessing an element.
@@ -117,4 +120,5 @@ def test_init_called():
                 self.t.period = None
                 super().__init__()
 
-        Reactor()
+        env = xronos.Environment()
+        env.create_reactor("reactor", Reactor)

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BSD-3-Clause
 
 #include <gtest/gtest.h>
+#include <stdexcept>
 #include <utility>
 
 #include "xronos/sdk.hh"
@@ -86,8 +87,8 @@ class InvalidPeriodicTimerTest : public ::testing::TestWithParam<std::pair<Durat
 
 TEST_P(InvalidPeriodicTimerTest, run) {
   TestEnvironment env{timeout};
-  EXPECT_THROW(PeriodicTimerTestReactor("test", env.context(), GetParam().first, GetParam().second),
-               std::runtime_error);
+  PeriodicTimerTestReactor test{"test", env.context(), GetParam().first, GetParam().second};
+  EXPECT_THROW(env.execute(), std::runtime_error);
 }
 
 INSTANTIATE_TEST_SUITE_P(periodic_timers, InvalidPeriodicTimerTest,

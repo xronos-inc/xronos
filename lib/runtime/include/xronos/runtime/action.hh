@@ -166,7 +166,7 @@ public:
       , period_(period) {}
 
   void startup() final;
-  void shutdown() override {}
+  void shutdown() final {}
 
   [[nodiscard]] auto element_type() const -> std::string_view override { return "timer"; };
   void visit(ReactorElementVisitor& visitor) const override { visitor.visit(*this); };
@@ -174,26 +174,31 @@ public:
   [[nodiscard]] auto offset() const noexcept -> const Duration& { return offset_; }
   [[nodiscard]] auto period() const noexcept -> const Duration& { return period_; }
 
-  void set_offset(Duration offset) { this->offset_ = offset; }
-  void set_period(Duration period) { this->period_ = period; }
+  void set_offset(Duration offset);
+  void set_period(Duration period);
 };
 
-class StartupTrigger : public Timer {
+class StartupTrigger : public BaseAction {
 public:
   StartupTrigger(std::string_view name, Reactor& container)
-      : Timer(name, container) {}
+      : BaseAction(name, container, true, Duration::zero()) {}
   [[nodiscard]] auto element_type() const -> std::string_view final { return "startup"; };
   void visit(ReactorElementVisitor& visitor) const final { visitor.visit(*this); };
+
+  void startup() final;
+  void shutdown() final {}
 };
 
-class ShutdownTrigger : public Timer {
+class ShutdownTrigger : public BaseAction {
 public:
-  ShutdownTrigger(std::string_view name, Reactor& container);
+  ShutdownTrigger(std::string_view name, Reactor& container)
+      : BaseAction(name, container, true, Duration::zero()) {}
 
-  void setup() noexcept final;
-  void shutdown() final;
   [[nodiscard]] auto element_type() const -> std::string_view final { return "shutdown"; };
   void visit(ReactorElementVisitor& visitor) const final { visitor.visit(*this); };
+
+  void startup() final;
+  void shutdown() final;
 };
 
 } // namespace xronos::runtime

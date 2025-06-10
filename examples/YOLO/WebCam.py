@@ -70,7 +70,7 @@ class WebCam(xronos.Reactor):
                 frame_effect.set(_frame)
             else:
                 print("WARNING: Failed to read frames from videostream. Shutting down.")
-                self.environment.request_shutdown()
+                self.request_shutdown()
             self.reschedule_sample_webcam(sample_webcam_effect)
 
         return handler

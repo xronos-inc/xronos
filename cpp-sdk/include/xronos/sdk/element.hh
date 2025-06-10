@@ -11,6 +11,7 @@
 #define XRONOS_SDK_ELEMENT_HH
 
 #include <memory>
+#include <span>
 
 #include "xronos/sdk/context.hh"
 #include "xronos/sdk/fwd.hh"
@@ -56,6 +57,29 @@ public:
   [[nodiscard]] auto fqn() const noexcept -> const std::string&;
 
   auto add_attribute(std::string_view key, const AttributeValue& value) noexcept -> bool;
+
+  template <std::ranges::input_range R>
+    requires requires(std::ranges::range_value_t<R> pair) {
+      { pair.first } -> std::convertible_to<std::string_view>;
+      { pair.second } -> std::convertible_to<AttributeValue>;
+    }
+  auto add_attributes(const R& range) noexcept -> bool {
+    bool success{true};
+    for (const auto& [key, value] : range) {
+      success |= add_attribute(key, value);
+    }
+    return success;
+  }
+
+  auto add_attributes(std::initializer_list<std::pair<std::string_view, AttributeValue>> attributes) -> bool {
+    return add_attributes(
+        std::span<const std::pair<std::string_view, AttributeValue>>(attributes.begin(), attributes.size()));
+  }
+
+  /**
+   * @brief Virtual destructor.
+   */
+  virtual ~Element() = default;
 
 protected:
   Element(std::unique_ptr<runtime::ReactorElement> runtime_instance, Context context);

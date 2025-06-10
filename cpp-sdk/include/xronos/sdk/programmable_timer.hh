@@ -12,7 +12,6 @@
 #include <memory>
 
 #include "xronos/sdk/context.hh"
-#include "xronos/sdk/element.hh"
 #include "xronos/sdk/event_source.hh"
 #include "xronos/sdk/fwd.hh"
 #include "xronos/sdk/time.hh"
@@ -32,7 +31,7 @@ namespace xronos::sdk {
  *
  * @tparam T The type of values carried by the programmable timer.
  */
-template <class T> class ProgrammableTimer final : public Element, public EventSource<T> {
+template <class T> class ProgrammableTimer final : public EventSource<T> {
 public:
   /**
    * @brief Construct a new `ProgrammableTimer`.
@@ -42,7 +41,8 @@ public:
    * containing reactor.
    */
   ProgrammableTimer(std::string_view name, ReactorContext context)
-      : Element{std::make_unique<runtime::LogicalAction<T>>(name, detail::get_reactor_instance(context)), context} {}
+      : EventSource<T>{std::make_unique<runtime::LogicalAction<T>>(name, detail::get_reactor_instance(context)),
+                       context} {}
 
 private:
   [[nodiscard]] auto is_present() const noexcept -> bool final {
@@ -75,7 +75,7 @@ private:
  * @details This specialization is used for programmable timers that do not convey
  * any values.
  */
-template <> class ProgrammableTimer<void> final : public Element, public EventSource<void> {
+template <> class ProgrammableTimer<void> final : public EventSource<void> {
 public:
   /**
    * @brief Construct a new `ProgrammableTimer`.
@@ -85,7 +85,8 @@ public:
    * containing reactor.
    */
   ProgrammableTimer(std::string_view name, ReactorContext context)
-      : Element{std::make_unique<runtime::LogicalAction<void>>(name, detail::get_reactor_instance(context)), context} {}
+      : EventSource<void>{std::make_unique<runtime::LogicalAction<void>>(name, detail::get_reactor_instance(context)),
+                          context} {}
 
 private:
   [[nodiscard]] auto is_present() const noexcept -> bool final {

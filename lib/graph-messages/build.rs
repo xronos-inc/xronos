@@ -18,7 +18,7 @@ pub fn main() {
         .compile_well_known_types(true)
         .extern_path(".google.protobuf", "::pbjson_types")
         .protoc_arg("--experimental_allow_proto3_optional")
-        .compile(&proto_files, &[root])
+        .compile_protos(&proto_files, &[root])
         .unwrap();
     let descriptor_set = std::fs::read(&descriptor_path).unwrap();
     pbjson_build::Builder::new()

@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 from xronos._core import (
+    Element,
     Environment,
+    EventSource,
     InputPort,
     InputPortDeclaration,
     Metric,
@@ -25,12 +27,14 @@ from xronos._core import (
     Trigger,
     reaction,
 )
-from xronos._runtime import (  # type: ignore
+from xronos._cpp_sdk import (  # type: ignore reportMissingModuleSource
     ValidationError,
 )
 
 __all__ = [
+    "Element",
     "Environment",
+    "EventSource",
     "InputPort",
     "InputPortDeclaration",
     "Metric",

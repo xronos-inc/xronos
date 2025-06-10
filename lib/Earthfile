@@ -18,6 +18,8 @@ common:
 
 build:
   FROM +common
+  # invalidate earthly cache
+  RUN true
   COPY opentelemetry+install/install /install
   COPY absl+install/third-party ../third-party
   COPY protobuf+install/third-party ../third-party

@@ -26,17 +26,16 @@ namespace xronos::sdk {
 namespace detail {
 
 void serialize_source_locations(
-    const std::unordered_map<std::uint64_t, std::pair<std::string, std::source_location>>& source_locations,
+    const std::unordered_map<std::uint64_t, std::pair<std::string, SourceLocation>>& source_locations,
     messages::source_info::SourceInfo& source_infos);
 
 } // namespace detail
 
 Environment::Environment()
-    : Environment{false, Duration::max(), true} {}
+    : Environment{std::thread::hardware_concurrency(), false, Duration::max(), true} {}
 
-Environment::Environment(bool fast_fwd_execution, Duration timeout, bool render_reactor_graph)
-    : runtime_environment_{std::make_unique<runtime::Environment>(std::thread::hardware_concurrency(),
-                                                                  fast_fwd_execution, timeout)}
+Environment::Environment(unsigned num_workers, bool fast_fwd_execution, Duration timeout, bool render_reactor_graph)
+    : runtime_environment_{std::make_unique<runtime::Environment>(num_workers, fast_fwd_execution, timeout)}
     , attribute_manager_{std::make_unique<telemetry::AttributeManager>()}
     , metric_data_logger_provider_{std::make_unique<telemetry::MetricDataLoggerProvider>()}
     , render_reactor_graph_{render_reactor_graph} {}
@@ -52,28 +51,40 @@ void Environment::execute() {
   if (telemetry_backend_ != nullptr) {
     telemetry_backend_->initialize();
   }
-  runtime_environment_->assemble();
-  auto thread = runtime_environment_->startup();
-  if (render_reactor_graph_) {
-    xronos::messages::source_info::SourceInfo source_infos;
-    detail::serialize_source_locations(source_locations_, source_infos);
-    graph_exporter::send_reactor_graph_to_diagram_server(*runtime_environment_, source_infos, *attribute_manager_);
+
+  std::optional<std::thread> startup_thread;
+  try {
+    runtime_environment_->assemble();
+    startup_thread = runtime_environment_->startup();
+    if (render_reactor_graph_) {
+      xronos::messages::source_info::SourceInfo source_infos;
+      detail::serialize_source_locations(source_locations_, source_infos);
+      graph_exporter::send_reactor_graph_to_diagram_server(*runtime_environment_, source_infos, *attribute_manager_);
+    }
+  } catch (const std::exception& e) {
+    runtime_environment_->set_exception(); // exception will be re-thrown after cleanup
   }
-  thread.join();
+
+  if (startup_thread.has_value()) {
+    startup_thread->join();
+  }
+
   if (telemetry_backend_ != nullptr) {
     telemetry_backend_->shutdown();
+  }
+
+  try {
+    runtime_environment_->rethrow_exception_if_any();
+  } catch (const runtime::ValidationError& e) {
+    throw ValidationError(e.what());
   }
 }
 
 void Environment::request_shutdown() { runtime_environment_->async_shutdown(); }
 
 auto Environment::context(std::source_location source_location) noexcept -> EnvironmentContext {
-  return EnvironmentContext{*this, source_location};
+  return detail::create_context(*this, detail::SourceLocationView::from_std(source_location));
 }
-
-void Environment::enable_tracing(std::string_view application_name, std::string_view endpoint) {
-  enable_telemetry(application_name, endpoint);
-};
 
 void Environment::enable_telemetry(std::string_view application_name, std::string_view endpoint) {
   reactor_assert(telemetry_backend_ == nullptr);
@@ -94,7 +105,7 @@ namespace detail {
 }
 
 void store_source_location(Environment& environment, std::uint64_t uid, std::string_view fqn,
-                           std::source_location source_location) {
+                           SourceLocationView source_location) {
   [[maybe_unused]] auto res = environment.source_locations_.try_emplace(uid, std::make_pair(fqn, source_location));
   assert(res.second);
 }
@@ -110,7 +121,7 @@ void serialize_fqn(std::string_view fqn, messages::source_info::ElementSourceInf
 }
 
 void serialize_source_locations(
-    const std::unordered_map<std::uint64_t, std::pair<std::string, std::source_location>>& source_locations,
+    const std::unordered_map<std::uint64_t, std::pair<std::string, SourceLocation>>& source_locations,
     messages::source_info::SourceInfo& source_infos) {
   for (const auto& [uid, value] : source_locations) {
     auto* source_info = source_infos.add_infos();
@@ -119,10 +130,12 @@ void serialize_source_locations(
     serialize_fqn(fqn, *source_info);
 
     auto* frame = source_info->mutable_frame();
-    frame->set_file(source_location.file_name());
-    frame->set_lineno(source_location.line());
-    frame->set_end_lineno(source_location.line());
-    frame->set_function(source_location.function_name());
+    frame->set_file(source_location.file);
+    frame->set_function(source_location.function);
+    frame->set_lineno(source_location.start_line);
+    frame->set_end_lineno(source_location.end_line);
+    frame->set_col_offset(source_location.start_column);
+    frame->set_end_col_offset(source_location.end_column);
   }
 }
 

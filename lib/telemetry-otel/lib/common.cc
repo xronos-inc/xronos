@@ -11,33 +11,12 @@
 
 namespace xronos::telemetry::otel {
 
-void get_attributes_recursive(const AttributeManager& attribute_manager, const runtime::ReactorElement& element,
-                              OtelAttributeMap& attributes) {
-  // If there is an attribute map for the given element, insert all attributes in `attributes`.
-  // This only copies attributes for keys that are not already defined in `attributes`. By walking
-  // the tree from the leaves to the root, we ensure that leaves take precedence.
-  auto element_attributes_opt = attribute_manager.get_attributes_converted<OtelAttributeMap, OtelAttributeValue>(
-      element, [](const AttributeValue& value) {
-        return std::visit([&](const auto& arg) { return OtelAttributeValue{arg}; }, value);
-      });
-
-  if (element_attributes_opt.has_value()) {
-    auto& element_attributes = element_attributes_opt.value();
-    // Merge the elements attributes with the given attribute map. Any
-    // previously defined attributes take precedence over the ones defined by
-    // this element.
-    attributes.merge(element_attributes);
-  }
-  if (element.container() != nullptr) {
-    get_attributes_recursive(attribute_manager, *element.container(), attributes);
-  }
-}
-
 auto get_merged_attributes(const AttributeManager& attribute_manager,
                            const runtime::ReactorElement& element) -> OtelAttributeMap {
-  OtelAttributeMap attributes{};
-  get_attributes_recursive(attribute_manager, element, attributes);
-  return attributes;
+  return xronos::telemetry::get_merged_attributes<OtelAttributeMap, OtelAttributeValue>(
+      attribute_manager, element, [](const AttributeValue& value) {
+        return std::visit([&](const auto& arg) { return OtelAttributeValue{arg}; }, value);
+      });
 }
 
 auto get_low_cardinality_attributes(const AttributeManager& attribute_manager,
