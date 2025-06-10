@@ -1,6 +1,7 @@
 VERSION 0.8
 
 IMPORT ../base-images AS base-images
+IMPORT ../cpp-sdk AS cpp-sdk
 IMPORT ../lib AS lib
 IMPORT ../ AS root
 
@@ -19,6 +20,7 @@ common:
     FROM base-images+python-venv --python_version=$python_version
     COPY lib+install/install /install
     WORKDIR /xronos/xronos
+    COPY cpp-sdk+common/cpp-sdk ../cpp-sdk
     COPY --dir cpp src ./
     COPY pyproject.toml README.md CMakeLists.txt ./
     COPY LICENSE THIRD_PARTY_NOTICE ./

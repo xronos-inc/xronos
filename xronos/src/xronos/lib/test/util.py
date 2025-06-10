@@ -36,7 +36,7 @@ class AssertList(xronos.Reactor, Generic[T]):
 
             # When all the expected values have been received, request a shutdown.
             if self.count == len(self.expected):
-                self.environment.request_shutdown()
+                self.request_shutdown()
 
         return handler
 

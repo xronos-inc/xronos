@@ -13,14 +13,18 @@
 #include <cstdint>
 #include <memory>
 #include <source_location>
+#include <stdexcept>
 #include <string_view>
+#include <thread>
 #include <unordered_map>
 
 #include "xronos/sdk/context.hh"
+#include "xronos/sdk/detail/source_location.hh"
 #include "xronos/sdk/element.hh"
 #include "xronos/sdk/fwd.hh"
 #include "xronos/sdk/time.hh"
 
+#include "xronos/runtime/assert.hh"
 #include "xronos/runtime/connection_properties.hh"
 #include "xronos/runtime/environment.hh"
 
@@ -30,11 +34,19 @@ namespace detail {
 
 auto get_environment_instance(Environment& environment) -> runtime::Environment&;
 void store_source_location(Environment& environment, std::uint64_t uid, std::string_view fqn,
-                           std::source_location source_location);
+                           detail::SourceLocationView source_location);
 auto get_attribute_manager(Environment& environment) noexcept -> telemetry::AttributeManager&;
 auto get_metric_data_logger_provider(Environment& environment) noexcept -> telemetry::MetricDataLoggerProvider&;
 
 } // namespace detail
+
+/**
+ * @brief Exception that is thrown when a program reaches an invalid state.
+ */
+class ValidationError : public std::runtime_error {
+public:
+  using std::runtime_error::runtime_error;
+};
 
 /**
  * @brief The entry point for assembling and executing reactor programs.
@@ -103,22 +115,34 @@ public:
    * @param to The port to draw the connection to.
    */
   template <class T> void connect(const InputPort<T>& from, const InputPort<T>& to) {
-    runtime_environment_->draw_connection(detail::get_runtime_instance<runtime::Port<T>>(from),
-                                          detail::get_runtime_instance<runtime::Port<T>>(to), {});
+    try {
+      runtime_environment_->draw_connection(detail::get_runtime_instance<runtime::Port<T>>(from),
+                                            detail::get_runtime_instance<runtime::Port<T>>(to), {});
+    } catch (const runtime::ValidationError& e) {
+      throw ValidationError(e.what());
+    }
   }
   /**
    * @overload
    */
   template <class T> void connect(const OutputPort<T>& from, const OutputPort<T>& to) {
-    runtime_environment_->draw_connection(detail::get_runtime_instance<runtime::Port<T>>(from),
-                                          detail::get_runtime_instance<runtime::Port<T>>(to), {});
+    try {
+      runtime_environment_->draw_connection(detail::get_runtime_instance<runtime::Port<T>>(from),
+                                            detail::get_runtime_instance<runtime::Port<T>>(to), {});
+    } catch (const runtime::ValidationError& e) {
+      throw ValidationError(e.what());
+    }
   }
   /**
    * @overload
    */
   template <class T> void connect(const OutputPort<T>& from, const InputPort<T>& to) {
-    runtime_environment_->draw_connection(detail::get_runtime_instance<runtime::Port<T>>(from),
-                                          detail::get_runtime_instance<runtime::Port<T>>(to), {});
+    try {
+      runtime_environment_->draw_connection(detail::get_runtime_instance<runtime::Port<T>>(from),
+                                            detail::get_runtime_instance<runtime::Port<T>>(to), {});
+    } catch (const runtime::ValidationError& e) {
+      throw ValidationError(e.what());
+    }
   }
   /**
    * @brief Connect two ports with a delay.
@@ -132,25 +156,38 @@ public:
    * messages to @p to.
    */
   template <class T> void connect(const InputPort<T>& from, const InputPort<T>& to, Duration delay) {
-    runtime_environment_->draw_connection(detail::get_runtime_instance<runtime::Port<T>>(from),
-                                          detail::get_runtime_instance<runtime::Port<T>>(to),
-                                          {runtime::ConnectionType::Delayed, delay});
+    try {
+
+      runtime_environment_->draw_connection(detail::get_runtime_instance<runtime::Port<T>>(from),
+                                            detail::get_runtime_instance<runtime::Port<T>>(to),
+                                            {runtime::ConnectionType::Delayed, delay});
+    } catch (const runtime::ValidationError& e) {
+      throw ValidationError(e.what());
+    }
   }
   /**
    * @overload
    */
   template <class T> void connect(const OutputPort<T>& from, const OutputPort<T>& to, Duration delay) {
-    runtime_environment_->draw_connection(detail::get_runtime_instance<runtime::Port<T>>(from),
-                                          detail::get_runtime_instance<runtime::Port<T>>(to),
-                                          {runtime::ConnectionType::Delayed, delay});
+    try {
+      runtime_environment_->draw_connection(detail::get_runtime_instance<runtime::Port<T>>(from),
+                                            detail::get_runtime_instance<runtime::Port<T>>(to),
+                                            {runtime::ConnectionType::Delayed, delay});
+    } catch (const runtime::ValidationError& e) {
+      throw ValidationError(e.what());
+    }
   }
   /**
    * @overload
    */
   template <class T> void connect(const OutputPort<T>& from, const InputPort<T>& to, Duration delay) {
-    runtime_environment_->draw_connection(detail::get_runtime_instance<runtime::Port<T>>(from),
-                                          detail::get_runtime_instance<runtime::Port<T>>(to),
-                                          {runtime::ConnectionType::Delayed, delay});
+    try {
+      runtime_environment_->draw_connection(detail::get_runtime_instance<runtime::Port<T>>(from),
+                                            detail::get_runtime_instance<runtime::Port<T>>(to),
+                                            {runtime::ConnectionType::Delayed, delay});
+    } catch (const runtime::ValidationError& e) {
+      throw ValidationError(e.what());
+    }
   }
 
   /**
@@ -162,21 +199,19 @@ public:
    */
   void enable_telemetry(std::string_view application_name = "xronos", std::string_view endpoint = "localhost:4317");
 
-  [[deprecated("Use enable_telemetry() instead")]] void enable_tracing(std::string_view application_name = "xronos",
-                                                                       std::string_view endpoint = "localhost:4317");
-
 protected:
   /**
    * @internal
    * @brief Low-level constructor for the environment that supports advanced configuration.
    *
    * @details This constructor usually should not be called directly.
+   * @param worker Number of worker threads to be used for execution.
    * @param fast_fwd_execution Use a special mode of execution that skips waiting between
    * executing events and instead processes events as fast as possible.
    * @param timeout The maximum amount of time to simulate before terminating.
    * @param render_reactor_graph Whether to export the reactor graph to a diagram server.
    */
-  Environment(bool fast_fwd_execution, Duration timeout, bool render_reactor_graph);
+  Environment(unsigned workers, bool fast_fwd_execution, Duration timeout, bool render_reactor_graph);
 
 private:
   std::unique_ptr<runtime::Environment> runtime_environment_;
@@ -190,10 +225,10 @@ private:
   [[nodiscard]] auto runtime_instance() noexcept -> runtime::Environment& { return *runtime_environment_; }
   [[nodiscard]] auto runtime_instance() const noexcept -> const runtime::Environment& { return *runtime_environment_; }
 
-  std::unordered_map<std::uint64_t, std::pair<std::string, std::source_location>> source_locations_{};
+  std::unordered_map<std::uint64_t, std::pair<std::string, detail::SourceLocation>> source_locations_{};
 
   friend void detail::store_source_location(Environment& environment, std::uint64_t uid, std::string_view fqn,
-                                            std::source_location source_location);
+                                            detail::SourceLocationView source_location);
   friend auto detail::get_environment_instance(Environment& environment) -> runtime::Environment&;
   friend auto detail::get_attribute_manager(Environment& environment) noexcept -> telemetry::AttributeManager&;
   friend auto
@@ -214,7 +249,7 @@ public:
    * @param timeout The maximum amount of time to simulate before terminating.
    */
   TestEnvironment(Duration timeout = Duration::max())
-      : Environment{true, timeout, false} {}
+      : Environment{std::thread::hardware_concurrency(), true, timeout, false} {}
 };
 
 } // namespace xronos::sdk

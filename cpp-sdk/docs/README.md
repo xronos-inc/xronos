@@ -36,7 +36,7 @@ From the `cpp-sdk` folder, build the sdk followed by the `docs` target:
 ```shell
 cmake -S . -B build -DXRONOS_SDK_BUILD_DOCS=ON
 cmake --build build --target all
-make --build build --target docs
+cmake --build build --target docs
 ```
 
 ### View the C++ SDK API

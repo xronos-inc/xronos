@@ -52,7 +52,7 @@ Reactor::Reactor(std::string_view name, Context parent_context)
     , shutdown_{"shutdown", this->context()} {}
 
 [[nodiscard]] auto Reactor::context(std::source_location source_location) noexcept -> ReactorContext {
-  return ReactorContext{detail::get_runtime_instance<runtime::Reactor>(*this), environment_, source_location};
+  return detail::create_context(*this, detail::SourceLocationView::from_std(source_location));
 }
 
 auto Reactor::get_time() const noexcept -> TimePoint {

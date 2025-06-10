@@ -18,7 +18,7 @@ namespace xronos::sdk {
 /**
  * @brief An event that triggers before the program shuts down.
  */
-class Shutdown final : public Element, public EventSource<void> {
+class Shutdown final : public EventSource<void> {
 public:
   /**
    * @brief Construct a new `Shutdown` object.

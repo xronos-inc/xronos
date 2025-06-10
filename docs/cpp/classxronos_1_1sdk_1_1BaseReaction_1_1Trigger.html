@@ -25,6 +25,7 @@
 /* @license-end */
 </script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
+<link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -34,7 +35,7 @@
  <tr id="projectrow">
   <td id="projectlogo"><img alt="Logo" src="logo-banner.jpg"/></td>
   <td id="projectalign">
-   <div id="projectname">xronos-sdk<span id="projectnumber">&#160;0.3.0</span>
+   <div id="projectname">xronos-sdk<span id="projectnumber">&#160;0.4.0</span>
    </div>
    <div id="projectbrief">Xronos C++ SDK</div>
   </td>
@@ -123,10 +124,10 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a07a77129ba8ceee418d4cca28c1ec49a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a new <a class="el" href="classxronos_1_1sdk_1_1BaseReaction_1_1Trigger.html" title="Access to a reactor element that triggers the reaction and that it may read.">Trigger</a> object.  <br /></td></tr>
 <tr class="separator:a07a77129ba8ceee418d4cca28c1ec49a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4f391b15de2f7a1e9a7e1cd1df4e1792" id="r_a4f391b15de2f7a1e9a7e1cd1df4e1792"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a4f391b15de2f7a1e9a7e1cd1df4e1792">get</a> () const noexcept -&gt; <a class="el" href="value__ptr_8hh.html#a5fbaedd8606c11580bd1bc5a7cdeb112">ImmutableValuePtr</a>&lt; T &gt; requires(!std::is_same_v&lt; T, void &gt;)</td></tr>
-<tr class="memdesc:a4f391b15de2f7a1e9a7e1cd1df4e1792"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get read access to the current value of the referenced event source.  <br /></td></tr>
+<tr class="memdesc:a4f391b15de2f7a1e9a7e1cd1df4e1792"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the value of a currently present event.  <br /></td></tr>
 <tr class="separator:a4f391b15de2f7a1e9a7e1cd1df4e1792"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6248ddd7733bd02dcfc26479cabbe41e" id="r_a6248ddd7733bd02dcfc26479cabbe41e"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a6248ddd7733bd02dcfc26479cabbe41e">is_present</a> () const noexcept -&gt; bool</td></tr>
-<tr class="memdesc:a6248ddd7733bd02dcfc26479cabbe41e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check if the referenced event source is present at the current timestamp.  <br /></td></tr>
+<tr class="memdesc:a6248ddd7733bd02dcfc26479cabbe41e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check if an event is present at the current timestamp.  <br /></td></tr>
 <tr class="separator:a6248ddd7733bd02dcfc26479cabbe41e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
@@ -200,8 +201,8 @@ template&lt;class T&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Get read access to the current value of the referenced event source. </p>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="value__ptr_8hh.html#a5fbaedd8606c11580bd1bc5a7cdeb112" title="Smart pointer to an immutable value.">ImmutableValuePtr&lt;T&gt;</a> A pointer to the current value of the event source, or <code>null</code> if the element is not present. </dd></dl>
+<p>Get the value of a currently present event. </p>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="value__ptr_8hh.html#a5fbaedd8606c11580bd1bc5a7cdeb112" title="Smart pointer to an immutable value.">ImmutableValuePtr&lt;T&gt;</a> A pointer to the current value of the event source, or <code>nullptr</code> if there is no present event. </dd></dl>
 
 </div>
 </div>
@@ -230,8 +231,8 @@ template&lt;class T&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Check if the referenced event source is present at the current timestamp. </p>
-<dl class="section return"><dt>Returns</dt><dd>bool <code>true</code> if the element is present, <code>false</code> otherwise. </dd></dl>
+<p>Check if an event is present at the current timestamp. </p>
+<dl class="section return"><dt>Returns</dt><dd>bool <code>true</code> if an event is present, <code>false</code> otherwise. </dd></dl>
 
 </div>
 </div>

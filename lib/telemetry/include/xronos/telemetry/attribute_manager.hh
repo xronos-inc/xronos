@@ -81,6 +81,34 @@ auto AttributeManager::get_attributes_converted(const runtime::ReactorElement& e
   return std::nullopt;
 }
 
+template <class MapType, class ValueType>
+void get_attributes_recursive(const AttributeManager& attribute_manager, const runtime::ReactorElement& element,
+                              MapType& attributes, std::function<ValueType(const AttributeValue&)> convert) {
+  // If there is an attribute map for the given element, insert all attributes in `attributes`.
+  // This only copies attributes for keys that are not already defined in `attributes`. By walking
+  // the tree from the leaves to the root, we ensure that leaves take precedence.
+  auto element_attributes_opt = attribute_manager.get_attributes_converted<MapType, ValueType>(element, convert);
+
+  if (element_attributes_opt.has_value()) {
+    auto& element_attributes = element_attributes_opt.value();
+    // Merge the elements attributes with the given attribute map. Any
+    // previously defined attributes take precedence over the ones defined by
+    // this element.
+    attributes.merge(element_attributes);
+  }
+  if (element.container() != nullptr) {
+    get_attributes_recursive<MapType, ValueType>(attribute_manager, *element.container(), attributes, convert);
+  }
+}
+
+template <class MapType, class ValueType>
+auto get_merged_attributes(const AttributeManager& attribute_manager, const runtime::ReactorElement& element,
+                           std::function<ValueType(const AttributeValue&)> convert) -> MapType {
+  MapType attributes{};
+  get_attributes_recursive<MapType, ValueType>(attribute_manager, element, attributes, convert);
+  return attributes;
+}
+
 }; // namespace xronos::telemetry
 
 #endif // XRONOS_TELEMETRY_ATTRIBUTE_MANAGER_HH

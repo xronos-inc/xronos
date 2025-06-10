@@ -1,5 +1,15 @@
 find_package(Doxygen 1.13.2 REQUIRED)
 
+# use Doxygen Awesome stylesheets for doxygen content
+include(FetchContent)
+FetchContent_Declare(
+    doxygen-awesome-css
+    URL https://github.com/jothepro/doxygen-awesome-css/archive/refs/heads/main.zip
+    GIT_TAG v2.3.4
+)
+FetchContent_MakeAvailable(doxygen-awesome-css)
+FetchContent_GetProperties(doxygen-awesome-css SOURCE_DIR AWESOME_CSS_DIR)
+
 # SDK include path allows the preprocessor to resolve types and header paths
 get_filename_component(CPP_SDK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/.." REALPATH)
 set(CPP_SDK_INCLUDE "${CPP_SDK_DIR}/include")

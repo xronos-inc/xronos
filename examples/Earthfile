@@ -19,6 +19,7 @@ lint:
     BUILD ./style-guide+lint
     BUILD ./YOLO+lint
     BUILD ./keyboard-synth+lint
+    BUILD ./webots+lint
 
 copy:
     # Copies the examples directory to the root of the image and exports it as an artifact.

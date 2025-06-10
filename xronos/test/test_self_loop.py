@@ -44,7 +44,7 @@ class SelfLoop(xronos.Reactor):
             self.expected += 1
 
             if self.expected >= self.kill_at_count:
-                self.environment.request_shutdown()
+                self.request_shutdown()
             else:
                 i_event.schedule(value=input_.get())
 

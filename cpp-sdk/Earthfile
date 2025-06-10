@@ -11,7 +11,7 @@ common:
   COPY root+configs/.clang-format ./
   COPY root+configs/.clang-tidy ./
   COPY CMakeLists.txt Config.cmake.in .
-  COPY --dir src include examples test docs .
+  COPY --dir src include examples test .
   SAVE ARTIFACT . cpp-sdk
 
 build:
@@ -41,6 +41,7 @@ lint:
 docs:
   FROM +build
   COPY doxygen+build/install /install
+  COPY --dir docs .
   RUN cmake -S . -B build -DCMAKE_INSTALL_PREFIX=/install -DXRONOS_SDK_BUILD_DOCS=ON
   RUN export LD_LIBRARY_PATH=/install/lib && cmake --build build --target docs --config Release
   SAVE ARTIFACT --keep-ts build/docs/html AS LOCAL build/docs/html

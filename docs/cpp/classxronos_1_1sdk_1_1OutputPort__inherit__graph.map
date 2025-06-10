@@ -1,9 +1,9 @@
 <map id="xronos::sdk::OutputPort&lt; T &gt;" name="xronos::sdk::OutputPort&lt; T &gt;">
-<area shape="rect" id="Node000001" title="A port that sends values to other reactors." alt="" coords="86,152,299,177"/>
-<area shape="rect" id="Node000002" href="$classxronos_1_1sdk_1_1Port.html" title="Base class for inputs and outputs of reactors." alt="" coords="108,79,277,104"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="195,118,195,152,190,152,190,118"/>
-<area shape="rect" id="Node000003" href="$classxronos_1_1sdk_1_1Element.html" title="Base class for all reactor elements." alt="" coords="5,5,164,31"/>
-<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="115,36,176,76,174,81,112,40"/>
-<area shape="rect" id="Node000004" href="$classxronos_1_1sdk_1_1EventSource.html" title="Base class for reactor elements that can be used as triggers of reactions." alt="" coords="189,5,413,31"/>
-<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="273,40,212,81,209,76,271,36"/>
+<area shape="rect" id="Node000001" title="A port that sends values to other reactors." alt="" coords="11,225,224,251"/>
+<area shape="rect" id="Node000002" href="$classxronos_1_1sdk_1_1Port.html" title="Base class for inputs and outputs of reactors." alt="" coords="33,152,202,177"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="120,191,120,225,115,225,115,191"/>
+<area shape="rect" id="Node000003" href="$classxronos_1_1sdk_1_1EventSource.html" title="Base class for reactor elements that can be used as triggers of reactions." alt="" coords="5,79,229,104"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="120,118,120,152,115,152,115,118"/>
+<area shape="rect" id="Node000004" href="$classxronos_1_1sdk_1_1Element.html" title="Base class for all reactor elements." alt="" coords="38,5,197,31"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="120,44,120,79,115,79,115,44"/>
 </map>

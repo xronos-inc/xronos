@@ -45,7 +45,7 @@ if __name__ == "__main__":
 
     env = xronos.Environment()
     if args.telemetry:
-        env.enable_tracing(args.telemetry)
+        env.enable_telemetry(args.telemetry)
 
     audio_bridge = env.create_reactor("Audio Bridge", AudioBridge)
 

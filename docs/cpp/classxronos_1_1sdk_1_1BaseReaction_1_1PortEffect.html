@@ -25,6 +25,7 @@
 /* @license-end */
 </script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
+<link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -34,7 +35,7 @@
  <tr id="projectrow">
   <td id="projectlogo"><img alt="Logo" src="logo-banner.jpg"/></td>
   <td id="projectalign">
-   <div id="projectname">xronos-sdk<span id="projectnumber">&#160;0.3.0</span>
+   <div id="projectname">xronos-sdk<span id="projectnumber">&#160;0.4.0</span>
    </div>
    <div id="projectbrief">Xronos C++ SDK</div>
   </td>
@@ -139,6 +140,12 @@ requires (!std::is_same_v&lt;U, void&gt; &amp;&amp; std::is_same_v&lt;T, U&gt;)<
 void&#160;</td><td class="memItemRight" valign="bottom"><b>set</b> ()</td></tr>
 <tr class="memdesc:a585468a65e3ff19d5b5e502f71368caf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the port without sending any value to connected ports. <br /></td></tr>
 <tr class="separator:a585468a65e3ff19d5b5e502f71368caf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a073590927c10acc3524fb7f1c7243e57" id="r_a073590927c10acc3524fb7f1c7243e57"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a073590927c10acc3524fb7f1c7243e57">get</a> () const noexcept -&gt; <a class="el" href="value__ptr_8hh.html#a5fbaedd8606c11580bd1bc5a7cdeb112">ImmutableValuePtr</a>&lt; T &gt; requires(!std::is_same_v&lt; T, void &gt;)</td></tr>
+<tr class="memdesc:a073590927c10acc3524fb7f1c7243e57"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a previously set value.  <br /></td></tr>
+<tr class="separator:a073590927c10acc3524fb7f1c7243e57"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa99b014e7580f2bf4f0ea18ddc72b6f6" id="r_aa99b014e7580f2bf4f0ea18ddc72b6f6"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aa99b014e7580f2bf4f0ea18ddc72b6f6">is_present</a> () const noexcept -&gt; bool</td></tr>
+<tr class="memdesc:aa99b014e7580f2bf4f0ea18ddc72b6f6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check if an event is present at the current timestamp.  <br /></td></tr>
+<tr class="separator:aa99b014e7580f2bf4f0ea18ddc72b6f6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;class T&gt;<br />
@@ -273,6 +280,68 @@ requires (!std::is_same_v&lt;U, void&gt; &amp;&amp; std::is_same_v&lt;T, U&gt;)<
       </table>
 </div><div class="memdoc">
 <p>This is an overloaded member function, provided for convenience. It differs from the above function only in what argument(s) it accepts. </p>
+
+</div>
+</div>
+<a id="a073590927c10acc3524fb7f1c7243e57" name="a073590927c10acc3524fb7f1c7243e57"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a073590927c10acc3524fb7f1c7243e57">&#9670;&#160;</a></span>get()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class T&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">auto <a class="el" href="classxronos_1_1sdk_1_1BaseReaction_1_1PortEffect.html">xronos::sdk::BaseReaction::PortEffect</a>&lt; T &gt;::get </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td> const -&gt; <a class="el" href="value__ptr_8hh.html#a5fbaedd8606c11580bd1bc5a7cdeb112">ImmutableValuePtr</a>&lt;T&gt;
+      requires(!std::is_same_v&lt;T, void&gt;)
+    </td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel nodiscard">nodiscard</span><span class="mlabel noexcept">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get a previously set value. </p>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="value__ptr_8hh.html#a5fbaedd8606c11580bd1bc5a7cdeb112" title="Smart pointer to an immutable value.">ImmutableValuePtr&lt;T&gt;</a> A pointer to the current value of the port or <code>nullptr</code> if no value was set at the current timestamp. </dd></dl>
+
+</div>
+</div>
+<a id="aa99b014e7580f2bf4f0ea18ddc72b6f6" name="aa99b014e7580f2bf4f0ea18ddc72b6f6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa99b014e7580f2bf4f0ea18ddc72b6f6">&#9670;&#160;</a></span>is_present()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class T&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">auto <a class="el" href="classxronos_1_1sdk_1_1BaseReaction_1_1PortEffect.html">xronos::sdk::BaseReaction::PortEffect</a>&lt; T &gt;::is_present </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td> const -&gt; bool </td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel nodiscard">nodiscard</span><span class="mlabel noexcept">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Check if an event is present at the current timestamp. </p>
+<dl class="section return"><dt>Returns</dt><dd>bool <code>true</code> if an event is present, <code>false</code> otherwise. </dd></dl>
 
 </div>
 </div>

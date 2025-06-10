@@ -10,13 +10,11 @@
 import datetime
 import inspect
 import os
-import platform
 import sys
 from typing import (
     Any,
     Callable,
     Generic,
-    Optional,
     ParamSpec,
     Type,
     TypeAlias,
@@ -26,30 +24,27 @@ from typing import (
     overload,
 )
 
+import xronos._cpp_sdk as sdk
+
 # Self is only available for Python>=3.11
-try:
+if sys.version_info >= (3, 11):
     from typing import Self
-except ImportError:
+else:
     from typing_extensions import Self
 
-# deprecated is only available for Python>=3.13
-try:
-    from warnings import deprecated
-except ImportError:
-    from typing_extensions import deprecated
-
-import xronos._runtime as runtime
-from xronos._runtime import TelemetryBackend, ValidationError
-
-ValidationError.__doc__ = (
-    "An exception that indicates problems in the reactor topology as defined by"
-    " the program."
-)
-
 T = TypeVar("T")
+R = TypeVar("R", bound="Reactor")
+P = ParamSpec("P")
+
+SdkElem = TypeVar("SdkElem", bound=sdk.Element)
+Elem = TypeVar("Elem", bound="Element")
 
 
-def _get_calling_stack_frame() -> inspect.FrameInfo:
+AttributeValue: TypeAlias = str | bool | int | float
+AttributeMap: TypeAlias = dict[str, AttributeValue]
+
+
+def get_source_location() -> sdk.SourceLocation:
     stack = inspect.stack()
     # The frame that we are looking for is 2 frames up the stack. 1 up gets to
     # the caller of this function and 2 up gets to their caller.
@@ -58,15 +53,51 @@ def _get_calling_stack_frame() -> inspect.FrameInfo:
     # have to go one more frame up.
     if frame.filename.endswith("typing.py"):
         frame = stack[3]
-    return frame
+
+    try:
+        pos = frame.positions
+    except AttributeError:
+        # Fallback for Python 3.10
+        pos = None
+    lineno = pos.lineno if pos and pos.lineno else frame.lineno
+    end_lineno = pos.end_lineno if pos and pos.end_lineno else lineno
+    col_offset = pos.col_offset if pos and pos.col_offset else 0
+    end_col_offset = pos.end_col_offset if pos and pos.end_col_offset else 80
+    return sdk.SourceLocation(
+        function=frame.function,
+        file_=frame.filename,
+        start_line=lineno,
+        end_line=end_lineno,
+        start_column=col_offset,
+        end_column=end_col_offset,
+    )
 
 
-AttributeValue: TypeAlias = str | bool | int | float
-AttributeMap: TypeAlias = dict[str, AttributeValue]
+class Element:
+    """A reactor element.
 
+    This is used as a base class for all elements that can be contained by a
+    reactor, including the :class:`Reactor` class itself.
+    """
 
-class AttributeMixin:
-    def add_attribute(self, key: str, value: AttributeValue) -> None:
+    def __init__(self, sdk_instance: sdk.Element) -> None:
+        self.__sdk_instance = sdk_instance
+
+    def _get_sdk_instance(self, cls: Type[SdkElem]) -> SdkElem:
+        assert isinstance(self.__sdk_instance, cls)
+        return self.__sdk_instance
+
+    @property
+    def name(self) -> str:
+        """Name of the element (read-only)."""
+        return self.__sdk_instance.name
+
+    @property
+    def fqn(self) -> str:
+        """Fully qualified name of the element (read-only)."""
+        return self.__sdk_instance.fqn
+
+    def add_attribute(self, key: str, value: str | bool | int | float) -> None:
         """Annotate the element with an attribute.
 
         See :ref:`attributes` for more information.
@@ -78,12 +109,11 @@ class AttributeMixin:
         Raises:
             KeyError: If the attribute key was added before.
         """
-        assert isinstance(self, runtime.ReactorElement)
-        result = self._environment._add_attribute(self, key, value)
+        result = self.__sdk_instance.add_attribute(key, value)
         if not result:
             raise KeyError("Overwriting an existing attribute is not permitted.")
 
-    def add_attributes(self, attributes: AttributeMap) -> None:
+    def add_attributes(self, attributes: dict[str, str | bool | int | float]) -> None:
         """Annotate the element with multiple attributes.
 
         See :ref:`attributes` for more information.
@@ -92,15 +122,11 @@ class AttributeMixin:
             attributes: A map of attribute names and their values to be added.
 
         Raises:
-            KeyError: If any of the provided attribute keys was added before.
+            KeyError: If the attribute key was added before.
         """
-        assert isinstance(self, runtime.ReactorElement)
-        result = self._environment._add_attributes(self, attributes)
+        result = self.__sdk_instance.add_attributes(attributes)
         if not result:
             raise KeyError("Overwriting an existing attribute is not permitted.")
-
-
-Elem = TypeVar("Elem", bound=runtime.ReactorElement)
 
 
 class ElementDescriptor(Generic[Elem]):
@@ -108,18 +134,16 @@ class ElementDescriptor(Generic[Elem]):
 
     Args:
         initializer: a callable that can be used to create the element
-        frame_info: stack frame to be associated with the element's source location
+        attributes: dictionary of attributes to add to the element
     """
 
     def __init__(
         self,
         initializer: Callable[[str, "Reactor"], Elem],
-        frame_info: inspect.FrameInfo,
         attributes: AttributeMap | None = None,
     ) -> None:
         self.__name: str | None = None
         self.__initializer = initializer
-        self.__frame_info = frame_info
         self.__attributes = attributes
 
     def __set_name__(self, reactor_cls: Type["Reactor"], name: str) -> None:
@@ -152,70 +176,38 @@ class ElementDescriptor(Generic[Elem]):
         assert self.__name
         return self.__name
 
-    def _get_instance(self, container: "Reactor") -> runtime.ReactorElement:
+    def _create_instance(self, reactor: "Reactor") -> Elem:
         """Return an instance of the described element.
 
         Args:
-            container: the owning `Reactor`
+            reactor: the owning `Reactor`
         """
-        instance = self.__initializer(self._name, container)
-        container.environment._add_frame_info(self.__frame_info, instance)
+        instance = self.__initializer(self._name, reactor)
         if self.__attributes:
-            assert isinstance(instance, AttributeMixin)
             instance.add_attributes(self.__attributes)
         return instance
 
 
-class Startup(runtime.Startup, AttributeMixin):
-    """An event that triggers when the program starts executing."""
+class EventSource(Element, Generic[T]):
+    """An element that may emit events and act as reaction trigger."""
 
-    @property
-    def name(self) -> str:
-        """Name of the startup event (read-only)."""
-        return self._name
-
-    @property
-    def fqn(self) -> str:
-        """Fully qualified name of the startup event (read-only)."""
-        return self._fqn
+    pass
 
 
-class StartupDeclaration(ElementDescriptor[Startup]):
-    def __init__(self) -> None:
-        super().__init__(Startup, frame_info=_get_calling_stack_frame())
+class Startup(EventSource[None]):
+    """Emits an event once when the program starts executing."""
+
+    pass
 
 
-class Shutdown(runtime.Shutdown, AttributeMixin):
-    """An event that triggers before the program shuts down."""
+class Shutdown(EventSource[None]):
+    """Emits an event once when the program shuts down."""
 
-    @property
-    def name(self) -> str:
-        """Name of the shutdown event (read-only)."""
-        return self._name
-
-    @property
-    def fqn(self) -> str:
-        """Fully qualified name of the shutdown event (read-only)."""
-        return self._fqn
+    pass
 
 
-class ShutdownDeclaration(ElementDescriptor[Shutdown]):
-    def __init__(self) -> None:
-        super().__init__(Shutdown, frame_info=_get_calling_stack_frame())
-
-
-class PeriodicTimer(runtime.Timer, AttributeMixin):
-    """A trigger that emits events in regular intervals."""
-
-    @property
-    def name(self) -> str:
-        """Name of the periodic timer (read-only)."""
-        return self._name
-
-    @property
-    def fqn(self) -> str:
-        """Fully qualified name of the periodic timer (read-only)."""
-        return self._fqn
+class PeriodicTimer(EventSource[None]):
+    """An event source that emits events in regular intervals."""
 
     @property
     def period(self) -> datetime.timedelta:
@@ -225,21 +217,32 @@ class PeriodicTimer(runtime.Timer, AttributeMixin):
         once with a delay of :attr:`offset` after :attr:`~Reactor.startup`
         triggers. If :attr:`offset` is also set to 0, the timer triggers
         simultaneously to :attr:`~Reactor.startup`.
+
+        Raises:
+            RuntimeError: When set during program execution.
         """
-        return self._period
+        return self.__sdk_instance.period()
 
     @period.setter
     def period(self, value: datetime.timedelta) -> None:
-        self._period = value
+        self.__sdk_instance.set_period(value)
 
     @property
     def offset(self) -> datetime.timedelta:
-        """The delay between :attr:`~Reactor.startup` and the first event emitted by the timer (read-write)."""  # noqa: E501
-        return self._offset
+        """The delay between :attr:`~Reactor.startup` and the first event emitted by the timer (read-write).
+
+        Raises:
+            RuntimeError: When set during program execution.
+        """  # noqa: E501
+        return self.__sdk_instance.offset()
 
     @offset.setter
     def offset(self, value: datetime.timedelta) -> None:
-        self._offset = value
+        self.__sdk_instance.set_offset(value)
+
+    @property
+    def __sdk_instance(self) -> sdk.PeriodicTimer:
+        return self._get_sdk_instance(sdk.PeriodicTimer)
 
 
 class PeriodicTimerDeclaration(ElementDescriptor[PeriodicTimer]):
@@ -258,14 +261,17 @@ class PeriodicTimerDeclaration(ElementDescriptor[PeriodicTimer]):
         offset: datetime.timedelta = datetime.timedelta(0),
         attributes: AttributeMap | None = None,
     ) -> None:
-        super().__init__(
-            lambda name, container: PeriodicTimer(name, container, period, offset),
-            frame_info=_get_calling_stack_frame(),
-            attributes=attributes,
-        )
+        source_location = get_source_location()
+
+        def initialize(name: str, reactor: "Reactor") -> PeriodicTimer:
+            context = reactor._context(source_location)
+            sdk_timer = sdk.PeriodicTimer(name, context, period, offset)
+            return PeriodicTimer(sdk_timer)
+
+        super().__init__(initialize, attributes)
 
 
-class InputPort(Generic[T], runtime.Input, AttributeMixin):
+class InputPort(EventSource[T]):
     """A port that receives values from other reactors.
 
     The input port does not provide direct access to received values. A
@@ -273,24 +279,10 @@ class InputPort(Generic[T], runtime.Input, AttributeMixin):
     :class:`Effect` to read or write its value.
 
     Type Parameters:
-        T(optional): The type of values carried by the port.
+        T: The type of values carried by the port.
     """
 
-    @property
-    def name(self) -> str:
-        """Name of the input port (read-only)."""
-        return self._name
-
-    @property
-    def fqn(self) -> str:
-        """Fully qualified name of the input port (read-only)."""
-        return self._fqn
-
-    def _set(self, value: T) -> None:
-        super()._set(value)
-
-    def _get(self) -> T:
-        return cast(T, super()._get())
+    pass
 
 
 class InputPortDeclaration(ElementDescriptor[InputPort[T]]):
@@ -300,16 +292,20 @@ class InputPortDeclaration(ElementDescriptor[InputPort[T]]):
         attributes(optional): A dict of attributes characterizing the input port.
 
     Type Parameters:
-        T(optional): The type of values carried by the port.
+        T: The type of values carried by the port.
     """
 
     def __init__(self, attributes: AttributeMap | None = None) -> None:
-        super().__init__(
-            InputPort, frame_info=_get_calling_stack_frame(), attributes=attributes
-        )
+        source_location = get_source_location()
+
+        def initialize(name: str, reactor: "Reactor") -> InputPort[T]:
+            context = reactor._context(source_location)
+            return InputPort(sdk.InputPort(name, context))
+
+        super().__init__(initialize, attributes)
 
 
-class OutputPort(Generic[T], runtime.Output, AttributeMixin):
+class OutputPort(EventSource[T]):
     """A port that sends values to other reactors.
 
     The output port does not provide direct access to received values. A
@@ -317,24 +313,10 @@ class OutputPort(Generic[T], runtime.Output, AttributeMixin):
     :class:`Effect` to read or write its value.
 
     Type Parameters:
-        T(optional): The type of values carried by the port.
+        T: The type of values carried by the port.
     """
 
-    @property
-    def name(self) -> str:
-        """Name of the output port (read-only)."""
-        return self._name
-
-    @property
-    def fqn(self) -> str:
-        """Fully qualified name of the output port (read-only)."""
-        return self._fqn
-
-    def _set(self, value: T) -> None:
-        super()._set(value)
-
-    def _get(self) -> T:
-        return cast(T, super()._get())
+    pass
 
 
 class OutputPortDeclaration(ElementDescriptor[OutputPort[T]]):
@@ -344,43 +326,34 @@ class OutputPortDeclaration(ElementDescriptor[OutputPort[T]]):
         attributes(optional): A dict of attributes characterizing the output port.
 
     Type Parameters:
-        T(optional): The type of values carried by the port.
+        T: The type of values carried by the port.
     """
 
     def __init__(self, attributes: AttributeMap | None = None) -> None:
-        super().__init__(
-            OutputPort, frame_info=_get_calling_stack_frame(), attributes=attributes
-        )
+        source_location = get_source_location()
+
+        def initialize(name: str, reactor: "Reactor") -> OutputPort[T]:
+            context = reactor._context(source_location)
+            return OutputPort(sdk.OutputPort(name, context))
+
+        super().__init__(initialize, attributes)
 
 
-class ProgrammableTimer(Generic[T], runtime.ProgrammableTimer, AttributeMixin):
-    """An element for scheduling future events.
+class ProgrammableTimer(EventSource[T]):
+    """A schedulable event source.
 
     Programmable timers may be used by reactions to schedule new events in the
-    future. Events are not scheduled or read directly. Instead,
-    :attr:`reaction`'s may declare a :class:`ProgrammableTimerEffect` to
-    schedule new events, or a :class:`Trigger` to access the
-    value associated with an active event.
+    future. Similar to ports, programmable timers may not be accessed
+    directly. Instead, :attr:`reaction`'s may declare a
+    :class:`ProgrammableTimerEffect` to schedule new events, or a
+    :class:`Trigger` to access the value associated with an active event.
 
     Type Parameters:
-        T(optional): The type of values carried by the programmable times.
+        T: The type of values associated with events scheduled via the
+             programmable timer.
     """
 
-    @property
-    def name(self) -> str:
-        """Name of the programmable timer (read-only)."""
-        return self._name
-
-    @property
-    def fqn(self) -> str:
-        """Fully qualified name of the programmable timer (read-only)."""
-        return self._fqn
-
-    def _schedule(self, value: T, delay: datetime.timedelta) -> None:
-        super()._schedule(value, delay)
-
-    def _get(self) -> T:
-        return cast(T, super()._get())
+    pass
 
 
 class ProgrammableTimerDeclaration(ElementDescriptor[ProgrammableTimer[T]]):
@@ -391,40 +364,32 @@ class ProgrammableTimerDeclaration(ElementDescriptor[ProgrammableTimer[T]]):
         programmable timer.
 
     Type Parameters:
-        T(optional): The type of values carried by the programmable timer.
+        T: The type of values associated with events scheduled via the
+             programmable timer.
     """
 
     def __init__(self, attributes: AttributeMap | None = None) -> None:
-        super().__init__(
-            ProgrammableTimer,
-            frame_info=_get_calling_stack_frame(),
-            attributes=attributes,
-        )
+        source_location = get_source_location()
+
+        def initialize(name: str, reactor: "Reactor") -> ProgrammableTimer[T]:
+            context = reactor._context(source_location)
+            return ProgrammableTimer(sdk.ProgrammableTimer(name, context))
+
+        super().__init__(initialize, attributes)
 
 
-class PhysicalEvent(Generic[T], runtime.PhysicalEvent, AttributeMixin):
-    """An element for triggering events from contexts external to the xronos program.
+class PhysicalEvent(EventSource[T]):
+    """An element for triggering events from outside the xronos program (e.g. sensors).
 
-    Physical events may be used to schedule new events from an external context
-    outside of the scope of the reactor program. These could be external event
-    handlers that respond to sensor inputs. Physical events do not provide
-    direct access to their values. A :attr:`reaction` may declare a
-    :class:`Trigger` to access the value associated with an
-    active event.
+    Physical events may be used to schedule new events from outside of the
+    scope of the reactor program. These could be external event handlers that
+    respond to sensor inputs. Physical events do not provide direct access to
+    their values. A :attr:`reaction` may declare a :class:`Trigger` to access
+    the value associated with an active event.
 
     Type Parameters:
-        T(optional): The type of values carried by the event.
+        T: The type of values carried by any triggered events.
     """
-
-    @property
-    def name(self) -> str:
-        """Name of the physical event (read-only)."""
-        return self._name
-
-    @property
-    def fqn(self) -> str:
-        """Fully qualified name of the physical event (read-only)."""
-        return self._fqn
 
     def trigger(self, value: T) -> None:
         """Create a new event with an automatically assigned timestamp.
@@ -432,10 +397,7 @@ class PhysicalEvent(Generic[T], runtime.PhysicalEvent, AttributeMixin):
         Args:
             value: A value to be associated with the newly created event.
         """
-        self._schedule(value, datetime.timedelta(0))
-
-    def _get(self) -> T:
-        return cast(T, super()._get())
+        self._get_sdk_instance(sdk.PhysicalEvent).trigger(value)
 
 
 class PhysicalEventDeclaration(ElementDescriptor[PhysicalEvent[T]]):
@@ -445,16 +407,20 @@ class PhysicalEventDeclaration(ElementDescriptor[PhysicalEvent[T]]):
         attributes(optional): A dict of attributes characterizing the physical event.
 
     Type Parameters:
-        T(optional): The type of values carried by the physical event.
+        T: The type of values carried by any triggered events.
     """
 
     def __init__(self, attributes: AttributeMap | None = None) -> None:
-        super().__init__(
-            PhysicalEvent, frame_info=_get_calling_stack_frame(), attributes=attributes
-        )
+        source_location = get_source_location()
+
+        def initialize(name: str, reactor: "Reactor") -> PhysicalEvent[T]:
+            context = reactor._context(source_location)
+            return PhysicalEvent(sdk.PhysicalEvent(name, context))
+
+        super().__init__(initialize, attributes)
 
 
-class Metric(runtime.Metric, AttributeMixin):
+class Metric(Element):
     """Allows recording values to an external data base from reaction handlers.
 
     This class is not intended to be instantiated directly. Use
@@ -462,24 +428,18 @@ class Metric(runtime.Metric, AttributeMixin):
     """
 
     @property
-    def name(self) -> str:
-        """Name of the metric (read-only)."""
-        return self._name
-
-    @property
-    def fqn(self) -> str:
-        """Fully qualified name of the metric (read-only)."""
-        return self._fqn
-
-    @property
     def description(self) -> str:
         """Description of the metric (read-only)."""
-        return self._description
+        return self.__sdk_instance.description
 
     @property
     def unit(self) -> str:
         """Unit of the metric (read-only)."""
-        return self._unit
+        return self.__sdk_instance.unit
+
+    @property
+    def __sdk_instance(self) -> sdk.Metric:
+        return self._get_sdk_instance(sdk.Metric)
 
 
 class MetricDeclaration(ElementDescriptor[Metric]):
@@ -499,29 +459,17 @@ class MetricDeclaration(ElementDescriptor[Metric]):
     ) -> None:
         if unit is None:
             unit = ""
-        super().__init__(
-            lambda name, container: Metric(
-                name,
-                container,
-                container.environment._metric_data_logger_provider,
-                description,
-                unit,
-            ),
-            frame_info=_get_calling_stack_frame(),
-            attributes=attributes,
-        )
+
+        source_location = get_source_location()
+
+        def initialize(name: str, reactor: "Reactor") -> Metric:
+            context = reactor._context(source_location)
+            return Metric(sdk.Metric(name, context, description, unit))
+
+        super().__init__(initialize, attributes)
 
 
-Port: TypeAlias = InputPort[T] | OutputPort[T]
-
-Container: TypeAlias = runtime.Environment | runtime.Reactor
-
-
-R = TypeVar("R", bound="Reactor")
-P = ParamSpec("P")
-
-
-class Environment(runtime.Environment):
+class Environment:
     """The entry point for assembling and executing reactor programs.
 
     The environment acts as an execution context for reactor programs. It
@@ -539,11 +487,10 @@ class Environment(runtime.Environment):
     """
 
     def __init__(
-        self,
-        fast: bool = False,
-        timeout: Optional[datetime.timedelta] = None,
+        self, fast: bool = False, timeout: datetime.timedelta | None = None
     ) -> None:
         workers = 1
+
         try:
             # This is currently the official way to check whether the GIL is
             # enabled or not. The function is only available in Python>=3.13.
@@ -556,41 +503,19 @@ class Environment(runtime.Environment):
             pass
 
         if timeout:
-            super().__init__(workers=workers, fast=fast, timeout=timeout)
+            self.__sdk_env = sdk.Environment(
+                workers, fast, render_reactor_graph=True, timeout=timeout
+            )
         else:
-            super().__init__(workers=workers, fast=fast)
+            self.__sdk_env = sdk.Environment(workers, fast, render_reactor_graph=True)
 
-        #: List of all top-level reactors.
+        #: List of contained reactors.
         #:
         #: Used for keeping references to all reactors created via
         #: `create_reactor`. This ensures that the garbage collector does not
         #: delete reactors, even if the user does not assign them to a variable or
         #: the variable goes out of scope.
         self.__reactors = list["Reactor"]()
-
-        #: List of source infos that map reactor elements to their location of
-        #: creation in the source code.
-        self.__source_locations = list[runtime.SourceInfo]()
-
-    def execute(self) -> None:
-        """Execute the reactor program.
-
-        Initiates the execution of a reactor program. This triggers
-        :attr:`~xronos.Reactor.startup` and instructs the runtime to start
-        processing reactions.
-
-        Returns when the reactor program terminates.
-        """
-        for reactor in self._top_level_reactors:
-            Environment._recursive_init(reactor)
-        super()._execute(self.__source_locations)
-
-    @staticmethod
-    def _recursive_init(reactor: runtime.Reactor) -> None:
-        if isinstance(reactor, Reactor):
-            reactor._initialize()
-        for child in reactor._reactor_instances:
-            Environment._recursive_init(child)
 
     @overload
     def connect(
@@ -615,7 +540,10 @@ class Environment(runtime.Environment):
     ) -> None: ...
 
     def connect(
-        self, from_: Port[T], to: Port[T], delay: datetime.timedelta | None = None
+        self,
+        from_: InputPort[T] | OutputPort[T],
+        to: InputPort[T] | OutputPort[T],
+        delay: datetime.timedelta | None = None,
     ) -> None:
         """Connect two ports.
 
@@ -629,11 +557,18 @@ class Environment(runtime.Environment):
                 to.
             delay(~datetime.timedelta | None): When set, the connection waits
                 for `delay` before delivering the messages to `to`. (optional)
+
+        Raises:
+            ValidationError: If an invalid connections is created.
         """
         if delay is None:
-            super()._connect(from_, to)
+            self.__sdk_env.connect(
+                from_._get_sdk_instance(sdk.Port), to._get_sdk_instance(sdk.Port)
+            )
         else:
-            super()._connect_delayed(from_, to, delay)
+            self.__sdk_env.connect_delayed(
+                from_._get_sdk_instance(sdk.Port), to._get_sdk_instance(sdk.Port), delay
+            )
 
     def create_reactor(
         self,
@@ -666,60 +601,39 @@ class Environment(runtime.Environment):
         # the types of all args and kwargs and support type checking any calls
         # to this method.
         checked_class = Reactor._checked_cast_to_subclass(reactor_class)
-        reactor = checked_class._create_instance(
-            name, self, _get_calling_stack_frame(), *args, **kwargs
-        )
+        context = sdk.EnvironmentContext(self.__sdk_env, get_source_location())
+        reactor = checked_class._create_instance(name, context, *args, **kwargs)
+
         # keep a reference to the created reactor
         self.__reactors.append(reactor)
         return reactor
 
-    @staticmethod
-    def __frameinfo_to_sourceinfo(
-        frame: inspect.FrameInfo, element: runtime.ReactorElement
-    ):
-        try:
-            pos = frame.positions
-        except AttributeError:
-            # Fallback for Python 3.10
-            pos = None
-        lineno = pos.lineno if pos and pos.lineno else frame.lineno
-        end_lineno = pos.end_lineno if pos and pos.end_lineno else lineno
-        col_offset = pos.col_offset if pos and pos.col_offset else 0
-        end_col_offset = pos.end_col_offset if pos and pos.end_col_offset else 80
-        return runtime.SourceInfo(
-            type(element).__name__,
-            frame.function,
-            frame.filename,
-            element._fqn.split("."),
-            element._uid,
-            lineno,
-            end_lineno,
-            col_offset,
-            end_col_offset,
-        )
+    def execute(self) -> None:
+        """Execute the reactor program.
 
-    def _add_frame_info(
-        self, frame: inspect.FrameInfo, element: runtime.ReactorElement
-    ):
-        source_info = Environment.__frameinfo_to_sourceinfo(frame, element)
-        self.__source_locations.append(source_info)
+        Initiates the execution of a reactor program. This triggers
+        :attr:`~xronos.Reactor.startup` and instructs the runtime to start
+        processing reactions.
 
-    @deprecated("Use enable_telemetry() instead")
-    def enable_tracing(
-        self,
-        application_name: str = "xronos",
-        endpoint: str = "localhost:4317",
-    ) -> None:
+        Returns when the reactor program terminates.
+
+        Raises:
+            ValidationError: When the program is invalid or reaches an invalid state.
         """
-        .. deprecated:: 0.3.0
-           Use :func:`enable_telemetry` instead.
-        """  # noqa: D205, D212
-        self.enable_telemetry(application_name, endpoint)
+        return self.__sdk_env.execute()
+
+    def request_shutdown(self) -> None:
+        """Request the termination of the currently running reactor program.
+
+        Terminates a program started with :func:`execute` at the next
+        convenience. This triggers :attr:`~xronos.Reactor.shutdown` after
+        completing all currently active reactions, and stops program execution after
+        processing all reactions triggered by :attr:`~xronos.Reactor.shutdown`.
+        """
+        return self.__sdk_env.request_shutdown()
 
     def enable_telemetry(
-        self,
-        application_name: str = "xronos",
-        endpoint: str = "localhost:4317",
+        self, application_name: str = "xronos", endpoint: str = "localhost:4317"
     ) -> None:
         """Enable the collection of telemetry data during program execution.
 
@@ -732,55 +646,38 @@ class Environment(runtime.Environment):
             endpoint: The network endpoint to send telemetry data to. This is
                 typically port 4137 on the host running the :ref:`dashboard`.
         """
-        backend = runtime.OtelTelemetryBackend(
-            self._attribute_manager,
-            application_name,
-            endpoint,
-            platform.node(),
-            os.getpid(),
-        )
-        self._set_telemetry_backend(cast(TelemetryBackend, backend))
-
-    def request_shutdown(self) -> None:
-        """Request the termination of the currently running reactor program.
-
-        Terminates a program started with :func:`execute` at the next
-        convenience. This triggers :attr:`~xronos.Reactor.shutdown` after
-        completing all currently active reactions, and stops program execution after
-        processing all reactions triggered by :attr:`~xronos.Reactor.shutdown`.
-        """
-        return super().request_shutdown()
+        return self.__sdk_env.enable_telemetry(application_name, endpoint)
 
 
-class Reactor(runtime.Reactor, AttributeMixin):
+class Reactor(Element):
     """An abstract reactor that can be subclassed to define new reactors."""
 
-    #: Startup: Startup event.
-    #:
-    #: Triggers once when the program execution starts.
-    startup = StartupDeclaration()
-
-    #: Shutdown: Shutdown event.
-    #:
-    #: Triggers once right before the program execution ends.
-    shutdown = ShutdownDeclaration()
-
-    def __pre_init(self, name: str, container: Container) -> None:
+    def __pre_init(
+        self, name: str, context: sdk.EnvironmentContext | sdk.ReactorContext
+    ) -> None:
         self.__name = name
-        self.__container = container
+        self.__container_context = context
 
     def __init__(self) -> None:
-        super().__init__(self.__name, self.__container)
+        if not hasattr(self, "_Reactor__name") or not hasattr(
+            self, "_Reactor__container_context"
+        ):
+            raise TypeError(
+                "Reactors may not be instantiated directly. "
+                "Use create_reactor() instead."
+            )
+
+        super().__init__(
+            sdk.Reactor(self.__name, self.__container_context, lambda: self._assemble())
+        )
         self.__initialized = True
 
-        self._reactions = dict[str, Reaction]()
-
         #: Dictionary of contained reactor elements
-        self.__elements: dict[str, runtime.ReactorElement] = {}
+        self.__elements: dict[str, Element] = {}
         # Initialize all contained elements
         for desc in type(self).__element_descriptors:
             assert desc._name not in self.__elements
-            self.__elements[desc._name] = desc._get_instance(self)
+            self.__elements[desc._name] = desc._create_instance(self)
 
         #: List of contained reactors.
         #:
@@ -791,32 +688,24 @@ class Reactor(runtime.Reactor, AttributeMixin):
         self.__reactors = list["Reactor"]()
 
     @property
-    def name(self) -> str:
-        """Name of the reactor (read-only)."""
-        return self._name
-
-    @property
-    def fqn(self) -> str:
-        """Fully qualified name of the reactor (read-only)."""
-        return self._fqn
+    def __sdk_instance(self) -> sdk.Reactor:
+        return self._get_sdk_instance(sdk.Reactor)
 
     @classmethod
     def _create_instance(
         cls,
         name: str,
-        container: Container,
-        frame: inspect.FrameInfo,
+        context: sdk.EnvironmentContext | sdk.ReactorContext,
         *args: Any,
         **kwargs: Any,
     ) -> Self:
         reactor = cls.__new__(cls, *args, **kwargs)
-        reactor.__pre_init(name, container)
+        reactor.__pre_init(name, context)
         reactor.__init__(*args, **kwargs)
         if not hasattr(reactor, "_Reactor__initialized"):
             raise TypeError(
                 "super().__init__() must be called when overriding __init__ of Reactor."
             )
-        reactor.environment._add_frame_info(frame, reactor)
         return reactor
 
     @staticmethod
@@ -846,21 +735,18 @@ class Reactor(runtime.Reactor, AttributeMixin):
         This is used to ensure that each subclass keeps track of its
         reactions individually.
         """
-        if "_Reactor__reaction_priority_counter" not in cls.__dict__:
-            cls.__reaction_priority_counter = cls.__get_base_priority()
-        if "_Reactor__reaction_descriptors" not in cls.__dict__:
-            cls.__reaction_descriptors = cls.__get_base_reaction_descriptors()
         if "_Reactor__element_descriptors" not in cls.__dict__:
             #: List of element descriptors
             cls.__element_descriptors = cls.__get_base_element_descriptors()
 
     @classmethod
-    def __get_base_element_descriptors(cls) -> set["ElementDescriptor[Any]"]:
+    def __get_base_element_descriptors(cls) -> list["ElementDescriptor[Any]"]:
         """Retrieve the element descriptors of all base classes."""
-        descriptors = set["ElementDescriptor[Any]"]()
+        descriptors = list["ElementDescriptor[Any]"]()
         base = cls.__get_base_reactor()
         if base:
-            descriptors.update(base.__element_descriptors)
+            for desc in base.__element_descriptors:
+                descriptors.append(desc)
         return descriptors
 
     @classmethod
@@ -870,9 +756,9 @@ class Reactor(runtime.Reactor, AttributeMixin):
         # __set_name__ which is called before __init_submodules.
         cls.__init_attributes()
         assert descriptor not in cls.__element_descriptors
-        cls.__element_descriptors.add(descriptor)
+        cls.__element_descriptors.append(descriptor)
 
-    def _get_element(self, name: str) -> runtime.ReactorElement:
+    def _get_element(self, name: str) -> Element:
         if not hasattr(self, "_Reactor__initialized"):
             raise TypeError(
                 "When overriding __init__ of Reactor, super().__init__() "
@@ -894,65 +780,30 @@ class Reactor(runtime.Reactor, AttributeMixin):
         """
         base_reactor_cls = None
         for base in cls.__bases__:
-            if issubclass(base, runtime.Reactor) and base is not runtime.Reactor:
+            if issubclass(base, Reactor) and base is not Reactor:
                 if base_reactor_cls is not None:
                     raise NotImplementedError(
                         "Multiple inheritance for reactor classes is currently not "
                         + "supported!"
                     )
-                base_reactor_cls = cast(Type["Reactor"], base)
+                base_reactor_cls = base
         return base_reactor_cls
 
-    @classmethod
-    def __get_base_priority(cls) -> int:
-        """Get the priority counter of the base reactor class.
+    @property
+    def startup(self) -> Startup:
+        """Startup event source.
 
-        Returns:
-            The priority counter value of the base reactor class, or 0 if there
-            is no base.
+        Triggers once when the program execution starts.
         """
-        base_reactor = cls.__get_base_reactor()
-        return base_reactor.__reaction_priority_counter if base_reactor else 0
-
-    @classmethod
-    def __get_base_reaction_descriptors(cls) -> list["ReactionDescriptor[Reactor]"]:
-        """Get the list of reaction descriptors of the base reactor class.
-
-        Returns:
-            The list of reaction descriptors of the base reactor class, or an
-            empty list if there is no base.
-        """
-        base_reactor = cls.__get_base_reactor()
-        return base_reactor.__reaction_descriptors.copy() if base_reactor else []
-
-    @classmethod
-    def _register_reaction_descriptor(
-        cls, descriptor: "ReactionDescriptor[Reactor]"
-    ) -> int:
-        """Register a reaction descriptor.
-
-        This is intended to be called during `__set_name__` of
-        :class:`ReactionDescriptor`. It adds the descriptor to
-        `_reaction_descriptors`, increments `_reaction_priority_counter` and
-        returns the resulting priority.
-
-        Args:
-            descriptor: The reaction descriptor to register
-
-        Returns:
-            The priority of the newly registered reaction.
-        """
-        cls.__init_attributes()
-        cls.__reaction_priority_counter += 1
-        cls.__reaction_descriptors.append(descriptor)
-        return cls.__reaction_priority_counter
+        return Startup(self.__sdk_instance.startup)
 
     @property
-    def environment(self) -> Environment:
-        """The environment that the reactor is associated with (read-only)."""
-        env = super()._environment
-        assert isinstance(env, Environment)
-        return env
+    def shutdown(self) -> Shutdown:
+        """Shutdown event source.
+
+        Triggers once right before the program execution ends.
+        """
+        return Shutdown(self.__sdk_instance.shutdown)
 
     def get_time(self) -> datetime.datetime:
         """Get the current point in time.
@@ -962,7 +813,7 @@ class Reactor(runtime.Reactor, AttributeMixin):
                   :func:`get_time` reads the current time as measured by the
                   internal clock.
         """
-        return self._get_logical_time()
+        return self.__sdk_instance.get_time()
 
     def get_lag(self) -> datetime.timedelta:
         """Get the current lag.
@@ -973,7 +824,7 @@ class Reactor(runtime.Reactor, AttributeMixin):
         clock. It is a measure of how far the execution of reactions lags behind
         events in the physical world.
         """
-        return self._get_physical_time() - self._get_logical_time()
+        return self.__sdk_instance.get_lag()
 
     def get_time_since_startup(self) -> datetime.timedelta:
         """Get the time that passed since the :attr:`startup` event.
@@ -982,11 +833,34 @@ class Reactor(runtime.Reactor, AttributeMixin):
             The difference between the current time point given by
             :func:`get_time` and the time at which the program started.
         """
-        return self._get_elapsed_logical_time()
+        return self.__sdk_instance.get_time_since_startup()
+
+    def request_shutdown(self) -> None:
+        """Request the termination of the currently running reactor program.
+
+        Terminates a program started with :func:`execute` at the next
+        convenience. This triggers :attr:`~xronos.Reactor.shutdown` after
+        completing all currently active reactions, and stops program execution after
+        processing all reactions triggered by :attr:`~xronos.Reactor.shutdown`.
+        """
+        return self.__sdk_instance.request_shutdown()
 
     def _assemble(self) -> None:
-        for reaction in self._reactions.values():
-            reaction.assemble()
+        for _, elem in self.__elements.items():
+            if isinstance(elem, Reaction):
+                elem._assemble()
+
+    def _context(self, source_location: sdk.SourceLocation) -> sdk.ReactorContext:
+        return sdk.ReactorContext(self.__sdk_instance, source_location)
+
+    def _add_reaction(
+        self,
+        name: str,
+        declaration: "Callable[[sdk.ReactionContext], Callable[[], None]]",
+        source_location: sdk.SourceLocation,
+    ) -> "Reaction":
+        sdk_reaction = self.__sdk_instance.add_reaction(name, source_location)
+        return Reaction(sdk_reaction, lambda: declaration(sdk_reaction.context()))
 
     @overload
     def connect(
@@ -1011,27 +885,34 @@ class Reactor(runtime.Reactor, AttributeMixin):
     ) -> None: ...
 
     def connect(
-        self, from_: Port[T], to: Port[T], delay: datetime.timedelta | None = None
+        self,
+        from_: InputPort[T] | OutputPort[T],
+        to: InputPort[T] | OutputPort[T],
+        delay: datetime.timedelta | None = None,
     ) -> None:
         """Connect two ports.
 
-        See :func:`Environment.connect`.
-        """
-        # Ignore typing here. Alternatively we could use runtime assertions to
-        # check the types, but that is unnecessary as `Reactor.connect` uses
-        # the same overloads as `Environment.connect`, and the underlying
-        # implementation in the C++ runtime already performs such assertions.
-        self.environment.connect(from_, to, delay)  # pyright: ignore
+        Creates a new connection from the port given in ``from_`` to the port
+        given in ``to``.
 
-    def _initialize(self) -> None:
-        """Initialize the reactor.
+        Also see `Environment.connect`.
 
-        Ensures that all reactions are instantiated for this particular reactor
-        instance.
+        Args:
+            from_(InputPort[T] | OutputPort[T]): The port to draw the
+                connection from.
+            to(InputPort[T] | OutputPort[T]): The port to draw the connection
+                to.
+            delay(~datetime.timedelta | None): When set, the connection waits
+                for `delay` before delivering the messages to `to`. (optional)
         """
-        for descriptor in type(self).__reaction_descriptors:
-            reaction = descriptor.create_instance(self)
-            self._reactions[descriptor.name] = reaction
+        if delay is None:
+            self.__sdk_instance.connect(
+                from_._get_sdk_instance(sdk.Port), to._get_sdk_instance(sdk.Port)
+            )
+        else:
+            self.__sdk_instance.connect_delayed(
+                from_._get_sdk_instance(sdk.Port), to._get_sdk_instance(sdk.Port), delay
+            )
 
     def create_reactor(
         self,
@@ -1040,7 +921,7 @@ class Reactor(runtime.Reactor, AttributeMixin):
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> R:
-        """Create a new nested reactor.
+        """Create a nested reactor.
 
         A factory method for instantiating and registering a new nested reactor.
         In contrast to :func:`Environment.create_reactor`, the newly created reactor
@@ -1059,6 +940,9 @@ class Reactor(runtime.Reactor, AttributeMixin):
             ``reactor_class``:
                  An instance of the class provided in the ``reactor_class``
                  argument.
+
+        Raises:
+            ValidationError: If an invalid connections is created.
         """
         # We annotate `reactor_class` as a callable that returns an R to infer
         # the parameters of the init method. `reactor_class` is expected to be
@@ -1066,28 +950,12 @@ class Reactor(runtime.Reactor, AttributeMixin):
         # the types of all args and kwargs and support type checking any calls
         # to this method.
         checked_class = Reactor._checked_cast_to_subclass(reactor_class)
-        reactor = checked_class._create_instance(
-            name, self, _get_calling_stack_frame(), *args, **kwargs
-        )
+        context = self._context(get_source_location())
+        reactor = checked_class._create_instance(name, context, *args, **kwargs)
+
         # keep a reference to the created reactor
         self.__reactors.append(reactor)
         return reactor
-
-
-TypedEventSource: TypeAlias = Port[T] | ProgrammableTimer[T] | PhysicalEvent[T]
-
-ValuelessEventSource: TypeAlias = PeriodicTimer | Startup | Shutdown
-
-GenericEventSource: TypeAlias = TypedEventSource[T] | ValuelessEventSource
-
-
-class _Dependency(Generic[T]):
-    def __init__(self, element: GenericEventSource[T]) -> None:
-        self._element = element
-
-    def is_present(self) -> bool:
-        """Check if the referenced element has triggered."""
-        return self._element._is_present
 
 
 class AbsentError(Exception):
@@ -1099,51 +967,46 @@ class AbsentError(Exception):
     pass
 
 
-class _ReadableEvent(Generic[T], _Dependency[T]):
-    def __init__(self, element: GenericEventSource[T]) -> None:
-        super().__init__(element)
-
-    def get(self) -> T:
-        """Get the current value of the referenced reactor element.
-
-        Raises:
-            AbsentException: If called and :func:`is_present` returns ``False``.
-        """
-        if not self.is_present():
-            raise AbsentError(
-                f"Tried to read a value from {self._element.fqn},"
-                " but there is no present value."
-            )
-
-        if isinstance(
-            self._element,
-            (runtime.Timer, runtime.Startup, runtime.Shutdown),
-        ):
-            return cast(T, None)
-        return self._element._get()
-
-
-class Trigger(Generic[T], _ReadableEvent[T]):
-    """Access to a reactor element that a reaction is triggered by and may read.
+class Trigger(Generic[T]):
+    """Provides read access to an event source that a reaction is triggered by.
 
     This class is not intended to be instantiated directly. Use
     :func:`~xronos.ReactionInterface.add_trigger` instead.
     """
 
-    pass
+    def __init__(self, sdk_trigger: sdk.Trigger | sdk.VoidTrigger) -> None:
+        self.__sdk_trigger = sdk_trigger
+
+    def is_present(self) -> bool:
+        """Check if the referenced event source has produced an event."""
+        return self.__sdk_trigger.is_present()
+
+    def get(self) -> T:
+        """Get the current value of the referenced reactor element.
+
+        Raises:
+            AbsentError: If called and :func:`is_present` returns ``False``.
+        """
+        if not self.is_present():
+            raise AbsentError(
+                "Tried to read a value from an element, but there is no present event."
+            )
+
+        if isinstance(self.__sdk_trigger, sdk.Trigger):
+            return cast(T, self.__sdk_trigger.get())
+        else:
+            return cast(T, None)
 
 
-class PortEffect(Generic[T], _ReadableEvent[T]):
-    """Access to a port that a reaction may write to.
+class PortEffect(Generic[T]):
+    """Provides write access to a port.
 
     This class is not intended to be instantiated directly. Use
     :func:`~xronos.ReactionInterface.add_effect` instead.
     """
 
-    def __init__(self, element: Port[T]) -> None:
-        super().__init__(element)
-        # overwrite so that type checker knows element is a Port[T]
-        self._element = element
+    def __init__(self, sdk_effect: sdk.PortEffect) -> None:
+        self.__sdk_effect = sdk_effect
 
     def set(self, value: T) -> None:
         """Set the port value and send a message to connected ports.
@@ -1155,42 +1018,57 @@ class PortEffect(Generic[T], _ReadableEvent[T]):
         Args:
             value: The value to be written to the referenced port.
         """
-        self._element._set(value)
+        self.__sdk_effect.set(value)
+
+    def is_present(self) -> bool:
+        """Check if an event is present at the current Timestamp."""
+        return self.__sdk_effect.is_present()
+
+    def get(self) -> T:
+        """Get the current value of the referenced port.
+
+        Raises:
+            AbsentError: If called and :func:`is_present` returns ``False``.
+        """
+        if not self.is_present():
+            raise AbsentError(
+                "Tried to read a value from an element, but there is no present event."
+            )
+
+        return cast(T, self.__sdk_effect.get())
 
 
-class ProgrammableTimerEffect(Generic[T], _ReadableEvent[T]):
-    """Access to a programmable timer that a reaction may schedule events with.
+class ProgrammableTimerEffect(Generic[T]):
+    """Provides write access to a programmable timer.
 
     This class is not intended to be instantiated directly. Use
     :func:`~xronos.ReactionInterface.add_effect` instead.
     """
 
-    def __init__(self, element: ProgrammableTimer[T]) -> None:
-        super().__init__(element)
-        # overwrite so that type checker knows element is an ProgrammableTimer[T]
-        self._element = element
+    def __init__(self, sdk_effect: sdk.ProgrammableTimerEffect) -> None:
+        self.__sdk_effect = sdk_effect
 
     def schedule(
         self, value: T, delay: datetime.timedelta = datetime.timedelta(0)
     ) -> None:
-        """Schedule a future timer event.
+        """Schedule a future event.
 
         Args:
-            value: The value to be associated with the event occurrence.
+            value: The value to be associated with the event.
             delay: The time to wait until the new event is processed.
         """
-        self._element._schedule(value, delay)
+        self.__sdk_effect.schedule(value, delay)
 
 
 class MetricEffect:
-    """Access to a metric that can be recorded.
+    """Provides write access to a metric.
 
     This class is not intended to be instantiated directly. Use
     :func:`~xronos.ReactionInterface.add_effect` instead.
     """
 
-    def __init__(self, metric: Metric) -> None:
-        self._metric = metric
+    def __init__(self, sdk_metric: sdk.MetricEffect) -> None:
+        self.__sdk_metric = sdk_metric
 
     def record(self, value: int | float) -> None:
         """Record a value.
@@ -1198,7 +1076,7 @@ class MetricEffect:
         Args:
             value: The value to be recorded.
         """
-        self._metric._record(value)
+        self.__sdk_metric.record(value)
 
 
 class ReactionInterface:
@@ -1209,34 +1087,35 @@ class ReactionInterface:
     {attr}`~xronos.reaction`.
     """
 
-    def __init__(self) -> None:
-        self._triggers = set[GenericEventSource[Any]]()
-        self._effects = set[Port[Any] | ProgrammableTimer[Any]]()
+    def __init__(self, context: sdk.ReactionContext) -> None:
+        self.__context = context
 
-    @overload
-    def add_trigger(self, trigger: TypedEventSource[T]) -> Trigger[T]: ...
-
-    @overload
-    def add_trigger(self, trigger: ValuelessEventSource) -> Trigger[None]: ...
-
-    def add_trigger(self, trigger: GenericEventSource[T]) -> Trigger[T]:
+    def add_trigger(self, event_source: EventSource[T]) -> Trigger[T]:
         """Declare a reaction trigger.
 
-        When the trigger element is activated by an event, the reaction that
+        When the triggering event source produces an event, the reaction that
         declares the trigger will be invoked automatically.
 
         Args:
-            trigger: The reactor element to declare as the reaction trigger.
+            event_source: The event source to declare as the reaction trigger.
 
         Returns:
             A new trigger object that can be used by the reaction handler to
             check presence and read values.
         """
-        self._triggers.add(trigger)
-        return Trigger(trigger)
+        if isinstance(event_source._get_sdk_instance(sdk.Element), sdk.VoidEventSource):
+            sdk_trigger = sdk.VoidTrigger(
+                event_source._get_sdk_instance(sdk.VoidEventSource), self.__context
+            )
+        else:
+            sdk_trigger = sdk.Trigger(
+                event_source._get_sdk_instance(sdk.EventSource), self.__context
+            )
+
+        return Trigger(sdk_trigger)
 
     @overload
-    def add_effect(self, target: Port[T]) -> PortEffect[T]: ...
+    def add_effect(self, target: InputPort[T] | OutputPort[T]) -> PortEffect[T]: ...
 
     @overload
     def add_effect(
@@ -1247,7 +1126,7 @@ class ReactionInterface:
     def add_effect(self, target: Metric) -> MetricEffect: ...
 
     def add_effect(
-        self, target: Port[T] | ProgrammableTimer[T] | Metric
+        self, target: InputPort[T] | OutputPort[T] | ProgrammableTimer[T] | Metric
     ) -> PortEffect[T] | ProgrammableTimerEffect[T] | MetricEffect:
         """Declare a reaction effect.
 
@@ -1262,161 +1141,74 @@ class ReactionInterface:
             write to ports or schedule events.
         """
         if isinstance(target, InputPort | OutputPort):
-            self._effects.add(target)
-            return PortEffect(target)
+            sdk_port = target._get_sdk_instance(sdk.Port)
+            return PortEffect(sdk.PortEffect(sdk_port, self.__context))
         elif isinstance(target, ProgrammableTimer):
-            self._effects.add(target)
-            return ProgrammableTimerEffect(target)
-        else:
-            return MetricEffect(target)
-
-
-class Reaction(runtime.Reaction):
-    def __init__(
-        self,
-        name: str,
-        priority: int,
-        container: Reactor,
-        handler: Callable[[], None],
-        interface: ReactionInterface,
-    ) -> None:
-        super().__init__(name, priority, container, handler)
-        self._handler = handler
-        self._interface = interface
-
-    def __call__(self, *args: Any, **kwargs: Any) -> Any:
-        raise RuntimeError("Reactions may not be called directly.")
-
-    @property
-    def name(self) -> str:
-        """Name of the reaction (read-only)."""
-        return self._name
-
-    @property
-    def fqn(self) -> str:
-        """Fully qualified name of the reaction (read-only)."""
-        return self._fqn
-
-    def assemble(self) -> None:
-        for trigger in self._interface._triggers:
-            if isinstance(trigger, runtime.EventSource):
-                self._declare_event_source_trigger(trigger)
-            else:
-                self._declare_port_trigger(trigger)
-        for effect in self._interface._effects:
-            if isinstance(effect, runtime.EventSource):
-                self._declare_event_source_effect(effect)
-            else:
-                self._declare_port_effect(effect)
-
-
-class ReactionDescriptor(Generic[R]):
-    def __init__(
-        self,
-        declaration_func: Callable[[R, ReactionInterface], Callable[[], None]],
-        frame_info: inspect.FrameInfo,
-    ):
-        """A descriptor for reactions.
-
-        This is an implementation of the Python descriptor protocol. It is used
-        to manage the deceleration and instantiation of reactions. The complete
-        protocol is split between this class and the `Reactor` base class.
-
-        Reaction descriptors are instantiated when the `@reaction` decorator is
-        used (see :func:`reaction`). The annotated function is expected to
-        accept a reactor instance and a reaction interface as arguments and to
-        return a reaction handler. The function is expected to use the given
-        reactor interface to declare the reaction's dependencies.
-
-        Python's descriptor protocol ensures that `__set_name__` is called once
-        during construction of the containing (reactor) class. We use this, to
-        record the reaction name and register the descriptor using
-        `_register_reaction_descriptor` provided by each reactor class.
-        `_register_reaction_descriptor` also returns
-        a priority, which the descriptor records for later use.
-
-        During initialization `_initialize` of :class:`Reactor` is called. This
-        will call `create_instance` on each recorded reaction descriptor.
-        `create_instance` uses the recorded information and returns a new
-        `Reaction` instance. The calling `Reactor` instance is responsible for
-        storing the reaction instance in its `_reactions` dict. If `__get__` is
-        called on the descriptor, it retrieves the concrete instances from the
-        `_reactions` dict of the calling reactor.
-
-        Args:
-            declaration_func: A callable that accepts a reactor and reaction
-                interface as arguments and returns a reaction handler. The
-                callable responsible for declaring reaction dependencies using
-                the provide reaction interface.
-            frame_info: stack frame to be associated with the element's source
-                location
-
-        They are intended to use the reaction functionality.
-        """
-        self._declaration_func = declaration_func
-        self._name: Optional[str] = None
-        self._priority: Optional[int] = None
-        self._instances: dict[Reactor, Reaction] = {}
-        self.__frame_info = frame_info
-
-    @property
-    def name(self) -> str:
-        """The reaction name."""
-        assert self._name
-        return self._name
-
-    @property
-    def priority(self) -> int:
-        """The reaction priority."""
-        assert self._priority
-        return self._priority
-
-    def __set_name__(self, reactor_cls: Type[R], name: str) -> None:
-        """Register the reaction and record its name and priority.
-
-        This is called automatically during the creation of a reactor class.
-        For instance, given the following reactor
-        ```
-        class Foo(xronos.Reactor):
-            @xronos.reaction
-            def bar(self, interface): ...
-        ```
-        this method will be called with `Foo` and `"bar"` as arguments during
-        the creation of `Foo`.
-        """
-        assert self._name is None
-        assert self._priority is None
-        self._name = name
-        self._priority = reactor_cls._register_reaction_descriptor(
-            cast("ReactionDescriptor[Reactor]", self)
-        )
-
-    def __get__(self, reactor: R, _: Any = None) -> Reaction:
-        """Return a reaction instance that is owned by the given reactor."""
-        return reactor._reactions[self.name]
-
-    def create_instance(self, reactor: R) -> Reaction:
-        """Create a new reaction instance that is owned by the given reactor.
-
-        This is a factory method that instantiates a reaction using the
-        information recorded in this descriptor. The given reactor is
-        registered as the owner of the reaction.
-        """
-        interface = ReactionInterface()
-        handler: Callable[[], None] = self._declaration_func(reactor, interface)
-        if not callable(handler):
-            raise RuntimeError(
-                "Reaction declaration function did not return a callable"
+            sdk_timer = target._get_sdk_instance(sdk.ProgrammableTimer)
+            return ProgrammableTimerEffect(
+                sdk.ProgrammableTimerEffect(sdk_timer, self.__context)
             )
-        reaction = Reaction(
-            name=self.name,
-            priority=self.priority,
-            container=reactor,
-            handler=handler,
-            interface=interface,
-        )
-        reactor.environment._add_frame_info(self.__frame_info, reaction)
-        return reaction
+        elif isinstance(target, Metric):  # type: ignore [reportUnnecessaryIsInstance]
+            sdk_metric = target._get_sdk_instance(sdk.Metric)
+            return MetricEffect(sdk.MetricEffect(sdk_metric, self.__context))
+        else:
+            raise ValueError(f"{type(target)} is not a valid target for an effect.")
+
+
+class Reaction(Element):
+    def __init__(
+        self,
+        sdk_instance: sdk.Reaction,
+        declaration: Callable[[], Callable[[], None]],
+    ) -> None:
+        super().__init__(sdk_instance)
+        self.__declaration = declaration
+
+    def _assemble(self):
+        sdk_reaction = self._get_sdk_instance(sdk.Reaction)
+        handler = self.__declaration()
+        sdk_reaction.set_handler(handler)
+
+    def __call__(self) -> None:
+        raise RuntimeError("Reactions may not be called directly")
+
+
+class ReactionDescriptor(ElementDescriptor[Reaction], Generic[R]):
+    """A descriptor for reactions.
+
+    This is an implementation of the Python descriptor protocol. It is used
+    to manage the declaration and instantiation of reactions. The complete
+    protocol is split between this class and the `Reactor` base class.
+
+    Reaction descriptors are instantiated when the `@reaction` decorator is
+    used (see :func:`reaction`). The annotated function is expected to
+    accept a reactor instance and a reaction interface as arguments and to
+    return a reaction handler. The function is expected to use the given
+    reactor interface to declare the reaction's dependencies.
+
+    Args:
+        declaration: A callable that accepts a reactor and reaction
+            interface as arguments and returns a reaction handler. The
+            callable responsible for declaring reaction dependencies using
+            the provide reaction interface.
+        source_location: source location to be associated with the reaction
+    """
+
+    def __init__(
+        self,
+        declaration: Callable[[R, ReactionInterface], Callable[[], None]],
+        source_location: sdk.SourceLocation,
+    ):
+        def initialize(name: str, reactor: Reactor) -> Reaction:
+            return reactor._add_reaction(
+                name,
+                lambda context: declaration(
+                    cast(R, reactor), ReactionInterface(context)
+                ),
+                source_location,
+            )
+
+        super().__init__(initialize, None)
 
     def __call__(self) -> None:
         raise RuntimeError("Reactions may not be called directly")
@@ -1424,7 +1216,7 @@ class ReactionDescriptor(Generic[R]):
 
 def reaction(
     declaration: Callable[[R, ReactionInterface], Callable[[], None]],
-) -> Callable[[], None]:
+) -> ReactionDescriptor[R]:
     """Decorator that is used to declare reactions.
 
     Args:
@@ -1433,4 +1225,4 @@ def reaction(
             a reaction handler. Failing to return a handler will result in an
             exception when the reactor containing the reaction is initialized.
     """
-    return ReactionDescriptor[R](declaration, _get_calling_stack_frame())
+    return ReactionDescriptor[R](declaration, get_source_location())

@@ -20,6 +20,7 @@
 #include "xronos/sdk/fwd.hh"
 #include "xronos/sdk/metric.hh"
 #include "xronos/sdk/port.hh"
+#include "xronos/sdk/reactor.hh"
 #include "xronos/sdk/time.hh"
 #include "xronos/sdk/value_ptr.hh"
 
@@ -43,36 +44,6 @@ private:
 
   friend BaseReaction;
 };
-/**
- * @cond Doxygen_Suppress
- * @internal
- * @brief Internal properties of a reaction.
- *
- * @details `ReactionProperties` objects should not be constructed or accessed
- * directly by application code.
- */
-class ReactionProperties {
-  constexpr ReactionProperties(std::string_view name, std::uint64_t reaction_id,
-                               std::reference_wrapper<Reactor> container, ReactorContext context)
-      : name_(name)
-      , reaction_id_(reaction_id)
-      , container_(container)
-      , context_(context) {}
-
-  std::string_view name_;
-  std::uint64_t reaction_id_;
-  std::reference_wrapper<Reactor> container_;
-  ReactorContext context_;
-
-  [[nodiscard]] auto container() noexcept -> Reactor& { return container_; }
-
-  friend Reactor;
-  friend BaseReaction;
-  template <class R> friend class Reaction;
-};
-/**
- * @endcond
- */
 
 /**
  * @brief Non-template base class for reactions.
@@ -80,7 +51,7 @@ class ReactionProperties {
  * @details Application code should inherit from `Reaction` instead of directly
  * from `BaseReaction`.
  */
-class BaseReaction : Element {
+class BaseReaction : public Element {
 public:
   /**
    * @internal
@@ -90,10 +61,6 @@ public:
    * instantiate reactions.
    */
   BaseReaction(ReactionProperties properties);
-  /**
-   * @brief Correct deletion of an instance of a derived class is permitted.
-   */
-  virtual ~BaseReaction() = default;
 
 protected:
   /**
@@ -129,10 +96,10 @@ protected:
     }
 
     /**
-     * @brief Get read access to the current value of the referenced event source.
+     * @brief Get the value of a currently present event.
      *
      * @return ImmutableValuePtr<T> A pointer to the current value of the event
-     * source, or `null` if the element is not present.
+     * source, or `nullptr` if there is no present event.
      */
     [[nodiscard]] auto get() const noexcept -> ImmutableValuePtr<T>
       requires(!std::is_same_v<T, void>)
@@ -141,10 +108,9 @@ protected:
     }
 
     /**
-     * @brief Check if the referenced event source is present at the current
-     * timestamp.
+     * @brief Check if an event is present at the current timestamp.
      *
-     * @return bool `true` if the element is present, `false` otherwise.
+     * @return bool `true` if an event is present, `false` otherwise.
      */
     [[nodiscard]] auto is_present() const noexcept -> bool { return trigger_.get().is_present(); }
 
@@ -227,6 +193,25 @@ protected:
     void set(V)
       requires(std::is_same_v<V, std::nullptr_t>)
     = delete;
+
+    /**
+     * @brief Get a previously set value.
+     *
+     * @return ImmutableValuePtr<T> A pointer to the current value of the port
+     * or `nullptr` if no value was set at the current timestamp.
+     */
+    [[nodiscard]] auto get() const noexcept -> ImmutableValuePtr<T>
+      requires(!std::is_same_v<T, void>)
+    {
+      return port_.get().get();
+    }
+
+    /**
+     * @brief Check if an event is present at the current timestamp.
+     *
+     * @return bool `true` if an event is present, `false` otherwise.
+     */
+    [[nodiscard]] auto is_present() const noexcept -> bool { return port_.get().is_present(); }
 
   private:
     std::reference_wrapper<Port<T>> port_;

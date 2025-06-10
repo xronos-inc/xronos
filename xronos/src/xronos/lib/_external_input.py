@@ -213,7 +213,7 @@ class ConsoleInput(ExternalInput[T]):
                 except ValueError:
                     pass
                 except ConsoleInput.RequestShutdown:
-                    self.environment.request_shutdown()
+                    self.request_shutdown()
                     break
         except EOFError:
             pass

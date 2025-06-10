@@ -129,7 +129,7 @@ following example into a new file called <code class="docutils literal notransla
                 <span class="sa">f</span><span class="s2">&quot;(count=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_count</span><span class="si">}</span><span class="s2">)&quot;</span>
             <span class="p">)</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_count</span> <span class="o">==</span> <span class="n">MAX_COUNT</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">environment</span><span class="o">.</span><span class="n">request_shutdown</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">request_shutdown</span><span class="p">()</span>
 
         <span class="k">return</span> <span class="n">handler</span>
 
@@ -181,7 +181,7 @@ following example into a new file called <code class="docutils literal notransla
                 <span class="sa">f</span><span class="s2">&quot;(count=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_count</span><span class="si">}</span><span class="s2">)&quot;</span>
             <span class="p">)</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_count</span> <span class="o">==</span> <span class="n">MAX_COUNT</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">environment</span><span class="o">.</span><span class="n">request_shutdown</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">request_shutdown</span><span class="p">()</span>
 
         <span class="k">return</span> <span class="n">handler</span>
 
@@ -225,7 +225,7 @@ returns.</p>
         <span class="sa">f</span><span class="s2">&quot;(count=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_count</span><span class="si">}</span><span class="s2">)&quot;</span>
     <span class="p">)</span>
     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_count</span> <span class="o">==</span> <span class="n">MAX_COUNT</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">environment</span><span class="o">.</span><span class="n">request_shutdown</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">request_shutdown</span><span class="p">()</span>
 
 <span class="k">return</span> <span class="n">handler</span>
 </pre></div>
@@ -233,7 +233,7 @@ returns.</p>
 <p>The handler performs multiple steps. First, it increments the <code class="docutils literal notranslate"><span class="pre">self._count</span></code>
 variable. It then prints the current time, the timer’s name and
 the current count. Finally, it checks if the count has reached <code class="docutils literal notranslate"><span class="pre">MAX_COUNT</span></code>, in
-which case <a class="reference internal" href="../api.html#xronos.Environment.request_shutdown" title="xronos.Environment.request_shutdown"><code class="xref py py-func docutils literal notranslate"><span class="pre">request_shutdown()</span></code></a> is called to terminate
+which case <a class="reference internal" href="../api.html#xronos.Reactor.request_shutdown" title="xronos.Reactor.request_shutdown"><code class="xref py py-func docutils literal notranslate"><span class="pre">request_shutdown()</span></code></a> is called to terminate
 the program.</p>
 <p>The program runs for about 4 seconds and produces output similar to the following:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>python<span class="w"> </span>timer.py

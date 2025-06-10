@@ -120,7 +120,7 @@ class TrainingController(xronos.Reactor):
 
         def handler() -> None:
             if self.epoch >= self.max_epochs:
-                self.environment.request_shutdown()
+                self.request_shutdown()
                 return
 
             data_effect.set(self.X[self.current_idx])
@@ -146,7 +146,7 @@ class TrainingController(xronos.Reactor):
             if self.current_idx == len(self.X) - 1 and self.check_convergence(
                 pred_loss
             ):
-                self.environment.request_shutdown()
+                self.request_shutdown()
                 return
 
             # take derivative of the loss function to calculate gradient

@@ -221,6 +221,7 @@ void Environment::set_exception() {
     }
   }
 }
+
 void Environment::rethrow_exception_if_any() {
   std::lock_guard<std::mutex> lock(exception_mutex_);
   if (exception_ != nullptr) {

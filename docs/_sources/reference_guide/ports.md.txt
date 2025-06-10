@@ -98,7 +98,7 @@ Executing the program yields output similar to the following:
 ```
 
 This program will execute indefinitely as the timer will always produce new
-events and we do not use {func}`~xronos.Environment.request_shutdown`. Use
+events and we do not use {func}`~xronos.Reactor.request_shutdown`. Use
 {kbd}`Ctrl`+{kbd}`C` to abort the execution. If the program defines any
 reactions to {attr}`~xronos.Reactor.shutdown`, these will be invoked after the
 termination signal is received.

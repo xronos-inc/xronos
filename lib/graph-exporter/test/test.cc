@@ -121,18 +121,33 @@ void check_reactor_element(const reactor_graph::ReactorElement& elem, const Reac
   REQUIRE(elem.has_reactor());
 }
 
-void check_timer_element(const reactor_graph::ReactorElement& elem, const Timer& timer,
-                         reactor_graph::TimerType expected_timer_type) {
+void check_timer_element(const reactor_graph::ReactorElement& elem, const Timer& timer) {
   using TimeUtil = google::protobuf::util::TimeUtil;
   REQUIRE(elem.uid() == timer.uid());
   REQUIRE(elem.name() == timer.name());
   REQUIRE(elem.has_timer());
   const auto& elem_timer = elem.timer();
-  REQUIRE(elem_timer.timer_type() == expected_timer_type);
-  if (expected_timer_type == reactor_graph::TimerType::TIMER_TYPE_GENERIC) {
-    REQUIRE(TimeUtil::DurationToNanoseconds(elem_timer.offset()) == timer.offset().count());
-    REQUIRE(TimeUtil::DurationToNanoseconds(elem_timer.period()) == timer.period().count());
-  }
+  REQUIRE(elem_timer.timer_type() == reactor_graph::TimerType::TIMER_TYPE_GENERIC);
+  REQUIRE(TimeUtil::DurationToNanoseconds(elem_timer.offset()) == timer.offset().count());
+  REQUIRE(TimeUtil::DurationToNanoseconds(elem_timer.period()) == timer.period().count());
+}
+
+void check_startup_element(const reactor_graph::ReactorElement& elem, const StartupTrigger& startup) {
+  using TimeUtil = google::protobuf::util::TimeUtil;
+  REQUIRE(elem.uid() == startup.uid());
+  REQUIRE(elem.name() == startup.name());
+  REQUIRE(elem.has_timer());
+  const auto& elem_timer = elem.timer();
+  REQUIRE(elem_timer.timer_type() == reactor_graph::TimerType::TIMER_TYPE_STARTUP);
+}
+
+void check_shutdown_element(const reactor_graph::ReactorElement& elem, const ShutdownTrigger& shutdown) {
+  using TimeUtil = google::protobuf::util::TimeUtil;
+  REQUIRE(elem.uid() == shutdown.uid());
+  REQUIRE(elem.name() == shutdown.name());
+  REQUIRE(elem.has_timer());
+  const auto& elem_timer = elem.timer();
+  REQUIRE(elem_timer.timer_type() == reactor_graph::TimerType::TIMER_TYPE_SHUTDOWN);
 }
 
 void check_action_element(const reactor_graph::ReactorElement& elem, const BaseAction& action,
@@ -213,19 +228,19 @@ TEST_CASE("Serialization of various reactor elements", "[exporter]") {
   }
   SECTION("Check fields of the startup element") {
     const auto& elem = lookup_element(graph, elements.startup.uid());
-    check_timer_element(elem, elements.startup, reactor_graph::TimerType::TIMER_TYPE_STARTUP);
+    check_startup_element(elem, elements.startup);
   }
   SECTION("Check fields of the shutdown element") {
     const auto& elem = lookup_element(graph, elements.shutdown.uid());
-    check_timer_element(elem, elements.shutdown, reactor_graph::TimerType::TIMER_TYPE_SHUTDOWN);
+    check_shutdown_element(elem, elements.shutdown);
   }
   SECTION("Check fields of the timer1 element") {
     const auto& elem = lookup_element(graph, elements.timer1.uid());
-    check_timer_element(elem, elements.timer1, reactor_graph::TimerType::TIMER_TYPE_GENERIC);
+    check_timer_element(elem, elements.timer1);
   }
   SECTION("Check fields of the timer2 element") {
     const auto& elem = lookup_element(graph, elements.timer2.uid());
-    check_timer_element(elem, elements.timer2, reactor_graph::TimerType::TIMER_TYPE_GENERIC);
+    check_timer_element(elem, elements.timer2);
   }
   SECTION("Check fields of the laction element") {
     const auto& elem = lookup_element(graph, elements.laction.uid());

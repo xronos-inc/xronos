@@ -32,19 +32,24 @@ if(XRONOS_BINDINGS_RUN_CLANG_TIDY)
     "${CLANG_TIDY_BASE_COMMAND};-header-filter=xronos/\(.*\)\\.hh")
 endif()
 
-find_package(xronos-lib CONFIG)
-if(NOT xronos-lib_FOUND)
-  include(FetchContent)
-  FetchContent_Declare(
-    xronos-lib
-    SOURCE_DIR "${PROJECT_SOURCE_DIR}/../lib"
-    EXCLUDE_FROM_ALL TRUE
-  )
-  FetchContent_MakeAvailable(xronos-lib)
-endif()
+include(FetchContent)
+FetchContent_Declare(
+  xronos-sdk
+  SOURCE_DIR "${PROJECT_SOURCE_DIR}/../cpp-sdk"
+  EXCLUDE_FROM_ALL TRUE
+  FIND_PACKAGE_ARGS CONFIG
+)
+FetchContent_MakeAvailable(xronos-sdk)
+FetchContent_Declare(
+  xronos-lib
+  SOURCE_DIR "${PROJECT_SOURCE_DIR}/../cpp-lib"
+  EXCLUDE_FROM_ALL TRUE
+  FIND_PACKAGE_ARGS CONFIG
+)
+FetchContent_MakeAvailable(xronos-lib)
 
 add_compile_options(-Wall -Wextra -pedantic -Werror)
 
 add_subdirectory(cpp)
 
-install(TARGETS _runtime DESTINATION ${SKBUILD_PROJECT_NAME})
+install(TARGETS _cpp_sdk DESTINATION ${SKBUILD_PROJECT_NAME})

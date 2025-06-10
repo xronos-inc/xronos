@@ -47,7 +47,7 @@ returns.
 The handler performs multiple steps. First, it increments the `self._count`
 variable. It then prints the current time, the timer's name and
 the current count. Finally, it checks if the count has reached `MAX_COUNT`, in
-which case {func}`~xronos.Environment.request_shutdown` is called to terminate
+which case {func}`~xronos.Reactor.request_shutdown` is called to terminate
 the program.
 
 The program runs for about 4 seconds and produces output similar to the following:

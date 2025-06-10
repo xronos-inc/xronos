@@ -83,7 +83,7 @@ class LifecycleManager(xronos.Reactor):
             ):
                 self.stopped_gracefully = True
                 log(self, "requesting shutdown")
-                self.environment.request_shutdown()
+                self.request_shutdown()
 
         return handler
 
@@ -98,7 +98,7 @@ class LifecycleManager(xronos.Reactor):
                 timeout_s = self.stop_timeout.seconds
                 log(self, f"warning: services timed out after {timeout_s} seconds")
                 log(self, "requesting shutdown")
-                self.environment.request_shutdown()
+                self.request_shutdown()
 
         return handler
 

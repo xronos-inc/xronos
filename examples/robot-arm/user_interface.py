@@ -61,7 +61,7 @@ class UserInterface(xronos.Reactor, Generic[T]):
         def handler() -> None:
             cmd = self.parser(user_input_trigger.get())
             if isinstance(cmd, KeyboardInterrupt):
-                self.environment.request_shutdown()
+                self.request_shutdown()
             elif cmd:
                 output_effect.set(cmd)
 

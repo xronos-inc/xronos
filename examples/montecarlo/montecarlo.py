@@ -156,7 +156,7 @@ class SimulationAggregator(xronos.Reactor):
             number_of_points_effect.record(self.total_generated)
 
             if self.total_generated >= self._simulation_request["total_points"]:
-                self.environment.request_shutdown()
+                self.request_shutdown()
 
         return handler
 

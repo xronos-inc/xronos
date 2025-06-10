@@ -4,6 +4,7 @@
 #include <memory>
 #include <stdexcept>
 
+#include "xronos/sdk/element.hh"
 #include "xronos/sdk/periodic_timer.hh"
 #include "xronos/sdk/time.hh"
 
@@ -13,14 +14,8 @@
 namespace xronos::sdk {
 
 PeriodicTimer::PeriodicTimer(std::string_view name, ReactorContext context, Duration period, Duration offset)
-    : Element{std::make_unique<runtime::Timer>(name, detail::get_reactor_instance(context), period, offset), context} {
-  if (period <= Duration::zero()) {
-    throw std::runtime_error("Timer period must be greater than zero.");
-  }
-  if (offset < Duration::zero()) {
-    throw std::runtime_error("Timer offset must be greater than or equal to zero.");
-  }
-}
+    : EventSource<void>{std::make_unique<runtime::Timer>(name, detail::get_reactor_instance(context), period, offset),
+                        context} {}
 
 [[nodiscard]] auto PeriodicTimer::period() const noexcept -> const Duration& {
   return detail::get_runtime_instance<runtime::Timer>(*this).period();
@@ -37,5 +32,17 @@ PeriodicTimer::PeriodicTimer(std::string_view name, ReactorContext context, Dura
 void PeriodicTimer::register_as_trigger_of(runtime::Reaction& reaction) const noexcept {
   reaction.declare_trigger(&detail::get_runtime_instance<runtime::Timer>(*this));
 }
+
+namespace detail {
+
+void set_timer_period(PeriodicTimer& timer, Duration period) {
+  get_runtime_instance<runtime::Timer>(timer).set_period(period);
+}
+
+void set_timer_offset(PeriodicTimer& timer, Duration offset) {
+  get_runtime_instance<runtime::Timer>(timer).set_offset(offset);
+}
+
+} // namespace detail
 
 } // namespace xronos::sdk

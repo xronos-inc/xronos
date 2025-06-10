@@ -91,7 +91,9 @@ class SimultaneousSource(AbstractTimerSource[T]):
     """A reactor that produces simultaneous outputs at startup."""
 
     def __init__(self, startup_value: T, timer_value: T) -> None:
-        super().__init__()
+        super().__init__(
+            period=datetime.timedelta(seconds=5), offset=datetime.timedelta(seconds=0)
+        )
         self.__startup_value: T = startup_value
         self.__timer_value: T = timer_value
 
@@ -159,7 +161,7 @@ def test_startup_and_shutdown_source() -> None:
 
 def test_simultaneous_events() -> None:
     """Test the AbstractSource with simultaneous events."""
-    env = xronos.Environment()
+    env = xronos.Environment(fast=True, timeout=datetime.timedelta(seconds=1))
     values = ["startup", "timer"]
 
     printer = env.create_reactor(

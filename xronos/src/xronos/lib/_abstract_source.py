@@ -15,7 +15,6 @@ from typing import (
 )
 
 import xronos
-from xronos._core import GenericEventSource
 
 TOutput = TypeVar("TOutput")
 
@@ -113,7 +112,7 @@ class AbstractSource(xronos.Reactor, Generic[TOutput]):
     def _create_reaction(
         self,
         interface: xronos.ReactionInterface,
-        trigger: GenericEventSource[TEventSource],
+        trigger: xronos.EventSource[TEventSource],
         handler_base_class: Type["AbstractSource[TOutput]"],
         handler: Callable[..., TOutput],
     ) -> Callable[[], None]:
@@ -315,13 +314,12 @@ class AbstractTimerSource(AbstractSource[TOutput]):
 
     def __init__(
         self,
-        period: Optional[datetime.timedelta] = None,
+        period: datetime.timedelta,
         offset: Optional[datetime.timedelta] = None,
         inhibit: bool = False,
     ) -> None:
         super().__init__(inhibit)
-        if period is not None:
-            self.timer.period = period
+        self.timer.period = period
         if offset is not None:
             self.timer.offset = offset
 

@@ -207,7 +207,7 @@ an effect on the <code class="docutils literal notranslate"><span class="pre">fa
 frame from the camera and to forward this frame to the next reactor using the
 <code class="docutils literal notranslate"><span class="pre">frame</span></code> output port. A value is written to a port by calling <a class="reference internal" href="../api.html#xronos.PortEffect.set" title="xronos.PortEffect.set"><code class="xref py py-func docutils literal notranslate"><span class="pre">set()</span></code></a>
 on the declared port effect. If no frame could be read, the
-handler stops the program using <a class="reference internal" href="../api.html#xronos.Environment.request_shutdown" title="xronos.Environment.request_shutdown"><code class="xref py py-func docutils literal notranslate"><span class="pre">request_shutdown()</span></code></a>.
+handler stops the program using <a class="reference internal" href="../api.html#xronos.Reactor.request_shutdown" title="xronos.Reactor.request_shutdown"><code class="xref py py-func docutils literal notranslate"><span class="pre">request_shutdown()</span></code></a>.
 Finally, the handler uses <code class="docutils literal notranslate"><span class="pre">reschedule_sample_webcam</span></code> to schedule the next
 occurrence of <code class="docutils literal notranslate"><span class="pre">_sample_webcam</span></code>, so that the reaction will be triggered again in
 the future.</p>
@@ -225,7 +225,7 @@ the future.</p>
             <span class="n">frame_effect</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">_frame</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;WARNING: Failed to read frames from videostream. Shutting down.&quot;</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">environment</span><span class="o">.</span><span class="n">request_shutdown</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">request_shutdown</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">reschedule_sample_webcam</span><span class="p">(</span><span class="n">sample_webcam_effect</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">handler</span>
@@ -387,7 +387,7 @@ The reaction handler can fully focus on sensor fusion.</p>
                 <span class="mi">2</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="k">if</span> <span class="n">cv2</span><span class="o">.</span><span class="n">waitKey</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="nb">ord</span><span class="p">(</span><span class="s2">&quot;q&quot;</span><span class="p">):</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">environment</span><span class="o">.</span><span class="n">request_shutdown</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">request_shutdown</span><span class="p">()</span>
 
     <span class="k">return</span> <span class="n">handler</span>
 </pre></div>

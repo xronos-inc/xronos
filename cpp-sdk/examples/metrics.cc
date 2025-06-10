@@ -2,10 +2,13 @@
 // SPDX-License-Identifier: BSD-3-Clause
 
 #include <cstdint>
+#include <string>
 #include <string_view>
+#include <unordered_map>
 
 #include "xronos/sdk.hh"
 #include "xronos/sdk/context.hh"
+#include "xronos/sdk/element.hh"
 #include "xronos/sdk/environment.hh"
 #include "xronos/sdk/metric.hh"
 #include "xronos/sdk/reactor.hh"
@@ -92,7 +95,11 @@ auto main() -> int {
   Ramp ramp{"ramp", env.context()};
   ramp.add_attribute("reactor_category", "data source");
   Square square{"square", env.context()};
-  square.add_attribute("reactor_category", "data processor");
+  square.add_attributes({{"reactor_category", "data processor"}, {"operation", "square"}});
+
+  std::unordered_map<std::string, sdk::AttributeValue> map{};
+  square.add_attributes(map);
+
   env.connect(ramp.output(), square.input(), 1s);
 
   env.execute();
