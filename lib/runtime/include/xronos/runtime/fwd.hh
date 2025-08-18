@@ -10,10 +10,11 @@
 
 namespace xronos::runtime {
 
+class Action;
 class BaseAction;
-class BasePort;
 class Environment;
 enum class Phase : std::uint8_t;
+class Port;
 class Reaction;
 class Reactor;
 class ReactorElement;
@@ -25,10 +26,7 @@ class StartupTrigger;
 class ShutdownTrigger;
 class MiscElement;
 
-template <class T> class Action;
-template <class T> class Port;
-
-using PortCallback = std::function<void(const BasePort&)>;
+using PortCallback = std::function<void(const Port&)>;
 
 } // namespace xronos::runtime
 

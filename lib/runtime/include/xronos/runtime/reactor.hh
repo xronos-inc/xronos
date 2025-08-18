@@ -6,16 +6,16 @@
 #define XRONOS_RUNTIME_REACTOR_HH
 
 #include <memory>
-#include <ranges>
 #include <set>
-#include <sstream>
-#include <string>
-#include <utility>
+#include <string_view>
+#include <vector>
 
-#include "action.hh"
-#include "environment.hh"
-#include "logical_time.hh"
-#include "reactor_element.hh"
+#include "xronos/runtime/action.hh"
+#include "xronos/runtime/environment.hh"
+#include "xronos/runtime/fwd.hh"
+#include "xronos/runtime/logical_time.hh"
+#include "xronos/runtime/reactor_element.hh"
+#include "xronos/runtime/time.hh"
 
 namespace xronos::runtime {
 class Reactor : public ReactorElement {

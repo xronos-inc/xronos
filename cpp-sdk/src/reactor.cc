@@ -1,17 +1,26 @@
+// SPDX-FileCopyrightText: Copyright (c) 2025 Xronos Inc.
+// SPDX-License-Identifier: BSD-3-Clause
+
+#include "xronos/runtime/reactor.hh"
+
+#include <chrono>
 #include <functional>
-#include <memory>
 #include <source_location>
 #include <string_view>
+#include <utility>
+#include <variant>
 
+#include "xronos/runtime/assert.hh"
+#include "xronos/runtime/connection_properties.hh"
+#include "xronos/runtime/environment.hh"
+#include "xronos/runtime/port.hh"
+#include "xronos/sdk/context.hh"
+#include "xronos/sdk/detail/source_location.hh"
 #include "xronos/sdk/element.hh"
 #include "xronos/sdk/environment.hh"
-#include "xronos/sdk/reaction.hh"
 #include "xronos/sdk/reactor.hh"
-
-#include "xronos/runtime/environment.hh"
-#include "xronos/runtime/reactor.hh"
-#include "xronos/sdk/context.hh"
 #include "xronos/sdk/startup.hh"
+#include "xronos/sdk/time.hh"
 
 namespace xronos::sdk {
 
@@ -32,12 +41,34 @@ private:
 namespace detail {
 
 auto make_reactor_wrapper(std::string_view name, ReactorContext context, std::function<void()> assemble) {
-  return std::make_unique<ReactorWrapper>(name, detail::get_reactor_instance(context), std::move(assemble));
+  return detail::make_runtime_element_pointer<ReactorWrapper>(name, detail::get_reactor_instance(context),
+                                                              std::move(assemble));
 }
 
 auto make_reactor_wrapper(std::string_view name, EnvironmentContext context, std::function<void()> assemble) {
-  return std::make_unique<ReactorWrapper>(name, detail::get_environment_instance(detail::get_environment(context)),
-                                          std::move(assemble));
+  return detail::make_runtime_element_pointer<ReactorWrapper>(
+      name, detail::get_environment_instance(detail::get_environment(context)), std::move(assemble));
+}
+
+void runtime_connect(Reactor& reactor, const Element& from_port, const Element& to_port) {
+  auto& runtime_environment = detail::get_runtime_instance<runtime::Reactor>(reactor).environment();
+  try {
+    runtime_environment.draw_connection(detail::get_runtime_instance<runtime::Port>(from_port),
+                                        detail::get_runtime_instance<runtime::Port>(to_port), {});
+  } catch (const runtime::ValidationError& e) {
+    throw ValidationError(e.what());
+  }
+}
+
+void runtime_connect(Reactor& reactor, const Element& from_port, const Element& to_port, Duration delay) {
+  auto& runtime_environment = detail::get_runtime_instance<runtime::Reactor>(reactor).environment();
+  try {
+    runtime_environment.draw_connection(detail::get_runtime_instance<runtime::Port>(from_port),
+                                        detail::get_runtime_instance<runtime::Port>(to_port),
+                                        {.type_ = runtime::ConnectionType::Delayed, .delay_ = delay});
+  } catch (const runtime::ValidationError& e) {
+    throw ValidationError(e.what());
+  }
 }
 
 } // namespace detail

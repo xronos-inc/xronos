@@ -3,6 +3,7 @@
 
 #include <gtest/gtest.h>
 #include <stdexcept>
+#include <string_view>
 #include <utility>
 
 #include "xronos/sdk.hh"

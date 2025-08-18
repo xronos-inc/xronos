@@ -1,18 +1,17 @@
 // SPDX-FileCopyrightText: Copyright (c) 2025 Xronos Inc.
 // SPDX-License-Identifier: BSD-3-Clause
 
-/**
- * @file
- *
- * @brief Definition of the `PeriodicTimer` class.
- */
+/** @file */
 
 #ifndef XRONOS_SDK_PERIODIC_TIMER_HH
 #define XRONOS_SDK_PERIODIC_TIMER_HH
 
+#include <string_view>
+
 #include "xronos/sdk/context.hh"
 #include "xronos/sdk/element.hh"
 #include "xronos/sdk/event_source.hh"
+#include "xronos/sdk/fwd.hh"
 #include "xronos/sdk/time.hh"
 
 namespace xronos::sdk {
@@ -25,40 +24,36 @@ void set_timer_offset(PeriodicTimer& timer, Duration offset);
 } // namespace detail
 
 /**
- * @brief An event source that emits events in regular intervals.
+ * A reactor element that emits events in regular intervals.
+ *
+ * Can be used as a reaction @ref BaseReaction::Trigger "trigger".
  */
-class PeriodicTimer final : public EventSource<void> {
+class PeriodicTimer final : public Element, public EventSource<void> {
 public:
   /**
-   * @brief Construct a new `PeriodicTimer` object.
+   * Constructor.
    *
-   * @param name The name of the timer event.
-   * @param context The current reactor's initialization context, which can be
-   * obtained using the `Reactor::context` method.
-   * @param period The delay in between two events emitted by the timer. See
-   * `Timer::period` for details.
-   * @param offset The delay between `Reactor::startup` and the first event
+   * @param name The name of the periodic timer.
+   * @param context The containing reactor's context.
+   * @param period The delay in between two events emitted by the timer.
+   * @param offset The delay between the startup event and the first event
    * emitted by the timer.
    */
   PeriodicTimer(std::string_view name, ReactorContext context, Duration period, Duration offset = Duration::zero());
 
   /**
-   * @brief The delay in between two events emitted by the timer.
+   * Get the delay in between two events emitted by the timer.
    *
-   * @details If `period` is 0 (the default), then the timer will trigger only
-   * once with a delay of `offset` after `Reactor::startup` triggers. If
-   * `offset` is also set to 0, the timer triggers simultaneously to
-   * `Reactor::startup`.
-   * @return const Duration& The delay in between two events emitted by the
-   * timer.
+   * @return The timer's period.
    */
   [[nodiscard]] auto period() const noexcept -> const Duration&;
   /**
-   * @brief The delay between `Reactor::startup` and the first event emitted by
-   * the timer.
+   * Get the timer's offset.
    *
-   * @return const Duration& The delay between `Reactor::startup` and the first
-   * event emitted by the timer.
+   * The offset denotes the delay between the startup event and the first event
+   * emitted by the timer.
+   *
+   * @return The timer's offset.
    */
   [[nodiscard]] auto offset() const noexcept -> const Duration&;
 

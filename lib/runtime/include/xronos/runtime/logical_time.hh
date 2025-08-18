@@ -5,7 +5,10 @@
 #ifndef XRONOS_RUNTIME_LOGICAL_TIME_HH
 #define XRONOS_RUNTIME_LOGICAL_TIME_HH
 
-#include "time.hh"
+#include <limits>
+#include <ostream>
+
+#include "xronos/runtime/time.hh"
 
 namespace xronos::runtime {
 using mstep_t = unsigned long; // at least 32 bit

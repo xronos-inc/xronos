@@ -1,0 +1,109 @@
+THIRD-PARTY SOFTWARE NOTICES AND INFORMATION
+
+This project includes third-party software components, which are distributed under the
+following licenses. Full licenses and notices are provided in the
+[third-party-licenses](third-party-licenses) subdirectory.
+
+---
+
+Component: Abseil C++
+Version: Abseil LTS 20250512.1
+License: Apache License 2.0
+License text: https://www.apache.org/licenses/LICENSE-2.0
+Source: https://github.com/abseil/abseil-cpp
+
+For the full license text, see:
+[third-party-licenses/libabseil_LICENSE](third-party-licenses/libabseil_LICENSE)
+
+---
+
+Component: address_sorting
+License: BSD 3-Clause License
+License text: https://opensource.org/licenses/BSD-3-Clause
+Source: https://github.com/grpc/grpc/tree/v1.74.1/third_party/address_sorting
+
+[third-party-licenses/address_sorting_LICENSE](third-party-licenses/address_sorting_LICENSE)
+
+---
+
+Component: boringssl
+License: Mixed, see full license text
+Version c63fadbde60a2224c22189d14c4001bbd2a3a629
+Source: https://boringssl.googlesource.com/boringssl
+
+[third-party-licenses/boringssl_LICENSE](third-party-licenses/boringssl_LICENSE)
+
+---
+
+Component: gRPC
+Version: v1.74.1
+License: Apache License 2.0
+License text: https://www.apache.org/licenses/LICENSE-2.0
+Source: https://github.com/grpc/grpc
+
+[third-party-licenses/grpc_LICENSE](third-party-licenses/grpc_LICENSE)
+
+---
+
+Component: OpenTelemetry protocol (OLTP)
+Version: v1.7.0
+License: Apache License 2.0
+License text: https://www.apache.org/licenses/LICENSE-2.0
+Source: https://github.com/open-telemetry/opentelemetry-proto
+
+For the full license text, see:
+[third-party-licenses/opentelemetry_proto_LICENSE](third-party-licenses/opentelemetry_proto_LICENSE)
+
+---
+
+Component: OpenTelemetry C++
+Version: v1.22.0
+License: Apache License 2.0
+License text: https://www.apache.org/licenses/LICENSE-2.0
+Source: https://github.com/open-telemetry/opentelemetry-cpp
+
+For the full license text, see:
+[third-party-licenses/opentelemetry_cpp_LICENSE](third-party-licenses/opentelemetry_cpp_LICENSE)
+
+---
+
+Component: protobuf
+Version: v31.1
+License: BSD 3-Clause License
+License text: https://opensource.org/licenses/BSD-3-Clause
+Source: https://github.com/protocolbuffers/protobuf
+
+For the full license text, see:
+[third-party-licenses/protobuf_LICENSE](third-party-licenses/protobuf_LICENSE)
+
+---
+
+Component: reactor-cpp
+Version: ae09ff11b131ff926bc4af3b4b4b466c6ca16c1d
+License: ISC License
+License text: https://opensource.org/licenses/ISC
+Source: https://github.com/lf-lang/reactor-cpp
+
+For the full license text, see:
+[third-party-licenses/reactor_cpp_LICENSE](third-party-licenses/reactor_cpp_LICENSE)
+
+---
+
+Component: re2
+Version: 2022-04-01
+License: BSD 3-Clause License
+License text: https://opensource.org/licenses/BSD-3-Clause
+Source: https://github.com/google/re2
+
+For the full license text, see:
+[third-party-licenses/re2_LICENSE](third-party-licenses/re2_LICENSE)
+
+---
+
+Component: utf8_range
+License: MIT License
+License text: https://opensource.org/licenses/MIT
+Source: https://github.com/grpc/grpc/tree/v1.74.1/third_party/utf8_range
+
+For the full license text, see:
+[third-party-licenses/utf8_range_LICENSE](third-party-licenses/utf8_range_LICENSE)

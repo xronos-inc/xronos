@@ -1,6 +1,5 @@
 Checks: '
     clang-diagnostic-*,
-    boost-*,
     Google-*,
     clang-analyzer-*,
     modernize-*,
@@ -10,13 +9,21 @@ Checks: '
     cppcoreguidelines-*,
     llvm-*,
     cert-*,
-    -clang-analyzer-core.CallAndMessage,
-    -readability-redundant-member-init'
-WarningsAsErrors: true
-HeaderFilterRegex: ''
+    misc-include-cleaner,
+    -readability-redundant-member-init,
+    -portability-template-virtual-member-function'
+WarningsAsErrors: '*'
+HeaderFilterRegex: 'xronos/.*\.hh'
 FormatStyle: none
+UseColor: true
 CheckOptions:
   - key: readability-identifier-length.MinimumParameterNameLength
     value: 2
+  - key: readability-identifier-length.IgnoredVariableNames
+    value: ^(to|it|_)$
+  - key: readability-identifier-length.IgnoredParameterNames
+    value: ^(to|it|_)$
   - key: cppcoreguidelines-special-member-functions.AllowSoleDefaultDtor
     value: true
+  - key: misc-include-cleaner.IgnoreHeaders
+    value: bits/chrono.h;pybind11/detail/.*

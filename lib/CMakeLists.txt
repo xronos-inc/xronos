@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.28)
 
-project(xronos-lib LANGUAGES CXX VERSION "0.4.0")
-set(PROJECT_VERSION "0.4.0")
+project(xronos-lib LANGUAGES CXX VERSION "0.5.0")
+set(PROJECT_VERSION "0.5.0")
 
 # require C++ 20
 set(CMAKE_CXX_STANDARD 20 CACHE STRING "The C++ standard." FORCE)
@@ -11,40 +11,27 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # Colorize compilation output
 set(CMAKE_COLOR_DIAGNOSTICS ON)
 
-# Generate compilation database for clang-tidy
+# Generate compilation database
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(BUILD_SHARED_LIBS "Build using shared libraries" Off)
-option(CLANG_TIDY_ERROR "clang-tidy warnings are errors" Off)
 option(RUNTIME_VALIDATE "Enable runtime validation" ON)
-set(CLANG_TIDY_COMMAND "clang-tidy" CACHE STRING "The clang-tidy command to use")
 set(RUNTIME_LOG_LEVEL 3 CACHE STRING "The log level used by the runtime")
 
 set(INSTALL_DEFAULT ON)
 set(BUILD_TESTS_DEFAULT ON)
-set(RUN_CLANG_TIDY_DEFAULT ON)
 if(NOT "${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
   # Disable some features when building as a subproject
   set(INSTALL_DEFAULT OFF)
   set(BUILD_TESTS_DEFAULT OFF)
-  set(RUN_CLANG_TIDY_DEFAULT OFF)
 endif()
 
 option(XRONOS_LIB_INSTALL "Generate installation target" ${INSTALL_DEFAULT})
 option(XRONOS_LIB_INSTALL_HEADERS "Generate installation target for header files" ${INSTALL_DEFAULT})
 option(XRONOS_LIB_BUILD_TESTS "Build the tests" ${BUILD_TESTS_DEFAULT})
-option(XRONOS_LIB_RUN_CLANG_TIDY "Enable building with clang-tidy" ${RUN_CLANG_TIDY_DEFAULT})
 
-if(XRONOS_LIB_RUN_CLANG_TIDY)
-  find_program(CLANG_TIDY ${CLANG_TIDY_COMMAND} REQUIRED)
-  if(CLANG_TIDY_ERROR)
-    set(CLANG_TIDY_BASE_COMMAND ${CLANG_TIDY_COMMAND}; -warnings-as-errors=*;)
-  else()
-    set(CLANG_TIDY_BASE_COMMAND ${CLANG_TIDY_COMMAND};)
-  endif()
-  set(XRONOS_CLANG_TIDY_COMMAND
-      "${CLANG_TIDY_BASE_COMMAND};-header-filter=xronos/\(.*\)\\.hh")
-endif()
+option(XRONOS_LIB_WITH_GRAPH_EXPORTER "Include the graph exporter in the build" ON)
+option(XRONOS_LIB_WITH_OTEL "Include the otel telemetry backend in the build" ON)
 
 include(GNUInstallDirs)
 
@@ -68,29 +55,33 @@ else()
   add_subdirectory(runtime)
 endif()
 
-set(OPENTELEMETRY_INSTALL ${XRONOS_LIB_INSTALL})
-include(../third-party/absl/absl.cmake)
-include(../third-party/protobuf/protobuf.cmake)
-include(../third-party/grpc/grpc.cmake)
-include(../third-party/opentelemetry/opentelemetry.cmake)
-
-find_package(Protobuf CONFIG REQUIRED)
-find_package(gRPC CONFIG REQUIRED)
-
-add_subdirectory(graph-exporter)
-add_subdirectory(graph-messages)
 add_subdirectory(telemetry)
-add_subdirectory(telemetry-otel)
+
+set(TARGETS xronos-runtime xronos-telemetry)
+
+if(XRONOS_LIB_WITH_GRAPH_EXPORTER)
+  include(../third-party/absl/absl.cmake)
+  include(../third-party/protobuf/protobuf.cmake)
+  include(../third-party/grpc/grpc.cmake)
+  add_subdirectory(graph-exporter)
+  add_subdirectory(graph-messages)
+  set(TARGETS ${TARGETS} xronos-graph-exporter xronos-graph-messages)
+endif()
+
+if(XRONOS_LIB_WITH_OTEL)
+  include(../third-party/absl/absl.cmake)
+  include(../third-party/protobuf/protobuf.cmake)
+  include(../third-party/grpc/grpc.cmake)
+  include(../third-party/opentelemetry/opentelemetry.cmake)
+  add_subdirectory(telemetry-otel)
+  set(TARGETS ${TARGETS} xronos-telemetry-otel)
+endif()
 
 if(XRONOS_LIB_INSTALL)
   install(
-    TARGETS
-      xronos-runtime
-      xronos-telemetry
-      xronos-telemetry-otel
-      xronos-graph-exporter
-      xronos-graph-messages
+    TARGETS ${TARGETS}
     EXPORT xronos-libTargets
+    FILE_SET HEADERS
     ARCHIVE  DESTINATION "${CMAKE_INSTALL_LIBDIR}" OPTIONAL
     LIBRARY  DESTINATION "${CMAKE_INSTALL_LIBDIR}" OPTIONAL
     RUNTIME  DESTINATION "${CMAKE_INSTALL_BINDIR}" OPTIONAL)
@@ -122,3 +113,50 @@ if(XRONOS_LIB_INSTALL)
     DESTINATION "share/cmake/xronos-lib"
   )
 endif()
+
+set(LINT_FILES
+  $<TARGET_PROPERTY:xronos-runtime,SOURCES>
+  $<TARGET_PROPERTY:xronos-runtime,HEADER_SET>
+  $<TARGET_PROPERTY:xronos-telemetry,SOURCES>
+  $<TARGET_PROPERTY:xronos-telemetry,HEADER_SET>
+)
+
+if(XRONOS_LIB_WITH_GRAPH_EXPORTER)
+  set(LINT_FILES ${LINT_FILES}
+    $<TARGET_PROPERTY:xronos-graph-exporter,SOURCES>
+    $<TARGET_PROPERTY:xronos-graph-exporter,HEADER_SET>
+  )
+endif()
+if(XRONOS_LIB_WITH_OTEL)
+  set(LINT_FILES ${LINT_FILES}
+    $<TARGET_PROPERTY:xronos-telemetry-otel,SOURCES>
+    $<TARGET_PROPERTY:xronos-telemetry-otel,HEADER_SET>
+    $<TARGET_PROPERTY:xronos-telemetry-otel,HEADER_SET_private_headers>
+  )
+endif()
+
+set(FORMAT_FILES ${LINT_FILES})
+if(XRONOS_LIB_WITH_GRAPH_EXPORTER)
+  set(FORMAT_FILES ${FORMAT_FILES} ${GRAPH_EXPORTER_TEST_SOURCES})
+endif()
+if(XRONOS_LIB_WITH_OTEL)
+  set(FORMAT_FILES ${FORMAT_FILES} ${TELEMETRY_OTEL_TEST_SOURCES})
+endif()
+
+add_custom_target(xronos-lib-format
+  COMMAND clang-format -i -style=file ${FORMAT_FILES}
+  COMMAND_EXPAND_LISTS
+  WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+add_custom_target(xronos-lib-check-format
+  COMMAND clang-format --dry-run --Werror -style=file ${FORMAT_FILES}
+  COMMAND_EXPAND_LISTS
+  WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+
+include(ProcessorCount)
+ProcessorCount(NCORES)
+add_custom_target(xronos-lib-lint COMMAND
+  echo ${LINT_FILES} | xargs -n1 -P${NCORES} clang-tidy --quiet -p ${CMAKE_CURRENT_BINARY_DIR}
+  COMMAND_EXPAND_LISTS
+)

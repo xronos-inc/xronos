@@ -2,15 +2,20 @@
 // SPDX-FileCopyrightText: Copyright (c) 2019 TU Dresden
 // SPDX-License-Identifier: BSD-3-Clause
 
-#include <cstdint>
-#include <utility>
-
 #include "xronos/runtime/reaction.hh"
+
+#include <cstdint>
+#include <functional>
+#include <string_view>
+#include <utility>
 
 #include "xronos/runtime/action.hh"
 #include "xronos/runtime/assert.hh"
 #include "xronos/runtime/environment.hh"
 #include "xronos/runtime/port.hh"
+#include "xronos/runtime/reactor.hh"
+#include "xronos/runtime/reactor_element.hh"
+#include "xronos/runtime/time.hh"
 
 namespace xronos::runtime {
 
@@ -46,7 +51,7 @@ void Reaction::declare_schedulable_action(BaseAction* action) {
   action->register_scheduler(this);
 }
 
-void Reaction::declare_trigger(BasePort* port) {
+void Reaction::declare_trigger(Port* port) {
   reactor_assert(port != nullptr);
   reactor_assert(&this->environment() == &port->environment());
   assert_phase(this, Phase::Assembly);
@@ -67,7 +72,7 @@ void Reaction::declare_trigger(BasePort* port) {
   port->register_dependency(this, true);
 }
 
-void Reaction::declare_dependency(BasePort* port) {
+void Reaction::declare_dependency(Port* port) {
   reactor_assert(port != nullptr);
   reactor_assert(&this->environment() == &port->environment());
   assert_phase(this, Phase::Assembly);
@@ -97,7 +102,7 @@ void Reaction::declare_dependency(BaseAction* action) {
   reactor_assert(result);
 }
 
-void Reaction::declare_antidependency(BasePort* port) {
+void Reaction::declare_antidependency(Port* port) {
   reactor_assert(port != nullptr);
   reactor_assert(&this->environment() == &port->environment());
   assert_phase(this, Phase::Assembly);

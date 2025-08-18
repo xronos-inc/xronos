@@ -1,7 +1,12 @@
 cmake_minimum_required(VERSION 3.28)
 
-project(xronos-sdk LANGUAGES CXX VERSION "0.4.0")
-set(PROJECT_VERSION "0.4.0")
+project(xronos-sdk
+  LANGUAGES CXX
+  VERSION "0.5.0"
+  HOMEPAGE_URL "https://github.com/xronos-inc/xronos"
+  DESCRIPTION "The Xronos C++ SDK for writing reactor programs."
+)
+set(PROJECT_VERSION "0.5.0")
 
 # require C++ 20
 set(CMAKE_CXX_STANDARD 20 CACHE STRING "The C++ standard." FORCE)
@@ -11,33 +16,38 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # Colorize compilation output
 set(CMAKE_COLOR_DIAGNOSTICS ON)
 
-# Generate compilation database for clang-tidy
+# Generate compilation database
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-option(BUILD_SHARED_LIBS "Build using shared libraries" Off)
-option(CLANG_TIDY_ERROR "clang-tidy warnings are errors" Off)
-set(CLANG_TIDY_COMMAND "clang-tidy" CACHE STRING "The clang-tidy command to use")
-
-set(INSTALL_DEFAULT OFF)
+set(INSTALL_DEFAULT ON)
+set(BUILD_SHARED_DEFAULT ON)
 set(BUILD_TESTS_DEFAULT ON)
-set(RUN_CLANG_TIDY_DEFAULT OFF)
 set(BUILD_DOCS_DEFAULT OFF)
 set(BUILD_EXAMPLES_DEFAULT ON)
 if(NOT "${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
   # Disable some features when building as a subproject
   set(INSTALL_DEFAULT OFF)
+  set(BUILD_SHARED_DEFAULT OFF)
   set(BUILD_TESTS_DEFAULT OFF)
-  set(RUN_CLANG_TIDY_DEFAULT OFF)
   set(BUILD_EXAMPLES_DEFAULT OFF)
 endif()
 
 option(XRONOS_SDK_INSTALL "Generate installation target" ${INSTALL_DEFAULT})
+option(XRONOS_SDK_BUILD_SHARED "Build the SDK as a shared library" ${BUILD_SHARED_DEFAULT})
 option(XRONOS_SDK_BUILD_TESTS "Build the tests" ${BUILD_TESTS_DEFAULT})
 option(XRONOS_SDK_BUILD_EXAMPLES "Build the examples" ${BUILD_EXAMPLES_DEFAULT})
-option(XRONOS_SDK_RUN_CLANG_TIDY "Enable building with clang-tidy" ${RUN_CLANG_TIDY_DEFAULT})
 option(XRONOS_SDK_BUILD_DOCS "Build API documentation using Doxygen" ${BUILD_DOCS_DEFAULT})
 
-set(XRONOS_LIB_INSTALL ${XRONOS_SDK_INSTALL})
+option(XRONOS_SDK_ENABLE_DIAGRAMS "Enable exporting diagrams for visualization." ON)
+option(XRONOS_SDK_ENABLE_TELEMETRY "Enable the recording of telemetry data (enable_telemetry() also needs to be called by the program)." ON)
+
+if(XRONOS_SDK_INSTALL AND NOT XRONOS_SDK_BUILD_SHARED)
+  message(FATAL_ERROR "Installing the Xronos SDK requires building with XRONOS_SDK_BUILD_SHARED=ON.")
+endif()
+
+set(XRONOS_LIB_WITH_GRAPH_EXPORTER ${XRONOS_SDK_ENABLE_DIAGRAMS})
+set(XRONOS_LIB_WITH_OTEL ${XRONOS_SDK_ENABLE_TELEMETRY})
+set(XRONOS_LIB_INSTALL OFF)
 include(FetchContent)
 FetchContent_Declare(
   xronos-lib
@@ -47,58 +57,45 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(xronos-lib)
 
-if(XRONOS_SDK_RUN_CLANG_TIDY)
-  find_program(CLANG_TIDY ${CLANG_TIDY_COMMAND} REQUIRED)
-  if(CLANG_TIDY_ERROR)
-    set(CLANG_TIDY_BASE_COMMAND ${CLANG_TIDY_COMMAND}; -warnings-as-errors=*;)
-  else()
-    set(CLANG_TIDY_BASE_COMMAND ${CLANG_TIDY_COMMAND};)
-  endif()
-  set(XRONOS_CLANG_TIDY_COMMAND
-    "${CLANG_TIDY_BASE_COMMAND};-header-filter=xronos/\(.*\)\\.hh")
+set(XRONOS_SDK_LIB_TYPE)
+if(XRONOS_SDK_BUILD_SHARED)
+  set(XRONOS_SDK_LIB_TYPE SHARED)
 endif()
-
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-add_library(xronos-sdk
-  src/context.cc
-  src/element.cc
-  src/environment.cc
-  src/metric.cc
-  src/periodic_timer.cc
-  src/reaction.cc
-  src/reactor.cc
-  src/shutdown.cc
-  src/startup.cc
-)
-target_include_directories(
+configure_file(cmake/config.hh.in include/xronos/sdk/gen/config.hh @ONLY)
+
+file(GLOB_RECURSE SDK_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cc")
+file(GLOB_RECURSE SDK_HEADERS CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/include/*.hh" "${CMAKE_CURRENT_BINARY_DIR}/include/*.hh")
+
+add_library(xronos-sdk ${XRONOS_SDK_LIB_TYPE} ${SDK_SOURCES})
+target_sources(
   xronos-sdk
-  PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
-  "$<INSTALL_INTERFACE:include>")
-target_link_libraries(xronos-sdk
-  xronos::xronos-runtime
-  xronos::xronos-graph-exporter
-  xronos::xronos-graph-messages
-  xronos::xronos-telemetry
-  xronos::xronos-telemetry-otel
+  PUBLIC FILE_SET HEADERS
+  TYPE HEADERS
+  BASE_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include> $<INSTALL_INTERFACE:include>
+  FILES ${SDK_HEADERS}
 )
+
+target_link_libraries(xronos-sdk PRIVATE xronos::xronos-runtime xronos::xronos-telemetry)
+
+if(XRONOS_SDK_ENABLE_DIAGRAMS)
+  target_link_libraries(xronos-sdk PRIVATE xronos::xronos-graph-exporter xronos::xronos-graph-messages)
+endif()
+if(XRONOS_SDK_ENABLE_TELEMETRY)
+  target_link_libraries(xronos-sdk PRIVATE xronos::xronos-telemetry-otel)
+endif()
+
+target_compile_features(xronos-sdk PUBLIC cxx_std_20)
 target_compile_options(xronos-sdk PRIVATE -Wall -Wextra -pedantic -Werror)
-
-if(XRONOS_SDK_RUN_CLANG_TIDY)
-  set_target_properties(xronos-sdk PROPERTIES CXX_CLANG_TIDY
-    "${XRONOS_CLANG_TIDY_COMMAND}")
-endif()
 set_target_properties(xronos-sdk PROPERTIES VERSION "${PROJECT_VERSION}" SOVERSION 1)
+set_target_properties(xronos-sdk PROPERTIES VERIFY_INTERFACE_HEADER_SETS ON)
 
-if(XRONOS_SDK_BUILD_EXAMPLES)
-  add_subdirectory(examples)
-endif()
+add_library(xronos::xronos-sdk ALIAS xronos-sdk)
 
-if(XRONOS_SDK_BUILD_TESTS)
-  enable_testing()
-  add_subdirectory(test)
-endif()
+add_subdirectory(examples)
+add_subdirectory(test)
 
 if(XRONOS_SDK_BUILD_DOCS)
   add_subdirectory(docs)
@@ -110,6 +107,7 @@ if(XRONOS_SDK_INSTALL)
   install(
     TARGETS xronos-sdk
     EXPORT xronos-sdkTargets
+    FILE_SET HEADERS
     ARCHIVE  DESTINATION "${CMAKE_INSTALL_LIBDIR}" OPTIONAL
     LIBRARY  DESTINATION "${CMAKE_INSTALL_LIBDIR}" OPTIONAL
     RUNTIME  DESTINATION "${CMAKE_INSTALL_BINDIR}" OPTIONAL)
@@ -141,7 +139,65 @@ if(XRONOS_SDK_INSTALL)
     DESTINATION "share/cmake/xronos-sdk"
   )
 
-  install(DIRECTORY include/ DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
+  install(FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/LICENSE
+    ${CMAKE_CURRENT_SOURCE_DIR}/THIRD_PARTY_NOTICE
+    DESTINATION "share/licenses/xronos-sdk"
+  )
+  install(DIRECTORY
+    ${CMAKE_CURRENT_SOURCE_DIR}/third-party-licenses
+    DESTINATION "share/licenses/xronos-sdk"
+  )
+
+  # cpack configuration for exporting packages
+  set(CPACK_GENERATOR "DEB;TGZ")
+  set(CPACK_THREADS 8)
+  set(CPACK_STRIP_FILES ON)
+  SET(CPACK_OUTPUT_FILE_PREFIX "${CMAKE_SOURCE_DIR}/pkgs")
+
+  set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}")
+  set(CPACK_PACKAGE_VENDOR "Xronos, Inc.")
+  set(CPACK_PACKAGE_CHECKSUM "SHA512")
+
+  set(CPACK_VERBATIM_VARIABLES YES)
+
+  set(CPACK_PACKAGE_CONTACT "christian@xronos.com")
+  set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Christian Menard <christian@xronos.com>")
+  set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT) # use debian naming scheme for the deb package
+
+  set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
+  set(CPACK_DEBIAN_PACKAGE_GENERATE_SHLIBS ON)
+
+  set(CPACK_PACKAGE_FILE_NAME "${PROJECT_NAME}-${PROJECT_VERSION}-${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}")
+
+  set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF)
+
+  include(CPack)
 endif()
 
-add_library(xronos::xronos-sdk ALIAS xronos-sdk)
+set(LINT_FILES
+  $<TARGET_PROPERTY:xronos-sdk,SOURCES>
+  $<TARGET_PROPERTY:xronos-sdk,HEADER_SET>
+  ${EXAMPLE_SOURCES}
+)
+
+set(FORMAT_FILES ${LINT_FILES} ${TEST_SOURCES})
+
+add_custom_target(xronos-sdk-format
+  COMMAND clang-format -i -style=file ${FORMAT_FILES}
+  COMMAND_EXPAND_LISTS
+  WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+add_custom_target(xronos-sdk-check-format
+  COMMAND clang-format --dry-run --Werror -style=file ${FORMAT_FILES}
+  COMMAND_EXPAND_LISTS
+  WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+
+include(ProcessorCount)
+ProcessorCount(NCORES)
+add_custom_target(xronos-sdk-lint COMMAND
+  echo ${LINT_FILES} | xargs -n1 -P${NCORES} clang-tidy --quiet -p ${CMAKE_CURRENT_BINARY_DIR}
+  COMMAND_EXPAND_LISTS
+)
+

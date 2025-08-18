@@ -1,0 +1,6 @@
+API Documentation
+=================
+
+.. warning::
+
+   This page is intended to be replaced by doxygen generated pages. This box should not be visible in a production site.

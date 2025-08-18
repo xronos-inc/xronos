@@ -5,18 +5,26 @@
 #include "xronos/runtime/environment.hh"
 
 #include <algorithm>
+#include <exception>
 #include <fstream>
+#include <functional>
+#include <iterator>
 #include <map>
+#include <mutex>
+#include <set>
+#include <sstream>
 #include <thread>
 #include <vector>
 
 #include "xronos/runtime/action.hh"
 #include "xronos/runtime/assert.hh"
+#include "xronos/runtime/connection_properties.hh"
 #include "xronos/runtime/logging.hh"
 #include "xronos/runtime/misc_element.hh"
 #include "xronos/runtime/port.hh"
 #include "xronos/runtime/reaction.hh"
 #include "xronos/runtime/reactor.hh"
+#include "xronos/runtime/reactor_element.hh"
 #include "xronos/runtime/time.hh"
 
 namespace xronos::runtime {
@@ -25,22 +33,8 @@ Environment::Environment(unsigned int num_workers, bool fast_fwd_execution, cons
     : log_("Environment")
     , num_workers_(num_workers)
     , fast_fwd_execution_(fast_fwd_execution)
-    , top_environment_(this)
     , scheduler_(this)
     , timeout_(timeout) {}
-
-Environment::Environment(const std::string& name, Environment* containing_environment)
-    : name_(name)
-    , log_("Environment " + name)
-    , num_workers_(containing_environment->num_workers_)
-    , fast_fwd_execution_(containing_environment->fast_fwd_execution_)
-    , containing_environment_(containing_environment)
-    , top_environment_(containing_environment_->top_environment_)
-    , scheduler_(this)
-    , timeout_(containing_environment->timeout()) {
-  [[maybe_unused]] bool result = containing_environment->contained_environments_.insert(this).second;
-  reactor_assert(result);
-}
 
 void Environment::register_top_level_reactor(Reactor& reactor) {
   validate(this->phase() == Phase::Construction, "Reactors may only be registered during construction phase!");
@@ -55,6 +49,18 @@ void Environment::register_input_action(BaseAction& action) {
   [[maybe_unused]] bool result = input_actions_.insert(&action).second;
   reactor_assert(result);
   run_forever_ = true;
+}
+
+void Environment::draw_connection(Port& source, Port& sink, ConnectionProperties properties) {
+  log::Debug() << "drawing connection: " << source.fqn() << " --> " << sink.fqn();
+  auto existing_source = graph_.source_for(&sink);
+  if (existing_source.has_value()) {
+    std::stringstream error_message;
+    error_message << "multiple sources (both " << existing_source.value()->fqn() << " and " << source.fqn()
+                  << ") connected to port " << sink.fqn();
+    throw ValidationError(error_message.str());
+  }
+  graph_.add_edge(&source, &sink, properties);
 }
 
 void Environment::optimize() {
@@ -81,61 +87,31 @@ void Environment::assemble() { // NOLINT(readability-function-cognitive-complexi
     recursive_assemble(reactor);
   }
 
-  // this assembles all the contained environments aka enclaves
-  for (auto* env : contained_environments_) {
-    env->assemble();
-  }
+  log::Debug() << "start optimization on port graph";
+  this->optimize();
 
-  // If this is the top level environment, then instantiate all connections.
-  if (top_environment_ == nullptr || top_environment_ == this) {
-    log::Debug() << "start optimization on port graph";
-    this->optimize();
+  log::Debug() << "instantiating port graph declaration";
+  log::Debug() << "graph: ";
+  log::Debug() << optimized_graph_;
 
-    log::Debug() << "instantiating port graph declaration";
-    log::Debug() << "graph: ";
-    log::Debug() << optimized_graph_;
+  auto graph = optimized_graph_.get_edges_grouped_by_properties();
+  // this generates the port graph
+  for (auto const& [source, sinks] : graph) {
 
-    auto graph = optimized_graph_.get_edges_grouped_by_properties();
-    // this generates the port graph
-    for (auto const& [source, sinks] : graph) {
+    auto* source_port = source.first;
+    auto properties = source.second;
 
-      auto* source_port = source.first;
-      auto properties = source.second;
-
-      if (properties.type_ == ConnectionType::Normal) {
-        for (auto* const destination_port : sinks) {
-          destination_port->set_inward_binding(source_port);
-          source_port->add_outward_binding(destination_port);
-          log::Debug() << "from: " << source_port->fqn() << "(" << source_port << ")"
-                       << " --> to: " << destination_port->fqn() << "(" << destination_port << ")";
-        }
-      } else {
-        if (properties.type_ == ConnectionType::Enclaved || properties.type_ == ConnectionType::PhysicalEnclaved ||
-            properties.type_ == ConnectionType::DelayedEnclaved) {
-          // here we need to bundle the downstream ports by their enclave
-          std::map<Environment*, std::vector<BasePort*>> collector{};
-
-          for (auto* downstream : sinks) {
-            if (collector.find(&downstream->environment()) == std::end(collector)) {
-              // didn't find the enviroment in collector yet
-              collector.insert(std::make_pair(&downstream->environment(), std::vector<BasePort*>{downstream}));
-            } else {
-              // environment already contained in collector
-              collector[&downstream->environment()].push_back(downstream);
-            }
-          }
-          for (auto& [env, sinks_same_env] : collector) {
-            source_port->instantiate_connection_to(properties, sinks_same_env);
-
-            log::Debug() << "from: " << source_port->container()->fqn() << " |-> to: " << sinks_same_env.size()
-                         << " objects";
-          }
-        } else {
-          source_port->instantiate_connection_to(properties, sinks);
-
-          log::Debug() << "from: " << source_port->container()->fqn() << " |-> to: " << sinks.size() << " objects";
-        }
+    if (properties.type_ == ConnectionType::Normal) {
+      for (auto* const destination_port : sinks) {
+        destination_port->set_inward_binding(source_port);
+        source_port->add_outward_binding(destination_port);
+        log::Debug() << "from: " << source_port->fqn() << "(" << source_port << ")"
+                     << " --> to: " << destination_port->fqn() << "(" << destination_port << ")";
       }
+    } else {
+      source_port->instantiate_connection_to(properties, sinks);
+
+      log::Debug() << "from: " << source_port->container()->fqn() << " |-> to: " << sinks.size() << " objects";
     }
   }
 }
@@ -231,7 +207,7 @@ void Environment::rethrow_exception_if_any() {
 
 auto dot_name([[maybe_unused]] ReactorElement* reactor_element) -> std::string {
   std::string fqn{reactor_element->fqn()};
-  std::replace(fqn.begin(), fqn.end(), '.', '_');
+  std::ranges::replace(fqn, '.', '_');
   return fqn;
 }
 
@@ -330,10 +306,7 @@ void Environment::calculate_indexes() {
   max_reaction_index_ = index - 1;
 }
 
-auto Environment::startup() -> std::thread {
-  validate(this == top_environment_, "startup() may only be called on the top environment");
-  return startup(get_physical_time());
-}
+auto Environment::startup() -> std::thread { return startup(get_physical_time()); }
 
 auto Environment::startup(const TimePoint& start_time) -> std::thread {
   validate(this->phase() == Phase::Assembly, "startup() may only be called during assembly phase!");
@@ -365,19 +338,9 @@ auto Environment::startup(const TimePoint& start_time) -> std::thread {
   // start processing events
   phase_ = Phase::Execution;
 
-  return std::thread([this, start_time]() {
-    std::vector<std::thread> threads;
-    threads.reserve(contained_environments_.size());
-    // startup all contained environments recursively
-    for (auto* env : contained_environments_) {
-      threads.emplace_back(env->startup(start_time));
-    }
-    // start the local scheduler and wait until it returns
+  return std::thread([this]() {
+    // start scheduler and wait until it returns
     this->scheduler_.start();
-    // then join all the created threads
-    for (auto& thread : threads) {
-      thread.join();
-    }
   });
 }
 
@@ -399,7 +362,7 @@ public:
   }
   void visit(const Reaction& reaction) final { reaction.visit(visitor); }
   void visit(const BaseAction& action) final { action.visit(visitor); }
-  void visit(const BasePort& port) final { port.visit(visitor); }
+  void visit(const Port& port) final { port.visit(visitor); }
   void visit(const Timer& timer) final { timer.visit(visitor); }
   void visit(const StartupTrigger& startup) final { startup.visit(visitor); }
   void visit(const ShutdownTrigger& shutdown) final { shutdown.visit(visitor); }

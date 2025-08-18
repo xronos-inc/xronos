@@ -2,6 +2,14 @@
 // SPDX-License-Identifier: BSD-3-Clause
 
 #include "xronos/sdk/context.hh"
+
+#include <cstdint>
+#include <string_view>
+#include <variant>
+
+#include "xronos/runtime/reactor.hh"
+#include "xronos/sdk/detail/source_location.hh"
+#include "xronos/sdk/element.hh"
 #include "xronos/sdk/environment.hh"
 #include "xronos/sdk/reactor.hh"
 
@@ -12,11 +20,11 @@ namespace xronos::sdk::detail {
 }
 
 void store_source_location(ReactorContext context, std::uint64_t uid, std::string_view fqn) {
-  store_source_location(context.environment_, uid, fqn, context.source_location_);
+  store_source_location(*context.environment_, uid, fqn, context.source_location_);
 }
 
 void store_source_location(EnvironmentContext context, std::uint64_t uid, std::string_view fqn) {
-  store_source_location(context.environment_, uid, fqn, context.source_location_);
+  store_source_location(*context.environment_, uid, fqn, context.source_location_);
 }
 
 void store_source_location(Context context, std::uint64_t uid, std::string_view fqn) {

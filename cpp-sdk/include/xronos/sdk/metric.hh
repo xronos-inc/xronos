@@ -1,47 +1,44 @@
 // SPDX-FileCopyrightText: Copyright (c) 2025 Xronos Inc.
 // SPDX-License-Identifier: BSD-3-Clause
 
-/**
- * @file
- *
- * @brief Definition of the `Metric` class.
- */
+/** @file */
 
 #ifndef XRONOS_SDK_METRIC_HH
 #define XRONOS_SDK_METRIC_HH
 
 #include <cstdint>
+#include <string>
 #include <string_view>
 
+#include "xronos/sdk/context.hh"
 #include "xronos/sdk/element.hh"
+#include "xronos/sdk/fwd.hh"
 
 namespace xronos::sdk {
 /**
- * @brief Allows recording values to an external data base from reaction handlers.
+ * A reactor element for recording metric data to an external data base.
+ *
+ * Can be used as a reaction @ref BaseReaction::MetricEffect "effect" allowing
+ * the reaction handler to record values using the metric.
  */
 class Metric final : public Element {
 public:
   /**
-   * @brief Construct a new `Metric`.
+   * Constructor.
    *
-   * @param name The name of the `Metric`.
-   * @param context The context object obtained from the `Metric`'s
-   * containing reactor.
-   * @param description A description of the `Metric`.
-   * @param unit The unit of the `Metric`.
+   * @param name The name of the metric.
+   * @param context The containing reactor's context.
+   * @param description A human readable description of the metric.
+   * @param unit The unit of values recorded using the metric.
    */
   Metric(std::string_view name, ReactorContext context, std::string_view description, std::string_view unit = "");
 
   /**
-   * @brief Description of the `Metric`.
-   *
-   * @return std::string_view The description of the `Metric`.
+   * Get the description.
    */
   [[nodiscard]] auto description() const noexcept -> const std::string&;
   /**
-   * @brief Unit of the `Metric`.
-   *
-   * @return const std::string& The unit of the `Metric`.
+   * Get the unit.
    */
   [[nodiscard]] auto unit() const noexcept -> const std::string&;
 

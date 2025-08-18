@@ -76,8 +76,11 @@ def get_source_location() -> sdk.SourceLocation:
 class Element:
     """A reactor element.
 
-    This is used as a base class for all elements that can be contained by a
-    reactor, including the :class:`Reactor` class itself.
+    Reactor elements are objects that can be contained by reactors and that have
+    special meaning to the Xronos SDK.
+
+    Reactor elements should not be instantiated directly. Use the corresponding
+    ``<Element>Declaration`` classes instead.
     """
 
     def __init__(self, sdk_instance: sdk.Element) -> None:
@@ -94,11 +97,20 @@ class Element:
 
     @property
     def fqn(self) -> str:
-        """Fully qualified name of the element (read-only)."""
+        """Fully qualified name of the element (read-only).
+
+        The fully qualified name (FQN) represents the containment hierarchy. It
+        consists of the containing reactor's FQN plus the element's name
+        separated by a ``.``. For top-level reactors (those owned by the
+        environment), the FQN is equal to the name.
+        """
         return self.__sdk_instance.fqn
 
     def add_attribute(self, key: str, value: str | bool | int | float) -> None:
         """Annotate the element with an attribute.
+
+        Adding the attribute only succeeds, if the given key has not been set
+        before on the same element.
 
         See :ref:`attributes` for more information.
 
@@ -115,6 +127,9 @@ class Element:
 
     def add_attributes(self, attributes: dict[str, str | bool | int | float]) -> None:
         """Annotate the element with multiple attributes.
+
+        Adding the attributes only succeeds, if the given key has not been set
+        before on the same element.
 
         See :ref:`attributes` for more information.
 
@@ -195,28 +210,35 @@ class EventSource(Element, Generic[T]):
 
 
 class Startup(EventSource[None]):
-    """Emits an event once when the program starts executing."""
+    """A reactor element that emits an event program starts executing.
+
+    Can be used as a reaction :class:`Trigger`.
+    """
 
     pass
 
 
 class Shutdown(EventSource[None]):
-    """Emits an event once when the program shuts down."""
+    """A reactor element that emits an event right before the program shuts down.
+
+    Can be used as a reaction :class:`Trigger`.
+    """
 
     pass
 
 
 class PeriodicTimer(EventSource[None]):
-    """An event source that emits events in regular intervals."""
+    """A reactor element that emits events in regular intervals.
+
+    Can be used as a reaction :class:`Trigger`.
+
+    This class is not intended to be instantiated directly. Use
+    :class:`PeriodicTimerDeclaration` instead.
+    """
 
     @property
     def period(self) -> datetime.timedelta:
         """The delay in between two events emitted by the timer (read-write).
-
-        If :attr:`period` is 0 (the default), then the timer will trigger only
-        once with a delay of :attr:`offset` after :attr:`~Reactor.startup`
-        triggers. If :attr:`offset` is also set to 0, the timer triggers
-        simultaneously to :attr:`~Reactor.startup`.
 
         Raises:
             RuntimeError: When set during program execution.
@@ -272,14 +294,24 @@ class PeriodicTimerDeclaration(ElementDescriptor[PeriodicTimer]):
 
 
 class InputPort(EventSource[T]):
-    """A port that receives values from other reactors.
+    """A reactor element for receiving messages from other reactors.
 
-    The input port does not provide direct access to received values. A
-    :attr:`reaction` may declare an input port as a :class:`Trigger` or
-    :class:`Effect` to read or write its value.
+    Input ports can be used as a reaction :class:`Trigger`
+    and provide an interface for reactors to receive messages from other
+    reactors.
+
+    Input ports may be connected to other ports so that messages are forwarded
+    automatically (see :func:`Environment.connect` and :func:`Reactor.connect`).
+
+    Reactions of other reactors may also use input ports as a
+    :class:`PortEffect` allowing an external reaction handler to send messages
+    directly to the port.
+
+    This class is not intended to be instantiated directly. Use
+    :class:`InputPortDeclaration` instead.
 
     Type Parameters:
-        T: The type of values carried by the port.
+        T: The value type associated with messages.
     """
 
     pass
@@ -292,7 +324,7 @@ class InputPortDeclaration(ElementDescriptor[InputPort[T]]):
         attributes(optional): A dict of attributes characterizing the input port.
 
     Type Parameters:
-        T: The type of values carried by the port.
+        T: The value type associated with messages.
     """
 
     def __init__(self, attributes: AttributeMap | None = None) -> None:
@@ -306,14 +338,23 @@ class InputPortDeclaration(ElementDescriptor[InputPort[T]]):
 
 
 class OutputPort(EventSource[T]):
-    """A port that sends values to other reactors.
+    """A reactor element for sending messages to other reactors.
 
-    The output port does not provide direct access to received values. A
-    :attr:`reaction` may declare an output port as a :class:`Trigger` or
-    :class:`Effect` to read or write its value.
+    Output ports can be used as a :class:`PortEffect` and provide an interface
+    for reactors to send messages to other reactors.
+
+    Output ports may be connected to other ports so that messages are forwarded
+    automatically (see :func:`Environment.connect` and :func:`Reactor.connect`).
+
+    Other reactors may also use output ports as a reaction :class:`Trigger`
+    allowing an external reaction handler to receive messages directly from the
+    port.
+
+    This class is not intended to be instantiated directly. Use
+    :class:`OutputPortDeclaration` instead.
 
     Type Parameters:
-        T: The type of values carried by the port.
+        T: The value type associated with messages.
     """
 
     pass
@@ -340,17 +381,15 @@ class OutputPortDeclaration(ElementDescriptor[OutputPort[T]]):
 
 
 class ProgrammableTimer(EventSource[T]):
-    """A schedulable event source.
+    """A reactor element for scheduling new events.
 
-    Programmable timers may be used by reactions to schedule new events in the
-    future. Similar to ports, programmable timers may not be accessed
-    directly. Instead, :attr:`reaction`'s may declare a
-    :class:`ProgrammableTimerEffect` to schedule new events, or a
-    :class:`Trigger` to access the value associated with an active event.
+    Programmable timers may be used by reactions to schedule new events that
+    will be emitted in the future. They can be used both as a reaction
+    :class:`Trigger` as and as a :class:`ProgrammableTimerEffect`.
 
     Type Parameters:
-        T: The type of values associated with events scheduled via the
-             programmable timer.
+        T: The value type associated with events emitted by the programmable
+           timer.
     """
 
     pass
@@ -364,8 +403,8 @@ class ProgrammableTimerDeclaration(ElementDescriptor[ProgrammableTimer[T]]):
         programmable timer.
 
     Type Parameters:
-        T: The type of values associated with events scheduled via the
-             programmable timer.
+        T: The value type associated with events emitted by the programmable
+           timer.
     """
 
     def __init__(self, attributes: AttributeMap | None = None) -> None:
@@ -379,23 +418,27 @@ class ProgrammableTimerDeclaration(ElementDescriptor[ProgrammableTimer[T]]):
 
 
 class PhysicalEvent(EventSource[T]):
-    """An element for triggering events from outside the xronos program (e.g. sensors).
+    """A reactor element for receiving events from external sources.
 
-    Physical events may be used to schedule new events from outside of the
-    scope of the reactor program. These could be external event handlers that
-    respond to sensor inputs. Physical events do not provide direct access to
-    their values. A :attr:`reaction` may declare a :class:`Trigger` to access
-    the value associated with an active event.
+    Physical events may be used to trigger reactions from a context outside of
+    the scope of the reactor program. These could be external event handlers that
+    respond to sensor inputs.
+
+    Can be used as a reaction :class:`Trigger` allowing the reaction handler to
+    read the associated value.
 
     Type Parameters:
-        T: The type of values carried by any triggered events.
+        T: The type of values carried by emitted events.
     """
 
     def trigger(self, value: T) -> None:
-        """Create a new event with an automatically assigned timestamp.
+        """Emit a new event with an associated value and trigger reactions.
+
+        The event will be assigned a timestamp equal to the current wall-clock
+        time.
 
         Args:
-            value: A value to be associated with the newly created event.
+            value: The value to be associated with the emitted event.
         """
         self._get_sdk_instance(sdk.PhysicalEvent).trigger(value)
 
@@ -407,7 +450,7 @@ class PhysicalEventDeclaration(ElementDescriptor[PhysicalEvent[T]]):
         attributes(optional): A dict of attributes characterizing the physical event.
 
     Type Parameters:
-        T: The type of values carried by any triggered events.
+        T: The type of values carried by emitted events.
     """
 
     def __init__(self, attributes: AttributeMap | None = None) -> None:
@@ -421,7 +464,10 @@ class PhysicalEventDeclaration(ElementDescriptor[PhysicalEvent[T]]):
 
 
 class Metric(Element):
-    """Allows recording values to an external data base from reaction handlers.
+    """A reactor element for recording metric data to an external data base.
+
+    Can be used by a reaction as a :class:`MetricEffect` allowing the
+    reaction handler to record values using the metric.
 
     This class is not intended to be instantiated directly. Use
     :class:`MetricDeclaration` instead.
@@ -550,13 +596,21 @@ class Environment:
         Creates a new connection from the port given in ``from_`` to the port
         given in ``to``.
 
+        If ``delay`` is ``None`` messages are delivered without a delay.
+        This means that the timestamp at which the message is received is the
+        same as the timestamp at which it was sent.
+
+        If ``delay`` is set messages are delivered with a delay. This means
+        that the timestamp at which the message is received is the timestamp at
+        which it was sent plus delay.
+
         Args:
             from_(InputPort[T] | OutputPort[T]): The port to draw the
                 connection from.
             to(InputPort[T] | OutputPort[T]): The port to draw the connection
                 to.
-            delay(~datetime.timedelta | None): When set, the connection waits
-                for `delay` before delivering the messages to `to`. (optional)
+            delay(~datetime.timedelta | None): The delay to apply to messages.
+                (optional)
 
         Raises:
             ValidationError: If an invalid connections is created.
@@ -615,7 +669,9 @@ class Environment:
         :attr:`~xronos.Reactor.startup` and instructs the runtime to start
         processing reactions.
 
-        Returns when the reactor program terminates.
+        Returns when the reactor program terminates. The reactor program
+        terminates when there are no more events, or after calling
+        :func:`request_shutdown()`.
 
         Raises:
             ValidationError: When the program is invalid or reaches an invalid state.
@@ -625,17 +681,17 @@ class Environment:
     def request_shutdown(self) -> None:
         """Request the termination of the currently running reactor program.
 
-        Terminates a program started with :func:`execute` at the next
-        convenience. This triggers :attr:`~xronos.Reactor.shutdown` after
-        completing all currently active reactions, and stops program execution after
-        processing all reactions triggered by :attr:`~xronos.Reactor.shutdown`.
+        Terminates a running program at the next convenience. After completing
+        all currently active reactions, this triggers
+        :attr:`~xronos.Reactor.shutdown`. Once all reactions triggered by
+        :attr:`~xronos.Reactor.shutdown` are processed, the program terminates.
         """
         return self.__sdk_env.request_shutdown()
 
     def enable_telemetry(
         self, application_name: str = "xronos", endpoint: str = "localhost:4317"
     ) -> None:
-        """Enable the collection of telemetry data during program execution.
+        """Enable collecting and sending telemetry data from the application.
 
         See :ref:`telemetry` and  :ref:`dashboard` for more information on
         producing, collecting and visualizing telemetry data.
@@ -806,23 +862,27 @@ class Reactor(Element):
         return Shutdown(self.__sdk_instance.shutdown)
 
     def get_time(self) -> datetime.datetime:
-        """Get the current point in time.
+        """Get the current timestamp.
 
-        .. note:: This does not read wall-clock time. The ``xronos`` runtime
-                  uses an internal clock to control how a program advances.
-                  :func:`get_time` reads the current time as measured by the
-                  internal clock.
+        .. note:: This does not read wall-clock time. The Xronos runtime uses
+                  an internal clock to control how a program advances.
+
+        Returns:
+            The current timestamp as provided by the internal clock.
         """
         return self.__sdk_instance.get_time()
 
     def get_lag(self) -> datetime.timedelta:
         """Get the current lag.
 
-        Since time in the ``xronos`` runtime does not advance while reactions
-        execute, the internal clock may advance slower than a wall clock would.
-        The lag denotes the difference between the wall clock and the internal
-        clock. It is a measure of how far the execution of reactions lags behind
+        Since in the Xronos SDK time does not advance while reactions execute,
+        the internal clock may advance slower than a wall clock would. The lag
+        denotes the difference between the wall clock and the internal clock.
+        It is a measure of how far the execution of reactions lags behind
         events in the physical world.
+
+        Returns:
+            The current lag.
         """
         return self.__sdk_instance.get_lag()
 
@@ -838,10 +898,10 @@ class Reactor(Element):
     def request_shutdown(self) -> None:
         """Request the termination of the currently running reactor program.
 
-        Terminates a program started with :func:`execute` at the next
-        convenience. This triggers :attr:`~xronos.Reactor.shutdown` after
-        completing all currently active reactions, and stops program execution after
-        processing all reactions triggered by :attr:`~xronos.Reactor.shutdown`.
+        Terminates a running program at the next convenience. After completing
+        all currently active reactions, this triggers
+        :attr:`~xronos.Reactor.shutdown`. Once all reactions triggered by
+        :attr:`~xronos.Reactor.shutdown` are processed, the program terminates.
         """
         return self.__sdk_instance.request_shutdown()
 
@@ -895,6 +955,14 @@ class Reactor(Element):
         Creates a new connection from the port given in ``from_`` to the port
         given in ``to``.
 
+        If ``delay`` is ``None`` messages are delivered without a delay.
+        This means that the timestamp at which the message is received is the
+        same as the timestamp at which it was sent.
+
+        If ``delay`` is set messages are delivered with a delay. This means
+        that the timestamp at which the message is received is the timestamp at
+        which it was sent plus delay.
+
         Also see `Environment.connect`.
 
         Args:
@@ -902,8 +970,11 @@ class Reactor(Element):
                 connection from.
             to(InputPort[T] | OutputPort[T]): The port to draw the connection
                 to.
-            delay(~datetime.timedelta | None): When set, the connection waits
-                for `delay` before delivering the messages to `to`. (optional)
+            delay(~datetime.timedelta | None): The delay to apply to messages.
+                (optional)
+
+        Raises:
+            ValidationError: If an invalid connections is created.
         """
         if delay is None:
             self.__sdk_instance.connect(
@@ -940,9 +1011,6 @@ class Reactor(Element):
             ``reactor_class``:
                  An instance of the class provided in the ``reactor_class``
                  argument.
-
-        Raises:
-            ValidationError: If an invalid connections is created.
         """
         # We annotate `reactor_class` as a callable that returns an R to infer
         # the parameters of the init method. `reactor_class` is expected to be
@@ -978,11 +1046,11 @@ class Trigger(Generic[T]):
         self.__sdk_trigger = sdk_trigger
 
     def is_present(self) -> bool:
-        """Check if the referenced event source has produced an event."""
+        """Check if an event is present at the current timestamp."""
         return self.__sdk_trigger.is_present()
 
     def get(self) -> T:
-        """Get the current value of the referenced reactor element.
+        """Get the value of a currently present event.
 
         Raises:
             AbsentError: If called and :func:`is_present` returns ``False``.
@@ -999,20 +1067,24 @@ class Trigger(Generic[T]):
 
 
 class PortEffect(Generic[T]):
-    """Provides write access to a port.
+    """Allows a reaction to write data to a given :class:`InputPort` or
+    :class:`OutputPort`.
 
     This class is not intended to be instantiated directly. Use
     :func:`~xronos.ReactionInterface.add_effect` instead.
-    """
+
+    Type Args:
+        T: The value type associated with the port.
+    """  # noqa: D205
 
     def __init__(self, sdk_effect: sdk.PortEffect) -> None:
         self.__sdk_effect = sdk_effect
 
     def set(self, value: T) -> None:
-        """Set the port value and send a message to connected ports.
+        """Write a value to the port sending a message to connected ports.
 
-        Can be called multiple times, but at each time at most one value is
-        sent to connected ports. When called repeatedly at a given timestamp, the
+        May be called multiple times, but at most one value is sent to
+        connected ports. When called repeatedly at a given timestamp, the
         previous value is overwritten.
 
         Args:
@@ -1025,7 +1097,10 @@ class PortEffect(Generic[T]):
         return self.__sdk_effect.is_present()
 
     def get(self) -> T:
-        """Get the current value of the referenced port.
+        """Get a previously set value.
+
+        Returns:
+            The current value if an event is present.
 
         Raises:
             AbsentError: If called and :func:`is_present` returns ``False``.
@@ -1039,10 +1114,13 @@ class PortEffect(Generic[T]):
 
 
 class ProgrammableTimerEffect(Generic[T]):
-    """Provides write access to a programmable timer.
+    """Allows a reaction to schedule future events using a :class:`ProgrammableTimer`.
 
     This class is not intended to be instantiated directly. Use
     :func:`~xronos.ReactionInterface.add_effect` instead.
+
+    Type Args:
+        T: The value type associated with the programmable timer.
     """
 
     def __init__(self, sdk_effect: sdk.ProgrammableTimerEffect) -> None:
@@ -1061,7 +1139,7 @@ class ProgrammableTimerEffect(Generic[T]):
 
 
 class MetricEffect:
-    """Provides write access to a metric.
+    """Allows a reaction to record telemetry data using a given :class:`Metric`.
 
     This class is not intended to be instantiated directly. Use
     :func:`~xronos.ReactionInterface.add_effect` instead.
@@ -1071,7 +1149,7 @@ class MetricEffect:
         self.__sdk_metric = sdk_metric
 
     def record(self, value: int | float) -> None:
-        """Record a value.
+        """Record a value at the current timestamp.
 
         Args:
             value: The value to be recorded.
@@ -1093,7 +1171,7 @@ class ReactionInterface:
     def add_trigger(self, event_source: EventSource[T]) -> Trigger[T]:
         """Declare a reaction trigger.
 
-        When the triggering event source produces an event, the reaction that
+        When the triggering event source emits an event, the reaction that
         declares the trigger will be invoked automatically.
 
         Args:
@@ -1103,14 +1181,12 @@ class ReactionInterface:
             A new trigger object that can be used by the reaction handler to
             check presence and read values.
         """
-        if isinstance(event_source._get_sdk_instance(sdk.Element), sdk.VoidEventSource):
-            sdk_trigger = sdk.VoidTrigger(
-                event_source._get_sdk_instance(sdk.VoidEventSource), self.__context
-            )
+        sdk_element = event_source._get_sdk_instance(sdk.Element)
+        if isinstance(sdk_element, sdk.VoidEventSource):
+            sdk_trigger = sdk.VoidTrigger(sdk_element, self.__context)
         else:
-            sdk_trigger = sdk.Trigger(
-                event_source._get_sdk_instance(sdk.EventSource), self.__context
-            )
+            assert isinstance(sdk_element, sdk.EventSource)
+            sdk_trigger = sdk.Trigger(sdk_element, self.__context)
 
         return Trigger(sdk_trigger)
 

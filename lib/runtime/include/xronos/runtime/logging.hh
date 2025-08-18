@@ -5,14 +5,11 @@
 #ifndef XRONOS_RUNTIME_LOGGING_HH
 #define XRONOS_RUNTIME_LOGGING_HH
 
-#include "xronos/runtime/gen/config.hh"
-#include "xronos/runtime/time.hh"
-#include <chrono>
 #include <iostream>
-#include <memory>
 #include <mutex>
 #include <string>
-#include <utility>
+
+#include "xronos/runtime/gen/config.hh"
 
 namespace xronos::runtime::log {
 

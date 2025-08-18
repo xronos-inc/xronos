@@ -4,7 +4,10 @@
 #ifndef XRONOS_TELEMETRY_OTEL_OTEL_RUNTIME_DATA_LOGGER_HH
 #define XRONOS_TELEMETRY_OTEL_OTEL_RUNTIME_DATA_LOGGER_HH
 
+#include <functional>
+
 #include "xronos/runtime/data_logger.hh"
+#include "xronos/runtime/fwd.hh"
 #include "xronos/telemetry/attribute_manager.hh"
 
 namespace xronos::telemetry::otel {

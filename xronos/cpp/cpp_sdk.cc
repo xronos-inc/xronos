@@ -1,22 +1,35 @@
 // SPDX-FileCopyrightText: Copyright (c) 2025 Xronos Inc.
 // SPDX-License-Identifier: BSD-3-Clause
 
-#include <algorithm>
+#include <atomic>
+#include <cassert>
+#include <chrono>
+#include <condition_variable>
 #include <csignal>
-#include <exception>
+#include <cstdint>
 #include <functional>
-#include <stdexcept>
+#include <iostream>
+#include <mutex>
 #include <string>
 #include <string_view>
+#include <thread>
 #include <unordered_map>
-#include <variant>
+#include <utility>
 
-#include "pybind11/chrono.h"
-#include "pybind11/functional.h"
+#include "pybind11/cast.h"
+#include "pybind11/chrono.h"     // IWYU pragma: keep
+#include "pybind11/functional.h" // IWYU pragma: keep
+#include "pybind11/gil.h"
 #include "pybind11/pybind11.h"
-#include "pybind11/stl.h"
+#include "pybind11/pytypes.h"
+#include "pybind11/stl.h" // IWYU pragma: keep
 
 #include "xronos/sdk.hh"
+#include "xronos/sdk/detail/source_location.hh"
+#include "xronos/sdk/element.hh"
+#include "xronos/sdk/event_source.hh"
+#include "xronos/sdk/shutdown.hh"
+#include "xronos/sdk/startup.hh"
 
 using namespace xronos::sdk;
 namespace py = pybind11;
@@ -153,8 +166,8 @@ public:
   using Reactor::shutdown;
   using Reactor::startup;
 
-  static auto add_reaction(Reactor& reactor, std::string_view name,
-                           detail::SourceLocationView location) -> const PyReaction& {
+  static auto add_reaction(Reactor& reactor, std::string_view name, detail::SourceLocationView location)
+      -> const PyReaction& {
     return detail::add_reaction<PyReaction>(reactor, name, location);
   }
 
@@ -272,15 +285,15 @@ PYBIND11_MODULE(_cpp_sdk, mod, py::mod_gil_not_used()) {
           py::overload_cast<const OutputPort<GilWrapper>&, const InputPort<GilWrapper>&, Duration>(&PyReactor::connect),
           py::arg("from_"), py::arg("to"), py::arg("delay"));
 
-  py::class_<EventSource<GilWrapper>, Element>(mod, "EventSource");
+  py::class_<EventSource<GilWrapper>>(mod, "EventSource");
 
-  py::class_<EventSource<void>, Element>(mod, "VoidEventSource");
+  py::class_<EventSource<void>>(mod, "VoidEventSource");
 
-  py::class_<Startup, EventSource<void>>(mod, "Startup");
+  py::class_<Startup, EventSource<void>, Element>(mod, "Startup");
 
-  py::class_<Shutdown, EventSource<void>>(mod, "Shutdown");
+  py::class_<Shutdown, EventSource<void>, Element>(mod, "Shutdown");
 
-  py::class_<PeriodicTimer, EventSource<void>>(mod, "PeriodicTimer")
+  py::class_<PeriodicTimer, EventSource<void>, Element>(mod, "PeriodicTimer")
       .def(py::init<std::string_view, ReactorContext, Duration, Duration>(), py::arg("name"), py::arg("context"),
            py::arg("period"), py::arg("offset"))
       .def("offset", &PeriodicTimer::offset)
@@ -288,7 +301,7 @@ PYBIND11_MODULE(_cpp_sdk, mod, py::mod_gil_not_used()) {
       .def("set_offset", &detail::set_timer_offset, py::arg("offset"))
       .def("set_period", &detail::set_timer_period, py::arg("period"));
 
-  py::class_<Port<GilWrapper>, EventSource<GilWrapper>>(mod, "Port");
+  py::class_<Port<GilWrapper>, EventSource<GilWrapper>, Element>(mod, "Port");
 
   py::class_<InputPort<GilWrapper>, Port<GilWrapper>>(mod, "InputPort")
       .def(py::init<std::string_view, ReactorContext>(), py::arg("name"), py::arg("context"));
@@ -296,10 +309,10 @@ PYBIND11_MODULE(_cpp_sdk, mod, py::mod_gil_not_used()) {
   py::class_<OutputPort<GilWrapper>, Port<GilWrapper>>(mod, "OutputPort")
       .def(py::init<std::string_view, ReactorContext>(), py::arg("name"), py::arg("context"));
 
-  py::class_<ProgrammableTimer<GilWrapper>, EventSource<GilWrapper>>(mod, "ProgrammableTimer")
+  py::class_<ProgrammableTimer<GilWrapper>, EventSource<GilWrapper>, Element>(mod, "ProgrammableTimer")
       .def(py::init<std::string_view, ReactorContext>(), py::arg("name"), py::arg("context"));
 
-  py::class_<PhysicalEvent<GilWrapper>, EventSource<GilWrapper>>(mod, "PhysicalEvent")
+  py::class_<PhysicalEvent<GilWrapper>, EventSource<GilWrapper>, Element>(mod, "PhysicalEvent")
       .def(py::init<std::string_view, ReactorContext>(), py::arg("name"), py::arg("context"))
       .def(
           "trigger",

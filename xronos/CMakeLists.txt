@@ -13,24 +13,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # Colorize compilation output
 set(CMAKE_COLOR_DIAGNOSTICS ON)
 
-# Generate compilation database for clang-tidy
+# Generate compilation database
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
-option(RUN_CLANG_TIDY "Enable building with clang-tidy" Off)
-option(CLANG_TIDY_ERROR "clang-tidy warnings are errors" Off)
-option(XRONOS_BINDINGS_RUN_CLANG_TIDY "Run clang-tidy when compiling the bindings" OFF)
-set(CLANG_TIDY_COMMAND "clang-tidy" CACHE STRING "The clang-tidy command to use")
-
-if(XRONOS_BINDINGS_RUN_CLANG_TIDY)
-  find_program(CLANG_TIDY ${CLANG_TIDY_COMMAND} REQUIRED)
-  if(CLANG_TIDY_ERROR)
-    set(CLANG_TIDY_BASE_COMMAND ${CLANG_TIDY_COMMAND}; -warnings-as-errors=*;)
-  else()
-    set(CLANG_TIDY_BASE_COMMAND ${CLANG_TIDY_COMMAND};)
-  endif()
-  set(XRONOS_CLANG_TIDY_COMMAND
-    "${CLANG_TIDY_BASE_COMMAND};-header-filter=xronos/\(.*\)\\.hh")
-endif()
 
 include(FetchContent)
 FetchContent_Declare(
@@ -40,16 +24,36 @@ FetchContent_Declare(
   FIND_PACKAGE_ARGS CONFIG
 )
 FetchContent_MakeAvailable(xronos-sdk)
-FetchContent_Declare(
-  xronos-lib
-  SOURCE_DIR "${PROJECT_SOURCE_DIR}/../cpp-lib"
-  EXCLUDE_FROM_ALL TRUE
-  FIND_PACKAGE_ARGS CONFIG
-)
-FetchContent_MakeAvailable(xronos-lib)
 
 add_compile_options(-Wall -Wextra -pedantic -Werror)
 
-add_subdirectory(cpp)
+find_package(Python 3.10.0...<3.15.0 REQUIRED COMPONENTS Interpreter
+  Development.Module)
+find_package(pybind11 CONFIG REQUIRED)
+
+python_add_library(_cpp_sdk MODULE "${CMAKE_CURRENT_SOURCE_DIR}/cpp/cpp_sdk.cc" WITH_SOABI)
+target_link_libraries(_cpp_sdk PRIVATE xronos::xronos-sdk pybind11::headers)
+
+target_include_directories(_cpp_sdk PRIVATE "${CMAKE_CURRENT_LIST_DIR}/include")
+set_target_properties(_cpp_sdk PROPERTIES
+  CXX_VISIBILITY_PRESET hidden
+  VISIBILITY_INLINES_HIDDEN YES
+)
 
 install(TARGETS _cpp_sdk DESTINATION ${SKBUILD_PROJECT_NAME})
+
+add_custom_target(xronos-py-bindings-format
+  COMMAND clang-format -i -style=file $<TARGET_PROPERTY:_cpp_sdk,SOURCES>
+  COMMAND_EXPAND_LISTS
+  WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+add_custom_target(xronos-py-bindings-check-format
+  COMMAND clang-format --dry-run --Werror -style=file $<TARGET_PROPERTY:_cpp_sdk,SOURCES>
+  COMMAND_EXPAND_LISTS
+  WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+
+add_custom_target(xronos-py-bindings-lint COMMAND
+  clang-tidy --quiet -p ${CMAKE_CURRENT_BINARY_DIR} $<TARGET_PROPERTY:_cpp_sdk,SOURCES>
+  COMMAND_EXPAND_LISTS
+)

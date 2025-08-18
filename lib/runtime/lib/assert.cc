@@ -3,6 +3,11 @@
 // SPDX-License-Identifier: BSD-3-Clause
 
 #include "xronos/runtime/assert.hh"
+
+#include <iterator>
+#include <map>
+#include <string>
+
 #include "xronos/runtime/environment.hh"
 #include "xronos/runtime/reactor_element.hh"
 

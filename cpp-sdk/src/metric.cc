@@ -2,15 +2,20 @@
 // SPDX-License-Identifier: BSD-3-Clause
 
 #include "xronos/sdk/metric.hh"
+
+#include <cstdint>
+#include <string>
+#include <string_view>
+
 #include "xronos/sdk/context.hh"
+#include "xronos/sdk/element.hh"
 #include "xronos/sdk/environment.hh"
 #include "xronos/telemetry/metric.hh"
-#include <cstdint>
 
 namespace xronos::sdk {
 
 Metric::Metric(std::string_view name, ReactorContext context, std::string_view description, std::string_view unit)
-    : Element(std::make_unique<telemetry::Metric>(
+    : Element(detail::make_runtime_element_pointer<telemetry::Metric>(
                   name, detail::get_reactor_instance(context),
                   detail::get_metric_data_logger_provider(detail::get_environment(context)), description, unit),
               context) {}

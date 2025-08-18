@@ -1,0 +1,117 @@
+(external_input)=
+# External Input
+
+In the Xronos SDK, {ref}`ports` are the primary mechanism for sending and
+receiving data. However, often programs also have to read input from components
+that are not directly controlled by the SDK. For instance, a program might
+want to receive input from a file, from the console, or from a socket. For this, the
+Xronos SDK provides a set of library reactors that allow receiving input
+from external data sources. They assign a timestamp to any data received and
+forward the data using an output port. Currently, the following library reactors
+are provided for reading external input.
+
+- {class}`xronos.lib.ConsoleInput`
+- {class}`xronos.lib.SocketInput`
+- {class}`xronos.lib.ExternalInput`
+
+```{note}
+While it is possible to use blocking reads in reaction handlers
+(e.g., `input(...)`), this is discouraged as it potentially
+blocks the entire program and no other reactions are executed in the meantime.
+Using the library input reactors ensures that blocking reads do not affect
+the overall program execution.
+```
+
+## Reading from Console
+
+The {class}`~xronos.lib.ConsoleInput` can be used to read data from the console.
+Consider the following example program.
+
+`````{tabs}
+````{group-tab} plain
+```{literalinclude} ../_examples/console.py
+```
+````
+````{group-tab} with type hints
+```{literalinclude} ../_examples/console_hints.py
+```
+````
+````{group-tab} diagram
+![diagram clock](./_img/diagram_console.png){.bg-warning w="70%" align=center}
+````
+`````
+
+This program defines a simple `Printer` reactor that prints any strings that it
+receives on its input port. The `main()` function instantiates the `Printer`
+reactor and connects its input to an instance of
+{class}`~xronos.lib.ConsoleInput`. The custom parser function that is provided
+as an argument simply forwards all received strings. However, if a string equals
+"quit" or "exit", then it raises a
+{exc}`~xronos.lib.ConsoleInput.RequestShutdown` exception to instruct the
+console input reactor to stop reading input and terminate the program.
+
+When executing the program, it immediately echos any lines entered by the user
+and terminates if the user types "quit" or "exit".
+
+```console
+$ python console.py
+> test
+> test
+exit
+```
+
+## Reading from a Socket
+
+The {class}`~xronos.lib.InputSocket` reactor allows receiving data from a
+socket. Consider the following example program.
+
+`````{tabs}
+````{group-tab} plain
+```{literalinclude} ../_examples/socket_.py
+```
+````
+````{group-tab} with type hints
+```{literalinclude} ../_examples/socket_hints.py
+```
+````
+````{group-tab} diagram
+![diagram clock](./_img/diagram_socket.png){.bg-warning w="70%" align=center}
+````
+`````
+
+This instantiates the {class}`~xronos.lib.InputSocket` reactor in TCP server
+mode listening on port 1234 of `localhost`. Any data received on the socket will
+be printed by the `Printer` reactor.
+
+Try running the program and then open
+[`http://loalhost:1234`](http://localhost:1234) in your browser. This should
+produce output similar to the following:
+
+```console
+$ python socket.py
+GET / HTTP/1.1
+Host: localhost:1234
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:134.0) Gecko/20100101 Firefox/134.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br, zstd
+DNT: 1
+Connection: keep-alive
+Upgrade-Insecure-Requests: 1
+Sec-Fetch-Dest: document
+Sec-Fetch-Mode: navigate
+Sec-Fetch-Site: none
+Sec-Fetch-User: ?1
+Priority: u=0, i
+```
+
+## Other Input
+
+{class}`~xronos.lib.ExternalInput` is a generic reactor that can be used to read
+input from arbitrary other sources. It is configured with an arbitrary
+[generator](https://realpython.com/introduction-to-python-generators/). The
+generator is expected to yield received values. Any value yielded from the
+generator will be timestamped and forwarded to the output port. See
+{class}`~xronos.lib.ExternalInput` for usage instructions and an example
+generator function.
+

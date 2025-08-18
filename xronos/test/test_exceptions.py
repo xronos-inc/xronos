@@ -4,6 +4,8 @@
 import datetime
 from typing import Callable
 
+import pytest
+
 import xronos
 
 FIRST_EXCEPTION_ITERATION = 3
@@ -46,10 +48,8 @@ def main(fast: bool = False) -> None:
 
 
 def test_exceptions() -> None:
-    import pytest  # pyright: ignore
-
     env = xronos.Environment(fast=True, timeout=datetime.timedelta(seconds=5))
-    with pytest.raises(Exception, match=r"Exception raised at count 3, as expected"):  # pyright: ignore
+    with pytest.raises(Exception, match=r"Exception raised at count 3, as expected"):
         run(env)
 
 

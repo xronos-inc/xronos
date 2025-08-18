@@ -1,33 +1,56 @@
 // SPDX-FileCopyrightText: Copyright (c) 2025 Xronos Inc.
 // SPDX-License-Identifier: BSD-3-Clause
 
-/**
- * @file
- *
- * @brief Type aliases related to time.
- */
+/** @file */
 
 #ifndef XRONOS_SDK_TIME_HH
 #define XRONOS_SDK_TIME_HH
 
-#include "xronos/runtime/time.hh"
+#include <chrono>
+#include <ostream>
 
 namespace xronos::sdk {
-/**
- * @typedef Duration
- *
- * @brief Alias corresponding to the equivalent `std::chrono::nanoseconds` type.
- */
-using Duration = runtime::Duration;
-/**
- * @typedef TimePoint
- *
- * @brief Alias corresponding to the equivalent `std::chrono::time_point` type.
- */
-using TimePoint = runtime::TimePoint;
 
+/**
+ * Data type used to represent durations.
+ */
+using Duration = std::chrono::nanoseconds;
+
+/**
+ * Data type used to represent time points.
+ */
+using TimePoint = std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds>;
+
+/**
+ * Contains convenience streaming operators that allow printing time points and durations including their units.
+ */
 inline namespace operators {
-using runtime::operators::operator<<;
+
+/**
+ * Write a timepoint to an ostream.
+ */
+auto operator<<(std::ostream& os, TimePoint tp) -> std::ostream&;
+
+/**
+ * Write a duration in seconds including the unit to an ostream.
+ */
+auto operator<<(std::ostream& os, std::chrono::seconds dur) -> std::ostream&;
+
+/**
+ * Write a duration in milliseconds including the unit to an ostream.
+ */
+auto operator<<(std::ostream& os, std::chrono::milliseconds dur) -> std::ostream&;
+
+/**
+ * Write a duration in microseconds including the unit to an ostream.
+ */
+auto operator<<(std::ostream& os, std::chrono::microseconds dur) -> std::ostream&;
+
+/**
+ * Write a duration in nanoseconds including the unit to an ostream.
+ */
+auto operator<<(std::ostream& os, std::chrono::nanoseconds dur) -> std::ostream&;
+
 } // namespace operators
 
 } // namespace xronos::sdk

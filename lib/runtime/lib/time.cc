@@ -2,16 +2,18 @@
 // SPDX-FileCopyrightText: Copyright (c) 2019 TU Dresden
 // SPDX-License-Identifier: BSD-3-Clause
 
+#include "xronos/runtime/time.hh"
+
+#include <array>
+#include <chrono>
+#include <ctime>
+#include <iomanip>
+#include <ostream>
+
 // tell MSCV not to worry about the potential unsafe use of localtime
 #ifdef _MSC_VER
 #pragma warning(disable : 4996)
 #endif
-
-#include "xronos/runtime/time.hh"
-
-#include <array>
-#include <ctime>
-#include <iomanip>
 
 namespace xronos::runtime {
 
@@ -39,19 +41,19 @@ auto operator<<(std::ostream& os, TimePoint tp) -> std::ostream& {
 }
 
 auto operator<<(std::ostream& os, std::chrono::seconds dur) -> std::ostream& {
-  os << dur.count() << " secs";
+  os << dur.count() << "s";
   return os;
 }
 auto operator<<(std::ostream& os, std::chrono::milliseconds dur) -> std::ostream& {
-  os << dur.count() << " msecs";
+  os << dur.count() << "ms";
   return os;
 }
 auto operator<<(std::ostream& os, std::chrono::microseconds dur) -> std::ostream& {
-  os << dur.count() << " usecs";
+  os << dur.count() << "us";
   return os;
 }
 auto operator<<(std::ostream& os, std::chrono::nanoseconds dur) -> std::ostream& {
-  os << dur.count() << " nsecs";
+  os << dur.count() << "ns";
   return os;
 }
 

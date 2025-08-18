@@ -3,8 +3,10 @@
 
 import datetime
 import math
-import warnings
+import sys
 from typing import Callable, Generic, TypeVar, cast
+
+import pytest
 
 # 'override' added to typing in 3.12
 from typing_extensions import override
@@ -159,6 +161,10 @@ def test_startup_and_shutdown_source() -> None:
     env.execute()
 
 
+@pytest.mark.skipif(
+    sys.version_info > (3, 13) and not sys._is_gil_enabled(),
+    reason="Catching warnings currently does not work as expected in Python 3.14t",
+)
 def test_simultaneous_events() -> None:
     """Test the AbstractSource with simultaneous events."""
     env = xronos.Environment(fast=True, timeout=datetime.timedelta(seconds=1))
@@ -180,14 +186,12 @@ def test_simultaneous_events() -> None:
         printer.result,
     )
 
-    with warnings.catch_warnings(record=True) as caught_warnings:
+    with pytest.warns(OutputDiscardedWarning) as warning_record:
         env.execute()
-        assert len(caught_warnings) == 1
-        assert issubclass(caught_warnings[0].category, OutputDiscardedWarning)
+        assert len(warning_record) == 1
         assert (
-            cast(OutputDiscardedWarning, caught_warnings[0].message).value == values[0]
+            cast(OutputDiscardedWarning, warning_record[0].message).value == values[0]
         )
-        print(caught_warnings[0])
 
 
 def test_timed_source() -> None:

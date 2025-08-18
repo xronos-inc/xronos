@@ -2,20 +2,26 @@
 // SPDX-FileCopyrightText: Copyright (c) 2019 TU Dresden
 // SPDX-License-Identifier: BSD-3-Clause
 
+#include "xronos/runtime/scheduler.hh"
+
+#include <algorithm>
+#include <atomic>
 #include <cstddef>
-#include <cstdint>
 #include <memory>
 #include <mutex>
+#include <shared_mutex>
+#include <sstream>
 #include <utility>
-
-#include "xronos/runtime/scheduler.hh"
+#include <vector>
 
 #include "xronos/runtime/action.hh"
 #include "xronos/runtime/assert.hh"
 #include "xronos/runtime/environment.hh"
 #include "xronos/runtime/logging.hh"
+#include "xronos/runtime/logical_time.hh"
 #include "xronos/runtime/port.hh"
 #include "xronos/runtime/reaction.hh"
+#include "xronos/runtime/time.hh"
 #include "xronos/runtime/time_barrier.hh"
 
 namespace xronos::runtime {
@@ -216,8 +222,9 @@ auto Scheduler::schedule_ready_reactions() -> bool {
 
       // Make sure that any reaction is only executed once even if it
       // was triggered multiple times.
-      std::sort(reactions.begin(), reactions.end());
-      reactions.erase(std::unique(reactions.begin(), reactions.end()), reactions.end());
+      std::ranges::sort(reactions);
+      auto items_to_erase = std::ranges::unique(reactions);
+      reactions.erase(items_to_erase.begin(), items_to_erase.end());
 
       if constexpr (log::debug_enabled) {
         for (auto* reaction : reactions) {
@@ -497,7 +504,7 @@ auto Scheduler::schedule_empty_async_at(const Tag& tag) -> bool {
 
 auto Scheduler::set_exception() -> void { environment_->set_exception(); }
 
-void Scheduler::set_port(BasePort* port) {
+void Scheduler::set_port(Port* port) {
   log_.debug() << "Set port " << port->fqn();
 
   // We do not check here if port is already in the list. This means clean()
@@ -509,7 +516,7 @@ void Scheduler::set_port(BasePort* port) {
   set_port_helper(port);
 }
 
-void Scheduler::set_port_helper(BasePort* port) {
+void Scheduler::set_port_helper(Port* port) {
   // record the port for cleaning it up later
   set_ports_[Worker::current_worker_id()].push_back(port);
 

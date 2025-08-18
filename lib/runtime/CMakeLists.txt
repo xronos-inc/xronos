@@ -1,18 +1,19 @@
-add_library(xronos-runtime
-  lib/action.cc
-  lib/assert.cc
-  lib/environment.cc
-  lib/logical_time.cc
-  lib/port.cc
-  lib/reaction.cc
-  lib/reactor.cc
-  lib/scheduler.cc
-  lib/time.cc
-  lib/reactor_element.cc)
+file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/lib/*.cc")
+file(GLOB_RECURSE HEADERS CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/include/*.hh" "${CMAKE_CURRENT_BINARY_DIR}/include/*.hh")
+
+add_library(xronos-runtime ${SOURCES})
+target_sources(
+  xronos-runtime
+  PUBLIC FILE_SET HEADERS
+  TYPE HEADERS
+  BASE_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include> $<INSTALL_INTERFACE:include>
+  FILES ${HEADERS}
+)
 
 find_package(Threads)
 target_link_libraries(xronos-runtime PUBLIC ${CMAKE_THREAD_LIBS_INIT})
 target_compile_options(xronos-runtime PRIVATE -Wall -Wextra -pedantic -Werror)
+set_target_properties(xronos-runtime PROPERTIES VERIFY_INTERFACE_HEADER_SETS ON)
 
 find_package(Backtrace)
 set(RUNTIME_USE_BACKTRACE ${Backtrace_FOUND})
@@ -23,22 +24,6 @@ endif()
 
 configure_file(cmake/config.hh.in include/xronos/runtime/gen/config.hh @ONLY)
 
-target_include_directories(
-  xronos-runtime
-  PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
-         "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>"
-         "$<INSTALL_INTERFACE:include>")
-
-
-if(XRONOS_LIB_RUN_CLANG_TIDY)
-  set_target_properties(xronos-runtime PROPERTIES CXX_CLANG_TIDY
-                                       "${XRONOS_CLANG_TIDY_COMMAND}")
-endif()
 set_target_properties(xronos-runtime PROPERTIES VERSION "${PROJECT_VERSION}" SOVERSION 1)
-
-if(XRONOS_LIB_INSTALL_HEADERS)
-  install(DIRECTORY include/ DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
-  install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/include/" DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
-endif()
 
 add_library(xronos::xronos-runtime ALIAS xronos-runtime)

@@ -1,0 +1,537 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ports and Connections &mdash; xronos v0.5.0  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../_static/tabs.css?v=a5c4661c" />
+      <link rel="stylesheet" type="text/css" href="../../_static/fix_stacking.css?v=30aa6f93" />
+
+  
+    <link rel="shortcut icon" href="../../_static/logo.svg"/>
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../_static/copybutton.js?v=35a8b989"></script>
+      <script src="../../_static/tabs.js?v=3030b3cb"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Programmable Timers" href="programmable_timers.html" />
+    <link rel="prev" title="Periodic Timers" href="periodic_timers.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            xronos v0.5.0
+              <img src="../../_static/logo_written.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Python SDK</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Reference Guide</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="periodic_timers.html">Periodic Timers</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Ports and Connections</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#simple-connections">Simple Connections</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#delayed-connections">Delayed Connections</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#multiple-inputs">Multiple Inputs</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="programmable_timers.html">Programmable Timers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="metrics.html">Metrics</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/index.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html">API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../lib.html">Library Reactors</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">C++ SDK</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../cpp_sdk/getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cpp_sdk/api/index.html">API Documentation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Analysis &amp; Visualization</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../diagrams.html">Diagram View</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../telemetry.html">Telemetry</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../dashboard.html">Dashboard</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Links</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://www.xronos.com">Xronos Inc.</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://www.github.com/xronos-inc/xronos">GitHub</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://www.github.com/xronos-inc/xronos/releases">Releases</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://pypi.org/project/xronos/">PyPi</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">xronos v0.5.0</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Reference Guide</a></li>
+      <li class="breadcrumb-item active">Ports and Connections</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="ports-and-connections">
+<span id="ports"></span><h1>Ports and Connections<a class="headerlink" href="#ports-and-connections" title="Link to this heading"></a></h1>
+<p>Reactors may send and receive messages to or from other reactors using input and
+output ports. The ports of a reactor define its interface. Outputs of one
+reactor may be connected to the inputs of others, which gives a mechanism for
+composing programs from simple building blocks.</p>
+<section id="simple-connections">
+<h2>Simple Connections<a class="headerlink" href="#simple-connections" title="Link to this heading"></a></h2>
+<p>Consider the following reactor.</p>
+<div class="sphinx-tabs docutils container">
+<div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-0-cGxhaW4=" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-0-cGxhaW4=" name="cGxhaW4=" role="tab" tabindex="0">plain</button><button aria-controls="panel-0-d2l0aCB0eXBlIGhpbnRz" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-d2l0aCB0eXBlIGhpbnRz" name="d2l0aCB0eXBlIGhpbnRz" role="tab" tabindex="-1">with type hints</button><button aria-controls="panel-0-ZGlhZ3JhbQ==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-ZGlhZ3JhbQ==" name="ZGlhZ3JhbQ==" role="tab" tabindex="-1">diagram</button></div><div aria-labelledby="tab-0-cGxhaW4=" class="sphinx-tabs-panel group-tab" id="panel-0-cGxhaW4=" name="cGxhaW4=" role="tabpanel" tabindex="0"><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Counter</span><span class="p">(</span><span class="n">xronos</span><span class="o">.</span><span class="n">Reactor</span><span class="p">):</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">OutputPortDeclaration</span><span class="p">()</span>
+    <span class="n">_timer</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">PeriodicTimerDeclaration</span><span class="p">(</span>
+        <span class="n">period</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">milliseconds</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_count</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="nd">@xronos</span><span class="o">.</span><span class="n">reaction</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">count</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface</span><span class="p">):</span>
+        <span class="n">interface</span><span class="o">.</span><span class="n">add_trigger</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_timer</span><span class="p">)</span>
+        <span class="n">output_effect</span> <span class="o">=</span> <span class="n">interface</span><span class="o">.</span><span class="n">add_effect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">handler</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_count</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">output_effect</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_count</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">handler</span>
+</pre></div>
+</div>
+</div><div aria-labelledby="tab-0-d2l0aCB0eXBlIGhpbnRz" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-0-d2l0aCB0eXBlIGhpbnRz" name="d2l0aCB0eXBlIGhpbnRz" role="tabpanel" tabindex="0"><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Counter</span><span class="p">(</span><span class="n">xronos</span><span class="o">.</span><span class="n">Reactor</span><span class="p">):</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">OutputPortDeclaration</span><span class="p">[</span><span class="nb">int</span><span class="p">]()</span>
+    <span class="n">_timer</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">PeriodicTimerDeclaration</span><span class="p">(</span>
+        <span class="n">period</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">milliseconds</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_count</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="nd">@xronos</span><span class="o">.</span><span class="n">reaction</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">count</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface</span><span class="p">:</span> <span class="n">xronos</span><span class="o">.</span><span class="n">ReactionInterface</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">]:</span>
+        <span class="n">interface</span><span class="o">.</span><span class="n">add_trigger</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_timer</span><span class="p">)</span>
+        <span class="n">output_effect</span> <span class="o">=</span> <span class="n">interface</span><span class="o">.</span><span class="n">add_effect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">handler</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_count</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">output_effect</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_count</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">handler</span>
+</pre></div>
+</div>
+</div><div aria-labelledby="tab-0-ZGlhZ3JhbQ==" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-0-ZGlhZ3JhbQ==" name="ZGlhZ3JhbQ==" role="tabpanel" tabindex="0"><p><a class="bg-warning reference internal" href="../../_images/diagram_ports_counter.png"><img alt="diagram connection" class="bg-warning align-center" src="../../_images/diagram_ports_counter.png" style="width: 35%;" /></a></p>
+</div></div>
+<p>It implements a counting mechanism, similar to the <code class="docutils literal notranslate"><span class="pre">Timed</span></code> reactor that we
+considered before. In addition to the timer, it also declares an output port
+called <code class="docutils literal notranslate"><span class="pre">output</span></code> using an <a class="reference internal" href="../api.html#xronos.OutputPortDeclaration" title="xronos.OutputPortDeclaration"><code class="xref py py-class docutils literal notranslate"><span class="pre">OutputPortDeclaration</span></code></a>. The <code class="docutils literal notranslate"><span class="pre">increment</span></code>
+reaction is triggered by the timer. In addition to the trigger, the reaction
+also declares an <em>effect</em> using <a class="reference internal" href="../api.html#xronos.ReactionInterface.add_effect" title="xronos.ReactionInterface.add_effect"><code class="xref py py-func docutils literal notranslate"><span class="pre">add_effect()</span></code></a>.
+This returns a <a class="reference internal" href="../api.html#xronos.PortEffect" title="xronos.PortEffect"><code class="xref py py-class docutils literal notranslate"><span class="pre">PortEffect</span></code></a> object, which the handler may use to
+write a value to the port using the <a class="reference internal" href="../api.html#xronos.PortEffect.set" title="xronos.PortEffect.set"><code class="xref py py-func docutils literal notranslate"><span class="pre">set()</span></code></a> method.
+Setting a value on the port notifies any reactions that are triggered by a connected port.</p>
+<p>For instance, we can define a <code class="docutils literal notranslate"><span class="pre">Printer</span></code> reactor that prints any object that it receives.</p>
+<div class="sphinx-tabs docutils container">
+<div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-1-cGxhaW4=" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-1-cGxhaW4=" name="cGxhaW4=" role="tab" tabindex="0">plain</button><button aria-controls="panel-1-d2l0aCB0eXBlIGhpbnRz" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-1-d2l0aCB0eXBlIGhpbnRz" name="d2l0aCB0eXBlIGhpbnRz" role="tab" tabindex="-1">with type hints</button><button aria-controls="panel-1-ZGlhZ3JhbQ==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-1-ZGlhZ3JhbQ==" name="ZGlhZ3JhbQ==" role="tab" tabindex="-1">diagram</button></div><div aria-labelledby="tab-1-cGxhaW4=" class="sphinx-tabs-panel group-tab" id="panel-1-cGxhaW4=" name="cGxhaW4=" role="tabpanel" tabindex="0"><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Printer</span><span class="p">(</span><span class="n">xronos</span><span class="o">.</span><span class="n">Reactor</span><span class="p">):</span>
+    <span class="n">input_</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">InputPortDeclaration</span><span class="p">()</span>
+
+    <span class="nd">@xronos</span><span class="o">.</span><span class="n">reaction</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">print</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface</span><span class="p">):</span>
+        <span class="n">input_trigger</span> <span class="o">=</span> <span class="n">interface</span><span class="o">.</span><span class="n">add_trigger</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="k">lambda</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> received </span><span class="si">{</span><span class="n">input_trigger</span><span class="o">.</span><span class="n">get</span><span class="p">()</span><span class="si">}</span><span class="s2"> at &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_time_since_startup</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+</pre></div>
+</div>
+</div><div aria-labelledby="tab-1-d2l0aCB0eXBlIGhpbnRz" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-1-d2l0aCB0eXBlIGhpbnRz" name="d2l0aCB0eXBlIGhpbnRz" role="tabpanel" tabindex="0"><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Printer</span><span class="p">(</span><span class="n">xronos</span><span class="o">.</span><span class="n">Reactor</span><span class="p">):</span>
+    <span class="n">input_</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">InputPortDeclaration</span><span class="p">[</span><span class="nb">int</span><span class="p">]()</span>
+
+    <span class="nd">@xronos</span><span class="o">.</span><span class="n">reaction</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">print</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface</span><span class="p">:</span> <span class="n">xronos</span><span class="o">.</span><span class="n">ReactionInterface</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">]:</span>
+        <span class="n">input_trigger</span> <span class="o">=</span> <span class="n">interface</span><span class="o">.</span><span class="n">add_trigger</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="k">lambda</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> received </span><span class="si">{</span><span class="n">input_trigger</span><span class="o">.</span><span class="n">get</span><span class="p">()</span><span class="si">}</span><span class="s2"> at &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_time_since_startup</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+</pre></div>
+</div>
+</div><div aria-labelledby="tab-1-ZGlhZ3JhbQ==" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-1-ZGlhZ3JhbQ==" name="ZGlhZ3JhbQ==" role="tabpanel" tabindex="0"><p><a class="bg-warning reference internal" href="../../_images/diagram_ports_printer.png"><img alt="diagram counter" class="bg-warning align-center" src="../../_images/diagram_ports_printer.png" style="width: 22%;" /></a></p>
+</div></div>
+<p>This reactor uses an <a class="reference internal" href="../api.html#xronos.InputPortDeclaration" title="xronos.InputPortDeclaration"><code class="xref py py-class docutils literal notranslate"><span class="pre">InputPortDeclaration</span></code></a> to declare an input
+port called <code class="docutils literal notranslate"><span class="pre">input_</span></code>. The reaction uses
+<a class="reference internal" href="../api.html#xronos.ReactionInterface.add_trigger" title="xronos.ReactionInterface.add_trigger"><code class="xref py py-func docutils literal notranslate"><span class="pre">add_trigger()</span></code></a> to declare the input port as its
+trigger. The returned <a class="reference internal" href="../api.html#xronos.Trigger" title="xronos.Trigger"><code class="xref py py-class docutils literal notranslate"><span class="pre">Trigger</span></code></a> object can be used to read the
+received value using the <a class="reference internal" href="../api.html#xronos.Trigger.get" title="xronos.Trigger.get"><code class="xref py py-func docutils literal notranslate"><span class="pre">get()</span></code></a> method.</p>
+<p>Now we can write a <code class="docutils literal notranslate"><span class="pre">main()</span></code> function that instantiates and connects both reactors.</p>
+<div class="sphinx-tabs docutils container">
+<div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-2-cGxhaW4=" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-2-cGxhaW4=" name="cGxhaW4=" role="tab" tabindex="0">plain</button><button aria-controls="panel-2-d2l0aCB0eXBlIGhpbnRz" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-2-d2l0aCB0eXBlIGhpbnRz" name="d2l0aCB0eXBlIGhpbnRz" role="tab" tabindex="-1">with type hints</button><button aria-controls="panel-2-ZGlhZ3JhbQ==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-2-ZGlhZ3JhbQ==" name="ZGlhZ3JhbQ==" role="tab" tabindex="-1">diagram</button></div><div aria-labelledby="tab-2-cGxhaW4=" class="sphinx-tabs-panel group-tab" id="panel-2-cGxhaW4=" name="cGxhaW4=" role="tabpanel" tabindex="0"><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+    <span class="n">env</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">Environment</span><span class="p">()</span>
+    <span class="n">counter</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;counter&quot;</span><span class="p">,</span> <span class="n">Counter</span><span class="p">)</span>
+    <span class="n">printer</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;printer&quot;</span><span class="p">,</span> <span class="n">Printer</span><span class="p">)</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">counter</span><span class="o">.</span><span class="n">output</span><span class="p">,</span> <span class="n">printer</span><span class="o">.</span><span class="n">input_</span><span class="p">)</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+</div><div aria-labelledby="tab-2-d2l0aCB0eXBlIGhpbnRz" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-2-d2l0aCB0eXBlIGhpbnRz" name="d2l0aCB0eXBlIGhpbnRz" role="tabpanel" tabindex="0"><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">env</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">Environment</span><span class="p">()</span>
+    <span class="n">counter</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;counter&quot;</span><span class="p">,</span> <span class="n">Counter</span><span class="p">)</span>
+    <span class="n">printer</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;printer&quot;</span><span class="p">,</span> <span class="n">Printer</span><span class="p">)</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">counter</span><span class="o">.</span><span class="n">output</span><span class="p">,</span> <span class="n">printer</span><span class="o">.</span><span class="n">input_</span><span class="p">)</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+</div><div aria-labelledby="tab-2-ZGlhZ3JhbQ==" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-2-ZGlhZ3JhbQ==" name="ZGlhZ3JhbQ==" role="tabpanel" tabindex="0"><p><a class="bg-warning reference internal" href="../../_images/diagram_ports_simple.png"><img alt="diagram printer" class="bg-warning align-center" src="../../_images/diagram_ports_simple.png" style="width: 60%;" /></a></p>
+</div></div>
+<p>Copy the two reactors and the <code class="docutils literal notranslate"><span class="pre">main()</span></code> function into a new file called
+<code class="docutils literal notranslate"><span class="pre">ports.py</span></code>. Do not forget to add the required imports:</p>
+<div class="sphinx-tabs docutils container">
+<div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-3-cGxhaW4=" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-3-cGxhaW4=" name="cGxhaW4=" role="tab" tabindex="0">plain</button><button aria-controls="panel-3-d2l0aCB0eXBlIGhpbnRz" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-3-d2l0aCB0eXBlIGhpbnRz" name="d2l0aCB0eXBlIGhpbnRz" role="tab" tabindex="-1">with type hints</button></div><div aria-labelledby="tab-3-cGxhaW4=" class="sphinx-tabs-panel group-tab" id="panel-3-cGxhaW4=" name="cGxhaW4=" role="tabpanel" tabindex="0"><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">datetime</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">xronos</span>
+</pre></div>
+</div>
+</div><div aria-labelledby="tab-3-d2l0aCB0eXBlIGhpbnRz" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-3-d2l0aCB0eXBlIGhpbnRz" name="d2l0aCB0eXBlIGhpbnRz" role="tabpanel" tabindex="0"><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">xronos</span>
+</pre></div>
+</div>
+</div></div>
+<p>Executing the program yields output similar to the following:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>python<span class="w"> </span>ports.py
+<span class="go">printer received 1 at 0:00:00</span>
+<span class="go">printer received 2 at 0:00:00.100000</span>
+<span class="go">printer received 3 at 0:00:00.200000</span>
+<span class="go">printer received 4 at 0:00:00.300000</span>
+<span class="go">printer received 5 at 0:00:00.400000</span>
+<span class="go">printer received 6 at 0:00:00.500000</span>
+<span class="go">printer received 7 at 0:00:00.600000</span>
+<span class="go">printer received 8 at 0:00:00.700000</span>
+<span class="go">printer received 9 at 0:00:00.800000</span>
+<span class="go">...</span>
+</pre></div>
+</div>
+<p>This program will execute indefinitely as the timer will always produce new
+events and we do not use <a class="reference internal" href="../api.html#xronos.Reactor.request_shutdown" title="xronos.Reactor.request_shutdown"><code class="xref py py-func docutils literal notranslate"><span class="pre">request_shutdown()</span></code></a>. Use
+<kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">C</kbd> to abort the execution. If the program defines any
+reactions to <a class="reference internal" href="../api.html#xronos.Reactor.shutdown" title="xronos.Reactor.shutdown"><code class="xref py py-attr docutils literal notranslate"><span class="pre">shutdown</span></code></a>, these will be invoked after the
+termination signal is received.</p>
+<p>Note that <code class="docutils literal notranslate"><span class="pre">printer</span></code> receives the first message right at startup, and all
+subsequent messages are spaced perfectly by the timer period of 100ms. As
+mentioned in <a class="reference internal" href="periodic_timers.html#periodic-timers"><span class="std std-ref">Periodic Timers</span></a>, time does not advance while reactions execute. This
+is also true for any messages sent via ports. The timestamp of any output
+produced by a reaction is equal to the timestamp of its trigger.</p>
+</section>
+<section id="delayed-connections">
+<h2>Delayed Connections<a class="headerlink" href="#delayed-connections" title="Link to this heading"></a></h2>
+<p>Sometimes it is useful to delay messages so that they are processed at a later
+point in time. The <a class="reference internal" href="../api.html#xronos.Environment.connect" title="xronos.Environment.connect"><code class="xref py py-func docutils literal notranslate"><span class="pre">connect()</span></code></a> method accepts an
+optional <code class="docutils literal notranslate"><span class="pre">delay</span></code> argument. If it is set, the connection will output the message
+on the receiving side precisely at <code class="docutils literal notranslate"><span class="pre">get_time()</span> <span class="pre">+</span> <span class="pre">delay</span></code>.</p>
+<p>For instance, we can make the following modification to delay all messages by 1s:</p>
+<div class="sphinx-tabs docutils container">
+<div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-4-cGxhaW4=" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-4-cGxhaW4=" name="cGxhaW4=" role="tab" tabindex="0">plain</button><button aria-controls="panel-4-d2l0aCB0eXBlIGhpbnRz" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-4-d2l0aCB0eXBlIGhpbnRz" name="d2l0aCB0eXBlIGhpbnRz" role="tab" tabindex="-1">with type hints</button><button aria-controls="panel-4-ZGlhZ3JhbQ==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-4-ZGlhZ3JhbQ==" name="ZGlhZ3JhbQ==" role="tab" tabindex="-1">diagram</button></div><div aria-labelledby="tab-4-cGxhaW4=" class="sphinx-tabs-panel group-tab" id="panel-4-cGxhaW4=" name="cGxhaW4=" role="tabpanel" tabindex="0"><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+    <span class="n">env</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">Environment</span><span class="p">()</span>
+    <span class="n">counter</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;counter&quot;</span><span class="p">,</span> <span class="n">Counter</span><span class="p">)</span>
+    <span class="n">printer</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;printer&quot;</span><span class="p">,</span> <span class="n">Printer</span><span class="p">)</span>
+<span class="hll">    <span class="n">env</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">counter</span><span class="o">.</span><span class="n">output</span><span class="p">,</span> <span class="n">printer</span><span class="o">.</span><span class="n">input_</span><span class="p">,</span> <span class="n">delay</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+</span>    <span class="n">env</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+</pre></div>
+</div>
+</div><div aria-labelledby="tab-4-d2l0aCB0eXBlIGhpbnRz" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-4-d2l0aCB0eXBlIGhpbnRz" name="d2l0aCB0eXBlIGhpbnRz" role="tabpanel" tabindex="0"><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+    <span class="n">env</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">Environment</span><span class="p">()</span>
+    <span class="n">counter</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;counter&quot;</span><span class="p">,</span> <span class="n">Counter</span><span class="p">)</span>
+    <span class="n">printer</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;printer&quot;</span><span class="p">,</span> <span class="n">Printer</span><span class="p">)</span>
+<span class="hll">    <span class="n">env</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">counter</span><span class="o">.</span><span class="n">output</span><span class="p">,</span> <span class="n">printer</span><span class="o">.</span><span class="n">input_</span><span class="p">,</span> <span class="n">delay</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+</span>    <span class="n">env</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+</pre></div>
+</div>
+</div><div aria-labelledby="tab-4-ZGlhZ3JhbQ==" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-4-ZGlhZ3JhbQ==" name="ZGlhZ3JhbQ==" role="tabpanel" tabindex="0"><p><a class="bg-warning reference internal" href="../../_images/diagram_ports_delayed.png"><img alt="diagram delayed connection" class="bg-warning align-center" src="../../_images/diagram_ports_delayed.png" style="width: 65%;" /></a></p>
+</div></div>
+<p>This produces the following output after waiting for 1s:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>python<span class="w"> </span>ports.py
+<span class="go">printer received 1 at 0:00:01</span>
+<span class="go">printer received 2 at 0:00:01.100000</span>
+<span class="go">printer received 3 at 0:00:01.200000</span>
+<span class="go">printer received 4 at 0:00:01.300000</span>
+<span class="go">printer received 5 at 0:00:01.400000</span>
+<span class="go">printer received 6 at 0:00:01.500000</span>
+<span class="go">printer received 7 at 0:00:01.600000</span>
+<span class="go">printer received 8 at 0:00:01.700000</span>
+<span class="go">printer received 9 at 0:00:01.800000</span>
+<span class="go">...</span>
+</pre></div>
+</div>
+</section>
+<section id="multiple-inputs">
+<h2>Multiple Inputs<a class="headerlink" href="#multiple-inputs" title="Link to this heading"></a></h2>
+<p>Reactors may define an arbitrary number of input and output ports. While in
+prior examples all reactions had a single trigger, it is also possible to
+trigger reactions by multiple inputs. Consider the following <code class="docutils literal notranslate"><span class="pre">Multiplier</span></code> reactor.</p>
+<div class="sphinx-tabs docutils container">
+<div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-5-cGxhaW4=" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-5-cGxhaW4=" name="cGxhaW4=" role="tab" tabindex="0">plain</button><button aria-controls="panel-5-d2l0aCB0eXBlIGhpbnRz" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-5-d2l0aCB0eXBlIGhpbnRz" name="d2l0aCB0eXBlIGhpbnRz" role="tab" tabindex="-1">with type hints</button><button aria-controls="panel-5-ZGlhZ3JhbQ==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-5-ZGlhZ3JhbQ==" name="ZGlhZ3JhbQ==" role="tab" tabindex="-1">diagram</button></div><div aria-labelledby="tab-5-cGxhaW4=" class="sphinx-tabs-panel group-tab" id="panel-5-cGxhaW4=" name="cGxhaW4=" role="tabpanel" tabindex="0"><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Multiplier</span><span class="p">(</span><span class="n">xronos</span><span class="o">.</span><span class="n">Reactor</span><span class="p">):</span>
+    <span class="n">factor1</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">InputPortDeclaration</span><span class="p">()</span>
+    <span class="n">factor2</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">InputPortDeclaration</span><span class="p">()</span>
+    <span class="n">product</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">OutputPortDeclaration</span><span class="p">()</span>
+
+    <span class="nd">@xronos</span><span class="o">.</span><span class="n">reaction</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">multiply</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface</span><span class="p">):</span>
+        <span class="n">factor1_trigger</span> <span class="o">=</span> <span class="n">interface</span><span class="o">.</span><span class="n">add_trigger</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">factor1</span><span class="p">)</span>
+        <span class="n">factor2_trigger</span> <span class="o">=</span> <span class="n">interface</span><span class="o">.</span><span class="n">add_trigger</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">factor2</span><span class="p">)</span>
+        <span class="n">product_effect</span> <span class="o">=</span> <span class="n">interface</span><span class="o">.</span><span class="n">add_effect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">product</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">handler</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">factor1_trigger</span><span class="o">.</span><span class="n">is_present</span><span class="p">()</span> <span class="ow">and</span> <span class="n">factor2_trigger</span><span class="o">.</span><span class="n">is_present</span><span class="p">():</span>
+                <span class="n">product_effect</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">factor1_trigger</span><span class="o">.</span><span class="n">get</span><span class="p">()</span> <span class="o">*</span> <span class="n">factor2_trigger</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
+
+        <span class="k">return</span> <span class="n">handler</span>
+</pre></div>
+</div>
+</div><div aria-labelledby="tab-5-d2l0aCB0eXBlIGhpbnRz" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-5-d2l0aCB0eXBlIGhpbnRz" name="d2l0aCB0eXBlIGhpbnRz" role="tabpanel" tabindex="0"><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Multiplier</span><span class="p">(</span><span class="n">xronos</span><span class="o">.</span><span class="n">Reactor</span><span class="p">):</span>
+    <span class="n">factor1</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">InputPortDeclaration</span><span class="p">[</span><span class="nb">int</span><span class="p">]()</span>
+    <span class="n">factor2</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">InputPortDeclaration</span><span class="p">[</span><span class="nb">int</span><span class="p">]()</span>
+    <span class="n">product</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">OutputPortDeclaration</span><span class="p">[</span><span class="nb">int</span><span class="p">]()</span>
+
+    <span class="nd">@xronos</span><span class="o">.</span><span class="n">reaction</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">multiply</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface</span><span class="p">:</span> <span class="n">xronos</span><span class="o">.</span><span class="n">ReactionInterface</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">]:</span>
+        <span class="n">factor1_trigger</span> <span class="o">=</span> <span class="n">interface</span><span class="o">.</span><span class="n">add_trigger</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">factor1</span><span class="p">)</span>
+        <span class="n">factor2_trigger</span> <span class="o">=</span> <span class="n">interface</span><span class="o">.</span><span class="n">add_trigger</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">factor2</span><span class="p">)</span>
+        <span class="n">product_effect</span> <span class="o">=</span> <span class="n">interface</span><span class="o">.</span><span class="n">add_effect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">product</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">handler</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">factor1_trigger</span><span class="o">.</span><span class="n">is_present</span><span class="p">()</span> <span class="ow">and</span> <span class="n">factor2_trigger</span><span class="o">.</span><span class="n">is_present</span><span class="p">():</span>
+                <span class="n">product_effect</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">factor1_trigger</span><span class="o">.</span><span class="n">get</span><span class="p">()</span> <span class="o">*</span> <span class="n">factor2_trigger</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
+
+        <span class="k">return</span> <span class="n">handler</span>
+</pre></div>
+</div>
+</div><div aria-labelledby="tab-5-ZGlhZ3JhbQ==" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-5-ZGlhZ3JhbQ==" name="ZGlhZ3JhbQ==" role="tabpanel" tabindex="0"><p><a class="bg-warning reference internal" href="../../_images/diagram_ports_multiplier.png"><img alt="diagram multiplier" class="bg-warning align-center" src="../../_images/diagram_ports_multiplier.png" style="width: 40%;" /></a></p>
+</div></div>
+<p>It declares two input ports <code class="docutils literal notranslate"><span class="pre">factor1</span></code> and <code class="docutils literal notranslate"><span class="pre">factor2</span></code> as well as the output port
+<code class="docutils literal notranslate"><span class="pre">product</span></code>. The <code class="docutils literal notranslate"><span class="pre">multiply</span></code> reaction declares both input ports as triggers.
+Consequently, the reaction executes when either or both of the inputs receive a
+message. The <code class="xref py py-func docutils literal notranslate"><span class="pre">is_present()</span></code> method can be used to check
+if the trigger was activated and carries a value.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Calling <a class="reference internal" href="../api.html#xronos.Trigger.get" title="xronos.Trigger.get"><code class="xref py py-func docutils literal notranslate"><span class="pre">get()</span></code></a> while <a class="reference internal" href="../api.html#xronos.Trigger.is_present" title="xronos.Trigger.is_present"><code class="xref py py-func docutils literal notranslate"><span class="pre">is_present()</span></code></a>
+returns <code class="docutils literal notranslate"><span class="pre">False</span></code> raises an <code class="xref py py-class docutils literal notranslate"><span class="pre">AbsentError</span></code>.</p>
+</div>
+<p>If both triggers are present, the handler writes the product to the output port
+using the corresponding effect. If only one of the triggers is present, then no
+output is produced. Note that it is also possible to define other strategies, such
+as assuming a default value or storing the last observed value on <code class="docutils literal notranslate"><span class="pre">self</span></code>.</p>
+<p>Now we have multiple options for connecting the <code class="docutils literal notranslate"><span class="pre">Multiplier</span></code> reactor with the
+<code class="docutils literal notranslate"><span class="pre">Counter</span></code> and <code class="docutils literal notranslate"><span class="pre">Printer</span></code> reactors. For instance, we can create the following pattern.</p>
+<div class="sphinx-tabs docutils container">
+<div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-6-cGxhaW4=" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-6-cGxhaW4=" name="cGxhaW4=" role="tab" tabindex="0">plain</button><button aria-controls="panel-6-d2l0aCB0eXBlIGhpbnRz" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-6-d2l0aCB0eXBlIGhpbnRz" name="d2l0aCB0eXBlIGhpbnRz" role="tab" tabindex="-1">with type hints</button><button aria-controls="panel-6-ZGlhZ3JhbQ==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-6-ZGlhZ3JhbQ==" name="ZGlhZ3JhbQ==" role="tab" tabindex="-1">diagram</button></div><div aria-labelledby="tab-6-cGxhaW4=" class="sphinx-tabs-panel group-tab" id="panel-6-cGxhaW4=" name="cGxhaW4=" role="tabpanel" tabindex="0"><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+    <span class="n">env</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">Environment</span><span class="p">()</span>
+    <span class="n">counter</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;counter&quot;</span><span class="p">,</span> <span class="n">Counter</span><span class="p">)</span>
+    <span class="n">printer</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;printer&quot;</span><span class="p">,</span> <span class="n">Printer</span><span class="p">)</span>
+    <span class="n">multiplier</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;multiplier&quot;</span><span class="p">,</span> <span class="n">Multiplier</span><span class="p">)</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">counter</span><span class="o">.</span><span class="n">output</span><span class="p">,</span> <span class="n">multiplier</span><span class="o">.</span><span class="n">factor1</span><span class="p">)</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">counter</span><span class="o">.</span><span class="n">output</span><span class="p">,</span> <span class="n">multiplier</span><span class="o">.</span><span class="n">factor2</span><span class="p">)</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">multiplier</span><span class="o">.</span><span class="n">product</span><span class="p">,</span> <span class="n">printer</span><span class="o">.</span><span class="n">input_</span><span class="p">)</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+</pre></div>
+</div>
+</div><div aria-labelledby="tab-6-d2l0aCB0eXBlIGhpbnRz" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-6-d2l0aCB0eXBlIGhpbnRz" name="d2l0aCB0eXBlIGhpbnRz" role="tabpanel" tabindex="0"><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">env</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">Environment</span><span class="p">()</span>
+    <span class="n">counter</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;counter&quot;</span><span class="p">,</span> <span class="n">Counter</span><span class="p">)</span>
+    <span class="n">printer</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;printer&quot;</span><span class="p">,</span> <span class="n">Printer</span><span class="p">)</span>
+    <span class="n">multiplier</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;multiplier&quot;</span><span class="p">,</span> <span class="n">Multiplier</span><span class="p">)</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">counter</span><span class="o">.</span><span class="n">output</span><span class="p">,</span> <span class="n">multiplier</span><span class="o">.</span><span class="n">factor1</span><span class="p">)</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">counter</span><span class="o">.</span><span class="n">output</span><span class="p">,</span> <span class="n">multiplier</span><span class="o">.</span><span class="n">factor2</span><span class="p">)</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">multiplier</span><span class="o">.</span><span class="n">product</span><span class="p">,</span> <span class="n">printer</span><span class="o">.</span><span class="n">input_</span><span class="p">)</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+</pre></div>
+</div>
+</div><div aria-labelledby="tab-6-ZGlhZ3JhbQ==" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-6-ZGlhZ3JhbQ==" name="ZGlhZ3JhbQ==" role="tabpanel" tabindex="0"><p><a class="bg-warning reference internal" href="../../_images/diagram_ports_squared.png"><img alt="diagram square numbers" class="bg-warning align-center" src="../../_images/diagram_ports_squared.png" style="width: 80%;" /></a></p>
+</div></div>
+<p>This connects <code class="docutils literal notranslate"><span class="pre">counter.output</span></code> to inputs of <code class="docutils literal notranslate"><span class="pre">multiplier</span></code>, so that the same
+messages are delivered to both input ports. When executed, the program prints
+square numbers.</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>python<span class="w"> </span>ports.py
+<span class="go">printer received 1 at 0:00:00</span>
+<span class="go">printer received 4 at 0:00:00.100000</span>
+<span class="go">printer received 9 at 0:00:00.200000</span>
+<span class="go">printer received 16 at 0:00:00.300000</span>
+<span class="go">printer received 25 at 0:00:00.400000</span>
+<span class="go">printer received 36 at 0:00:00.500000</span>
+<span class="go">printer received 49 at 0:00:00.600000</span>
+<span class="go">printer received 64 at 0:00:00.700000</span>
+<span class="go">printer received 81 at 0:00:00.800000</span>
+<span class="go">...</span>
+</pre></div>
+</div>
+<p>We can also achieve the same behavior using two instances of <code class="docutils literal notranslate"><span class="pre">counter</span></code>.</p>
+<div class="sphinx-tabs docutils container">
+<div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-7-cGxhaW4=" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-7-cGxhaW4=" name="cGxhaW4=" role="tab" tabindex="0">plain</button><button aria-controls="panel-7-d2l0aCB0eXBlIGhpbnRz" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-7-d2l0aCB0eXBlIGhpbnRz" name="d2l0aCB0eXBlIGhpbnRz" role="tab" tabindex="-1">with type hints</button><button aria-controls="panel-7-ZGlhZ3JhbQ==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-7-ZGlhZ3JhbQ==" name="ZGlhZ3JhbQ==" role="tab" tabindex="-1">diagram</button></div><div aria-labelledby="tab-7-cGxhaW4=" class="sphinx-tabs-panel group-tab" id="panel-7-cGxhaW4=" name="cGxhaW4=" role="tabpanel" tabindex="0"><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+    <span class="n">env</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">Environment</span><span class="p">()</span>
+    <span class="n">counter1</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;counter1&quot;</span><span class="p">,</span> <span class="n">Counter</span><span class="p">)</span>
+    <span class="n">counter2</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;counter2&quot;</span><span class="p">,</span> <span class="n">Counter</span><span class="p">)</span>
+    <span class="n">printer</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;printer&quot;</span><span class="p">,</span> <span class="n">Printer</span><span class="p">)</span>
+    <span class="n">multiplier</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;multiplier&quot;</span><span class="p">,</span> <span class="n">Multiplier</span><span class="p">)</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">counter1</span><span class="o">.</span><span class="n">output</span><span class="p">,</span> <span class="n">multiplier</span><span class="o">.</span><span class="n">factor1</span><span class="p">)</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">counter2</span><span class="o">.</span><span class="n">output</span><span class="p">,</span> <span class="n">multiplier</span><span class="o">.</span><span class="n">factor2</span><span class="p">)</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">multiplier</span><span class="o">.</span><span class="n">product</span><span class="p">,</span> <span class="n">printer</span><span class="o">.</span><span class="n">input_</span><span class="p">)</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+</pre></div>
+</div>
+</div><div aria-labelledby="tab-7-d2l0aCB0eXBlIGhpbnRz" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-7-d2l0aCB0eXBlIGhpbnRz" name="d2l0aCB0eXBlIGhpbnRz" role="tabpanel" tabindex="0"><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+    <span class="n">env</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">Environment</span><span class="p">()</span>
+    <span class="n">counter1</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;counter1&quot;</span><span class="p">,</span> <span class="n">Counter</span><span class="p">)</span>
+    <span class="n">counter2</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;counter2&quot;</span><span class="p">,</span> <span class="n">Counter</span><span class="p">)</span>
+    <span class="n">printer</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;printer&quot;</span><span class="p">,</span> <span class="n">Printer</span><span class="p">)</span>
+    <span class="n">multiplier</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;multiplier&quot;</span><span class="p">,</span> <span class="n">Multiplier</span><span class="p">)</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">counter1</span><span class="o">.</span><span class="n">output</span><span class="p">,</span> <span class="n">multiplier</span><span class="o">.</span><span class="n">factor1</span><span class="p">)</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">counter2</span><span class="o">.</span><span class="n">output</span><span class="p">,</span> <span class="n">multiplier</span><span class="o">.</span><span class="n">factor2</span><span class="p">)</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">multiplier</span><span class="o">.</span><span class="n">product</span><span class="p">,</span> <span class="n">printer</span><span class="o">.</span><span class="n">input_</span><span class="p">)</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+</pre></div>
+</div>
+</div><div aria-labelledby="tab-7-ZGlhZ3JhbQ==" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-7-ZGlhZ3JhbQ==" name="ZGlhZ3JhbQ==" role="tabpanel" tabindex="0"><p><a class="bg-warning reference internal" href="../../_images/diagram_ports_squared2.png"><img alt="diagram square numbers" class="bg-warning align-center" src="../../_images/diagram_ports_squared2.png" style="width: 80%;" /></a></p>
+</div></div>
+<p>Independent of how the reactors are connected, the runtime analyzes the
+connections as well as the declared triggers and effects of reactions to ensure
+repeatable behavior. Concretely, the <code class="docutils literal notranslate"><span class="pre">multiply</span></code> reaction does not need to wait
+for inputs to arrive. The runtime ensures that any reactions that may have an
+effect on <code class="docutils literal notranslate"><span class="pre">multiply</span></code>’s triggers are executed first. Thus, the values and the
+<code class="docutils literal notranslate"><span class="pre">is_present</span></code> status of any trigger is guaranteed to be known when the handler
+executes.</p>
+<p>Finally, we may use delayed connections to offset the factors received by <code class="docutils literal notranslate"><span class="pre">multiplier</span></code>.</p>
+<div class="sphinx-tabs docutils container">
+<div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-8-cGxhaW4=" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-8-cGxhaW4=" name="cGxhaW4=" role="tab" tabindex="0">plain</button><button aria-controls="panel-8-d2l0aCB0eXBlIGhpbnRz" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-8-d2l0aCB0eXBlIGhpbnRz" name="d2l0aCB0eXBlIGhpbnRz" role="tab" tabindex="-1">with type hints</button><button aria-controls="panel-8-ZGlhZ3JhbQ==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-8-ZGlhZ3JhbQ==" name="ZGlhZ3JhbQ==" role="tab" tabindex="-1">diagram</button></div><div aria-labelledby="tab-8-cGxhaW4=" class="sphinx-tabs-panel group-tab" id="panel-8-cGxhaW4=" name="cGxhaW4=" role="tabpanel" tabindex="0"><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+    <span class="n">env</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">Environment</span><span class="p">()</span>
+    <span class="n">counter1</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;counter1&quot;</span><span class="p">,</span> <span class="n">Counter</span><span class="p">)</span>
+    <span class="n">counter2</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;counter2&quot;</span><span class="p">,</span> <span class="n">Counter</span><span class="p">)</span>
+    <span class="n">printer</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;printer&quot;</span><span class="p">,</span> <span class="n">Printer</span><span class="p">)</span>
+    <span class="n">multiplier</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;multiplier&quot;</span><span class="p">,</span> <span class="n">Multiplier</span><span class="p">)</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">counter1</span><span class="o">.</span><span class="n">output</span><span class="p">,</span> <span class="n">multiplier</span><span class="o">.</span><span class="n">factor1</span><span class="p">)</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span>
+        <span class="n">counter2</span><span class="o">.</span><span class="n">output</span><span class="p">,</span> <span class="n">multiplier</span><span class="o">.</span><span class="n">factor2</span><span class="p">,</span> <span class="n">delay</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">milliseconds</span><span class="o">=</span><span class="mi">200</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">multiplier</span><span class="o">.</span><span class="n">product</span><span class="p">,</span> <span class="n">printer</span><span class="o">.</span><span class="n">input_</span><span class="p">)</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+</pre></div>
+</div>
+</div><div aria-labelledby="tab-8-d2l0aCB0eXBlIGhpbnRz" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-8-d2l0aCB0eXBlIGhpbnRz" name="d2l0aCB0eXBlIGhpbnRz" role="tabpanel" tabindex="0"><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+    <span class="n">env</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">Environment</span><span class="p">()</span>
+    <span class="n">counter1</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;counter1&quot;</span><span class="p">,</span> <span class="n">Counter</span><span class="p">)</span>
+    <span class="n">counter2</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;counter2&quot;</span><span class="p">,</span> <span class="n">Counter</span><span class="p">)</span>
+    <span class="n">printer</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;printer&quot;</span><span class="p">,</span> <span class="n">Printer</span><span class="p">)</span>
+    <span class="n">multiplier</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;multiplier&quot;</span><span class="p">,</span> <span class="n">Multiplier</span><span class="p">)</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">counter1</span><span class="o">.</span><span class="n">output</span><span class="p">,</span> <span class="n">multiplier</span><span class="o">.</span><span class="n">factor1</span><span class="p">)</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span>
+        <span class="n">counter2</span><span class="o">.</span><span class="n">output</span><span class="p">,</span> <span class="n">multiplier</span><span class="o">.</span><span class="n">factor2</span><span class="p">,</span> <span class="n">delay</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">milliseconds</span><span class="o">=</span><span class="mi">200</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">multiplier</span><span class="o">.</span><span class="n">product</span><span class="p">,</span> <span class="n">printer</span><span class="o">.</span><span class="n">input_</span><span class="p">)</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+</pre></div>
+</div>
+</div><div aria-labelledby="tab-8-ZGlhZ3JhbQ==" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-8-ZGlhZ3JhbQ==" name="ZGlhZ3JhbQ==" role="tabpanel" tabindex="0"><p><a class="bg-warning reference internal" href="../../_images/diagram_ports_multiplier_delay.png"><img alt="diagram multiplier delayed" class="bg-warning align-center" src="../../_images/diagram_ports_multiplier_delay.png" style="width: 100%;" /></a></p>
+</div></div>
+<p>This produces the following output.</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>python<span class="w"> </span>ports.py
+<span class="go">printer received 3 at 0:00:00.200000</span>
+<span class="go">printer received 8 at 0:00:00.300000</span>
+<span class="go">printer received 15 at 0:00:00.400000</span>
+<span class="go">printer received 24 at 0:00:00.500000</span>
+<span class="go">printer received 35 at 0:00:00.600000</span>
+<span class="go">printer received 48 at 0:00:00.700000</span>
+<span class="go">printer received 63 at 0:00:00.800000</span>
+<span class="go">...</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="periodic_timers.html" class="btn btn-neutral float-left" title="Periodic Timers" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="programmable_timers.html" class="btn btn-neutral float-right" title="Programmable Timers" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Xronos Inc..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

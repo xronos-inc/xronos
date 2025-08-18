@@ -1,4 +1,4 @@
-set(CATCH2_VERSION "3.7.0" CACHE STRING "Catch2 version")
+set(CATCH2_VERSION "3.9.1" CACHE STRING "Catch2 version")
 option(CATCH2_FORCE_BUILD "Force building Catch2 from source" OFF)
 option(CATCH2_INSTALL "Add Catch2 to the install target" OFF)
 

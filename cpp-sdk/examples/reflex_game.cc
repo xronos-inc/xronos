@@ -1,8 +1,11 @@
 // SPDX-FileCopyrightText: Copyright (c) 2025 Xronos Inc.
 // SPDX-License-Identifier: BSD-3-Clause
 
+#include <atomic>
 #include <chrono>
 #include <cstdint>
+#include <cstdio>
+#include <iostream>
 #include <random>
 #include <string_view>
 #include <thread>
@@ -197,11 +200,14 @@ public:
   }
 };
 
+auto constexpr MIN_DELAY = std::chrono::seconds(2);
+auto constexpr MAX_DELAY = std::chrono::seconds(5);
+
 auto main() -> int {
   sdk::Environment env{}; // Create a runtime environment
 
   // Instantiate reactors
-  RandomDelay delay{"delay", env.context(), std::chrono::seconds(2), std::chrono::seconds(5)};
+  RandomDelay delay{"delay", env.context(), MIN_DELAY, MAX_DELAY};
   KeyboardInput keyboard{"keyboard", env.context()};
   GameLogic logic{"logic", env.context()};
 

@@ -3,13 +3,17 @@
 
 #include "xronos/telemetry/otel/otel_metric_data_logger.hh"
 
+#include <variant>
+
 #include "common.hh"
+#include "opentelemetry/trace/tracer.h"
+#include "xronos/telemetry/metric.hh"
 
 using namespace xronos::telemetry;
 using namespace xronos::telemetry::otel;
 
 void OtelMetricDataLogger::record(const Metric& metric, MetricValue value) {
-  auto current_span = get_tracer()->GetCurrentSpan();
+  auto current_span = opentelemetry::trace::Tracer::GetCurrentSpan();
   if (!current_span->GetContext().IsValid()) {
     // Either tracing is disabled or there is no current span. The latter case
     // indicates user error, but it is nontrivial to distinguish between the

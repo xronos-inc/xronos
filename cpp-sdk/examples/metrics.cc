@@ -1,17 +1,13 @@
 // SPDX-FileCopyrightText: Copyright (c) 2025 Xronos Inc.
 // SPDX-License-Identifier: BSD-3-Clause
 
+#include <chrono> // IWYU pragma: keep
 #include <cstdint>
 #include <string>
 #include <string_view>
 #include <unordered_map>
 
 #include "xronos/sdk.hh"
-#include "xronos/sdk/context.hh"
-#include "xronos/sdk/element.hh"
-#include "xronos/sdk/environment.hh"
-#include "xronos/sdk/metric.hh"
-#include "xronos/sdk/reactor.hh"
 
 namespace sdk = xronos::sdk;
 using namespace std::literals::chrono_literals;

@@ -8,13 +8,11 @@
 #include <atomic>
 #include <cstdint>
 #include <functional>
-#include <memory>
-#include <set>
-#include <sstream>
 #include <string>
+#include <string_view>
 
-#include "fwd.hh"
 #include "xronos/runtime/environment.hh"
+#include "xronos/runtime/fwd.hh"
 
 namespace xronos::runtime {
 
@@ -71,7 +69,7 @@ public:
   virtual void visit(const Reactor& reactor) = 0;
   virtual void visit(const Reaction& reaction) = 0;
   virtual void visit(const BaseAction& action) = 0;
-  virtual void visit(const BasePort& port) = 0;
+  virtual void visit(const Port& port) = 0;
   virtual void visit(const Timer& timer) = 0;
   virtual void visit(const StartupTrigger& startup) = 0;
   virtual void visit(const ShutdownTrigger& shutdown) = 0;

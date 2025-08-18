@@ -7,6 +7,9 @@
 #include "xronos/runtime/misc_element.hh"
 #include "xronos/runtime/reactor.hh"
 #include <cstdint>
+#include <functional>
+#include <string>
+#include <string_view>
 #include <variant>
 
 namespace xronos::telemetry {

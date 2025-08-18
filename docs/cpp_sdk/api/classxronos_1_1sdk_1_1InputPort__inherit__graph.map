@@ -1,0 +1,9 @@
+<map id="xronos::sdk::InputPort&lt; T &gt;" name="xronos::sdk::InputPort&lt; T &gt;">
+<area shape="rect" id="Node000001" title="A reactor element for receiving messages from other reactors." alt="" coords="91,152,294,177"/>
+<area shape="rect" id="Node000002" href="$classxronos_1_1sdk_1_1Port.html" title="Base class for reactor elements that may send or receive messages." alt="" coords="108,79,277,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="195,118,195,152,190,152,190,118"/>
+<area shape="rect" id="Node000003" href="$classxronos_1_1sdk_1_1Element.html" title="Base class for all reactor elements." alt="" coords="5,5,164,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="115,36,176,76,174,81,112,40"/>
+<area shape="rect" id="Node000004" href="$classxronos_1_1sdk_1_1EventSource.html" title="Interface implemented by reactor elements that can be used as triggers of reactions." alt="" coords="189,5,413,31"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="273,40,212,81,209,76,271,36"/>
+</map>

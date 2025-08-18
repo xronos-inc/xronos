@@ -9,9 +9,11 @@
 #include "xronos/runtime/gen/config.hh"
 
 #include <cassert>
-#include <sstream>
+#include <cstddef>
 #include <stdexcept>
 #include <string>
+#include <string_view>
+#include <type_traits>
 
 #ifdef RUNTIME_VALIDATE
 constexpr bool runtime_validation = true;

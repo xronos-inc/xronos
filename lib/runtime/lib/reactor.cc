@@ -4,13 +4,18 @@
 
 #include "xronos/runtime/reactor.hh"
 
+#include <memory>
+#include <string_view>
+#include <utility>
+
 #include "xronos/runtime/action.hh"
 #include "xronos/runtime/assert.hh"
 #include "xronos/runtime/environment.hh"
 #include "xronos/runtime/logging.hh"
-#include "xronos/runtime/port.hh"
+#include "xronos/runtime/logical_time.hh"
 #include "xronos/runtime/reaction.hh"
 #include "xronos/runtime/reactor_element.hh"
+#include "xronos/runtime/time.hh"
 
 namespace xronos::runtime {
 

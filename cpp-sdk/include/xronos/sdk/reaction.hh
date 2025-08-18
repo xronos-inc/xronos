@@ -1,38 +1,37 @@
 // SPDX-FileCopyrightText: Copyright (c) 2025 Xronos Inc.
 // SPDX-License-Identifier: BSD-3-Clause
 
-/**
- * @file
- *
- * @brief Class definitions related to reactions.
- */
+/** @file */
 
 #ifndef XRONOS_SDK_REACTION_HH
 #define XRONOS_SDK_REACTION_HH
 
 #include <cassert>
-#include <string_view>
+#include <cstddef>
+#include <cstdint>
+#include <functional>
 #include <type_traits>
 
-#include "xronos/sdk/context.hh"
 #include "xronos/sdk/element.hh"
 #include "xronos/sdk/event_source.hh"
 #include "xronos/sdk/fwd.hh"
 #include "xronos/sdk/metric.hh"
 #include "xronos/sdk/port.hh"
+#include "xronos/sdk/programmable_timer.hh"
 #include "xronos/sdk/reactor.hh"
 #include "xronos/sdk/time.hh"
 #include "xronos/sdk/value_ptr.hh"
 
-#include "xronos/runtime/action.hh"
-#include "xronos/runtime/port.hh"
+/**
+ * @defgroup effects effects Reaction effect classes.
+ */
 
 namespace xronos::sdk {
 /**
- * @brief Opaque object used by reactions at construction time.
+ * Opaque data type used for constructing reaction @ref
+ * xronos::sdk::BaseReaction::Trigger "triggers" and @ref effects.
  *
- * @details This object can be used as arguments to the constructors of the
- * reaction's triggers, sources, and effects.
+ * Use BaseReaction::context() to obtain an instance of this class.
  */
 class ReactionContext {
 private:
@@ -46,49 +45,62 @@ private:
 };
 
 /**
- * @brief Non-template base class for reactions.
+ * Base class for implementing reactions.
  *
- * @details Application code should inherit from `Reaction` instead of directly
- * from `BaseReaction`.
+ * In the Xronos SDK, reactions define the behavior of a reactor. Reactions have
+ * one or more @ref Trigger "triggers" and may have @ref effects. The reaction's
+ * behavior is defined by overriding the handler() method, which is invoked
+ * automatically for any event received on the triggers.
+ *
+ * Typically, user reactions should not inherit from BaseReaction directly and
+ * use Reaction instead as it provides additional tools for accessing other
+ * reactor elements and reactor state.
+ *
+ * Note that reaction classes may not be instantiated directly. Use the
+ * Reactor::add_reaction() factory method instead.
+ *
+ * @see Reaction
+ * @see Reactor::add_reaction()
  */
 class BaseReaction : public Element {
 public:
   /**
-   * @internal
-   * @brief Constructor that should not be invoked directly by application code.
+   * Constructor.
    *
-   * @details Application code should instead use `Reaction::add_reaction` to
-   * instantiate reactions.
+   * Since ReactionProperties has no public constructor, this constructor cannot
+   * be invoked directly. Use the Reactor::add_reaction() factory method
+   * instead.
    */
   BaseReaction(ReactionProperties properties);
 
 protected:
   /**
-   * @brief Get the context object that is needed to construct the reaction's
-   * members.
+   * Get a context object for constructing reaction @ref
+   * xronos::sdk::BaseReaction::Trigger "triggers" and @ref effects.
    *
-   * @return ReactionContext This reaction's initialization context.
+   * @returns This reaction's context.
    */
   [[nodiscard]] auto context() noexcept -> ReactionContext;
 
   /**
-   * @brief Access to a reactor element that triggers the reaction and that it
-   * may read.
+   * Declares a reaction trigger and provides read access to the triggering
+   * EventSource.
    *
-   * @tparam T The type of value carried by the trigger.
+   * @tparam T The value type associated with events received on the triggering
+   * event source.
    */
   template <class T> class Trigger {
   public:
     /**
-     * @brief Construct a new Trigger object.
+     * Constructor.
      *
-     * @details Constructing a Trigger object ensures that the corresponding
-     * reaction is invoked for every event on the given event source.
+     * Constructing a Trigger automatically registers the specified event source
+     * with the reaction, causing the reaction handler to run whenever the event
+     * source emits an event.
      *
-     * @param trigger An event source of the containing reactor, which can be
-     * obtained using the `Reaction::self` method.
-     * @param context The current reaction's initialization context, which can
-     * be obtained using the `BaseReaction::context` method.
+     * @param trigger An EventSource source that should trigger the reaction.
+     * @param context Context of the reaction the trigger is declared for. Can
+     * be obtained using context().
      */
     Trigger(const EventSource<T>& trigger, ReactionContext context)
         : trigger_{trigger} {
@@ -96,10 +108,10 @@ protected:
     }
 
     /**
-     * @brief Get the value of a currently present event.
+     * Get the value of a currently present event.
      *
-     * @return ImmutableValuePtr<T> A pointer to the current value of the event
-     * source, or `nullptr` if there is no present event.
+     * @returns A pointer to the value of the current event, or `nullptr` if there
+     * is no current event (is_present() is false).
      */
     [[nodiscard]] auto get() const noexcept -> ImmutableValuePtr<T>
       requires(!std::is_same_v<T, void>)
@@ -108,9 +120,9 @@ protected:
     }
 
     /**
-     * @brief Check if an event is present at the current timestamp.
+     * Check if an event is present at the current timestamp.
      *
-     * @return bool `true` if an event is present, `false` otherwise.
+     * @returns `true` if an event is present, `false` otherwise.
      */
     [[nodiscard]] auto is_present() const noexcept -> bool { return trigger_.get().is_present(); }
 
@@ -119,31 +131,32 @@ protected:
   };
 
   /**
-   * @brief Access to a port that this reaction may write to.
+   * Allows a reaction to write data to a given Port.
    *
-   * @tparam T The type of value carried by the port.
+   * @tparam T The value type associated with the port.
+   * @ingroup effects
    */
   template <class T> class PortEffect {
   public:
     /**
-     * @brief Construct a new `PortEffect` object.
+     * Constructor.
      *
-     * @param port An port of the containing reactor, which can be
-     * obtained using the `Reaction::self` method.
-     * @param context The current reaction's initialization context, which can
-     * be obtained using the `BaseReaction::context` method.
+     * @param port The Port for which the reaction should have write access.
+     * @param context The context of the reaction the effect is declared for.
+     * Can be obtained using context().
      */
     PortEffect(Port<T>& port, ReactionContext context)
         : port_{port} {
-      context.reaction_instance().declare_antidependency(&detail::get_runtime_instance<runtime::BasePort>(port));
+      detail::runtime_port::register_as_effect_of(port, context.reaction_instance());
     }
 
     /**
-     * @brief Set the port value and send a message to connected ports.
-
-     * @details Can be called multiple times, but at each time at most one value
-     * is sent to connected ports. When called repeatedly at a given timestamp,
-     * the previous value is overwritten.
+     * Write a value to the port sending a message to connected ports.
+     *
+     * May be called multiple times, but at most one value is sent to connected
+     * ports. When called repeatedly at a given timestamp, the previous value is
+     * overwritten.
+     *
      * @param value_ptr A pointer to the value to be written to the referenced
      * port.
      */
@@ -162,6 +175,8 @@ protected:
     }
     /**
      * @overload
+     *
+     * @details Copy constructs the value using the given lvalue reference.
      */
     template <class U>
     void set(const U& value)
@@ -171,6 +186,8 @@ protected:
     }
     /**
      * @overload
+     *
+     * @details Move constructs the value using the given rvalue reference.
      */
     template <class U>
     void set(U&& value)
@@ -180,7 +197,10 @@ protected:
     }
 
     /**
-     * @brief Set the port without sending any value to connected ports.
+     * @overload
+     *
+     * @details Set the port without sending a value. This is only available if
+     * `T` is `void`.
      */
     void set()
       requires(std::is_same_v<T, void>)
@@ -195,9 +215,9 @@ protected:
     = delete;
 
     /**
-     * @brief Get a previously set value.
+     * Get a previously set value.
      *
-     * @return ImmutableValuePtr<T> A pointer to the current value of the port
+     * @returns A pointer to the current value of the port
      * or `nullptr` if no value was set at the current timestamp.
      */
     [[nodiscard]] auto get() const noexcept -> ImmutableValuePtr<T>
@@ -207,9 +227,9 @@ protected:
     }
 
     /**
-     * @brief Check if an event is present at the current timestamp.
+     * Check if an event is present at the current timestamp.
      *
-     * @return bool `true` if an event is present, `false` otherwise.
+     * @returns `true` if an event is present, `false` otherwise.
      */
     [[nodiscard]] auto is_present() const noexcept -> bool { return port_.get().is_present(); }
 
@@ -218,30 +238,30 @@ protected:
   };
 
   /**
-   * @brief Access to a programmable timer that this reaction may schedule
-   * events with.
+   * Allows a reaction to schedule future events using a ProgrammableTimer.
    *
-   * @tparam T The type of value carried by the programmable timer.
+   * @tparam T The value type associated with the programmable timer.
+   * @ingroup effects
    */
   template <class T> class ProgrammableTimerEffect {
   public:
     /**
-     * @brief Construct a new `ProgrammableTimerEffect` object.
+     * Constructor.
      *
-     * @param timer A programmable timer of the containing reactor, which can be
-     * obtained using the `Reaction::self` method.
-     * @param context The current reaction's initialization context, which can
-     * be obtained using the `BaseReaction::context` method.
+     * @param timer The ProgrammableTimer for which the reaction should have
+     * write access.
+     * @param context The context of the reaction the effect is declared for.
+     * Can be obtained using context().
      */
     ProgrammableTimerEffect(ProgrammableTimer<T>& timer, ReactionContext context)
         : event_{timer} {
-      context.reaction_instance().declare_schedulable_action(&detail::get_runtime_instance<runtime::BaseAction>(timer));
+      detail::runtime_programmable_timer::register_as_effect_of(timer, context.reaction_instance());
     }
 
     /**
-     * @brief Schedule a future timer event.
+     * Schedule a future event.
      *
-     * @param value_ptr The value to be associated with the event occurrence.
+     * @param value_ptr The value to be associated with the future event occurrence.
      * @param delay The time to wait until the new event is processed.
      */
     void schedule(const ImmutableValuePtr<T>& value_ptr, Duration delay = Duration::zero())
@@ -259,6 +279,8 @@ protected:
     }
     /**
      * @overload
+     *
+     * @details Copy constructs the value using the given lvalue reference.
      */
     template <class U>
     void schedule(const U& value, Duration delay = Duration::zero())
@@ -268,6 +290,8 @@ protected:
     }
     /**
      * @overload
+     *
+     * @details Move constructs the value using the given rvalue reference.
      */
     template <class U>
     void schedule(U&& value, Duration delay = Duration::zero())
@@ -277,9 +301,10 @@ protected:
     }
 
     /**
-     * @brief Schedule a future timer event.
+     * @overload
      *
-     * @param delay The time to wait until the new event is processed.
+     * @details Schedule an event without an associated value. This is only
+     * available if `T` is `void`.
      */
     void schedule(Duration delay = Duration::zero())
       requires(std::is_same_v<T, void>)
@@ -287,7 +312,7 @@ protected:
       event_.get().schedule(delay);
     }
 
-    // Disambiguate set(0) by explicitly deleting set(nullptr_t)
+    // Disambiguate schedule(0) by explicitly deleting schedule(nullptr_t)
     template <typename V>
     void schedule(V, Duration delay = Duration::zero())
       requires(std::is_same_v<V, std::nullptr_t>)
@@ -298,21 +323,32 @@ protected:
   };
 
   /**
-   * @brief Access to a metric that can be recorded.
+   * Allows a reaction to record telemetry data using a given Metric.
+   *
+   * @ingroup effects
    */
   class MetricEffect {
   public:
     /**
-     * @brief Construct a new `MetricEffect` object.
+     * Constructor.
      *
-     * @param metric A metric of the containing reactor, which can be obtained
-     * using the `Reaction::self` method.
-     * @param context The current reaction's initialization context, which can
-     * be obtained using the `BaseReaction::context` method.
+     * @param metric The Metric for which the reaction should be able to record data.
+     * @param context The context of the reaction the effect is declared for.
+     * Can be obtained using context().
      */
     MetricEffect(Metric& metric, [[maybe_unused]] ReactionContext context)
         : metric_{metric} {}
+
+    /**
+     * Record a value at the current timestamp.
+     *
+     * @param value The value to record.
+     */
     void record(double value) noexcept { metric_.get().record(value); }
+
+    /**
+     * @overload
+     */
     void record(std::int64_t value) noexcept { metric_.get().record(value); }
 
   private:
@@ -321,31 +357,26 @@ protected:
 
 private:
   /**
-   * @brief The body of the reaction.
+   * The reaction handler.
    *
-   * @details This method should be overridden by application code to provide
-   * the functionality of the reaction. This handler will be called by the
-   * framework when the reaction is triggered.
+   * This method is invoked automatically in response to triggering events. User
+   * code must override this method to define a reaction's behavior.
    */
   virtual void handler() = 0;
 };
 
 /**
- * @brief Reaction base class that is intended to be inherited by application
- * code.
+ * Reaction base class with reactor access.
  *
- * @details Implementors should provide reaction functionality by overriding the
- * `BaseReaction::handler` method and should declare the triggers, sources, and
- * effects that the reaction depends on as members of the derived class.
+ * In addition to BaseReaction, this class provides fully-typed access to the
+ * owning reactor and all its state and elements.
+ *
+ * @tparam R Type of the owning reactor. This must be a subclass of Reactor.
  */
 template <class R> class Reaction : public BaseReaction {
 public:
   /**
-   * @internal
-   * @brief Constructor that should not be invoked directly by application code.
-   *
-   * @details Application code should instead use `Reactor::add_reaction` to
-   * instantiate reactions.
+   * @copydoc BaseReaction::BaseReaction
    */
   Reaction(ReactionProperties properties)
       : BaseReaction(properties)
@@ -353,10 +384,14 @@ public:
 
 protected:
   /**
-   * @brief Get a reference to the reaction's containing reactor.
+   * Get a reference to the owning reactor.
    *
-   * @details This reference is valid at reaction construction time.
-   * @return R& A reference to the reaction's containing reactor.
+   * The reactor reference can be used for referencing other elements of the
+   * reactor when declaring @ref xronos::sdk::BaseReaction::Trigger "triggers"
+   * and @ref effects. It can also be used in the reaction @ref handler for
+   * accessing the reactor's state.
+   *
+   * @returns A reference to the owning reactor.
    */
   [[nodiscard]] auto self() noexcept -> R& { return self_; }
 

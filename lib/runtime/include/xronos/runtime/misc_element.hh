@@ -4,6 +4,9 @@
 #ifndef XRONOS_RUNTIME_MISC_ELEMENT_HH
 #define XRONOS_RUNTIME_MISC_ELEMENT_HH
 
+#include <string_view>
+
+#include "xronos/runtime/fwd.hh"
 #include "xronos/runtime/reactor_element.hh"
 
 namespace xronos::runtime {

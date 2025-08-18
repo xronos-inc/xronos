@@ -3,6 +3,8 @@
 
 from typing import Callable
 
+import pytest
+
 import xronos
 
 
@@ -37,9 +39,7 @@ def main(fast: bool = False) -> None:
 def test_exception_causality_cycle() -> None:
     env = xronos.Environment(fast=True)
 
-    import pytest  # pyright: ignore
-
-    with pytest.raises(  # pyright: ignore
+    with pytest.raises(
         xronos.ValidationError,
         match=r"There is a loop in the dependency graph. Graph was written to "
         "/tmp/reactor_dependency_graph.dot",

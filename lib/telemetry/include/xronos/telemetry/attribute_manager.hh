@@ -5,10 +5,13 @@
 #define XRONOS_TELEMETRY_ATTRIBUTE_MANAGER_HH
 
 #include <cstdint>
+#include <functional>
 #include <mutex>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <unordered_map>
+#include <utility>
 #include <variant>
 
 #include "xronos/runtime/reactor_element.hh"
@@ -60,14 +63,14 @@ public:
   // auto get_attributes(const runtime::ReactorElement& element) const -> AttributeMap;
 
   template <class MapType, class ValueType>
-  auto
-  get_attributes_converted(const runtime::ReactorElement& element,
-                           std::function<ValueType(const AttributeValue&)> convert) const -> std::optional<MapType>;
+  auto get_attributes_converted(const runtime::ReactorElement& element,
+                                const std::function<ValueType(const AttributeValue&)>& convert) const
+      -> std::optional<MapType>;
 };
 
 template <class MapType, class ValueType>
 auto AttributeManager::get_attributes_converted(const runtime::ReactorElement& element,
-                                                std::function<ValueType(const AttributeValue&)> convert) const
+                                                const std::function<ValueType(const AttributeValue&)>& convert) const
     -> std::optional<MapType> {
   std::lock_guard<std::mutex> lock{mutex_};
   auto iterator = attribute_maps_.find(element.uid());
@@ -83,7 +86,7 @@ auto AttributeManager::get_attributes_converted(const runtime::ReactorElement& e
 
 template <class MapType, class ValueType>
 void get_attributes_recursive(const AttributeManager& attribute_manager, const runtime::ReactorElement& element,
-                              MapType& attributes, std::function<ValueType(const AttributeValue&)> convert) {
+                              MapType& attributes, const std::function<ValueType(const AttributeValue&)>& convert) {
   // If there is an attribute map for the given element, insert all attributes in `attributes`.
   // This only copies attributes for keys that are not already defined in `attributes`. By walking
   // the tree from the leaves to the root, we ensure that leaves take precedence.
@@ -103,9 +106,9 @@ void get_attributes_recursive(const AttributeManager& attribute_manager, const r
 
 template <class MapType, class ValueType>
 auto get_merged_attributes(const AttributeManager& attribute_manager, const runtime::ReactorElement& element,
-                           std::function<ValueType(const AttributeValue&)> convert) -> MapType {
+                           const std::function<ValueType(const AttributeValue&)>& convert) -> MapType {
   MapType attributes{};
-  get_attributes_recursive<MapType, ValueType>(attribute_manager, element, attributes, convert);
+  get_attributes_recursive<MapType, ValueType>(attribute_manager, element, attributes, std::move(convert));
   return attributes;
 }
 

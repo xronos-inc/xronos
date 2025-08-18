@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <source_location>
 #include <string>
+#include <string_view>
 
 namespace xronos::sdk::detail {
 
@@ -19,7 +20,10 @@ struct SourceLocationView {
   std::uint32_t end_column{0};
 
   [[nodiscard]] static auto from_std(std::source_location location) -> SourceLocationView {
-    return SourceLocationView{location.file_name(), location.function_name(), location.line(), location.line()};
+    return {.file = location.file_name(),
+            .function = location.function_name(),
+            .start_line = location.line(),
+            .end_line = location.line()};
   }
 };
 

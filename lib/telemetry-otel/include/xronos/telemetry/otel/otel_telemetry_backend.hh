@@ -4,11 +4,16 @@
 #ifndef XRONOS_TELEMETRY_OTEL_OTEL_TELEMETRY_BACKEND_HH
 #define XRONOS_TELEMETRY_OTEL_OTEL_TELEMETRY_BACKEND_HH
 
-#include "otel_metric_data_logger.hh"
-#include "otel_runtime_data_logger.hh"
-#include "xronos/telemetry/telemetry.hh"
 #include <cstdint>
+#include <string>
 #include <string_view>
+
+#include "xronos/runtime/data_logger.hh"
+#include "xronos/telemetry/attribute_manager.hh"
+#include "xronos/telemetry/metric.hh"
+#include "xronos/telemetry/otel/otel_metric_data_logger.hh"
+#include "xronos/telemetry/otel/otel_runtime_data_logger.hh"
+#include "xronos/telemetry/telemetry.hh"
 
 namespace xronos::telemetry::otel {
 

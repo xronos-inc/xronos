@@ -4,11 +4,11 @@
 #
 #    pip-compile dev-requirements.in
 #
-auditwheel==6.3.0
+auditwheel==6.4.2
     # via -r dev-requirements.in
 iniconfig==2.1.0
     # via pytest
-mypy==1.15.0
+mypy==1.17.1
     # via -r dev-requirements.in
 mypy-extensions==1.1.0
     # via mypy
@@ -18,26 +18,30 @@ packaging==25.0
     # via
     #   auditwheel
     #   pytest
-patchelf==0.17.2.2
+patchelf==0.17.2.4
     # via -r dev-requirements.in
+pathspec==0.12.1
+    # via mypy
 pluggy==1.6.0
     # via pytest
 pyelftools==0.32
     # via auditwheel
-pyright==1.1.400
+pygments==2.19.2
+    # via pytest
+pyright==1.1.403
     # via -r dev-requirements.in
-pytest==8.3.5
+pytest==8.4.1
     # via
     #   -r dev-requirements.in
     #   pytest-mock
     #   pytest-subprocess
-pytest-mock==3.14.0
+pytest-mock==3.14.1
     # via -r dev-requirements.in
 pytest-subprocess==1.5.3
     # via -r dev-requirements.in
-ruff==0.11.10
+ruff==0.12.9
     # via -r dev-requirements.in
-typing-extensions==4.13.2
+typing-extensions==4.14.1
     # via
     #   mypy
     #   pyright

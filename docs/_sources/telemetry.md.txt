@@ -2,28 +2,62 @@
 
 # Telemetry
 
-xronos provides several mechanisms for collecting telemetry data to gain insight
+The Xronos SDKs provide several mechanisms for collecting telemetry data to gain insight
 into an application.
 
 ## Enabling Telemetry
 
 An application needs to explicitly enable the collection of telemetry data by
-calling {func}`~xronos.Environment.enable_telemetry` on the environment.
-By default, this records trace data for each reaction handler that executes.
+calling `enable_telemetry()`
+({textref}`Python<xronos.Environment.enable_telemetry>`,
+{cpp-sdk}`C++<xronos::sdk::Environment::enable_telemetry>`)
+on the environment .
+This records trace data for each reaction handler that executes and collects all data recorded using {ref}`metrics`.
 
-For instance, you can modify the {ref}`hello_world` example like shown below.
+For instance, you can modify the "Hello, World!" ({ref}`Python <py_hello_world>`, {ref}`C++ <cpp_hello_world>`) example like shown below.
 
-```{literalinclude} _examples/hello_telemetry.py
+
+`````{tabs}
+````{group-tab} Python
+```{literalinclude} python_sdk/_examples/hello_telemetry.py
 :pyobject: main
+:emphasize-lines: 4
 ```
+````
+```` {group-tab} C++
+```{code-block} cpp
+:emphasize-lines: 4
+
+auto main() -> int {
+  sdk::Environment env{};
+  HelloWorld hello_world{"hello_world", env.context()};
+  env.enable_telemetry();
+  env.execute();
+  return 0;
+}
+```
+````
+`````
 
 Then execute the program.
 
+`````{tabs}
+````{group-tab} Python
 ```console
 $ python hello.py
 Hello, World!
 [Error] File: /xronos/xronos-telemetry/build/_deps/opentelemetry-cpp-src/exporters/otlp/src/otlp_grpc_exporter.cc:114 [OTLP TRACE GRPC Exporter] Export() failed with status_code: "UNAVAILABLE" error_message: "failed to connect to all addresses; last error: UNKNOWN: ipv4:127.0.0.1:4317: Failed to connect to remote host: connect: Connection refused (111)"
 ```
+````
+````{group-tab} C++
+```console
+$ cmake --build build --target hello
+$ ./build/hello
+Hello, World!
+[Error] File: /xronos/xronos-telemetry/build/_deps/opentelemetry-cpp-src/exporters/otlp/src/otlp_grpc_exporter.cc:114 [OTLP TRACE GRPC Exporter] Export() failed with status_code: "UNAVAILABLE" error_message: "failed to connect to all addresses; last error: UNKNOWN: ipv4:127.0.0.1:4317: Failed to connect to remote host: connect: Connection refused (111)"
+```
+````
+`````
 
 This prints an error because we ran the program with telemetry enabled, but did
 not provide an endpoint for receiving the telemetry data. See {ref}`dashboard`
@@ -33,14 +67,14 @@ visualizing telemetry data.
 (attributes)=
 ## Attributes
 
-All elements within the xronos framework may be annotated with attributes. The
+All elements within the Xronos SDK may be annotated with attributes. The
 attributes provide a mechanism for labeling the recorded data and provide a
 mechanism for filtering the telemetry data in the {ref}`dashboard <dashboard>`.
 By default, the following attributes are recorded:
 
-- `host.name`: Name of the host executing the xronos program.
-- `process.pid`: The process ID of the running xronos program.
-- `service.name`: Name of the application as given provided in the call to {func}`~xronos.Environment.enable_telemetry`.
+- `host.name`: Name of the host executing the Xronos program.
+- `process.pid`: The process ID of the running Xronos program.
+- `service.name`: Name of the application as given provided in the call to `xronos.Environment.enable_telemetry()`.
 - `xronos.fqn`: Fully qualified name of the element that produces telemetry data.
 - `xronos.name`: Name of the element that produces telemetry data.
 - `xronos.element_type`: Type of the element that produces telemetry data (e.g., "reactor", "reaction", "metric")
@@ -49,8 +83,8 @@ By default, the following attributes are recorded:
 This set of attributes is sufficient to uniquely identify the origin of each
 datapoint. However, you may specify additional attributes that will help you
 to better identify the data you are looking for. For this, each element
-has an {func}`~xronos.Reactor.add_attribute` and
-{func}`~xronos.Reactor.add_attributes` method.
+has an `add_attribute()` method ({textref}`Python <xronos.Reactor.add_attribute>`, {cpp-sdk}`C++ <xronos::sdk::Element::add_attribute>`) for adding a single attribute and
+an `add_attributes()` method for adding multiple attributes at once.
 
 Each element inherits all attributes of the reactor that it is contained in. Consider
 the following simplified example program. It shows the structure of a control
@@ -59,12 +93,67 @@ arms](https://en.wikipedia.org/wiki/Delta_robot), where each arm consists of 3
 motors.
 
 `````{tabs}
-````{group-tab} plain
-```{literalinclude} _examples/attributes.py
+````{group-tab} Python
+```{literalinclude} python_sdk/_examples/attributes_hints.py
 ```
 ````
-````{group-tab} with type hints
-```{literalinclude} _examples/attributes_hints.py
+````{group-tab} C++
+```cpp
+#include <string>
+#include <string_view>
+
+#include "xronos/sdk.hh"
+
+namespace sdk = xronos::sdk;
+
+class Motor : public sdk::Reactor {
+public:
+  Motor(std::string_view name, sdk::Context context)
+      : sdk::Reactor{name, context} {
+    add_attribute("motor", std::string{name});
+  }
+
+private:
+  void assemble() final {}
+};
+
+class DeltaArm : public sdk::Reactor {
+public:
+  DeltaArm(std::string_view name, sdk::Context context)
+      : sdk::Reactor{name, context} {
+    add_attribute("arm", std::string{name});
+  }
+
+private:
+  Motor a{"A", context()};
+  Motor b{"B", context()};
+  Motor c{"C", context()};
+
+  void assemble() final {}
+};
+
+class PickAndPlaceRobot : public sdk::Reactor {
+public:
+  using Reactor::Reactor;
+
+private:
+  DeltaArm arm1{"Arm1", context()};
+  DeltaArm arm2{"Arm2", context()};
+
+  void assemble() final {}
+};
+
+auto main() -> int {
+  sdk::Environment env{};
+  env.enable_telemetry();
+
+  PickAndPlaceRobot pick_and_place{"pick_and_place", env.context()};
+  pick_and_place.add_attribute("location", "factory1");
+
+  env.execute();
+
+  return 0;
+}
 ```
 ````
 ````{group-tab} diagram
@@ -93,42 +182,3 @@ Note that the same attribute may not be added twice for the same element. Once
 an attribute is added, its value cannot be changed. However, it is possible for
 contained elements to overwrite attributes that are defined higher in the
 reactor hierarchy.
-
-(metrics)=
-## Metrics
-
-Metrics provide a convenient mechanism for recording information about the
-system's state. Metrics are declared and used similarly to all other reactor
-elements. A {class}`~xronos.MetricDeclaration` can be used to declare a metric
-as part of a reactor. Consider the following example, which extends the `Motor`
-reactor from above so that it has a metric `_current`, which is used to record
-the current measured on the motor.
-
-`````{tabs}
-````{group-tab} plain
-```{literalinclude} _examples/metrics.py
-:pyobject: Motor
-```
-````
-````{group-tab} with type hints
-```{literalinclude} _examples/metrics_hints.py
-:pyobject: Motor
-```
-````
-````{group-tab} diagram
-![diagram clock](./_img/diagram_metrics_motor.png){.bg-warning w="40%" align=center}
-````
-`````
-
-When declaring a metric, a description needs to be provided and optionally a unit
-can be set. It is also possible to provide additional attributes via
-{class}`~xronos.MetricDeclaration` or by using
-{func}`~xronos.Metric.add_attribute` or {func}`~xronos.Metric.add_attributes` on
-the metric.
-
-In the example above, the `control` reaction executes every 500 microseconds. It
-reads and records the measured current using
-{func}`~xronos.MetricEffect.record`. The control algorithm is omitted from the
-example.
-
-See {ref}`queries` for instruction on how to visualize data recorded from metrics.
