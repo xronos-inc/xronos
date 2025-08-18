@@ -2,17 +2,56 @@
 Xronos Documentation
 ====================
 
+.. image:: https://img.shields.io/github/v/release/xronos-inc/xronos?logo=GitHub
+   :alt: GitHub Release
+   :target: https://github.com/xronos-inc/xronos/releases/latest
+.. image:: https://img.shields.io/pypi/v/xronos?logo=Python&logoColor=silver
+   :alt: PyPI - Version
+   :target: https://pypi.org/project/xronos/
+.. image:: https://img.shields.io/github/license/xronos-inc/xronos
+   :alt: GitHub License
+   :target: https://github.com/xronos-inc/xronos/blob/main/LICENSE
+.. image:: https://img.shields.io/pypi/pyversions/xronos?logo=Python&logoColor=silver
+   :alt: PyPI - Python Version
+   :target: https://pypi.org/project/xronos/
+
+Xronos is a lightweight framework for building deterministic, component-based
+robotics applications in Python and C++. It supports real-time telemetry, system
+visualization, and modular design with a focus on clarity, scalability, and
+correctness.
+
 
 .. toctree::
    :maxdepth: 1
-   :caption: Contents:
+   :caption: Python SDK
 
-   getting_started
-   reference_guide/index
+   python_sdk/getting_started
+   python_sdk/reference_guide/index
+   python_sdk/tutorials/index
+   python_sdk/api
+   python_sdk/lib
+
+.. toctree::
+   :maxdepth: 1
+   :caption: C++ SDK
+
+   cpp_sdk/getting_started
+   cpp_sdk/api/index
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Analysis & Visualization
+
    diagrams
    telemetry
    dashboard
-   tutorials/index
-   api
-   lib
 
+
+.. toctree::
+   :caption: Links
+   :hidden:
+
+   Xronos Inc. <https://www.xronos.com>
+   GitHub <https://www.github.com/xronos-inc/xronos>
+   Releases <https://www.github.com/xronos-inc/xronos/releases>
+   PyPi <https://pypi.org/project/xronos/>

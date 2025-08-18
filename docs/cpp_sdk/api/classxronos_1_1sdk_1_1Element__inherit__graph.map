@@ -1,0 +1,39 @@
+<map id="xronos::sdk::Element" name="xronos::sdk::Element">
+<area shape="rect" id="Node000001" title="Base class for all reactor elements." alt="" coords="5,308,164,333"/>
+<area shape="rect" id="Node000002" href="$classxronos_1_1sdk_1_1PhysicalEvent_3_01void_01_4.html" title="A reactor element for receiving events from external sources." alt="" coords="571,18,767,58"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="89,294,102,246,126,188,142,158,161,130,185,105,212,85,255,64,301,48,348,37,396,30,489,25,571,29,571,34,489,31,397,35,349,42,302,53,257,68,215,90,188,109,165,134,146,161,130,190,107,248,94,295"/>
+<area shape="poly" id="edge10_Node000001_Node000002" title=" " alt="" coords="87,294,98,241,121,176,137,142,158,111,182,83,212,61,260,38,311,21,363,11,416,5,516,5,600,15,599,21,516,11,416,10,364,16,312,26,262,43,215,66,186,87,162,114,142,145,126,178,103,242,92,295"/>
+<area shape="rect" id="Node000003" href="$classxronos_1_1sdk_1_1Port_3_01void_01_4.html" title="Base class for reactor elements that may send or receive messages." alt="" coords="598,139,741,179"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="120,297,163,268,212,242,314,209,419,188,517,175,597,167,598,172,517,180,420,193,316,215,214,247,165,273,123,302"/>
+<area shape="poly" id="edge15_Node000001_Node000003" title=" " alt="" coords="101,296,148,255,179,235,212,218,314,186,419,165,517,154,598,150,598,156,517,159,420,170,316,191,214,223,182,239,152,259,104,300"/>
+<area shape="rect" id="Node000004" href="$classxronos_1_1sdk_1_1ProgrammableTimer_3_01void_01_4.html" title="A reactor element for scheduling new events." alt="" coords="569,329,770,369"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="179,329,372,341,568,348,568,354,372,346,178,335"/>
+<area shape="poly" id="edge18_Node000001_Node000004" title=" " alt="" coords="179,316,372,323,569,334,568,340,372,328,178,321"/>
+<area shape="rect" id="Node000005" href="$classxronos_1_1sdk_1_1BaseReaction.html" title="Base class for implementing reactions." alt="" coords="233,435,428,460"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="109,341,155,382,184,402,214,420,249,432,247,437,212,424,181,407,152,386,106,345"/>
+<area shape="rect" id="Node000007" href="$classxronos_1_1sdk_1_1Metric.html" title="A reactor element for recording metric data to an external data base." alt="" coords="257,484,404,509"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="102,344,147,408,178,441,215,469,258,486,256,491,212,474,175,445,142,411,97,347"/>
+<area shape="rect" id="Node000008" href="$classxronos_1_1sdk_1_1PeriodicTimer.html" title="A reactor element that emits events in regular intervals." alt="" coords="233,533,428,559"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="97,345,114,384,139,432,172,479,215,519,238,531,236,536,212,523,168,483,134,435,109,387,92,347"/>
+<area shape="rect" id="Node000009" href="$classxronos_1_1sdk_1_1PhysicalEvent.html" title="A reactor element for receiving events from external sources." alt="" coords="213,88,448,113"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="90,294,102,257,122,212,150,168,186,131,224,111,226,116,190,135,154,171,127,215,107,259,95,295"/>
+<area shape="rect" id="Node000010" href="$classxronos_1_1sdk_1_1Port.html" title="Base class for reactor elements that may send or receive messages." alt="" coords="246,245,415,271"/>
+<area shape="poly" id="edge11_Node000001_Node000010" title=" " alt="" coords="138,302,187,287,268,268,270,273,189,293,140,307"/>
+<area shape="rect" id="Node000013" href="$classxronos_1_1sdk_1_1ProgrammableTimer.html" title="A reactor element for scheduling new events." alt="" coords="230,370,431,410"/>
+<area shape="poly" id="edge16_Node000001_Node000013" title=" " alt="" coords="141,335,189,349,256,367,254,373,187,354,140,340"/>
+<area shape="rect" id="Node000014" href="$classxronos_1_1sdk_1_1Reactor.html" title="An abstract reactor that can be subclassed to define new reactors." alt="" coords="253,583,408,608"/>
+<area shape="poly" id="edge19_Node000001_Node000014" title=" " alt="" coords="94,346,108,394,131,455,167,516,189,544,215,568,233,579,254,586,252,591,231,584,212,572,185,548,162,519,126,457,103,396,89,347"/>
+<area shape="rect" id="Node000015" href="$classxronos_1_1sdk_1_1Shutdown.html" title="A reactor element that emits an event right before the program shuts down." alt="" coords="246,632,415,657"/>
+<area shape="poly" id="edge20_Node000001_Node000015" title=" " alt="" coords="92,347,103,404,124,478,141,516,161,553,185,588,215,617,247,634,244,639,212,622,181,591,156,556,136,518,119,479,97,405,87,348"/>
+<area shape="rect" id="Node000016" href="$classxronos_1_1sdk_1_1Startup.html" title="A reactor element that emits an event when the program starts up." alt="" coords="255,681,407,707"/>
+<area shape="poly" id="edge21_Node000001_Node000016" title=" " alt="" coords="90,347,98,413,117,500,133,546,155,591,182,632,215,668,234,680,255,687,253,692,231,685,212,672,177,636,150,594,128,548,112,502,92,414,85,348"/>
+<area shape="rect" id="Node000006" href="$classxronos_1_1sdk_1_1Reaction.html" title="Reaction base class with reactor access." alt="" coords="569,435,770,460"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="442,445,568,445,568,450,442,450"/>
+<area shape="poly" id="edge9_Node000009_Node000002" title=" " alt="" coords="461,99,538,89,585,74,628,56,630,61,587,79,539,94,462,104"/>
+<area shape="poly" id="edge14_Node000010_Node000003" title=" " alt="" coords="417,240,538,210,623,177,625,182,539,215,419,245"/>
+<area shape="rect" id="Node000011" href="$classxronos_1_1sdk_1_1InputPort.html" title="A reactor element for receiving messages from other reactors." alt="" coords="568,229,771,255"/>
+<area shape="poly" id="edge12_Node000010_Node000011" title=" " alt="" coords="429,251,567,244,568,249,429,256"/>
+<area shape="rect" id="Node000012" href="$classxronos_1_1sdk_1_1OutputPort.html" title="A reactor element for sending messages to other reactors." alt="" coords="563,279,776,304"/>
+<area shape="poly" id="edge13_Node000010_Node000012" title=" " alt="" coords="429,265,563,278,562,284,429,270"/>
+<area shape="poly" id="edge17_Node000013_Node000004" title=" " alt="" coords="445,394,538,387,579,378,617,366,619,371,580,384,539,393,445,399"/>
+</map>

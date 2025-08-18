@@ -1,0 +1,16 @@
+<map id="xronos::sdk::PhysicalEvent&lt; void &gt;" name="xronos::sdk::PhysicalEvent&lt; void &gt;">
+<area shape="rect" id="Node000001" title="A reactor element for receiving events from external sources." alt="" coords="693,61,889,101"/>
+<area shape="rect" id="Node000002" href="$classxronos_1_1sdk_1_1Element.html" title="Base class for all reactor elements." alt="" coords="38,5,197,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="211,25,421,37,546,47,670,62,693,66,692,71,669,67,545,52,421,42,211,30"/>
+<area shape="poly" id="edge4_Node000001_Node000002" title=" " alt="" coords="211,8,421,14,546,23,670,38,755,58,754,63,669,43,545,29,421,19,211,13"/>
+<area shape="rect" id="Node000005" href="$classxronos_1_1sdk_1_1PhysicalEvent.html" title="A reactor element for receiving events from external sources." alt="" coords="344,68,579,93"/>
+<area shape="poly" id="edge7_Node000005_Node000002" title=" " alt="" coords="195,31,254,42,385,65,384,71,253,47,194,36"/>
+<area shape="rect" id="Node000003" href="$classxronos_1_1sdk_1_1EventSource_3_01void_01_4.html" title="Interface implemented by reactor elements that can be used as triggers of reactions." alt="" coords="368,118,555,158"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="568,125,718,98,719,103,569,131"/>
+<area shape="poly" id="edge5_Node000001_Node000003" title=" " alt="" coords="547,113,693,87,694,92,548,118"/>
+<area shape="rect" id="Node000004" href="$classxronos_1_1sdk_1_1EventSource.html" title="Interface implemented by reactor elements that can be used as triggers of reactions." alt="" coords="5,133,229,159"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="243,140,368,137,368,143,243,146"/>
+<area shape="poly" id="edge6_Node000001_Node000005" title=" " alt="" coords="593,78,693,78,693,83,593,83"/>
+<area shape="rect" id="Node000006" href="$classxronos_1_1sdk_1_1EventSource.html" title="Interface implemented by reactor elements that can be used as triggers of reactions." alt="" coords="5,84,229,109"/>
+<area shape="poly" id="edge8_Node000005_Node000006" title=" " alt="" coords="243,88,344,83,344,89,243,94"/>
+</map>

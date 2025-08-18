@@ -1,0 +1,33 @@
+<map id="xronos::sdk::EventSource&lt; T &gt;" name="xronos::sdk::EventSource&lt; T &gt;">
+<area shape="rect" id="Node000001" title="Interface implemented by reactor elements that can be used as triggers of reactions." alt="" coords="5,267,229,292"/>
+<area shape="rect" id="Node000002" href="$classxronos_1_1sdk_1_1PhysicalEvent.html" title="A reactor element for receiving events from external sources." alt="" coords="344,180,579,205"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="181,261,409,203,411,208,182,266"/>
+<area shape="rect" id="Node000004" href="$classxronos_1_1sdk_1_1Port.html" title="Base class for reactor elements that may send or receive messages." alt="" coords="377,76,546,101"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="152,257,436,99,438,104,155,262"/>
+<area shape="rect" id="Node000008" href="$classxronos_1_1sdk_1_1ProgrammableTimer.html" title="A reactor element for scheduling new events." alt="" coords="361,410,562,450"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="161,295,416,407,413,412,159,300"/>
+<area shape="rect" id="Node000010" href="$classxronos_1_1sdk_1_1EventSource_3_01void_01_4.html" title="Interface implemented by reactor elements that can be used as triggers of reactions." alt="" coords="368,295,555,335"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="243,290,368,303,368,308,242,295"/>
+<area shape="rect" id="Node000003" href="$classxronos_1_1sdk_1_1PhysicalEvent_3_01void_01_4.html" title="A reactor element for receiving events from external sources." alt="" coords="702,229,898,269"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="553,205,702,230,701,235,552,210"/>
+<area shape="rect" id="Node000005" href="$classxronos_1_1sdk_1_1InputPort.html" title="A reactor element for receiving messages from other reactors." alt="" coords="699,55,901,80"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="560,80,698,71,698,76,560,85"/>
+<area shape="rect" id="Node000006" href="$classxronos_1_1sdk_1_1OutputPort.html" title="A reactor element for sending messages to other reactors." alt="" coords="693,5,907,31"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="536,71,738,28,739,33,537,76"/>
+<area shape="rect" id="Node000007" href="$classxronos_1_1sdk_1_1Port_3_01void_01_4.html" title="Base class for reactor elements that may send or receive messages." alt="" coords="729,165,871,205"/>
+<area shape="poly" id="edge6_Node000004_Node000007" title=" " alt="" coords="521,103,729,162,727,167,519,108"/>
+<area shape="rect" id="Node000009" href="$classxronos_1_1sdk_1_1ProgrammableTimer_3_01void_01_4.html" title="A reactor element for scheduling new events." alt="" coords="699,393,901,433"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="559,450,614,455,669,451,693,443,734,430,735,435,694,449,670,457,614,460,559,455"/>
+<area shape="poly" id="edge10_Node000010_Node000003" title=" " alt="" coords="568,300,734,266,735,271,569,305"/>
+<area shape="poly" id="edge14_Node000010_Node000003" title=" " alt="" coords="540,290,701,257,702,262,541,295"/>
+<area shape="poly" id="edge11_Node000010_Node000007" title=" " alt="" coords="538,287,602,260,692,226,764,202,766,207,694,231,604,264,541,292"/>
+<area shape="poly" id="edge15_Node000010_Node000007" title=" " alt="" coords="496,286,602,236,692,202,727,191,729,196,694,207,604,240,498,291"/>
+<area shape="poly" id="edge12_Node000010_Node000009" title=" " alt="" coords="523,337,702,390,700,395,522,342"/>
+<area shape="poly" id="edge16_Node000010_Node000009" title=" " alt="" coords="569,335,752,390,751,395,567,340"/>
+<area shape="rect" id="Node000011" href="$classxronos_1_1sdk_1_1PeriodicTimer.html" title="A reactor element that emits events in regular intervals." alt="" coords="703,343,897,368"/>
+<area shape="poly" id="edge13_Node000010_Node000011" title=" " alt="" coords="569,325,703,341,702,347,568,331"/>
+<area shape="rect" id="Node000012" href="$classxronos_1_1sdk_1_1Shutdown.html" title="A reactor element that emits an event right before the program shuts down." alt="" coords="715,457,885,483"/>
+<area shape="poly" id="edge17_Node000010_Node000012" title=" " alt="" coords="505,341,590,392,642,419,694,442,734,455,732,460,692,447,639,424,588,397,502,345"/>
+<area shape="rect" id="Node000013" href="$classxronos_1_1sdk_1_1Startup.html" title="A reactor element that emits an event when the program starts up." alt="" coords="724,293,876,319"/>
+<area shape="poly" id="edge18_Node000010_Node000013" title=" " alt="" coords="569,310,724,305,724,311,569,315"/>
+</map>

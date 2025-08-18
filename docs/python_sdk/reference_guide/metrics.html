@@ -1,0 +1,212 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Metrics &mdash; xronos v0.5.0  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../_static/tabs.css?v=a5c4661c" />
+      <link rel="stylesheet" type="text/css" href="../../_static/fix_stacking.css?v=30aa6f93" />
+
+  
+    <link rel="shortcut icon" href="../../_static/logo.svg"/>
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../_static/copybutton.js?v=35a8b989"></script>
+      <script src="../../_static/tabs.js?v=3030b3cb"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Tutorials" href="../tutorials/index.html" />
+    <link rel="prev" title="Programmable Timers" href="programmable_timers.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            xronos v0.5.0
+              <img src="../../_static/logo_written.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Python SDK</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Reference Guide</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="periodic_timers.html">Periodic Timers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ports.html">Ports and Connections</a></li>
+<li class="toctree-l2"><a class="reference internal" href="programmable_timers.html">Programmable Timers</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Metrics</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/index.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html">API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../lib.html">Library Reactors</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">C++ SDK</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../cpp_sdk/getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cpp_sdk/api/index.html">API Documentation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Analysis &amp; Visualization</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../diagrams.html">Diagram View</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../telemetry.html">Telemetry</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../dashboard.html">Dashboard</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Links</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://www.xronos.com">Xronos Inc.</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://www.github.com/xronos-inc/xronos">GitHub</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://www.github.com/xronos-inc/xronos/releases">Releases</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://pypi.org/project/xronos/">PyPi</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">xronos v0.5.0</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Reference Guide</a></li>
+      <li class="breadcrumb-item active">Metrics</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="metrics">
+<span id="id1"></span><h1>Metrics<a class="headerlink" href="#metrics" title="Link to this heading"></a></h1>
+<p>Metrics provide a convenient mechanism for recording information about the
+system’s state. Metrics are declared and used similarly to all other reactor
+elements. A <a class="reference internal" href="../api.html#xronos.MetricDeclaration" title="xronos.MetricDeclaration"><code class="xref py py-class docutils literal notranslate"><span class="pre">MetricDeclaration</span></code></a> can be used to declare a metric
+as part of a reactor. Consider the following example, which extends the <code class="docutils literal notranslate"><span class="pre">Motor</span></code>
+reactor from above so that it has a metric <code class="docutils literal notranslate"><span class="pre">_current</span></code>, which is used to record
+the current measured on the motor.</p>
+<div class="sphinx-tabs docutils container">
+<div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-0-cGxhaW4=" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-0-cGxhaW4=" name="cGxhaW4=" role="tab" tabindex="0">plain</button><button aria-controls="panel-0-d2l0aCB0eXBlIGhpbnRz" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-d2l0aCB0eXBlIGhpbnRz" name="d2l0aCB0eXBlIGhpbnRz" role="tab" tabindex="-1">with type hints</button><button aria-controls="panel-0-ZGlhZ3JhbQ==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-ZGlhZ3JhbQ==" name="ZGlhZ3JhbQ==" role="tab" tabindex="-1">diagram</button></div><div aria-labelledby="tab-0-cGxhaW4=" class="sphinx-tabs-panel group-tab" id="panel-0-cGxhaW4=" name="cGxhaW4=" role="tabpanel" tabindex="0"><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Motor</span><span class="p">(</span><span class="n">xronos</span><span class="o">.</span><span class="n">Reactor</span><span class="p">):</span>
+    <span class="n">angle</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">InputPortDeclaration</span><span class="p">()</span>
+    <span class="n">_timer</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">PeriodicTimerDeclaration</span><span class="p">(</span>
+        <span class="n">period</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">microseconds</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">_current</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">MetricDeclaration</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">&quot;Motor current&quot;</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;mA&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_attribute</span><span class="p">(</span><span class="s2">&quot;motor&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+    <span class="nd">@xronos</span><span class="o">.</span><span class="n">reaction</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">control</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface</span><span class="p">):</span>
+        <span class="n">interface</span><span class="o">.</span><span class="n">add_trigger</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_timer</span><span class="p">)</span>
+        <span class="n">current_effect</span> <span class="o">=</span> <span class="n">interface</span><span class="o">.</span><span class="n">add_effect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_current</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">handler</span><span class="p">():</span>
+            <span class="n">current_effect</span><span class="o">.</span><span class="n">record</span><span class="p">(</span><span class="n">read_current</span><span class="p">())</span>
+            <span class="c1"># do control</span>
+
+        <span class="k">return</span> <span class="n">handler</span>
+</pre></div>
+</div>
+</div><div aria-labelledby="tab-0-d2l0aCB0eXBlIGhpbnRz" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-0-d2l0aCB0eXBlIGhpbnRz" name="d2l0aCB0eXBlIGhpbnRz" role="tabpanel" tabindex="0"><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Motor</span><span class="p">(</span><span class="n">xronos</span><span class="o">.</span><span class="n">Reactor</span><span class="p">):</span>
+    <span class="n">angle</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">InputPortDeclaration</span><span class="p">[</span><span class="nb">float</span><span class="p">]()</span>
+    <span class="n">_timer</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">PeriodicTimerDeclaration</span><span class="p">(</span>
+        <span class="n">period</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">microseconds</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">_current</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">MetricDeclaration</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">&quot;Motor current&quot;</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;mA&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_attribute</span><span class="p">(</span><span class="s2">&quot;motor&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+    <span class="nd">@xronos</span><span class="o">.</span><span class="n">reaction</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">control</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface</span><span class="p">:</span> <span class="n">xronos</span><span class="o">.</span><span class="n">ReactionInterface</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">]:</span>
+        <span class="n">interface</span><span class="o">.</span><span class="n">add_trigger</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_timer</span><span class="p">)</span>
+        <span class="n">current_effect</span> <span class="o">=</span> <span class="n">interface</span><span class="o">.</span><span class="n">add_effect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_current</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">handler</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">current_effect</span><span class="o">.</span><span class="n">record</span><span class="p">(</span><span class="n">read_current</span><span class="p">())</span>
+            <span class="c1"># do control</span>
+
+        <span class="k">return</span> <span class="n">handler</span>
+</pre></div>
+</div>
+</div><div aria-labelledby="tab-0-ZGlhZ3JhbQ==" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-0-ZGlhZ3JhbQ==" name="ZGlhZ3JhbQ==" role="tabpanel" tabindex="0"><p><a class="bg-warning reference internal" href="../../_images/diagram_metrics_motor.png"><img alt="diagram clock" class="bg-warning align-center" src="../../_images/diagram_metrics_motor.png" style="width: 40%;" /></a></p>
+</div></div>
+<p>When declaring a metric, a description needs to be provided and optionally a unit
+can be set. It is also possible to provide additional attributes via
+<a class="reference internal" href="../api.html#xronos.MetricDeclaration" title="xronos.MetricDeclaration"><code class="xref py py-class docutils literal notranslate"><span class="pre">MetricDeclaration</span></code></a> or by using
+<a class="reference internal" href="../api.html#xronos.Metric.add_attribute" title="xronos.Metric.add_attribute"><code class="xref py py-func docutils literal notranslate"><span class="pre">add_attribute()</span></code></a> or <a class="reference internal" href="../api.html#xronos.Metric.add_attributes" title="xronos.Metric.add_attributes"><code class="xref py py-func docutils literal notranslate"><span class="pre">add_attributes()</span></code></a> on
+the metric.</p>
+<p>In the example above, the <code class="docutils literal notranslate"><span class="pre">control</span></code> reaction executes every 500 microseconds. It
+reads and records the measured current using
+<a class="reference internal" href="../api.html#xronos.MetricEffect.record" title="xronos.MetricEffect.record"><code class="xref py py-func docutils literal notranslate"><span class="pre">record()</span></code></a>. The control algorithm is omitted from the
+example.</p>
+<p>See <a class="reference internal" href="../../telemetry.html#telemetry"><span class="std std-ref">Telemetry</span></a> for instructions on how to enable collection of telemetry
+data and <a class="reference internal" href="../../dashboard.html#queries"><span class="std std-ref">Visualizing Metrics</span></a> for instruction on how to visualize data recorded from
+metrics.</p>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="programmable_timers.html" class="btn btn-neutral float-left" title="Programmable Timers" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../tutorials/index.html" class="btn btn-neutral float-right" title="Tutorials" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Xronos Inc..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

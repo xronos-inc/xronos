@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Xronos Documentation &mdash; xronos  documentation</title>
+  <title>Xronos Documentation &mdash; xronos v0.5.0  documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
@@ -24,7 +24,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Getting Started" href="getting_started.html" /> 
+    <link rel="next" title="Getting Started" href="python_sdk/getting_started.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -35,8 +35,8 @@
 
           
           
-          <a href="#">
-            
+          <a href="#" class="icon icon-home">
+            xronos v0.5.0
               <img src="_static/logo_written.svg" class="logo" alt="Logo"/>
           </a>
 <div role="search">
@@ -47,16 +47,31 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Python SDK</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started</a></li>
-<li class="toctree-l1"><a class="reference internal" href="reference_guide/index.html">Reference Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="python_sdk/getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="python_sdk/reference_guide/index.html">Reference Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="python_sdk/tutorials/index.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="python_sdk/api.html">API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="python_sdk/lib.html">Library Reactors</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">C++ SDK</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="cpp_sdk/getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cpp_sdk/api/index.html">API Documentation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Analysis &amp; Visualization</span></p>
+<ul>
 <li class="toctree-l1"><a class="reference internal" href="diagrams.html">Diagram View</a></li>
 <li class="toctree-l1"><a class="reference internal" href="telemetry.html">Telemetry</a></li>
 <li class="toctree-l1"><a class="reference internal" href="dashboard.html">Dashboard</a></li>
-<li class="toctree-l1"><a class="reference internal" href="tutorials/index.html">Tutorials</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api.html">API Documentation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="lib.html">Library Reactors</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Links</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://www.xronos.com">Xronos Inc.</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://www.github.com/xronos-inc/xronos">GitHub</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://www.github.com/xronos-inc/xronos/releases">Releases</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://pypi.org/project/xronos/">PyPi</a></li>
 </ul>
 
         </div>
@@ -65,7 +80,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="#">xronos</a>
+          <a href="#">xronos v0.5.0</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -75,7 +90,6 @@
       <li><a href="#" class="icon icon-home" aria-label="Home"></a></li>
       <li class="breadcrumb-item active">Xronos Documentation</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -85,18 +99,44 @@
              
   <section id="xronos-documentation">
 <h1>Xronos Documentation<a class="headerlink" href="#xronos-documentation" title="Link to this heading"></a></h1>
+<a class="reference external image-reference" href="https://github.com/xronos-inc/xronos/releases/latest"><img alt="GitHub Release" src="https://img.shields.io/github/v/release/xronos-inc/xronos?logo=GitHub" />
+</a>
+<a class="reference external image-reference" href="https://pypi.org/project/xronos/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/xronos?logo=Python&amp;logoColor=silver" />
+</a>
+<a class="reference external image-reference" href="https://github.com/xronos-inc/xronos/blob/main/LICENSE"><img alt="GitHub License" src="https://img.shields.io/github/license/xronos-inc/xronos" />
+</a>
+<a class="reference external image-reference" href="https://pypi.org/project/xronos/"><img alt="PyPI - Python Version" src="https://img.shields.io/pypi/pyversions/xronos?logo=Python&amp;logoColor=silver" />
+</a>
+<p>Xronos is a lightweight framework for building deterministic, component-based
+robotics applications in Python and C++. It supports real-time telemetry, system
+visualization, and modular design with a focus on clarity, scalability, and
+correctness.</p>
 <div class="toctree-wrapper compound">
-<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<p class="caption" role="heading"><span class="caption-text">Python SDK</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started</a></li>
-<li class="toctree-l1"><a class="reference internal" href="reference_guide/index.html">Reference Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="python_sdk/getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="python_sdk/reference_guide/index.html">Reference Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="python_sdk/tutorials/index.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="python_sdk/api.html">API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="python_sdk/lib.html">Library Reactors</a></li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">C++ SDK</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="cpp_sdk/getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cpp_sdk/api/index.html">API Documentation</a></li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Analysis &amp; Visualization</span></p>
+<ul>
 <li class="toctree-l1"><a class="reference internal" href="diagrams.html">Diagram View</a></li>
 <li class="toctree-l1"><a class="reference internal" href="telemetry.html">Telemetry</a></li>
 <li class="toctree-l1"><a class="reference internal" href="dashboard.html">Dashboard</a></li>
-<li class="toctree-l1"><a class="reference internal" href="tutorials/index.html">Tutorials</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api.html">API Documentation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="lib.html">Library Reactors</a></li>
 </ul>
+</div>
+<div class="toctree-wrapper compound">
 </div>
 </section>
 
@@ -104,7 +144,7 @@
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="getting_started.html" class="btn btn-neutral float-right" title="Getting Started" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="python_sdk/getting_started.html" class="btn btn-neutral float-right" title="Getting Started" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

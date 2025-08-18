@@ -1,0 +1,40 @@
+(metrics)=
+# Metrics
+
+Metrics provide a convenient mechanism for recording information about the
+system's state. Metrics are declared and used similarly to all other reactor
+elements. A {class}`~xronos.MetricDeclaration` can be used to declare a metric
+as part of a reactor. Consider the following example, which extends the `Motor`
+reactor from above so that it has a metric `_current`, which is used to record
+the current measured on the motor.
+
+`````{tabs}
+````{group-tab} plain
+```{literalinclude} ../_examples/metrics.py
+:pyobject: Motor
+```
+````
+````{group-tab} with type hints
+```{literalinclude} ../_examples/metrics_hints.py
+:pyobject: Motor
+```
+````
+````{group-tab} diagram
+![diagram clock](../_img/diagram_metrics_motor.png){.bg-warning w="40%" align=center}
+````
+`````
+
+When declaring a metric, a description needs to be provided and optionally a unit
+can be set. It is also possible to provide additional attributes via
+{class}`~xronos.MetricDeclaration` or by using
+{func}`~xronos.Metric.add_attribute` or {func}`~xronos.Metric.add_attributes` on
+the metric.
+
+In the example above, the `control` reaction executes every 500 microseconds. It
+reads and records the measured current using
+{func}`~xronos.MetricEffect.record`. The control algorithm is omitted from the
+example.
+
+See {ref}`telemetry` for instructions on how to enable collection of telemetry
+data and {ref}`queries` for instruction on how to visualize data recorded from
+metrics.

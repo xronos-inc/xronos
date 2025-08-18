@@ -1,0 +1,197 @@
+# Getting Started
+
+[![GitHub Release](https://img.shields.io/github/v/release/xronos-inc/xronos?logo=GitHub)](https://github.com/xronos-inc/xronos/releases/latest)
+[![GitHub License](https://img.shields.io/github/license/xronos-inc/xronos)](https://github.com/xronos-inc/xronos/blob/main/LICENSE)
+
+## System Requirements
+
+- POSIX-compliant OS (Ubuntu 22.04 and 24.04 are tested)
+- GNU-compliant C++ compiler that supports the C++20 standard
+  - gcc 11 or later
+  - clang 16 or later
+- CMake 3.28 or later
+
+## Usage in CMake
+
+To use the Xronos C++ SDK in your CMake project, add one of the following
+code snippets to your `CMakeLists.txt` and link your targets with
+`xronos::xronos-sdk`.
+[FetchContent](https://cmake.org/cmake/help/latest/module/FetchContent.html)
+downloads the binary artifacts or sources and integrates them with your build.
+Note that building the Xronos SDK from source may take some time. We recommend
+using the pre-built binary artifacts.
+
+`````{tabs}
+````{group-tab} binary artifacts
+```cmake
+set(XRONOS_SDK_VERSION "0.5.0" CACHE STRING "Xronos SDK version")
+include(FetchContent)
+FetchContent_Declare(
+  "xronos-sdk"
+  URL https://github.com/xronos-inc/xronos/releases/download/v${XRONOS_SDK_VERSION}/xronos-sdk-${XRONOS_SDK_VERSION}-Linux-${CMAKE_SYSTEM_PROCESSOR}.tar.gz
+)
+FetchContent_MakeAvailable(xronos-sdk)
+set(xronos-sdk_DIR ${xronos-sdk_SOURCE_DIR}/share/cmake/xronos-sdk)
+find_package(xronos-sdk)
+```
+````
+````{group-tab} from source
+```cmake
+set(XRONOS_SDK_VERSION "0.5.0" CACHE STRING "Xronos SDK version")
+include(FetchContent)
+FetchContent_Declare(
+  "xronos-sdk"
+  GIT_REPOSITORY https://github.com/xronos-inc/xronos
+  GIT_TAG v${XRONOS_SDK_VERSION}
+  SOURCE_SUBDIR cpp-sdk
+)
+FetchContent_MakeAvailable(xronos-sdk)
+```
+````
+`````
+
+## Installation (Optional)
+
+Alternatively to the `FetchContent` method described above, the Xronos SDK can also be installed and used in CMake via `find_package(xronos-sdk)`.
+
+### .deb Package
+
+For system-wide installation on Ubuntu 22.04 (or newer) we provide a .deb
+package. Download the .deb package for your architecture from the [release
+page](https://github.com/xronos-inc/xronos/releases/latest) and install it using
+the following command.
+
+```console
+$ sudo dpkg -i <path-to-your-deb-file>
+```
+
+### Binary Artifacts
+
+Alternatively, you can download the .tar.gz archive containing pre-built binary
+artifacts from the [release page](https://github.com/xronos-inc/xronos/releases/latest).
+Simply extract the archive in the system root or in a directory of your choice.
+
+```console
+$ tar -xf <path-to-your-tar-file> -C <xronos-install-location>
+```
+When installing in a location other than `/`, you will have to use
+`-DCMAKE_INSTALL_PREFIX=<xronos-install-location>` when invoking cmake.
+
+(cpp_hello_world)=
+## Hello World
+
+
+This section shows you how to write a "Hello, World!" program using the Xronos
+SDK.
+
+### Application Code
+
+In a new directory, create a new file `hello.cc` and paste the
+following content into it.
+
+```cpp
+#include <iostream>
+
+#include "xronos/sdk.hh"
+
+namespace sdk = xronos::sdk;
+
+class Hello : public sdk::Reactor {
+  using sdk::Reactor::Reactor;
+
+  class HelloReaction : public sdk::Reaction<Hello> {
+    using sdk::Reaction<Hello>::Reaction;
+    Trigger<void> startup_trigger{self().startup(), context()};
+    void handler() final { std::cout << "Hello, World!\n"; }
+  };
+
+  void assemble() final { add_reaction<HelloReaction>("hello"); }
+};
+
+auto main() -> int {
+  sdk::Environment env{};
+  Hello hello{"hello", env.context()};
+  env.execute();
+  return 0;
+}
+```
+
+### CMake Config
+
+Then create `CMakeLists.txt` using your preferred method of including the SDK.
+
+`````{tabs}
+````{group-tab} binary artifacts
+```cmake
+cmake_minimum_required(VERSION 3.28)
+
+project(hello LANGUAGES CXX)
+
+set(XRONOS_SDK_VERSION "0.5.0" CACHE STRING "Xronos SDK version")
+include(FetchContent)
+FetchContent_Declare(
+  "xronos-sdk"
+  URL https://github.com/xronos-inc/xronos/releases/download/v${XRONOS_SDK_VERSION}/xronos-sdk-${XRONOS_SDK_VERSION}-Linux-${CMAKE_SYSTEM_PROCESSOR}.tar.gz
+)
+FetchContent_MakeAvailable(xronos-sdk)
+set(xronos-sdk_DIR ${xronos-sdk_SOURCE_DIR}/share/cmake/xronos-sdk)
+
+find_package(xronos-sdk)
+
+add_executable(hello hello.cc)
+target_link_libraries(hello xronos::xronos-sdk)
+```
+````
+````{group-tab} from source
+```cmake
+cmake_minimum_required(VERSION 3.28)
+
+project(hello LANGUAGES CXX)
+
+set(XRONOS_SDK_VERSION "0.5.0" CACHE STRING "Xronos SDK version")
+include(FetchContent)
+FetchContent_Declare(
+  "xronos-sdk"
+  GIT_REPOSITORY https://github.com/xronos-inc/xronos
+  GIT_TAG v${XRONOS_SDK_VERSION}
+  SOURCE_SUBDIR cpp-sdk
+)
+FetchContent_MakeAvailable(xronos-sdk)
+
+add_executable(hello hello.cc)
+target_link_libraries(hello xronos::xronos-sdk)
+```
+````
+````{group-tab} installed
+```cmake
+cmake_minimum_required(VERSION 3.28)
+
+project(hello LANGUAGES CXX)
+
+find_package(xronos-sdk)
+
+add_executable(hello hello.cc)
+target_link_libraries(hello xronos::xronos-sdk)
+```
+````
+`````
+
+### Build and Run
+
+Configure the CMake project and build the hello world application.
+
+```console
+$ cmake -B build
+$ cmake --build build --target hello
+```
+
+Then run the program.
+
+```console
+$ ./build/hello
+Hello, World!
+```
+
+## Additional Examples
+
+See [https://github.com/xronos-inc/xronos/tree/main/cpp-sdk/examples](https://github.com/xronos-inc/xronos/tree/main/cpp-sdk/examples) for additional examples.

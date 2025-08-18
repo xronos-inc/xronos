@@ -1,0 +1,390 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Yahboom Robot Arm Controller &mdash; xronos v0.5.0  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../_static/fix_stacking.css?v=30aa6f93" />
+
+  
+    <link rel="shortcut icon" href="../../_static/logo.svg"/>
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../_static/copybutton.js?v=35a8b989"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="External Input" href="external_input.html" />
+    <link rel="prev" title="Object Detection with YOLO" href="yolo.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            xronos v0.5.0
+              <img src="../../_static/logo_written.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Python SDK</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference_guide/index.html">Reference Guide</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Tutorials</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="yolo.html">Object Detection with YOLO</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Yahboom Robot Arm Controller</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#prerequisites">Prerequisites</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#cloning-repo-and-installing-dependencies">Cloning repo and installing dependencies</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#userinterface-reactor">UserInterface reactor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#armcontrol-reactor">ArmControl reactor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#running-the-program">Running the program</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#telemetry">Telemetry</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="external_input.html">External Input</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html">API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../lib.html">Library Reactors</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">C++ SDK</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../cpp_sdk/getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cpp_sdk/api/index.html">API Documentation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Analysis &amp; Visualization</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../diagrams.html">Diagram View</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../telemetry.html">Telemetry</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../dashboard.html">Dashboard</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Links</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://www.xronos.com">Xronos Inc.</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://www.github.com/xronos-inc/xronos">GitHub</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://www.github.com/xronos-inc/xronos/releases">Releases</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://pypi.org/project/xronos/">PyPi</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">xronos v0.5.0</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Tutorials</a></li>
+      <li class="breadcrumb-item active">Yahboom Robot Arm Controller</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="yahboom-robot-arm-controller">
+<span id="robot-arm"></span><h1>Yahboom Robot Arm Controller<a class="headerlink" href="#yahboom-robot-arm-controller" title="Link to this heading"></a></h1>
+<p><a class="reference external" href="https://www.yahboom.net/study/Dofbot-Jetson_nano/index.html">Yahboom DOFBOT AI Vision Robotic Arm</a> is 6 degree-of-freedom robotic arm controlled by a Jetson Nano. In this tutorial, you will see how a robotic arm controller can be implemented using xronos.</p>
+<figure class="align-default" id="id1">
+<a class="reference internal image-reference" href="../../_images/dofbot.jpg"><img alt="../../_images/dofbot.jpg" src="../../_images/dofbot.jpg" style="width: 560.0px; height: 434.0px;" />
+</a>
+<figcaption>
+<p><span class="caption-text">Image of DOFBOT-6 from Yahboom Technology / retrieved from <a class="reference external" href="https://github.com/YahboomTechnology/dofbot-jetson_nano/blob/master/DOFBOT.jpg">https://github.com/YahboomTechnology/dofbot-jetson_nano/blob/master/DOFBOT.jpg</a> / No copyright or licensing information was provided</span><a class="headerlink" href="#id1" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<section id="prerequisites">
+<h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading"></a></h2>
+<p>To run the code provided in this tutorial you will need a Yahboom DOFOT robot arm which can be purchased
+<a class="reference external" href="https://category.yahboom.net/collections/jetson/products/dofbot-jetson_nano">here</a>. The robot arm includes an NVIDIA
+Jetson Nano which must be configured with Ubuntu 22.04. Documentation for installing Ubuntu 22.04 is found
+<a class="reference external" href="https://github.com/xronos-inc/jetson-nano-ubuntu-22.04">here</a>. Alternatively, the code should also work with Raspberry
+Pi but this has not been tested.</p>
+</section>
+<section id="cloning-repo-and-installing-dependencies">
+<h2>Cloning repo and installing dependencies<a class="headerlink" href="#cloning-repo-and-installing-dependencies" title="Link to this heading"></a></h2>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This section assumes that you are logged onto the NVIDIA Jetson Nano on the Yahboom DOFBOT.</p>
+</div>
+<p>Begin by cloning the <code class="docutils literal notranslate"><span class="pre">xronos</span></code> repository and navigate to the robot arm controller example:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/xronos/xronos.git
+<span class="gp">$ </span><span class="nb">cd</span><span class="w"> </span>xronos/examples/robot-arm
+</pre></div>
+</div>
+<p>Set up a virtual environment and install xronos, see <a class="reference internal" href="../getting_started.html#xronos-installation"><span class="std std-ref">Installation</span></a> for instructions.</p>
+<p>Install the Python dependencies:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+</pre></div>
+</div>
+</section>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading"></a></h2>
+<p>The following diagram shows the layout of the program.</p>
+<p><img alt="Robot arm controller diagram" src="../../_images/diagram_arm.png" /></p>
+<p>The <code class="docutils literal notranslate"><span class="pre">ArmControl</span></code> reactor is driven by a periodic timer with a 100 ms period and accepts new trajectories on its input port from
+the <code class="docutils literal notranslate"><span class="pre">UserInterface</span></code> reactor. When the final pose of a trajectory is reached, the <code class="docutils literal notranslate"><span class="pre">ArmControl</span></code> reactor notifies the
+<code class="docutils literal notranslate"><span class="pre">UserInterface</span></code> that it can accept a new trajectory.</p>
+<p>Run the program and give the controller a trajectory:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>python<span class="w"> </span>arm.py
+<span class="gp">$ </span>&gt;<span class="w"> </span>moveto<span class="w"> </span>green<span class="w"> </span>yellow<span class="w"> </span>init
+</pre></div>
+</div>
+<p>The robot should follow a trajectory from the initial pose to the green field, followed by the yellow field
+and back to the initial pose.</p>
+<p>In the following, we will take a closer look at the two reactors.</p>
+</section>
+<section id="userinterface-reactor">
+<h2>UserInterface reactor<a class="headerlink" href="#userinterface-reactor" title="Link to this heading"></a></h2>
+<p>Open <code class="docutils literal notranslate"><span class="pre">user_interface.py</span></code>. The <code class="docutils literal notranslate"><span class="pre">UserInterface</span></code> reactor is an example of a generic reusable reactor. It declares four
+elements. Two ports, a programmable timer, and a physical event. A <code class="xref py py-class docutils literal notranslate"><span class="pre">PhysicalEvent</span></code> is useful for triggering reactions
+from <em>external</em> contexts such as a thread. In the <code class="docutils literal notranslate"><span class="pre">__init__</span></code> method we initialize class variables
+including a thread and a semaphore.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span> <span class="n">blocking</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">parser</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">],</span> <span class="n">T</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">|</span> <span class="ne">KeyboardInterrupt</span><span class="p">]</span>
+<span class="p">):</span>
+    <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">blocking</span> <span class="o">=</span> <span class="n">blocking</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">parser</span> <span class="o">=</span> <span class="n">parser</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">stop_thread_event</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Event</span><span class="p">()</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">thread</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span>
+        <span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">run_user_input_thread</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stop_thread_event</span><span class="p">,)</span>
+    <span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">semaphore</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Semaphore</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The thread is not started until the startup reaction. This ensures that the Xronos runtime runs before the thread calls
+any of the Xronos APIs.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@xronos</span><span class="o">.</span><span class="n">reaction</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">on_startup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface</span><span class="p">:</span> <span class="n">xronos</span><span class="o">.</span><span class="n">ReactionInterface</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Start the thread listening for console input.&quot;&quot;&quot;</span>
+    <span class="n">interface</span><span class="o">.</span><span class="n">add_trigger</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">startup</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">handler</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># Print out the help message on startup.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parser</span><span class="p">(</span><span class="s2">&quot;help&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">thread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">handler</span>
+</pre></div>
+</div>
+<p>The thread reads a user command from <code class="docutils literal notranslate"><span class="pre">stdin</span></code> and schedules it via the physical event. The thread will then acquire a
+semaphore before reading the next command.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">run_user_input_thread</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stop_event</span><span class="p">:</span> <span class="n">threading</span><span class="o">.</span><span class="n">Event</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Listen for console input and schedule the next user input action.</span>
+
+<span class="sd">    This function will run in a separate thread. After receiving an input</span>
+<span class="sd">    it will block until the semaphore is released by the runtime.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">while</span> <span class="ow">not</span> <span class="n">stop_event</span><span class="o">.</span><span class="n">is_set</span><span class="p">():</span>
+        <span class="n">cmd</span> <span class="o">=</span> <span class="nb">input</span><span class="p">(</span><span class="s2">&quot;&gt; &quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_user_input</span><span class="o">.</span><span class="n">trigger</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">semaphore</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>The physical events encapsulating the commands from <code class="docutils literal notranslate"><span class="pre">stdin</span></code> are handled by a reaction that parses the commands with a supplied
+function and writes recognized commands to the output port. The <code class="docutils literal notranslate"><span class="pre">UserInterface</span></code> reactor can be configured as
+<em>blocking</em>, in which case it will wait for an event on its input port before releasing the semaphore and allowing the
+external thread to read more commands from the console. If it is <em>non-blocking</em> it will schedule the release of the
+semaphore at once.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@xronos</span><span class="o">.</span><span class="n">reaction</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">on_user_input</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface</span><span class="p">:</span> <span class="n">xronos</span><span class="o">.</span><span class="n">ReactionInterface</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse the user input and output any parsed command on the output port.&quot;&quot;&quot;</span>
+    <span class="n">user_input_trigger</span> <span class="o">=</span> <span class="n">interface</span><span class="o">.</span><span class="n">add_trigger</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_user_input</span><span class="p">)</span>
+    <span class="n">output_effect</span> <span class="o">=</span> <span class="n">interface</span><span class="o">.</span><span class="n">add_effect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="p">)</span>
+    <span class="n">unblock_effect</span> <span class="o">=</span> <span class="n">interface</span><span class="o">.</span><span class="n">add_effect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_unblock</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">handler</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">cmd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parser</span><span class="p">(</span><span class="n">user_input_trigger</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="ne">KeyboardInterrupt</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">request_shutdown</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">cmd</span><span class="p">:</span>
+            <span class="n">output_effect</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">cmd</span> <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">blocking</span><span class="p">:</span>
+            <span class="c1"># If the user interface is non-blocking, schedule an unblock event.</span>
+            <span class="n">unblock_effect</span><span class="o">.</span><span class="n">schedule</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">handler</span>
+</pre></div>
+</div>
+</section>
+<section id="armcontrol-reactor">
+<h2>ArmControl reactor<a class="headerlink" href="#armcontrol-reactor" title="Link to this heading"></a></h2>
+<p>Open <code class="docutils literal notranslate"><span class="pre">arm.py</span></code>. The <code class="docutils literal notranslate"><span class="pre">ArmControl</span></code> reactor declares several reactor elements. An input port <code class="docutils literal notranslate"><span class="pre">new_trajectory</span></code> for accepting
+new trajectories from the user or a planner, a periodic timer <code class="docutils literal notranslate"><span class="pre">_sample_timer</span></code> for sampling the servos, a programmable timer
+<code class="docutils literal notranslate"><span class="pre">_in_position</span></code> for detecting changes to the servo states, and finally an output port <code class="docutils literal notranslate"><span class="pre">trajectory_completed</span></code> for
+notifying the user, or planner, that the trajectory was completed.</p>
+<p>Upon receiving a new trajectory on the input port we update the internal state of <code class="docutils literal notranslate"><span class="pre">ArmControl</span></code>.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@xronos</span><span class="o">.</span><span class="n">reaction</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">on_new_trajectory</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span> <span class="n">interface</span><span class="p">:</span> <span class="n">xronos</span><span class="o">.</span><span class="n">ReactionInterface</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">]:</span>
+    <span class="n">new_trajectory_trigger</span> <span class="o">=</span> <span class="n">interface</span><span class="o">.</span><span class="n">add_trigger</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">new_trajectory</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">handler</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">trajectory</span> <span class="o">=</span> <span class="n">new_trajectory_trigger</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+        <span class="n">next_pose</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">trajectory</span><span class="o">.</span><span class="n">next_pose</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Received trajectory, setting next_pose=</span><span class="si">{</span><span class="n">next_pose</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">next_pose</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">goal</span> <span class="o">=</span> <span class="n">next_pose</span>
+
+    <span class="k">return</span> <span class="n">handler</span>
+</pre></div>
+</div>
+<p>In response to timer events, the position of each servo is read through <code class="docutils literal notranslate"><span class="pre">self.read_pose()</span></code>. When a servo is within some
+small delta angle from its desired position, it is said to be <em>in-position</em>. The reaction schedules a programmable timer if
+in-position changes.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@xronos</span><span class="o">.</span><span class="n">reaction</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">on_sample_timer</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span> <span class="n">interface</span><span class="p">:</span> <span class="n">xronos</span><span class="o">.</span><span class="n">ReactionInterface</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">]:</span>
+    <span class="n">interface</span><span class="o">.</span><span class="n">add_trigger</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sample_timer</span><span class="p">)</span>
+    <span class="n">in_position_effect</span> <span class="o">=</span> <span class="n">interface</span><span class="o">.</span><span class="n">add_effect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_in_position</span><span class="p">)</span>
+
+    <span class="c1"># update position and schedule action if state of in_position changes</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">handler</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">read_pose</span><span class="p">()</span>
+        <span class="n">in_position</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">in_position</span><span class="p">()</span>
+        <span class="n">distance</span> <span class="o">=</span> <span class="n">Pose</span><span class="o">.</span><span class="n">delta</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">goal</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">position</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Distance: </span><span class="si">{</span><span class="n">distance</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">in_position</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">was_in_position</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">was_in_position</span> <span class="o">=</span> <span class="n">in_position</span>
+            <span class="n">in_position_effect</span><span class="o">.</span><span class="n">schedule</span><span class="p">(</span><span class="n">in_position</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">handler</span>
+</pre></div>
+</div>
+<p>When in-position changes one out of three things can happen. If the robot is not in-position,
+a new command is sent to the servo actuators to drive the robot to in-position. If the robot is
+in-position, it has either arrived at an intermediate pose of its trajectory, in which case it
+updates the current goal to the next pose, or it has completed its trajectory, in which case it
+writes to the output port to notify the user.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@xronos</span><span class="o">.</span><span class="n">reaction</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">on_in_position_change</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span> <span class="n">interface</span><span class="p">:</span> <span class="n">xronos</span><span class="o">.</span><span class="n">ReactionInterface</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">]:</span>
+    <span class="n">in_position_trigger</span> <span class="o">=</span> <span class="n">interface</span><span class="o">.</span><span class="n">add_trigger</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_in_position</span><span class="p">)</span>
+    <span class="n">trajectory_completed_effect</span> <span class="o">=</span> <span class="n">interface</span><span class="o">.</span><span class="n">add_effect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">trajectory_completed</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">handler</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">in_position_trigger</span><span class="o">.</span><span class="n">get</span><span class="p">():</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Goal distance: </span><span class="si">{</span><span class="p">(</span><span class="n">Pose</span><span class="o">.</span><span class="n">delta</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">goal</span><span class="p">,</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">position</span><span class="p">))</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">goal</span><span class="o">.</span><span class="n">validate</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">actuator</span><span class="p">,</span> <span class="n">pos_deg</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">goal</span><span class="o">.</span><span class="n">positions</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">move_actuator</span><span class="p">(</span><span class="n">actuator</span><span class="p">,</span> <span class="n">pos_deg</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Currrent pose goal reached. Check if more poses are in the trajectory.</span>
+            <span class="n">next_pose</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">trajectory</span><span class="o">.</span><span class="n">next_pose</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">next_pose</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">goal</span> <span class="o">=</span> <span class="n">next_pose</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">trajectory_completed_effect</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">handler</span>
+</pre></div>
+</div>
+</section>
+<section id="running-the-program">
+<h2>Running the program<a class="headerlink" href="#running-the-program" title="Link to this heading"></a></h2>
+<p>Run the application:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>python<span class="w"> </span>arm.py
+</pre></div>
+</div>
+<p>A command line interface is provided by the <code class="docutils literal notranslate"><span class="pre">UserInterface</span></code> reactor, type <code class="docutils literal notranslate"><span class="pre">help</span></code> for more info:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>&gt;<span class="w"> </span><span class="nb">help</span>
+<span class="go">CLI to robot arm controller. Commands: help, moveto [&lt;green/red/blue/yellow/init&gt; ...]. Exit with `exit` or Ctrl+C</span>
+</pre></div>
+</div>
+<p>To move the robot, provide a trajectory, e.g.:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>&gt;<span class="w"> </span>moveto<span class="w"> </span>red<span class="w"> </span>yellow<span class="w"> </span>green<span class="w"> </span>init
+</pre></div>
+</div>
+</section>
+<section id="telemetry">
+<h2>Telemetry<a class="headerlink" href="#telemetry" title="Link to this heading"></a></h2>
+<p>The Xronos Dashboard can provide invaluable runtime observability into the program. Bring it up on the Jetson by
+following the instructions in <a class="reference internal" href="../../dashboard.html#dashboard"><span class="std std-ref">Dashboard</span></a>. Then start the robot arm with telemetry enabled.</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>python<span class="w"> </span>arm.py<span class="w"> </span>--telemetry
+</pre></div>
+</div>
+<p>There are now two options for viewing the dashboard. If you are within a desktop environment on the Jetson, either
+through a remote desktop, or by connecting a monitor and a keyboard directly to the Jetson, then you can simply point the
+web browser to <code class="docutils literal notranslate"><span class="pre">localhost:3000</span></code> as explained in <a class="reference internal" href="../../dashboard.html#dashboard"><span class="std std-ref">Dashboard</span></a>. If you only have an SSH connection to the Jetson you
+can point the browser on your host computer to <code class="docutils literal notranslate"><span class="pre">JETSON_IP_ADDR:3000</span></code> where <code class="docutils literal notranslate"><span class="pre">JETSON_IP_ADDR</span></code> is the IP address or
+hostname of the Jetson.</p>
+<p>The trace view should look something like this.</p>
+<p><img alt="Xronos Dashboard for robot arm" src="../../_images/dashboard_arm.png" /></p>
+<p>Observe that <code class="docutils literal notranslate"><span class="pre">ui.on_user_input</span></code> reaction executes and triggers <code class="docutils literal notranslate"><span class="pre">arm_control.on_user_goal</span></code> which updates the current goal
+pose. In the following execution of <code class="docutils literal notranslate"><span class="pre">arm_control.on_sample_timer</span></code> the change in in-position is detected, and an internal
+event is scheduled which triggers new commands to the servos.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="yolo.html" class="btn btn-neutral float-left" title="Object Detection with YOLO" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="external_input.html" class="btn btn-neutral float-right" title="External Input" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Xronos Inc..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

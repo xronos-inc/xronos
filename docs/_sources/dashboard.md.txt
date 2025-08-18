@@ -2,7 +2,7 @@
 
 # Dashboard
 
-The runtime behavior of xronos programs can be observed using the Xronos
+The runtime behavior of Xronos programs can be observed using the Xronos
 Dashboard. The dashboard consists of a user interface based on
 [Grafana](https://grafana.com/) and a time series database that stores telemetry
 data such as traces of reaction executions and values recorded using
@@ -42,12 +42,12 @@ After logging in, the trace view opens. Initially, it will be empty.
 
 ![empty dashboard](./_img/dashboard_empty.png)
 
-To show trace data in the dashboard, we need to run a xronos application that
+To show trace data in the dashboard, we need to run a Xronos application that
 has telemetry enabled. Telemetry can be enabled on any application by calling
 {func}`~xronos.Environment.enable_telemetry` on the environment. Note that this
 has to happen before calling execute {func}`~xronos.Environment.execute`.
 
-Modify the {ref}`hello_world` example like shown below.
+Modify the {ref}`py_hello_world` example like shown below.
 
 ```python
 env = xronos.Environment()
@@ -70,7 +70,7 @@ The trace view is most useful for analyzing the execution of more complex
 applications. For instance, below you can see the trace view for the
 {ref}`YOLO<yolo>` example, when run with the `--telemetry` argument.
 
-![dashboard yolo](./tutorials/_img/dashboard_yolo.png)
+![dashboard yolo](./python_sdk/tutorials/_img/dashboard_yolo.png)
 
 (queries)=
 ## Visualizing Metrics
