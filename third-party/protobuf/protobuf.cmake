@@ -1,4 +1,4 @@
-set(XRONOS_PROTOBUF_VERSION "v30.2" CACHE STRING "protobuf version")
+set(XRONOS_PROTOBUF_VERSION "v31.1" CACHE STRING "protobuf version")
 set(XRONOS_PROTOBUF_PROVIDER "module" CACHE STRING "protobuf provider (module|package|none)")
 option(XRONOS_PROTOBUF_INSTALL "Add protobuf to the install target" OFF)
 

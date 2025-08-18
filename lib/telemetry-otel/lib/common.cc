@@ -3,24 +3,28 @@
 
 #include "common.hh"
 
+#include <algorithm>
+#include <chrono>
+#include <functional>
+#include <string_view>
+#include <variant>
+
 #include "xronos/runtime/reactor.hh"
 #include "xronos/runtime/reactor_element.hh"
 #include "xronos/telemetry/attribute_manager.hh"
 
-#include <functional>
-
 namespace xronos::telemetry::otel {
 
-auto get_merged_attributes(const AttributeManager& attribute_manager,
-                           const runtime::ReactorElement& element) -> OtelAttributeMap {
+auto get_merged_attributes(const AttributeManager& attribute_manager, const runtime::ReactorElement& element)
+    -> OtelAttributeMap {
   return xronos::telemetry::get_merged_attributes<OtelAttributeMap, OtelAttributeValue>(
       attribute_manager, element, [](const AttributeValue& value) {
         return std::visit([&](const auto& arg) { return OtelAttributeValue{arg}; }, value);
       });
 }
 
-auto get_low_cardinality_attributes(const AttributeManager& attribute_manager,
-                                    const runtime::ReactorElement& element) -> OtelAttributeMap {
+auto get_low_cardinality_attributes(const AttributeManager& attribute_manager, const runtime::ReactorElement& element)
+    -> OtelAttributeMap {
   auto attributes = get_merged_attributes(attribute_manager, element);
 
   // add additional common xronos low cardinality attributes
@@ -36,8 +40,7 @@ auto get_low_cardinality_attributes(const AttributeManager& attribute_manager,
 
 auto get_attribute_names(const OtelAttributeMap& attributes) -> AttributeNameList {
   AttributeNameList names{attributes.size()};
-  std::transform(attributes.begin(), attributes.end(), names.begin(),
-                 [](auto& entry) { return std::string_view(entry.first); });
+  std::ranges::transform(attributes, names.begin(), [](auto& entry) { return std::string_view(entry.first); });
 
   return names;
 }

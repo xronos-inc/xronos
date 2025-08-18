@@ -1,33 +1,62 @@
 // SPDX-FileCopyrightText: Copyright (c) 2025 Xronos Inc.
 // SPDX-License-Identifier: BSD-3-Clause
 
+#include "xronos/sdk/environment.hh"
+
+#include <array>
 #include <cassert>
+#include <cstddef>
 #include <cstdint>
+#include <exception>
 #include <memory>
 #include <optional>
 #include <ranges>
+#include <source_location>
+#include <stdexcept>
+#include <string>
 #include <string_view>
 #include <thread>
 #include <unistd.h>
+#include <unordered_map>
 #include <utility>
 
-#include "xronos/graph_exporter/exporter.hh"
-#include "xronos/messages/source_info.pb.h"
 #include "xronos/runtime/assert.hh"
+#include "xronos/runtime/connection_properties.hh"
 #include "xronos/runtime/environment.hh"
+#include "xronos/runtime/port.hh"
 #include "xronos/sdk/context.hh"
-#include "xronos/sdk/environment.hh"
+#include "xronos/sdk/detail/source_location.hh"
+#include "xronos/sdk/element.hh"
+#include "xronos/sdk/gen/config.hh"
 #include "xronos/sdk/time.hh"
 #include "xronos/telemetry/attribute_manager.hh"
-#include "xronos/telemetry/otel/otel_telemetry_backend.hh"
+#include "xronos/telemetry/metric.hh"
+#include "xronos/telemetry/telemetry.hh"
 
 namespace xronos::sdk {
 
 namespace detail {
 
-void serialize_source_locations(
-    const std::unordered_map<std::uint64_t, std::pair<std::string, SourceLocation>>& source_locations,
-    messages::source_info::SourceInfo& source_infos);
+void runtime_connect(Environment& environment, const Element& from_port, const Element& to_port) {
+  auto& runtime_environment = get_environment_instance(environment);
+  try {
+    runtime_environment.draw_connection(detail::get_runtime_instance<runtime::Port>(from_port),
+                                        detail::get_runtime_instance<runtime::Port>(to_port), {});
+  } catch (const runtime::ValidationError& e) {
+    throw ValidationError(e.what());
+  }
+}
+
+void runtime_connect(Environment& environment, const Element& from_port, const Element& to_port, Duration delay) {
+  auto& runtime_environment = get_environment_instance(environment);
+  try {
+    runtime_environment.draw_connection(detail::get_runtime_instance<runtime::Port>(from_port),
+                                        detail::get_runtime_instance<runtime::Port>(to_port),
+                                        {.type_ = runtime::ConnectionType::Delayed, .delay_ = delay});
+  } catch (const runtime::ValidationError& e) {
+    throw ValidationError(e.what());
+  }
+}
 
 } // namespace detail
 
@@ -56,10 +85,10 @@ void Environment::execute() {
   try {
     runtime_environment_->assemble();
     startup_thread = runtime_environment_->startup();
-    if (render_reactor_graph_) {
-      xronos::messages::source_info::SourceInfo source_infos;
-      detail::serialize_source_locations(source_locations_, source_infos);
-      graph_exporter::send_reactor_graph_to_diagram_server(*runtime_environment_, source_infos, *attribute_manager_);
+    if constexpr (config::DIAGRAMS_ENABLED) {
+      if (render_reactor_graph_) {
+        detail::send_reactor_graph(*runtime_environment_, *attribute_manager_, source_locations_);
+      }
     }
   } catch (const std::exception& e) {
     runtime_environment_->set_exception(); // exception will be re-thrown after cleanup
@@ -88,14 +117,11 @@ auto Environment::context(std::source_location source_location) noexcept -> Envi
 
 void Environment::enable_telemetry(std::string_view application_name, std::string_view endpoint) {
   reactor_assert(telemetry_backend_ == nullptr);
-  constexpr std::size_t hostname_buffer_size = 128;
-  std::array<char, hostname_buffer_size> hostname_buffer{};
-  gethostname(hostname_buffer.data(), hostname_buffer_size);
-
-  telemetry_backend_ = std::make_unique<telemetry::otel::OtelTelemetryBackend>(
-      *attribute_manager_, application_name, endpoint, std::string{hostname_buffer.data()}, getpid());
-  runtime_environment_->set_data_logger(telemetry_backend_->runtime_data_logger());
-  metric_data_logger_provider_->set_logger(telemetry_backend_->metric_data_logger());
+  if constexpr (config::TELEMETRY_ENABLED) {
+    telemetry_backend_ = detail::create_telemetry_backend(*attribute_manager_, application_name, endpoint);
+    runtime_environment_->set_data_logger(telemetry_backend_->runtime_data_logger());
+    metric_data_logger_provider_->set_logger(telemetry_backend_->metric_data_logger());
+  }
 }
 
 namespace detail {
@@ -109,6 +135,46 @@ void store_source_location(Environment& environment, std::uint64_t uid, std::str
   [[maybe_unused]] auto res = environment.source_locations_.try_emplace(uid, std::make_pair(fqn, source_location));
   assert(res.second);
 }
+
+auto get_attribute_manager(Environment& environment) noexcept -> telemetry::AttributeManager& {
+  reactor_assert(environment.attribute_manager_ != nullptr);
+  return *environment.attribute_manager_;
+}
+
+auto get_metric_data_logger_provider(Environment& environment) noexcept -> telemetry::MetricDataLoggerProvider& {
+  return *environment.metric_data_logger_provider_;
+}
+
+} // namespace detail
+
+} // namespace xronos::sdk
+
+#ifdef XRONOS_SDK_ENABLE_TELEMETRY
+
+#include "xronos/telemetry/otel/otel_telemetry_backend.hh"
+
+namespace xronos::sdk::detail {
+
+auto create_telemetry_backend(telemetry::AttributeManager& attribute_manager, std::string_view application_name,
+                              std::string_view endpoint) -> std::unique_ptr<telemetry::TelemetryBackend> {
+  constexpr std::size_t hostname_buffer_size = 128;
+  std::array<char, hostname_buffer_size> hostname_buffer{};
+  gethostname(hostname_buffer.data(), hostname_buffer_size);
+
+  return std::make_unique<telemetry::otel::OtelTelemetryBackend>(attribute_manager, application_name, endpoint,
+                                                                 std::string{hostname_buffer.data()}, getpid());
+}
+
+} // namespace xronos::sdk::detail
+
+#endif // XRONOS_SDK_ENABLE_TELEMETRY
+
+#ifdef XRONOS_SDK_ENABLE_DIAGRAMS
+
+#include "xronos/graph_exporter/exporter.hh"
+#include "xronos/messages/source_info.pb.h"
+
+namespace xronos::sdk::detail {
 
 void serialize_fqn(std::string_view fqn, messages::source_info::ElementSourceInfo& source_info) {
   std::size_t start = 0;
@@ -139,15 +205,14 @@ void serialize_source_locations(
   }
 }
 
-auto get_attribute_manager(Environment& environment) noexcept -> telemetry::AttributeManager& {
-  reactor_assert(environment.attribute_manager_ != nullptr);
-  return *environment.attribute_manager_;
+void send_reactor_graph(
+    const runtime::Environment& runtime_environment, const telemetry::AttributeManager& attribute_manager,
+    const std::unordered_map<std::uint64_t, std::pair<std::string, SourceLocation>>& source_locations) {
+  xronos::messages::source_info::SourceInfo source_infos;
+  detail::serialize_source_locations(source_locations, source_infos);
+  graph_exporter::send_reactor_graph_to_diagram_server(runtime_environment, source_infos, attribute_manager);
 }
 
-auto get_metric_data_logger_provider(Environment& environment) noexcept -> telemetry::MetricDataLoggerProvider& {
-  return *environment.metric_data_logger_provider_;
-}
+} // namespace xronos::sdk::detail
 
-} // namespace detail
-
-} // namespace xronos::sdk
+#endif // XRONOS_SDK_ENABLE_DIAGRAMS

@@ -5,19 +5,20 @@
 #ifndef XRONOS_RUNTIME_ACTION_HH
 #define XRONOS_RUNTIME_ACTION_HH
 
-#include "assert.hh"
-#include "environment.hh"
-#include "fwd.hh"
-#include "logical_time.hh"
-#include "reactor.hh"
-#include "reactor_element.hh"
-#include "time.hh"
-#include "time_barrier.hh"
-#include "value_ptr.hh"
-
-#include <condition_variable>
+#include <any>
+#include <functional>
 #include <map>
 #include <mutex>
+#include <set>
+#include <string_view>
+#include <utility>
+
+#include "xronos/runtime/environment.hh"
+#include "xronos/runtime/fwd.hh"
+#include "xronos/runtime/logical_time.hh"
+#include "xronos/runtime/reactor.hh"
+#include "xronos/runtime/reactor_element.hh"
+#include "xronos/runtime/time.hh"
 
 namespace xronos::runtime {
 
@@ -69,11 +70,11 @@ public:
   friend class Scheduler;
 };
 
-template <class T> class Action : public BaseAction {
+class Action : public BaseAction {
 private:
-  ImmutableValuePtr<T> value_ptr_{nullptr};
+  std::any current_value_{};
 
-  std::map<Tag, ImmutableValuePtr<T>> events_{};
+  std::map<Tag, std::any> events_{};
   std::mutex mutex_events_{};
 
 protected:
@@ -104,51 +105,22 @@ public:
   void startup() final {}
   void shutdown() final {}
 
-  template <class Dur = Duration> void schedule(const ImmutableValuePtr<T>& value_ptr, Dur delay = Dur::zero());
-  auto schedule_at(const ImmutableValuePtr<T>& value_ptr, const Tag& tag) -> bool;
+  auto schedule_at(const std::any& value, const Tag& tag) -> bool;
 
-  template <class Dur = Duration> void schedule(MutableValuePtr<T>&& value_ptr, Dur delay = Dur::zero()) {
-    schedule(ImmutableValuePtr<T>(std::move(value_ptr)), delay);
-  }
+  void schedule(const std::any& value, Duration delay = Duration::zero());
 
-  template <class Dur = Duration> void schedule(const T& value, Dur delay = Dur::zero()) {
-    schedule(make_immutable_value<T>(value), delay);
-  }
-
-  template <class Dur = Duration> void schedule(T&& value, Dur delay = Dur::zero()) {
-    schedule(make_immutable_value<T>(std::move(value)), delay);
-  }
-
-  // Scheduling an action with nullptr value is not permitted.
-  template <class Dur = Duration> void schedule(std::nullptr_t, Dur) = delete;
-
-  [[nodiscard]] auto get() const noexcept -> const ImmutableValuePtr<T>& { return value_ptr_; }
+  [[nodiscard]] auto get() const noexcept -> const std::any& { return current_value_; }
 };
 
-template <> class Action<void> : public BaseAction {
-protected:
-  Action(std::string_view name, Reactor& container, bool logical, Duration min_delay)
-      : BaseAction(name, container, logical, min_delay) {}
-  Action(std::string_view name, Environment& environment, bool logical, Duration min_delay)
-      : BaseAction(name, environment, logical, min_delay) {}
-
-public:
-  template <class Dur = Duration> void schedule(Dur delay = Dur::zero());
-  auto schedule_at(const Tag& tag) -> bool;
-
-  void startup() final {}
-  void shutdown() final {}
-};
-
-template <class T> class PhysicalAction : public Action<T> {
+class PhysicalAction : public Action {
 public:
   PhysicalAction(std::string_view name, Reactor& container);
 };
 
-template <class T> class LogicalAction : public Action<T> {
+class LogicalAction : public Action {
 public:
   LogicalAction(std::string_view name, Reactor& container, Duration min_delay = Duration::zero())
-      : Action<T>(name, container, true, min_delay) {}
+      : Action(name, container, true, min_delay) {}
 };
 
 class Timer : public BaseAction {
@@ -202,7 +174,5 @@ public:
 };
 
 } // namespace xronos::runtime
-
-#include "impl/action_impl.hh"
 
 #endif // XRONOS_RUNTIME_ACTION_HH

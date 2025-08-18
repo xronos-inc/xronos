@@ -5,23 +5,27 @@
 #ifndef XRONOS_RUNTIME_SCHEDULER_HH
 #define XRONOS_RUNTIME_SCHEDULER_HH
 
+#include <atomic>
 #include <condition_variable>
+#include <cstddef>
+#include <cstdint>
 #include <functional>
-#include <future>
+#include <limits>
 #include <map>
+#include <memory>
 #include <mutex>
-#include <set>
+#include <semaphore>
 #include <shared_mutex>
+#include <string>
 #include <thread>
 #include <vector>
 
-#include "assert.hh"
-#include "fwd.hh"
-#include "logging.hh"
-#include "logical_time.hh"
-#include "safe_vector.hh"
-#include "semaphore.hh"
-#include "time.hh"
+#include "xronos/runtime/assert.hh"
+#include "xronos/runtime/fwd.hh"
+#include "xronos/runtime/logging.hh"
+#include "xronos/runtime/logical_time.hh"
+#include "xronos/runtime/safe_vector.hh"
+#include "xronos/runtime/time.hh"
 
 namespace xronos::runtime {
 
@@ -66,7 +70,7 @@ class ReadyQueue {
 private:
   std::vector<Reaction*> queue_{};
   std::atomic<std::ptrdiff_t> size_{0};
-  Semaphore sem_{0};
+  std::counting_semaphore<std::numeric_limits<std::int32_t>::max()> sem_{0};
   std::ptrdiff_t waiting_workers_{0};
   const std::ptrdiff_t num_workers_{};
   log::NamedLogger& log_;
@@ -146,7 +150,7 @@ private:
   /// stores the actions triggered at the current tag
   ActionListPtr triggered_actions_{nullptr};
 
-  std::vector<std::vector<BasePort*>> set_ports_{};
+  std::vector<std::vector<Port*>> set_ports_{};
   std::vector<std::vector<Reaction*>> triggered_reactions_{};
   std::vector<std::vector<Reaction*>> reaction_queue_{};
   unsigned int reaction_queue_pos_{std::numeric_limits<unsigned>::max()};
@@ -166,7 +170,7 @@ private:
   auto schedule_ready_reactions() -> bool;
   void next();
   void terminate_all_workers();
-  void set_port_helper(BasePort* port);
+  void set_port_helper(Port* port);
 
   void advance_logical_time_to(const Tag& tag);
 
@@ -196,7 +200,7 @@ public:
   };
   auto set_exception() -> void;
 
-  void set_port(BasePort* port);
+  void set_port(Port* port);
 
   [[nodiscard]] auto logical_time() const noexcept -> const auto& { return logical_time_; }
 

@@ -1,14 +1,16 @@
 // SPDX-FileCopyrightText: Copyright (c) 2025 Xronos Inc.
 // SPDX-License-Identifier: BSD-3-Clause
 
-#include <catch2/catch_test_macros.hpp>
 #include <cstdint>
 #include <functional>
+#include <string>
 #include <string_view>
 #include <vector>
 
+#include "catch2/catch_test_macros.hpp"
 #include "common.hh"
 #include "xronos/runtime/action.hh"
+#include "xronos/runtime/environment.hh"
 #include "xronos/runtime/reaction.hh"
 #include "xronos/runtime/reactor.hh"
 #include "xronos/runtime/reactor_element.hh"

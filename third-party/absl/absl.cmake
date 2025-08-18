@@ -1,4 +1,4 @@
-set(XRONOS_ABSL_VERSION "20240722.1" CACHE STRING "absl version")
+set(XRONOS_ABSL_VERSION "20250512.1" CACHE STRING "absl version")
 set(XRONOS_ABSL_PROVIDER "module" CACHE STRING "absl provider (module|package|none)")
 
 function(add_absl)

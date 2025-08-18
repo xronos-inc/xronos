@@ -1,19 +1,18 @@
-add_library(xronos-telemetry lib/attribute_manager.cc)
-target_include_directories(
+file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/lib/*.cc")
+file(GLOB_RECURSE HEADERS CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/include/*.hh")
+
+add_library(xronos-telemetry ${SOURCES})
+target_sources(
   xronos-telemetry
-  PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include>"
-         "$<INSTALL_INTERFACE:include>")
-target_link_libraries(xronos-telemetry PRIVATE xronos-runtime)
+  PUBLIC FILE_SET HEADERS
+  TYPE HEADERS
+  BASE_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>
+  FILES ${HEADERS}
+)
+target_link_libraries(xronos-telemetry PUBLIC xronos-runtime)
 target_compile_options(xronos-telemetry PRIVATE -Wall -Wextra -pedantic -Werror)
+set_target_properties(xronos-telemetry PROPERTIES VERIFY_INTERFACE_HEADER_SETS ON)
 
-if(XRONOS_LIB_RUN_CLANG_TIDY)
-  set_target_properties(xronos-telemetry
-                        PROPERTIES CXX_CLANG_TIDY "${XRONOS_CLANG_TIDY_COMMAND}")
-endif()
 set_target_properties(xronos-telemetry PROPERTIES VERSION "${PROJECT_VERSION}" SOVERSION 1)
-
-if(XRONOS_LIB_INSTALL_HEADERS)
-  install(DIRECTORY include/ DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
-endif()
 
 add_library(xronos::xronos-telemetry ALIAS xronos-telemetry)

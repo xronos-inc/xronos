@@ -4,8 +4,11 @@
 
 #include "xronos/runtime/logical_time.hh"
 
-#include "xronos/runtime/assert.hh"
 #include <limits>
+#include <ostream>
+
+#include "xronos/runtime/assert.hh"
+#include "xronos/runtime/time.hh"
 
 namespace xronos::runtime {
 

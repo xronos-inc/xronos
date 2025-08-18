@@ -1,4 +1,4 @@
-set(GOOGLETEST_VERSION "1.16.0" CACHE STRING "GooglesTest version")
+set(GOOGLETEST_VERSION "1.17.0" CACHE STRING "GooglesTest version")
 
 include(FetchContent)
 

@@ -3,7 +3,12 @@
 
 #include "xronos/telemetry/otel/otel_runtime_data_logger.hh"
 
+#include <memory>
+#include <utility>
+
 #include "common.hh"
+#include "opentelemetry/trace/scope.h"
+#include "opentelemetry/trace/span.h"
 #include "xronos/runtime/data_logger.hh"
 #include "xronos/runtime/reaction.hh"
 
@@ -16,7 +21,7 @@ class OtelReactionScope final : public RuntimeDataLogger::ReactionScope {
 
 public:
   OtelReactionScope(std::shared_ptr<opentelemetry::trace::Span> span)
-      : scope_(get_tracer()->WithActiveSpan(span))
+      : scope_(opentelemetry::trace::Tracer::WithActiveSpan(span))
       , span_(std::move(span)) {};
   OtelReactionScope(const OtelReactionScope&) = delete;
   OtelReactionScope(OtelReactionScope&&) = default;

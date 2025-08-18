@@ -196,7 +196,7 @@ SHORT_NAMES            = NO
 # explicit @brief command for a brief description.)
 # The default value is: NO.
 
-JAVADOC_AUTOBRIEF      = NO
+JAVADOC_AUTOBRIEF      = YES
 
 # If the JAVADOC_BANNER tag is set to YES then Doxygen will interpret a line
 # such as
@@ -580,8 +580,8 @@ RESOLVE_UNNAMED_PARAMS = YES
 # members will be included in the various overviews, but no documentation
 # section is generated. This option has no effect if EXTRACT_ALL is enabled.
 # The default value is: NO.
-# This is needed to hide items in the detail namespace and to hide purely internal
-# private virtual members.
+
+# This is needed to hide to hide purely internal private virtual members.
 
 HIDE_UNDOC_MEMBERS     = YES
 
@@ -1075,7 +1075,7 @@ EXCLUDE_PATTERNS       = "*/detail/*"
 # wildcard * is used, a substring. Examples: ANamespace, AClass,
 # ANamespace::AClass, ANamespace::*Test
 
-EXCLUDE_SYMBOLS        =
+EXCLUDE_SYMBOLS        = detail::*,*::detail::*
 
 # The EXAMPLE_PATH tag can be used to specify one or more files or directories
 # that contain example code fragments that are included (see the \include
@@ -1213,13 +1213,13 @@ STRIP_CODE_COMMENTS    = YES
 # entity all documented functions referencing it will be listed.
 # The default value is: NO.
 
-REFERENCED_BY_RELATION = YES
+REFERENCED_BY_RELATION = NO
 
 # If the REFERENCES_RELATION tag is set to YES then for each documented function
 # all documented entities called/used by that function will be listed.
 # The default value is: NO.
 
-REFERENCES_RELATION    = YES
+REFERENCES_RELATION    = NO
 
 # If the REFERENCES_LINK_SOURCE tag is set to YES and SOURCE_BROWSER tag is set
 # to YES then the hyperlinks from functions in REFERENCES_RELATION and
@@ -1411,7 +1411,7 @@ HTML_STYLESHEET        =
 # documentation.
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
-HTML_EXTRA_STYLESHEET  = @AWESOME_CSS_DIR@/doxygen-awesome.css
+HTML_EXTRA_STYLESHEET  = @AWESOME_CSS_DIR@/doxygen-awesome.css "@CMAKE_CURRENT_SOURCE_DIR@/static/custom.css"
 HTML_COLORSTYLE        = LIGHT # required with Doxygen >= 1.9.5
 
 # The HTML_EXTRA_FILES tag can be used to specify one or more extra images or
@@ -2523,7 +2523,7 @@ TAGFILES               =
 # tag file that is based on the input files it reads. See section "Linking to
 # external documentation" for more information about the usage of tag files.
 
-GENERATE_TAGFILE       =
+GENERATE_TAGFILE       = xronos-sdk.tag
 
 # If the ALLEXTERNALS tag is set to YES, all external classes and namespaces
 # will be listed in the class and namespace index. If set to NO, only the
@@ -2924,3 +2924,6 @@ MSCGEN_TOOL            =
 # command).
 
 MSCFILE_DIRS           =
+
+# introduced in doxygen 1.14.0
+PAGE_OUTLINE_PANEL     = NO

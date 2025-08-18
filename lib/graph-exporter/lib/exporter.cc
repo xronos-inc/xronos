@@ -1,38 +1,39 @@
 // SPDX-FileCopyrightText: Copyright (c) 2025 Xronos Inc.
 // SPDX-License-Identifier: BSD-3-Clause
 
+#include "xronos/graph_exporter/exporter.hh"
+
 #include <cassert>
+#include <cstdlib>
+#include <cstring>
 #include <functional>
 #include <optional>
 #include <stdexcept>
 #include <string>
-#include <unordered_map>
-#include <utility>
 #include <variant>
 
-#include "xronos/graph_exporter/detail/exporter.hh"
-#include "xronos/graph_exporter/exporter.hh"
-
+#include "google/protobuf/empty.pb.h"
+#include "google/protobuf/util/json_util.h"
+#include "google/protobuf/util/time_util.h"
+#include "grpcpp/client_context.h"
+#include "grpcpp/create_channel.h"
+#include "grpcpp/security/credentials.h"
+#include "grpcpp/support/status.h"
+#include "xronos/messages/reactor_graph.pb.h"
+#include "xronos/messages/source_info.pb.h"
 #include "xronos/runtime/action.hh"
 #include "xronos/runtime/assert.hh"
+#include "xronos/runtime/connection_properties.hh"
+#include "xronos/runtime/environment.hh"
 #include "xronos/runtime/misc_element.hh"
 #include "xronos/runtime/port.hh"
 #include "xronos/runtime/reaction.hh"
 #include "xronos/runtime/reactor.hh"
-#include "xronos/telemetry/attribute_manager.hh"
-#include "xronos/telemetry/metric.hh"
-
-#include "xronos/messages/reactor_graph.pb.h"
-#include "xronos/messages/source_info.pb.h"
 #include "xronos/runtime/reactor_element.hh"
 #include "xronos/services/diagram_generator.grpc.pb.h"
-
-#include <google/protobuf/util/json_util.h>
-#include <google/protobuf/util/time_util.h>
-
-#include <grpcpp/client_context.h>
-#include <grpcpp/create_channel.h>
-#include <grpcpp/security/credentials.h>
+#include "xronos/services/diagram_generator.pb.h"
+#include "xronos/telemetry/attribute_manager.hh"
+#include "xronos/telemetry/metric.hh"
 
 using namespace xronos::messages;
 using namespace xronos::services;
@@ -92,7 +93,7 @@ void export_reaction(const Reaction& reaction, reactor_graph::Graph& graph) {
   export_reaction_dependencies(reaction, graph);
 }
 
-void export_port(const BasePort& port, reactor_graph::Graph& graph) {
+void export_port(const Port& port, reactor_graph::Graph& graph) {
   auto& elem = add_new_element(port, graph);
   auto& port_elem = *elem.mutable_port();
   reactor_assert(port.is_input() || port.is_output());
@@ -221,7 +222,7 @@ public:
   void visit(const Reactor& reactor) final { export_reactor(reactor, graph); }
   void visit(const Reaction& reaction) final { export_reaction(reaction, graph); }
   void visit(const BaseAction& action) final { export_action(action, graph); }
-  void visit(const BasePort& port) final { export_port(port, graph); }
+  void visit(const Port& port) final { export_port(port, graph); }
   void visit(const Timer& timer) final { export_timer(timer, graph); }
   void visit(const StartupTrigger& startup) final { export_startup(startup, graph); }
   void visit(const ShutdownTrigger& shutdown) final { export_shutdown(shutdown, graph); }
@@ -251,8 +252,8 @@ auto export_reactor_graph_to_proto(
 
 auto export_reactor_graph_to_json(
     const Environment& environment, const std::optional<source_info::SourceInfo>& source_info,
-    std::optional<std::reference_wrapper<const telemetry::AttributeManager>> attribute_manager,
-    bool pretty) -> std::string {
+    std::optional<std::reference_wrapper<const telemetry::AttributeManager>> attribute_manager, bool pretty)
+    -> std::string {
   using namespace google::protobuf::util;
 
   diagram_generator::GraphWithMetadata gwm;
@@ -291,8 +292,8 @@ namespace detail {
 
 auto send_reactor_graph_to_diagram_server(
     const Environment& environment, const std::optional<source_info::SourceInfo>& source_info,
-    std::optional<std::reference_wrapper<const telemetry::AttributeManager>> attribute_manager,
-    const std::string& host) -> ::grpc::Status {
+    std::optional<std::reference_wrapper<const telemetry::AttributeManager>> attribute_manager, const std::string& host)
+    -> ::grpc::Status {
 
   auto channel = grpc::CreateChannel(host, grpc::InsecureChannelCredentials());
   auto stub = diagram_generator::DiagramGenerator::NewStub(channel);

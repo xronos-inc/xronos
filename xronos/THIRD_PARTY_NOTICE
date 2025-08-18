@@ -7,7 +7,7 @@ following licenses. Full licenses and notices are provided in the
 ---
 
 Component: Abseil C++
-Version: Abseil LTS 20240722.1
+Version: Abseil LTS 20250512.1
 License: Apache License 2.0
 License text: https://www.apache.org/licenses/LICENSE-2.0
 Source: https://github.com/abseil/abseil-cpp
@@ -17,18 +17,18 @@ For the full license text, see:
 
 ---
 
-Component address_sorting
+Component: address_sorting
 License: BSD 3-Clause License
 License text: https://opensource.org/licenses/BSD-3-Clause
-Source: https://github.com/grpc/grpc/tree/v1.67.1/third_party/address_sorting
+Source: https://github.com/grpc/grpc/tree/v1.74.1/third_party/address_sorting
 
 [third-party-licenses/address_sorting_LICENSE](third-party-licenses/address_sorting_LICENSE)
 
 ---
 
-Component boringssl
+Component: boringssl
 License: Mixed, see full license text
-Version c57adcf6947912fe17bc5bfaf0876225d1fe742d
+Version c63fadbde60a2224c22189d14c4001bbd2a3a629
 Source: https://boringssl.googlesource.com/boringssl
 
 [third-party-licenses/boringssl_LICENSE](third-party-licenses/boringssl_LICENSE)
@@ -36,7 +36,7 @@ Source: https://boringssl.googlesource.com/boringssl
 ---
 
 Component: gRPC
-Version: v1.71.0
+Version: v1.74.1
 License: Apache License 2.0
 License text: https://www.apache.org/licenses/LICENSE-2.0
 Source: https://github.com/grpc/grpc
@@ -46,7 +46,7 @@ Source: https://github.com/grpc/grpc
 ---
 
 Component: myst_parser
-Version: v4.0.0
+Version: v4.0.1
 License: MIT License
 License text: https://opensource.org/licenses/MIT
 Source: https://github.com/executablebooks/MyST-Parser
@@ -56,8 +56,8 @@ For the full license text, see:
 
 ---
 
-Component: OpenTelemetry protcol (OLTP)
-Version: v1.3.2
+Component: OpenTelemetry protocol (OLTP)
+Version: v1.7.0
 License: Apache License 2.0
 License text: https://www.apache.org/licenses/LICENSE-2.0
 Source: https://github.com/open-telemetry/opentelemetry-proto
@@ -68,7 +68,7 @@ For the full license text, see:
 ---
 
 Component: OpenTelemetry C++
-Version: v1.17.0
+Version: v1.22.0
 License: Apache License 2.0
 License text: https://www.apache.org/licenses/LICENSE-2.0
 Source: https://github.com/open-telemetry/opentelemetry-cpp
@@ -79,7 +79,7 @@ For the full license text, see:
 ---
 
 Component: protobuf
-Version: v29.4
+Version: v31.1
 License: BSD 3-Clause License
 License text: https://opensource.org/licenses/BSD-3-Clause
 Source: https://github.com/protocolbuffers/protobuf
@@ -90,7 +90,7 @@ For the full license text, see:
 ---
 
 Component: pybind11
-Version: v2.13.6
+Version: v3.0.0
 License: BSD 3-Clause License
 License text: https://opensource.org/licenses/BSD-3-Clause
 Source: https://github.com/pybind/pybind11
@@ -158,7 +158,7 @@ For the full license text, see:
 Component: utf8_range
 License: MIT License
 License text: https://opensource.org/licenses/MIT
-Source: https://github.com/grpc/grpc/tree/v1.67.1/third_party/utf8_range
+Source: https://github.com/grpc/grpc/tree/v1.74.1/third_party/utf8_range
 
 For the full license text, see:
 [third-party-licenses/utf8_range_LICENSE](third-party-licenses/utf8_range_LICENSE)

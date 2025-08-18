@@ -1,4 +1,4 @@
-set(XRONOS_OPENTELEMETRY_VERSION "1.17.0" CACHE STRING "Opentelemetry version")
+set(XRONOS_OPENTELEMETRY_VERSION "1.22.0" CACHE STRING "Opentelemetry version")
 set(XRONOS_OPENTELEMETRY_PROVIDER "module" CACHE STRING "opentelemetry provider (module|package|none)")
 
 function(add_opentelemetry)
@@ -27,18 +27,13 @@ function(add_opentelemetry)
   )
 
   FetchContent_MakeAvailable(opentelemetry-cpp)
-
-  # define alias targets so that it looks as if opentelemetry was installed
-  add_library(opentelemetry-cpp::api ALIAS opentelemetry_api)
-  add_library(opentelemetry-cpp::otlp_grpc_exporter ALIAS opentelemetry_exporter_otlp_grpc)
-  add_library(opentelemetry-cpp::proto ALIAS opentelemetry_proto)
-  add_library(opentelemetry-cpp::proto_grpc ALIAS opentelemetry_proto_grpc)
-  add_library(opentelemetry-cpp::sdk ALIAS opentelemetry_sdk)
 endfunction()
 
 if(XRONOS_OPENTELEMETRY_PROVIDER STREQUAL "package")
   find_package(opentelemetry-cpp CONFIG REQUIRED)
 elseif(XRONOS_OPENTELEMETRY_PROVIDER STREQUAL "module")
-  add_opentelemetry()
+  if(NOT TARGET opentelemetry-cpp::api)
+    add_opentelemetry()
+  endif()
 endif()
 

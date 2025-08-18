@@ -8,10 +8,11 @@
 #include <cstdint>
 #include <functional>
 #include <set>
+#include <string_view>
 
-#include "fwd.hh"
-#include "logical_time.hh"
-#include "reactor_element.hh"
+#include "xronos/runtime/fwd.hh"
+#include "xronos/runtime/reactor_element.hh"
+#include "xronos/runtime/time.hh"
 
 namespace xronos::runtime {
 
@@ -19,9 +20,9 @@ class Reaction : public ReactorElement { // NOLINT(cppcoreguidelines-special-mem
 private:
   std::set<BaseAction*> action_triggers_;
   std::set<BaseAction*> scheduable_actions_;
-  std::set<BasePort*> port_trigger_;
-  std::set<BasePort*> antidependencies_;
-  std::set<BasePort*> dependencies_;
+  std::set<Port*> port_trigger_;
+  std::set<Port*> antidependencies_;
+  std::set<Port*> dependencies_;
   std::set<BaseAction*> action_dependencies_;
 
   std::uint32_t priority_;
@@ -40,10 +41,10 @@ public:
   ~Reaction() override = default;
 
   void declare_trigger(BaseAction* action);
-  void declare_trigger(BasePort* port);
+  void declare_trigger(Port* port);
   void declare_schedulable_action(BaseAction* action);
-  void declare_antidependency(BasePort* port);
-  void declare_dependency(BasePort* port);
+  void declare_antidependency(Port* port);
+  void declare_dependency(Port* port);
   void declare_dependency(BaseAction* action);
 
   [[nodiscard]] auto action_triggers() const noexcept -> const auto& { return action_triggers_; }

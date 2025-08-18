@@ -5,17 +5,24 @@
 #ifndef XRONOS_RUNTIME_ENVIRONMENT_HH
 #define XRONOS_RUNTIME_ENVIRONMENT_HH
 
+#include <cstdint>
+#include <exception>
+#include <functional>
+#include <mutex>
 #include <set>
 #include <string>
+#include <thread>
+#include <utility>
 #include <vector>
 
-#include "connection_properties.hh"
-#include "data_logger.hh"
-#include "fwd.hh"
-#include "graph.hh"
-#include "logging.hh"
-#include "scheduler.hh"
-#include "time.hh"
+#include "xronos/runtime/connection_properties.hh"
+#include "xronos/runtime/data_logger.hh"
+#include "xronos/runtime/fwd.hh"
+#include "xronos/runtime/graph.hh"
+#include "xronos/runtime/logging.hh"
+#include "xronos/runtime/logical_time.hh"
+#include "xronos/runtime/scheduler.hh"
+#include "xronos/runtime/time.hh"
 
 namespace xronos::runtime {
 
@@ -50,13 +57,6 @@ private:
   std::set<Reaction*> reactions_{};
   std::vector<Dependency> dependencies_{};
 
-  /// The environment containing this environment. nullptr if this is the top environment
-  Environment* containing_environment_{nullptr};
-  /// Set of all environments contained by this environment
-  std::set<Environment*> contained_environments_{};
-  /// Pointer to the top level environment
-  Environment* top_environment_{nullptr};
-
   Scheduler scheduler_;
   Phase phase_{Phase::Construction};
 
@@ -72,8 +72,8 @@ private:
   /// The timeout tag as determined during startup()
   Tag timeout_tag_{};
 
-  Graph<BasePort*, ConnectionProperties> graph_{};
-  Graph<BasePort*, ConnectionProperties> optimized_graph_{};
+  Graph<Port*, ConnectionProperties> graph_{};
+  Graph<Port*, ConnectionProperties> optimized_graph_{};
 
   void build_dependency_graph(Reactor* reactor);
   void calculate_indexes();
@@ -88,32 +88,11 @@ private:
 public:
   explicit Environment(unsigned int num_workers, bool fast_fwd_execution = default_fast_fwd_execution,
                        const Duration& timeout = Duration::max());
-  explicit Environment(const std::string& name, Environment* containing_environment);
   virtual ~Environment() = default;
 
   auto name() -> const std::string& { return name_; }
 
-  // this method draw a connection between two graph elements with some properties
-  template <class T> void draw_connection(Port<T>& source, Port<T>& sink, ConnectionProperties properties) {
-    this->draw_connection(&source, &sink, properties);
-  }
-
-  template <class T> void draw_connection(Port<T>* source, Port<T>* sink, ConnectionProperties properties) {
-    if (top_environment_ == nullptr || top_environment_ == this) {
-      log::Debug() << "drawing connection: " << source->fqn() << " --> " << sink->fqn();
-      auto existing_source = graph_.source_for(sink);
-      if (existing_source.has_value()) {
-        std::stringstream error_message;
-        error_message << "multiple sources (both " << existing_source.value()->fqn() << " and " << source->fqn()
-                      << ") connected to port " << sink->fqn();
-        throw ValidationError(error_message.str());
-      }
-      graph_.add_edge(source, sink, properties);
-    } else {
-      top_environment_->draw_connection(source, sink, properties);
-    }
-  }
-
+  void draw_connection(Port& source, Port& sink, ConnectionProperties properties);
   void optimize();
 
   void register_top_level_reactor(Reactor& reactor);

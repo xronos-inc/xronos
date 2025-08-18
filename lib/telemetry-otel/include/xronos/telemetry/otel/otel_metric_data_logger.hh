@@ -4,6 +4,8 @@
 #ifndef XRONOS_TELEMETRY_OTEL_OTEL_METRIC_DATA_LOGGER_HH
 #define XRONOS_TELEMETRY_OTEL_OTEL_METRIC_DATA_LOGGER_HH
 
+#include <functional>
+
 #include "xronos/telemetry/attribute_manager.hh"
 #include "xronos/telemetry/metric.hh"
 

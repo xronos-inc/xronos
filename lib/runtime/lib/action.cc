@@ -4,11 +4,21 @@
 
 #include "xronos/runtime/action.hh"
 
+#include <any>
+#include <functional>
+#include <mutex>
+#include <stdexcept>
+#include <string_view>
+#include <utility>
+
 #include "xronos/runtime/assert.hh"
 #include "xronos/runtime/environment.hh"
+#include "xronos/runtime/logical_time.hh"
 #include "xronos/runtime/reaction.hh"
+#include "xronos/runtime/reactor.hh"
+#include "xronos/runtime/reactor_element.hh"
 #include "xronos/runtime/time.hh"
-#include <stdexcept>
+#include "xronos/runtime/time_barrier.hh"
 
 namespace xronos::runtime {
 
@@ -97,13 +107,15 @@ void ShutdownTrigger::shutdown() {
   environment().scheduler()->schedule_sync(this, tag);
 }
 
-auto Action<void>::schedule_at(const Tag& tag) -> bool {
+auto Action::schedule_at(const std::any& value, const Tag& tag) -> bool {
+  reactor_assert(value.has_value());
   auto* scheduler = environment().scheduler();
   if (is_logical()) {
     if (tag <= scheduler->logical_time()) {
       return false;
     }
     scheduler->schedule_sync(this, tag);
+    events_[tag] = value;
   } else {
     // We must call schedule_async while holding the mutex, because otherwise
     // the scheduler could already start processing the event that we schedule
@@ -111,9 +123,37 @@ auto Action<void>::schedule_at(const Tag& tag) -> bool {
     // Holding both the local mutex mutex_events_ and the scheduler mutex (in
     // schedule async) should not lead to a deadlock as the scheduler will
     // only hold one of the two mutexes at once.
-    return scheduler->schedule_async_at(this, tag);
+    bool result = scheduler->schedule_async_at(this, tag);
+    if (result) {
+      events_[tag] = value;
+    }
+    return result;
   }
   return true;
+}
+
+void Action::schedule(const std::any& value, Duration delay) {
+  reactor_assert(delay >= Duration::zero());
+  reactor_assert(value.has_value());
+
+  auto* scheduler = environment().scheduler();
+  if (is_logical()) {
+    delay += this->min_delay();
+    auto tag = Tag::from_logical_time(scheduler->logical_time()).delay(delay);
+
+    scheduler->schedule_sync(this, tag);
+    events_[tag] = value;
+  } else {
+    std::lock_guard<std::mutex> lock{mutex_events_};
+    // We must call schedule_async while holding the mutex, because otherwise
+    // the scheduler could already start processing the event that we schedule
+    // and call setup() on this action before we insert the value in events_.
+    // Holding both the local mutex mutex_events_ and the scheduler mutex (in
+    // schedule async) should not lead to a deadlock as the scheduler will
+    // only hold one of the two mutexes at once.
+    auto tag = scheduler->schedule_async(this, delay);
+    events_[tag] = value;
+  }
 }
 
 auto BaseAction::acquire_tag(const Tag& tag, std::unique_lock<std::mutex>& lock,
@@ -121,6 +161,32 @@ auto BaseAction::acquire_tag(const Tag& tag, std::unique_lock<std::mutex>& lock,
   reactor_assert(!logical_);
   reactor_assert(lock.owns_lock());
   return PhysicalTimeBarrier::acquire_tag(tag, lock, environment().scheduler(), abort_waiting);
+}
+
+void Action::setup() noexcept {
+  BaseAction::setup();
+  if (!current_value_.has_value()) { // only do this once, even if the action was triggered multiple times
+    // lock if this is a physical action
+    std::unique_lock<std::mutex> lock =
+        is_logical() ? std::unique_lock<std::mutex>() : std::unique_lock<std::mutex>(mutex_events_);
+    const auto& node = events_.extract(events_.begin());
+    reactor_assert(!node.empty());
+    reactor_assert(node.key() == environment().scheduler()->logical_time());
+    current_value_ = std::move(node.mapped());
+  }
+  reactor_assert(current_value_.has_value());
+}
+
+void Action::cleanup() noexcept {
+  BaseAction::cleanup();
+  current_value_.reset();
+}
+
+PhysicalAction::PhysicalAction(std::string_view name, Reactor& container)
+    : Action(name, container, false, Duration::zero()) {
+  // all physical actions act as input actions to the program as they can be
+  // scheduled from external threads
+  this->environment().register_input_action(*this);
 }
 
 } // namespace xronos::runtime

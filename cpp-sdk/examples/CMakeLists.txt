@@ -1,14 +1,12 @@
-add_executable(hello_world hello_world.cc)
-target_link_libraries(hello_world xronos-sdk)
+file(GLOB_RECURSE EXAMPLE_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/*.cc")
+set(EXAMPLE_SOURCES ${EXAMPLE_SOURCES} PARENT_SCOPE)  # make the variable available in parent CMakeLists.txt
 
-add_executable(timers timers.cc)
-target_link_libraries(timers xronos-sdk)
-
-add_executable(counter counter.cc)
-target_link_libraries(counter xronos-sdk)
-
-add_executable(reflex_game reflex_game.cc)
-target_link_libraries(reflex_game xronos-sdk)
-
-add_executable(metrics metrics.cc)
-target_link_libraries(metrics xronos-sdk)
+if(XRONOS_SDK_BUILD_EXAMPLES)
+  # create an executable for each example source file
+  foreach(SOURCE ${EXAMPLE_SOURCES})
+    get_filename_component(FILENAME ${SOURCE} NAME)
+    string(REPLACE ".cc" "" TARGET_NAME ${FILENAME})
+    add_executable(${TARGET_NAME} ${SOURCE})
+    target_link_libraries(${TARGET_NAME} xronos::xronos-sdk)
+  endforeach()
+endif()

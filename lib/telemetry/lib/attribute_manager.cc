@@ -2,9 +2,13 @@
 // SPDX-License-Identifier: BSD-3-Clause
 
 #include "xronos/telemetry/attribute_manager.hh"
-#include "xronos/runtime/reactor_element.hh"
 
-#include <functional>
+#include <mutex>
+#include <optional>
+#include <string_view>
+#include <utility>
+
+#include "xronos/runtime/reactor_element.hh"
 
 namespace xronos::telemetry {
 

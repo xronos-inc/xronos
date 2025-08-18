@@ -83,19 +83,19 @@ class Reactor(BaseReactor):
         self, from_: Port, to: Port, delay: datetime.timedelta
     ) -> None: ...
 
-class EventSource(Element):
+class EventSource:
     pass
 
-class VoidEventSource(Element):
+class VoidEventSource:
     pass
 
-class Startup(VoidEventSource):
+class Startup(Element, VoidEventSource):
     pass
 
-class Shutdown(VoidEventSource):
+class Shutdown(Element, VoidEventSource):
     pass
 
-class PeriodicTimer(VoidEventSource):
+class PeriodicTimer(Element, VoidEventSource):
     def __init__(
         self,
         name: str,
@@ -108,7 +108,7 @@ class PeriodicTimer(VoidEventSource):
     def set_period(self, period: datetime.timedelta) -> None: ...
     def set_offset(self, offset: datetime.timedelta) -> None: ...
 
-class Port(EventSource):
+class Port(Element, EventSource):
     pass
 
 class InputPort(Port):
@@ -117,10 +117,10 @@ class InputPort(Port):
 class OutputPort(Port):
     def __init__(self, name: str, context: ReactorContext) -> None: ...
 
-class ProgrammableTimer(EventSource):
+class ProgrammableTimer(Element, EventSource):
     def __init__(self, name: str, context: ReactorContext) -> None: ...
 
-class PhysicalEvent(EventSource):
+class PhysicalEvent(Element, EventSource):
     def __init__(self, name: str, context: ReactorContext) -> None: ...
     def trigger(self, value: object) -> None: ...
 

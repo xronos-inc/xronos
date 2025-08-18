@@ -1,104 +1,108 @@
 // SPDX-FileCopyrightText: Copyright (c) 2025 Xronos Inc.
 // SPDX-License-Identifier: BSD-3-Clause
 
-/**
- * @file
- *
- * @brief Definition of the `ProgrammableTimer` class.
- */
+/** @file */
+
 #ifndef XRONOS_SDK_PROGRAMMABLE_TIMER_HH
 #define XRONOS_SDK_PROGRAMMABLE_TIMER_HH
 
-#include <memory>
+#include <any>
+#include <string_view>
+#include <variant>
 
 #include "xronos/sdk/context.hh"
+#include "xronos/sdk/element.hh"
 #include "xronos/sdk/event_source.hh"
 #include "xronos/sdk/fwd.hh"
 #include "xronos/sdk/time.hh"
-
-#include "xronos/runtime/action.hh"
-#include "xronos/runtime/reaction.hh"
+#include "xronos/sdk/value_ptr.hh"
 
 namespace xronos::sdk {
+
+namespace detail::runtime_programmable_timer {
+
+// Helper functions for accessing the underlying runtime code using pImpl.
+void schedule(Element& timer, const std::any& value, Duration delay = Duration::zero()) noexcept;
+[[nodiscard]] auto is_present(const Element& timer) noexcept -> bool;
+[[nodiscard]] auto get(const Element& timer) noexcept -> const std::any&;
+void register_as_trigger_of(const Element& timer, runtime::Reaction& reaction) noexcept;
+auto make_instance(std::string_view name, ReactorContext context) -> RuntimeElementPtr;
+void register_as_effect_of(const Element& timer, runtime::Reaction& reaction) noexcept;
+
+} // namespace detail::runtime_programmable_timer
+
 /**
- * @brief A reactor element for scheduling new events.
+ * A reactor element for scheduling new events.
  *
- * @details Programmable timers may be used by reactions to schedule new events in
- * the future. Events are not scheduled or read directly. Instead, reactions
- * may declare a `BaseReaction::ProgrammableTimerEffect` to schedule new events, or
- * a `BaseReaction::Trigger`
- * or `BaseReaction::Source` to access the value associated with an active event.
+ * Programmable timers may be used by reactions to schedule new events that will
+ * be emitted in the future. They can be used both as a reaction @ref
+ * BaseReaction::Trigger "trigger" and an reaction @ref
+ * BaseReaction::ProgrammableTimerEffect "effect".
  *
- * @tparam T The type of values carried by the programmable timer.
+ * @tparam T The value type associated with events emitted by the programmable timer.
  */
-template <class T> class ProgrammableTimer final : public EventSource<T> {
+template <class T> class ProgrammableTimer final : public Element, public EventSource<T> {
 public:
   /**
-   * @brief Construct a new `ProgrammableTimer`.
+   * Constructor.
    *
    * @param name The name of the `ProgrammableTimer`.
-   * @param context The context object obtained from the `ProgrammableTimer`'s
-   * containing reactor.
+   * @param context The containing reactor's context.
    */
   ProgrammableTimer(std::string_view name, ReactorContext context)
-      : EventSource<T>{std::make_unique<runtime::LogicalAction<T>>(name, detail::get_reactor_instance(context)),
-                       context} {}
+      : Element{detail::runtime_programmable_timer::make_instance(name, context), context} {}
 
 private:
   [[nodiscard]] auto is_present() const noexcept -> bool final {
-    return detail::get_runtime_instance<runtime::LogicalAction<T>>(*this).is_present();
+    return detail::runtime_programmable_timer::is_present(*this);
   }
-  [[nodiscard]] auto get() const noexcept -> const ImmutableValuePtr<T>& final {
-    return detail::get_runtime_instance<runtime::LogicalAction<T>>(*this).get();
+
+  [[nodiscard]] auto get() const noexcept -> ImmutableValuePtr<T> final {
+    if (!is_present()) {
+      return ImmutableValuePtr<T>{nullptr};
+    }
+    return std::any_cast<ImmutableValuePtr<T>>(detail::runtime_programmable_timer::get(*this));
   }
 
   void schedule(const ImmutableValuePtr<T>& value, Duration delay = Duration::zero()) noexcept {
-    detail::get_runtime_instance<runtime::LogicalAction<T>>(*this).schedule(value, delay);
+    detail::runtime_programmable_timer::schedule(*this, value, delay);
   }
 
   void register_as_trigger_of(runtime::Reaction& reaction) const noexcept final {
-    reaction.declare_trigger(&detail::get_runtime_instance<runtime::BaseAction>(*this));
+    detail::runtime_programmable_timer::register_as_trigger_of(*this, reaction);
   }
 
   friend BaseReaction;
 };
 
 /**
- * @brief An element for scheduling new events.
+ * A reactor element for scheduling new events.
  *
- * @details Programmable timers may be used by reactions to schedule new events in
- * the future. Events are not scheduled or read directly. Instead, reactions
- * may declare a `BaseReaction::ProgrammableTimerEffect` to schedule new events, or
- * a `BaseReaction::Trigger` or `BaseReaction::Source` to access the value
- * associated with an active event.
+ * Programmable timers may be used by reactions to schedule new events that will
+ * be emitted in the future. They can be used both as an reaction @ref
+ * BaseReaction::Trigger "trigger" and an reaction @ref
+ * BaseReaction::ProgrammableTimerEffect "effect".
  *
- * @details This specialization is used for programmable timers that do not convey
- * any values.
+ * This is a template specialization of ProgrammableTimer for scheduling and
+ * emitting events that do not have an associated value.
  */
-template <> class ProgrammableTimer<void> final : public EventSource<void> {
+template <> class ProgrammableTimer<void> final : public Element, public EventSource<void> {
 public:
-  /**
-   * @brief Construct a new `ProgrammableTimer`.
-   *
-   * @param name The name of the `ProgrammableTimer`.
-   * @param context The context object obtained from the `ProgrammableTimer`'s
-   * containing reactor.
-   */
+  /** @copydoc ProgrammableTimer::ProgrammableTimer */
   ProgrammableTimer(std::string_view name, ReactorContext context)
-      : EventSource<void>{std::make_unique<runtime::LogicalAction<void>>(name, detail::get_reactor_instance(context)),
-                          context} {}
+      : Element{detail::runtime_programmable_timer::make_instance(name, context), context} {}
 
 private:
   [[nodiscard]] auto is_present() const noexcept -> bool final {
-    return detail::get_runtime_instance<runtime::LogicalAction<void>>(*this).is_present();
+    return detail::runtime_programmable_timer::is_present(*this);
   }
 
   void schedule(Duration delay = Duration::zero()) noexcept {
-    detail::get_runtime_instance<runtime::LogicalAction<void>>(*this).schedule(delay);
+    detail::runtime_programmable_timer::schedule(*this, std::monostate{}, delay);
   }
 
   void register_as_trigger_of(runtime::Reaction& reaction) const noexcept final {
-    reaction.declare_trigger(&detail::get_runtime_instance<runtime::BaseAction>(*this));
+    detail::runtime_programmable_timer::register_as_trigger_of(*this, reaction);
   }
 
   friend BaseReaction;

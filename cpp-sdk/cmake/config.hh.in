@@ -1,0 +1,25 @@
+#ifndef XRONOS_SDK_GEN_CONFIG_HH
+#define XRONOS_SDK_GEN_CONFIG_HH
+
+// NOLINTNEXTLINE
+#cmakedefine XRONOS_SDK_ENABLE_TELEMETRY
+// NOLINTNEXTLINE
+#cmakedefine XRONOS_SDK_ENABLE_DIAGRAMS
+
+namespace xronos::sdk::config {
+
+#ifdef XRONOS_SDK_ENABLE_TELEMETRY
+inline constexpr bool TELEMETRY_ENABLED = true;
+#else
+inline constexpr bool TELEMETRY_ENABLED = false;
+#endif
+
+#ifdef XRONOS_SDK_ENABLE_DIAGRAMS
+inline constexpr bool DIAGRAMS_ENABLED = true;
+#else
+inline constexpr bool DIAGRAMS_ENABLED = false;
+#endif
+
+} // namespace xronos::sdk::config
+
+#endif // XRONOS_SDK_GEN_CONFIG_HH

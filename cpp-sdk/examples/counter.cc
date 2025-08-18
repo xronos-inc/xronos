@@ -1,7 +1,9 @@
 // SPDX-FileCopyrightText: Copyright (c) 2025 Xronos Inc.
 // SPDX-License-Identifier: BSD-3-Clause
 
+#include <chrono> // IWYU pragma: keep
 #include <cstdint>
+#include <iostream>
 
 #include "xronos/sdk.hh"
 

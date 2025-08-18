@@ -1,18 +1,23 @@
 // SPDX-FileCopyrightText: Copyright (c) 2025 Xronos Inc.
 // SPDX-License-Identifier: BSD-3-Clause
 
-#include <catch2/catch_test_macros.hpp>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
-#include <google/protobuf/empty.pb.h>
-#include <grpcpp/completion_queue.h>
-#include <grpcpp/server_context.h>
-#include <grpcpp/support/status.h>
 #include <initializer_list>
 #include <optional>
+#include <set>
 #include <stdexcept>
+#include <string>
 
+#include "catch2/catch_test_macros.hpp"
+#include "google/protobuf/empty.pb.h"
+#include "google/protobuf/util/time_util.h"
+#include "grpcpp/completion_queue.h"
+#include "grpcpp/security/server_credentials.h"
+#include "grpcpp/server_builder.h"
+#include "grpcpp/server_context.h"
+#include "grpcpp/support/status.h"
 #include "xronos/graph_exporter/detail/exporter.hh"
 #include "xronos/graph_exporter/exporter.hh"
 #include "xronos/messages/reactor_graph.pb.h"
@@ -23,9 +28,7 @@
 #include "xronos/runtime/reaction.hh"
 #include "xronos/runtime/reactor.hh"
 #include "xronos/services/diagram_generator.grpc.pb.h"
-
-#include <google/protobuf/util/time_util.h>
-#include <grpcpp/server_builder.h>
+#include "xronos/services/diagram_generator.pb.h"
 
 using namespace std::literals::chrono_literals;
 using namespace xronos::messages;
@@ -52,10 +55,10 @@ struct ElementsReactor : public Reactor {
   ShutdownTrigger shutdown{"shutdown", *this};
   Timer timer1{"timer1", *this, 1s, 2s};
   Timer timer2{"timer2", *this, 12ms, 42us};
-  LogicalAction<void> laction{"laction", *this};
-  PhysicalAction<int> paction{"paction", *this};
-  Input<void> input{"input", *this};
-  Output<float> output{"output", *this};
+  LogicalAction laction{"laction", *this};
+  PhysicalAction paction{"paction", *this};
+  Input input{"input", *this};
+  Output output{"output", *this};
   Reaction reaction{"reaction", 1, *this, []() {}};
   Reaction reaction3{"reaction", 3, *this, []() {}};
   EmptyReactor empty{"empty", *this};
@@ -71,7 +74,7 @@ struct SrcReactor : public Reactor {
   SrcReactor(const std::string& name, Reactor& container)
       : Reactor(name, container) {}
 
-  Output<void> output{"output", *this};
+  Output output{"output", *this};
 
   void assemble() override {}
 };
@@ -82,7 +85,7 @@ struct SinkReactor : public Reactor {
   SinkReactor(const std::string& name, Reactor& container)
       : Reactor(name, container) {}
 
-  Input<void> input{"input", *this};
+  Input input{"input", *this};
 
   void assemble() override {}
 };
@@ -105,8 +108,8 @@ auto lookup_containment(const reactor_graph::Graph& graph, std::uint64_t uid) ->
   throw std::runtime_error("containment not found");
 }
 
-auto lookup_dependencies(const reactor_graph::Graph& graph,
-                         std::uint64_t uid) -> const reactor_graph::ReactionDependencies& {
+auto lookup_dependencies(const reactor_graph::Graph& graph, std::uint64_t uid)
+    -> const reactor_graph::ReactionDependencies& {
   for (const auto& elem : graph.dependencies()) {
     if (elem.reaction_uid() == uid) {
       return elem;
@@ -159,7 +162,7 @@ void check_action_element(const reactor_graph::ReactorElement& elem, const BaseA
   REQUIRE(elem_action.action_type() == expected_action_type);
 }
 
-void check_port_element(const reactor_graph::ReactorElement& elem, const BasePort& port,
+void check_port_element(const reactor_graph::ReactorElement& elem, const Port& port,
                         reactor_graph::PortType expected_port_type) {
   REQUIRE(elem.uid() == port.uid());
   REQUIRE(elem.name() == port.name());
@@ -291,8 +294,8 @@ TEST_CASE("Serialization of various reactor elements", "[exporter]") {
   }
 }
 
-void check_connection(const reactor_graph::Connection& connection, const BasePort& from,
-                      std::initializer_list<const std::reference_wrapper<BasePort>> to) {
+void check_connection(const reactor_graph::Connection& connection, const Port& from,
+                      std::initializer_list<const std::reference_wrapper<Port>> to) {
   REQUIRE(connection.from_uid() == from.uid());
   REQUIRE(std::size_t(connection.targets_size()) == to.size());
   std::set<std::uint64_t> uids;
@@ -300,7 +303,7 @@ void check_connection(const reactor_graph::Connection& connection, const BasePor
     auto [_, success] = uids.insert(target.to_uid());
     REQUIRE(success);
   }
-  for (const BasePort& port : to) {
+  for (const Port& port : to) {
     REQUIRE(uids.count(port.uid()) == 1);
   }
 }

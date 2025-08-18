@@ -1,21 +1,22 @@
 // SPDX-FileCopyrightText: Copyright (c) 2025 Xronos Inc.
 // SPDX-License-Identifier: BSD-3-Clause
 
-#include <memory>
-#include <stdexcept>
-
-#include "xronos/sdk/element.hh"
 #include "xronos/sdk/periodic_timer.hh"
-#include "xronos/sdk/time.hh"
+
+#include <string_view>
 
 #include "xronos/runtime/action.hh"
 #include "xronos/runtime/reaction.hh"
+#include "xronos/sdk/context.hh"
+#include "xronos/sdk/element.hh"
+#include "xronos/sdk/time.hh"
 
 namespace xronos::sdk {
 
 PeriodicTimer::PeriodicTimer(std::string_view name, ReactorContext context, Duration period, Duration offset)
-    : EventSource<void>{std::make_unique<runtime::Timer>(name, detail::get_reactor_instance(context), period, offset),
-                        context} {}
+    : Element{detail::make_runtime_element_pointer<runtime::Timer>(name, detail::get_reactor_instance(context), period,
+                                                                   offset),
+              context} {}
 
 [[nodiscard]] auto PeriodicTimer::period() const noexcept -> const Duration& {
   return detail::get_runtime_instance<runtime::Timer>(*this).period();

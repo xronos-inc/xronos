@@ -8,6 +8,7 @@
 #include <iostream>
 #include <map>
 #include <optional>
+#include <utility>
 #include <vector>
 
 namespace xronos::runtime {
@@ -35,8 +36,10 @@ public:
       : graph_(std::move(graph.graph_)) {}
   ~Graph() noexcept = default;
 
-  auto operator=(const Graph other) noexcept -> Graph& {
-    graph_ = other.graph_;
+  auto operator=(const Graph& other) noexcept -> Graph& {
+    if (this != &other) {
+      graph_ = other.graph_;
+    }
     return *this;
   }
 
@@ -68,8 +71,8 @@ public:
   [[nodiscard]] auto get_edges() const noexcept -> const auto& { return graph_; }
 
   // this groups connections by same source and properties
-  [[nodiscard]] auto
-  get_edges_grouped_by_properties() const noexcept -> std::map<map_key, std::vector<E>, map_key_compare> {
+  [[nodiscard]] auto get_edges_grouped_by_properties() const noexcept
+      -> std::map<map_key, std::vector<E>, map_key_compare> {
     std::map<map_key, std::vector<E>, map_key_compare> all_edges{};
     for (auto const& [source, sinks] : graph_) {
 

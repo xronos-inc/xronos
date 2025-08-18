@@ -1,5 +1,11 @@
 # Xronos
 
+[![GitHub Release](https://img.shields.io/github/v/release/xronos-inc/xronos?logo=GitHub)](https://github.com/xronos-inc/xronos/releases/latest)
+[![PyPI - Version](https://img.shields.io/pypi/v/xronos?logo=Python&logoColor=silver)](https://pypi.org/project/xronos/)
+[![GitHub License](https://img.shields.io/github/license/xronos-inc/xronos)](https://github.com/xronos-inc/xronos/blob/main/LICENSE)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/xronos?logo=Python&logoColor=silver)](https://pypi.org/project/xronos/)
+[![Static Badge](https://img.shields.io/badge/docs-blue?logo=Read%20the%20Docs&logoColor=white)](https://docs.xronos.com/)
+
 **Xronos** is a lightweight framework for building deterministic, component-based robotics applications in Python or C++.
 It supports real-time telemetry, system visualization, and modular design with a focus on clarity, scalability, and correctness.
 
@@ -14,43 +20,38 @@ It supports real-time telemetry, system visualization, and modular design with a
 
 ## Usage
 
-For Python users, the [xronos PyPi package](https://pypi.org/project/xronos/) is published as a standalone Python
-package. Building from source is not required.
-
-- **Python users**: Get started at [docs.xronos.com](https://docs.xronos.com)
-- **C++ users**: See [docs.xronos.com/cpp](https://docs.xronos.com/cpp)
-- **VS Code users**: The [Xronos VS Code Extension](https://marketplace.visualstudio.com/items?itemName=xronos.xronos) is optional and enables diagrams of your programs
+- **Python users**: See [docs.xronos.com/python\_sdk/getting\_started.html](https://docs.xronos.com/python_sdk/getting_started.html)
+- **C++ users**: See [docs.xronos.com/cpp\_sdk/getting\_started.html](https://docs.xronos.com/cpp_sdk/getting_started.html)
+- **VS Code users**: The optional [Xronos VS Code Extension](https://marketplace.visualstudio.com/items?itemName=xronos.xronos) renders diagrams of your programs
 
 ## Repository Structure
 
 ```bash
 .
-├── base-images/:   # Earthly base images
-├── cpp-sdk/:       # C++ SDK
+├── cpp-sdk/        # C++ SDK
+├── docker-bake.hcl # build definitions
 ├── docs/           # source for https://docs.xronos.com
-├── examples/:      # python SDK examples
-├── lib/            # library components
+├── examples/       # python SDK examples
+├── lib/            # core Xronos libraries
 ├── third-party/    # third-party libraries
-├── xronos/         # source for the xronos framework
-├── Earthfile       # earthly build definitions
+├── xronos/         # Python SDK
 └── README.md       # project overview (this file)
 ```
 
 ## Building from Source
 
-To build locally:
 
-1. [Install Docker](https://docker.com)
-2. [Install Earthly](https://earthly.dev/get-earthly)
-3. Run:
+We use [docker bake](https://docs.docker.com/build/bake/) as our top-level build
+tool. To build locally, install [docker](https://docker.com) and the [buildx
+extension](https://github.com/docker/buildx) (if not included in your docker
+installation). Then run:
 
-   ```bash
-   earthly +build
-   ```
+```bash
+docker buildx bake build
+```
 
 ## Links
 
-- Website: [https://xronos.com](https://xronos.com)  
-- Python Package: [https://pypi.org/project/xronos](https://pypi.org/project/xronos/)  
-- Documentation: [https://docs.xronos.com](https://docs.xronos.com)  
-- C++ Docs: [https://docs.xronos.com/cpp](https://docs.xronos.com/cpp)
+- Documentation: [https://docs.xronos.com](https://docs.xronos.com)
+- Company website: [https://xronos.com](https://xronos.com)
+- Python package: [https://pypi.org/project/xronos](https://pypi.org/project/xronos/)

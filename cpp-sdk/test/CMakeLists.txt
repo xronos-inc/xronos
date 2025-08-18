@@ -1,14 +1,11 @@
-include(../../third-party/googletest/googletest.cmake)
+file(GLOB_RECURSE TEST_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/*.cc")
+set(TEST_SOURCES ${TEST_SOURCES} PARENT_SCOPE)  # make the variable available in parent CMakeLists.txt
 
-add_executable(xronos-sdk-tests
-  empty.cc
-  loops.cc
-  periodic_timers.cc
-  ports.cc
-  programmable_timers.cc
-  startup_and_shutdown.cc
-  time.cc
-)
-target_link_libraries(xronos-sdk-tests PRIVATE xronos-sdk GTest::gtest_main)
-include(GoogleTest)
-gtest_discover_tests(xronos-sdk-tests)
+if(XRONOS_SDK_BUILD_TESTS)
+  include(../../third-party/googletest/googletest.cmake)
+  enable_testing()
+  add_executable(xronos-sdk-tests ${TEST_SOURCES})
+  target_link_libraries(xronos-sdk-tests PRIVATE xronos-sdk GTest::gtest_main)
+  include(GoogleTest)
+  gtest_discover_tests(xronos-sdk-tests)
+endif()

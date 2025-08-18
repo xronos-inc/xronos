@@ -4,14 +4,22 @@
 
 #include "xronos/runtime/port.hh"
 
+#include <any>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
+
 #include "xronos/runtime/assert.hh"
 #include "xronos/runtime/connection.hh"
+#include "xronos/runtime/connection_properties.hh"
 #include "xronos/runtime/environment.hh"
+#include "xronos/runtime/fwd.hh"
 #include "xronos/runtime/reaction.hh"
 
 namespace xronos::runtime {
 
-void BasePort::register_dependency(Reaction* reaction, bool is_trigger) noexcept {
+void Port::register_dependency(Reaction* reaction, bool is_trigger) noexcept {
   reactor_assert(reaction != nullptr);
   reactor_assert(&this->environment() == &reaction->environment());
   validate(!this->has_outward_bindings(), "Dependencies may no be declared on ports with an outward binding!");
@@ -33,7 +41,7 @@ void BasePort::register_dependency(Reaction* reaction, bool is_trigger) noexcept
   }
 }
 
-void BasePort::register_antidependency(Reaction* reaction) noexcept {
+void Port::register_antidependency(Reaction* reaction) {
   reactor_assert(reaction != nullptr);
   reactor_assert(&this->environment() == &reaction->environment());
   validate(!this->has_inward_binding(), "Antidependencies may no be declared on ports with an inward binding!");
@@ -52,31 +60,32 @@ void BasePort::register_antidependency(Reaction* reaction) noexcept {
   reactor_assert(result);
 }
 
-[[maybe_unused]] auto Port<void>::typed_outward_bindings() const noexcept -> const std::set<Port<void>*>& {
-  // this is undefined behavior and should be changed
-  // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-  return reinterpret_cast<const std::set<Port<void>*>&>(outward_bindings()); // use C++20 std::bit_cast
-}
-
-auto Port<void>::typed_inward_binding() const noexcept -> Port<void>* {
-  // we can use a reinterpret cast here since we know that this port is always
-  // connected with another Port<T>.
-  // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-  return reinterpret_cast<Port<void>*>(inward_binding());
-}
-
-void Port<void>::set() {
-  validate(!has_inward_binding(), "set() may only be called on ports that do not have an inward "
-                                  "binding!");
+void Port::set(const std::any& value) {
+  reactor_assert(!has_inward_binding());
+  reactor_assert(value.has_value());
 
   auto* scheduler = environment().scheduler();
+  current_value_ = value;
   scheduler->set_port(this);
-  this->present_ = true;
 }
 
-void Port<void>::instantiate_connection_to(const ConnectionProperties& properties,
-                                           const std::vector<BasePort*>& downstream) {
-  std::unique_ptr<Connection<void>> connection = nullptr;
+auto Port::get() const noexcept -> const std::any& {
+  if (has_inward_binding()) {
+    return inward_binding()->get();
+  }
+  reactor_assert(current_value_.has_value());
+  return current_value_;
+}
+
+auto Port::is_present() const noexcept -> bool {
+  if (has_inward_binding()) {
+    return inward_binding()->is_present();
+  }
+  return current_value_.has_value();
+};
+
+void Port::instantiate_connection_to(const ConnectionProperties& properties, const std::vector<Port*>& downstream) {
+  std::unique_ptr<Connection> connection = nullptr;
 
   if (downstream.empty()) {
     return;
@@ -85,31 +94,18 @@ void Port<void>::instantiate_connection_to(const ConnectionProperties& propertie
   // normal connections should be handled by environment
   reactor_assert(properties.type_ != ConnectionType::Normal);
 
-  Environment& enclave = downstream[0]->environment();
   auto index = this->container()->connections().size();
 
   if (properties.type_ == ConnectionType::Delayed) {
-    connection = std::make_unique<DelayedConnection<void>>(
-        this->name() + "_delayed_connection_" + std::to_string(index), *this->container(), properties.delay_);
+    connection = std::make_unique<DelayedConnection>(this->name() + "_delayed_connection_" + std::to_string(index),
+                                                     *this->container(), properties.delay_);
   }
   if (properties.type_ == ConnectionType::Physical) {
-    connection = std::make_unique<PhysicalConnection<void>>(
-        this->name() + "_physical_connection_" + std::to_string(index), *this->container(), properties.delay_);
-  }
-  if (properties.type_ == ConnectionType::Enclaved) {
-    connection = std::make_unique<EnclaveConnection<void>>(
-        this->name() + "_enclave_connection_" + std::to_string(index), enclave);
-  }
-  if (properties.type_ == ConnectionType::DelayedEnclaved) {
-    connection = std::make_unique<DelayedEnclaveConnection<void>>(
-        this->name() + "_delayed_enclave_connection_" + std::to_string(index), enclave, properties.delay_);
-  }
-  if (properties.type_ == ConnectionType::PhysicalEnclaved) {
-    connection = std::make_unique<PhysicalEnclaveConnection<void>>(
-        this->name() + "_physical_enclave_connection_" + std::to_string(index), enclave);
+    connection = std::make_unique<PhysicalConnection>(this->name() + "_physical_connection_" + std::to_string(index),
+                                                      *this->container(), properties.delay_);
   }
 
-  // if the connection here is null we have a vaulty enum value
+  // if the connection here is null we have a faulty enum value
   reactor_assert(connection != nullptr);
   connection->bind_downstream_ports(downstream);
   connection->bind_upstream_port(this);
@@ -124,13 +120,25 @@ void Port<void>::instantiate_connection_to(const ConnectionProperties& propertie
 // same port (one if the port is in a multiport, and one if it is upstream of
 // a delayed connection).
 auto compose_callbacks(const PortCallback& callback1, const PortCallback& callback2) -> PortCallback {
-  return [=](const BasePort& port) {
+  return [=](const Port& port) {
     callback1(port);
     callback2(port);
   };
 }
 
-void BasePort::register_set_callback(const PortCallback& callback) {
+void Port::invoke_set_callback() {
+  if (set_callback_ != nullptr) {
+    set_callback_(*this);
+  }
+}
+
+void Port::invoke_clean_callback() {
+  if (clean_callback_ != nullptr) {
+    clean_callback_(*this);
+  }
+}
+
+void Port::register_set_callback(const PortCallback& callback) {
   if (set_callback_ == nullptr) {
     set_callback_ = callback;
   } else {
@@ -138,7 +146,7 @@ void BasePort::register_set_callback(const PortCallback& callback) {
   }
 }
 
-void BasePort::register_clean_callback(const PortCallback& callback) {
+void Port::register_clean_callback(const PortCallback& callback) {
   if (clean_callback_ == nullptr) {
     clean_callback_ = callback;
   } else {

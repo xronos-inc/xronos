@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 # type: ignore
-# ruff: noqa: PLR2004
 
 from typing import Callable
 

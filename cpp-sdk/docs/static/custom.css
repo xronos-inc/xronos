@@ -1,0 +1,35 @@
+/* invert the logo in dark mode */
+@media (prefers-color-scheme: dark) {
+    img[src="logo-banner.jpg"] {
+        filter: invert(0.89);
+    }
+}
+
+/* Add some padding left of the search box */
+#MSearchBox {
+    left: 20px;
+}
+
+
+/* The following is a temporary fix for rendering code blocks with Doxygen 1.14.0
+ * See: https://github.com/jothepro/doxygen-awesome-css/issues/187
+ */
+
+code, .tt {
+	  white-space: nowrap;
+}
+.tt, .tt a {
+	  font-family: var(--font-family-monospace);
+	  font-size: var(--code-font-size) !important;
+}
+.tt {
+	  display: inline;
+	  background: var(--code-background);
+	  color: var(--code-foreground);
+	  padding: 2px 6px;
+}
+.tt {
+	  border-radius: var(--border-radius-small);
+	  border: 1px solid var(--separator-color);
+	  overflow: hidden;
+}

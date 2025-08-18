@@ -1,16 +1,14 @@
 // SPDX-FileCopyrightText: Copyright (c) 2025 Xronos Inc.
 // SPDX-License-Identifier: BSD-3-Clause
 
-/**
- * @file
- *
- * @brief Definition of the inputs and outputs of reactors.
- */
+/** @file */
 
 #ifndef XRONOS_SDK_PORT_HH
 #define XRONOS_SDK_PORT_HH
 
-#include <memory>
+#include <any>
+#include <string_view>
+#include <variant>
 
 #include "xronos/sdk/context.hh"
 #include "xronos/sdk/element.hh"
@@ -18,104 +16,125 @@
 #include "xronos/sdk/fwd.hh"
 #include "xronos/sdk/value_ptr.hh"
 
-#include "xronos/runtime/port.hh"
-#include "xronos/runtime/reaction.hh"
-
 namespace xronos::sdk {
 
+namespace detail::runtime_port {
+
+// Helper functions for accessing the underlying runtime code using pImpl.
+[[nodiscard]] auto is_present(const Element& port) noexcept -> bool;
+[[nodiscard]] auto get(const Element& port) noexcept -> const std::any&;
+void set(Element& port, const std::any& value) noexcept;
+void register_as_trigger_of(const Element& port, runtime::Reaction& reaction) noexcept;
+auto make_input(std::string_view name, ReactorContext context) -> RuntimeElementPtr;
+auto make_output(std::string_view name, ReactorContext context) -> RuntimeElementPtr;
+void register_as_effect_of(const Element& port, runtime::Reaction& reaction) noexcept;
+
+} // namespace detail::runtime_port
+
 /**
- * @brief Base class for inputs and outputs of reactors.
+ * Base class for reactor elements that may send or receive messages.
  *
- * @details This should not be inherited from or instantiated directly by
- * application code. Instead, use `InputPort` or `OutputPort`.
+ * This should not be used directly in application code. Use InputPort or
+ * OutputPort instead.
+ *
  * @tparam T The type of values carried by the port.
  */
-template <class T> class Port : public EventSource<T> {
-protected:
-  Port(std::unique_ptr<runtime::Port<T>> runtime_instance, ReactorContext context)
-      : EventSource<T>(std::move(runtime_instance), context) {}
-
+template <class T> class Port : public Element, public EventSource<T> {
 private:
-  [[nodiscard]] auto is_present() const noexcept -> bool final {
-    return detail::get_runtime_instance<runtime::Port<T>>(*this).is_present();
+  using Element::Element;
+
+  [[nodiscard]] auto is_present() const noexcept -> bool final { return detail::runtime_port::is_present(*this); }
+  [[nodiscard]] auto get() const noexcept -> ImmutableValuePtr<T> final {
+    if (!is_present()) {
+      return ImmutableValuePtr<T>{nullptr};
+    }
+    return std::any_cast<ImmutableValuePtr<T>>(detail::runtime_port::get(*this));
   }
-  [[nodiscard]] auto get() const noexcept -> const ImmutableValuePtr<T>& final {
-    return detail::get_runtime_instance<runtime::Port<T>>(*this).get();
-  }
-  void set(const ImmutableValuePtr<T>& value) noexcept {
-    detail::get_runtime_instance<runtime::Port<T>>(*this).set(value);
-  }
+  void set(const ImmutableValuePtr<T>& value) noexcept { detail::runtime_port::set(*this, value); }
 
   void register_as_trigger_of(runtime::Reaction& reaction) const noexcept final {
-    reaction.declare_trigger(&detail::get_runtime_instance<runtime::BasePort>(*this));
+    detail::runtime_port::register_as_trigger_of(*this, reaction);
   }
 
   friend BaseReaction;
 };
 
 /**
- * @brief Base class for ports that do not communicate values.
+ * Base class for reactor elements that may send or receive messages.
  *
- * @details This should not be inherited from or instantiated directly by application code.
- * @details Ports of this type serve only to trigger activity or to signal
- * presence or absence of an event.
+ * This should not be used directly in application code. Use InputPort or
+ * OutputPort instead.
+ *
+ * This is a template specialization of Port for sending and receiving messages
+ * without a value.
  */
-template <> class Port<void> : public EventSource<void> {
-protected:
-  Port(std::unique_ptr<runtime::Port<void>> runtime_instance, ReactorContext context)
-      : EventSource<void>(std::move(runtime_instance), context) {}
-
+template <> class Port<void> : public Element, public EventSource<void> {
 private:
-  [[nodiscard]] auto is_present() const noexcept -> bool final {
-    return detail::get_runtime_instance<runtime::Port<void>>(*this).is_present();
-  }
-  void set() noexcept { detail::get_runtime_instance<runtime::Port<void>>(*this).set(); }
+  using Element::Element;
+
+  [[nodiscard]] auto is_present() const noexcept -> bool final { return detail::runtime_port::is_present(*this); }
+  void set() noexcept { detail::runtime_port::set(*this, std::monostate{}); }
 
   void register_as_trigger_of(runtime::Reaction& reaction) const noexcept final {
-    reaction.declare_trigger(&detail::get_runtime_instance<runtime::BasePort>(*this));
+    detail::runtime_port::register_as_trigger_of(*this, reaction);
   }
 
   friend BaseReaction;
 };
 
 /**
- * @brief A port that receives values from other reactors.
+ * A reactor element for receiving messages from other reactors.
  *
- * @details The input port does not provide direct access to received values. A
- * reaction may declare an input port as a `BaseReaction::Trigger` or
- * `BaseReaction::Source` to read its value.
- * @tparam T The type of values carried by the port.
+ * Input ports can be used as a reaction @ref BaseReaction::Trigger "trigger"
+ * and provide an interface for reactors to receive messages from other
+ * reactors.
+ *
+ * Input ports may be connected to other ports so that messages are forwarded
+ * automatically (see Environment::connect() and Reactor::connect()).
+ *
+ * Other reactors may also use input ports as a reaction @ref
+ * BaseReaction::PortEffect "effect" allowing an external reaction handler to
+ * send messages directly to the port.
+ *
+ * @tparam T The value type associated with messages.
  */
 template <class T> class InputPort final : public Port<T> {
 public:
   /**
-   * @brief Construct a new `InputPort` object.
+   * Constructor.
    *
    * @param name The name of the port.
-   * @param context The current reactor's initialization context, which can
-   * be obtained using the `Reactor::context` method.
+   * @param context The containing reactor's context.
    */
   InputPort(std::string_view name, ReactorContext context)
-      : Port<T>{std::make_unique<runtime::Input<T>>(name, detail::get_reactor_instance(context)), context} {}
+      : Port<T>{detail::runtime_port::make_input(name, context), context} {}
 };
+
 /**
- * @brief A port that sends values to other reactors.
+ * A reactor element for sending messages to other reactors.
  *
- * The output port does not provide direct access for writing values. A reaction
- * may declare a `BaseReaction::PortEffect` to send a value.
- * @tparam T The type of values carried by the port.
+ * Output ports can be used as a reaction @ref BaseReaction::PortEffect "effect"
+ * and provide an interface for reactors to send messages to other reactors.
+ *
+ * Output ports may be connected to other ports so that messages are forwarded
+ * automatically (see Environment::connect() and Reactor::connect()).
+ *
+ * Other reactors may also use output ports as a reaction @ref
+ * BaseReaction::Trigger "trigger" allowing an external reaction handler to
+ * receive messages directly from the port.
+ *
+ * @tparam T The value type associated with messages.
  */
 template <class T> class OutputPort final : public Port<T> {
 public:
   /**
-   * @brief Construct a new `OutputPort` object.
+   * Constructor.
    *
    * @param name The name of the port.
-   * @param context The current reactor's initialization context, which can
-   * be obtained using the `Reactor::context` method.
+   * @param context The containing reactor's context.
    */
   OutputPort(std::string_view name, ReactorContext context)
-      : Port<T>{std::make_unique<runtime::Output<T>>(name, detail::get_reactor_instance(context)), context} {}
+      : Port<T>{detail::runtime_port::make_output(name, context), context} {}
 };
 
 } // namespace xronos::sdk

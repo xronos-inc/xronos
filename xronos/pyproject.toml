@@ -4,11 +4,15 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "xronos"
-version = "0.4.0"
+version = "0.5.0"
 description = "Reactors for Python"
 authors = [
-  { name = "Jeff C. Jensen", email = "elgeeko@xronos.com" },
+  { name = "Christian Menard", email = "christian@xronos.com" },
   { name = "Peter Donovan", email = "peter@xronos.com" },
+  { name = "Jeff C. Jensen", email = "elgeeko@xronos.com" },
+  { name = "Erling Jellum", email = "erling@xronos.com" },
+]
+maintainers = [
   { name = "Christian Menard", email = "christian@xronos.com" },
 ]
 classifiers = [
@@ -20,6 +24,9 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: Free Threading",
+    "Programming Language :: Python :: Free Threading :: 3 - Stable",
     "Operating System :: POSIX :: Linux",
     "Topic :: Scientific/Engineering",
     "Topic :: Software Development :: Embedded Systems",
@@ -36,7 +43,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dashboard = [
-  'xronos-dashboard==0.4.0',
+  'xronos-dashboard==0.5.0',
 ]
 
 [project.urls]
