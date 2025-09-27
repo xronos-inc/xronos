@@ -1,13 +1,11 @@
 // SPDX-FileCopyrightText: Copyright (c) 2025 Xronos Inc.
 // SPDX-License-Identifier: BSD-3-Clause
 
-#include <gtest/gtest.h>
 #include <stdexcept>
 #include <string_view>
 #include <utility>
 
 #include "xronos/sdk.hh"
-
 #include "gtest/gtest.h"
 
 using namespace std::literals::chrono_literals;

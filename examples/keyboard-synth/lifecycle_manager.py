@@ -68,6 +68,7 @@ class LifecycleManager(xronos.Reactor):
             self.websocket_server_stopped
         )
         webserver_stopped_trigger = interface.add_trigger(self.webserver_stopped)
+        shutdown_effect = interface.add_effect(self.shutdown)
 
         def handler() -> None:
             if audio_stopped_trigger.is_present():
@@ -83,7 +84,7 @@ class LifecycleManager(xronos.Reactor):
             ):
                 self.stopped_gracefully = True
                 log(self, "requesting shutdown")
-                self.request_shutdown()
+                shutdown_effect.trigger_shutdown()
 
         return handler
 
@@ -92,13 +93,14 @@ class LifecycleManager(xronos.Reactor):
         self, interface: xronos.ReactionInterface
     ) -> Callable[[], None]:
         interface.add_trigger(self.__stop_timer)
+        shutdown_effect = interface.add_effect(self.shutdown)
 
         def handler() -> None:
             if not self.stopped_gracefully:
                 timeout_s = self.stop_timeout.seconds
                 log(self, f"warning: services timed out after {timeout_s} seconds")
                 log(self, "requesting shutdown")
-                self.request_shutdown()
+                shutdown_effect.trigger_shutdown()
 
         return handler
 

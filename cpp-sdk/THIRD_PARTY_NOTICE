@@ -22,6 +22,7 @@ License: BSD 3-Clause License
 License text: https://opensource.org/licenses/BSD-3-Clause
 Source: https://github.com/grpc/grpc/tree/v1.74.1/third_party/address_sorting
 
+For the full license text, see:
 [third-party-licenses/address_sorting_LICENSE](third-party-licenses/address_sorting_LICENSE)
 
 ---
@@ -31,7 +32,29 @@ License: Mixed, see full license text
 Version c63fadbde60a2224c22189d14c4001bbd2a3a629
 Source: https://boringssl.googlesource.com/boringssl
 
+For the full license text, see:
 [third-party-licenses/boringssl_LICENSE](third-party-licenses/boringssl_LICENSE)
+
+---
+
+Component: expected-lite
+Version: v0.9.0
+License: Boost Software License 1.0
+Source: https://github.com/martinmoene/expected-lite
+
+For the full license text, see:
+[third-party-licenses/expected-lite_LICENSE](third-party-licenses/expected-lite_LICENSE)
+
+---
+
+Component: {fmt}
+License: MIT
+License text: https://opensource.org/licenses/MIT
+Version: 12.0.0
+Source: https://github.com/fmtlib/fmt
+
+For the full license text, see:
+[third-party-licenses/fmt_LICENSE](third-party-licenses/fmt_LICENSE)
 
 ---
 
@@ -41,11 +64,12 @@ License: Apache License 2.0
 License text: https://www.apache.org/licenses/LICENSE-2.0
 Source: https://github.com/grpc/grpc
 
+For the full license text, see:
 [third-party-licenses/grpc_LICENSE](third-party-licenses/grpc_LICENSE)
 
 ---
 
-Component: OpenTelemetry protocol (OLTP)
+Component: OpenTelemetry protocol (OTLP)
 Version: v1.7.0
 License: Apache License 2.0
 License text: https://www.apache.org/licenses/LICENSE-2.0

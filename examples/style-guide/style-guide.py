@@ -44,8 +44,12 @@ class MyReactor(xronos.Reactor):
     # Periodic timer should in general be private.
     _periodic_timer = xronos.PeriodicTimerDeclaration()
 
+    # reactor state variables
+    _sensor_reads = 0
+
     # reactor constants
-    OUTPUT_COUNT: int = 3
+    MAX_SENSOR_READS = 3
+    SENSOR_READING_DELAY = datetime.timedelta(milliseconds=50)
 
     def __init__(self) -> None:
         super().__init__()
@@ -54,7 +58,7 @@ class MyReactor(xronos.Reactor):
         self._periodic_timer.offset = self._periodic_timer.period
 
         # threads should be private, started on a triggered event such as startup,
-        # signalled using a state variable, and joined on shutdown.
+        # signaled using a state variable, and joined on shutdown.
         self._thread: threading.Thread = threading.Thread()
 
         # variables used to signal threads should end with `request`
@@ -62,18 +66,10 @@ class MyReactor(xronos.Reactor):
 
     # suffix methods intended to run in threads with `process`
     def read_sensor_process(self) -> None:
-        output_count = 0
-        output_period = datetime.timedelta(milliseconds=500)
-        last_output_time = self.get_time_since_startup()
-        while not self._shutdown_request and output_count < self.OUTPUT_COUNT:
-            # simulate a blocking read: wait until the output period to produce output
-            if self.get_time_since_startup() - last_output_time < output_period:
-                time.sleep(0)  # yield CPU to other threads
-            else:
-                self._sensor.trigger(42)  # imagine this is a value from a sensor
-                output_count = output_count + 1
-                last_output_time = self.get_time_since_startup()
-        self.request_shutdown()
+        while not self._shutdown_request:
+            # simulate a blocking read by sleeping
+            time.sleep(self.SENSOR_READING_DELAY.total_seconds())
+            self._sensor.trigger(42)  # imagine this is a value from a sensor
 
     # reaction specifications begin with the event and have prefix `on`
     @xronos.reaction
@@ -114,11 +110,15 @@ class MyReactor(xronos.Reactor):
 
     @xronos.reaction
     def on_sensor(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        """Specify the reacition to the sensor action."""
+        """Specify the reaction to the sensor action."""
         sensor_trigger = interface.add_trigger(self._sensor)
+        shutown_effect = interface.add_effect(self.shutdown)
 
         def handler() -> None:
             print(f"Sensor read: {sensor_trigger.get()}")
+            self._sensor_reads += 1
+            if self._sensor_reads == self.MAX_SENSOR_READS:
+                shutown_effect.trigger_shutdown()
 
         return handler
 

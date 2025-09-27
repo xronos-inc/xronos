@@ -2,11 +2,11 @@ cmake_minimum_required(VERSION 3.28)
 
 project(xronos-sdk
   LANGUAGES CXX
-  VERSION "0.5.0"
-  HOMEPAGE_URL "https://github.com/xronos-inc/xronos"
+  VERSION "0.6.0"
+  HOMEPAGE_URL "https://docs.xronos.com"
   DESCRIPTION "The Xronos C++ SDK for writing reactor programs."
 )
-set(PROJECT_VERSION "0.5.0")
+set(PROJECT_VERSION "0.6.0")
 
 # require C++ 20
 set(CMAKE_CXX_STANDARD 20 CACHE STRING "The C++ standard." FORCE)
@@ -68,17 +68,50 @@ configure_file(cmake/config.hh.in include/xronos/sdk/gen/config.hh @ONLY)
 
 file(GLOB_RECURSE SDK_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cc")
 file(GLOB_RECURSE SDK_HEADERS CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/include/*.hh" "${CMAKE_CURRENT_BINARY_DIR}/include/*.hh")
+file(GLOB_RECURSE SDK_PRIVATE_HEADERS CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/include/*.hh")
 
 add_library(xronos-sdk ${XRONOS_SDK_LIB_TYPE} ${SDK_SOURCES})
+
+# We define a header only library for the public headers here. We do this
+# instead of defining a header file set for xronos-sdk so that we have a referable target
+# that we can use as a dependency for xronos-sdk-private-headers
+add_library(xronos-sdk-public-headers INTERFACE)
 target_sources(
-  xronos-sdk
-  PUBLIC FILE_SET HEADERS
+  xronos-sdk-public-headers
+  INTERFACE FILE_SET HEADERS
   TYPE HEADERS
   BASE_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include> $<INSTALL_INTERFACE:include>
   FILES ${SDK_HEADERS}
 )
+set_target_properties(xronos-sdk-public-headers PROPERTIES VERIFY_INTERFACE_HEADER_SETS ON)
 
-target_link_libraries(xronos-sdk PRIVATE xronos::xronos-runtime xronos::xronos-telemetry)
+# As cmake currently does not support verification for non interface headers, we
+# take the extra step of defining a header only library containing the private
+# headers. This allows us to generate entries in compile_commands.json and
+# subsequently use clang-tidy on the private headers.
+add_library(xronos-sdk-private-headers INTERFACE)
+target_sources(
+  xronos-sdk-private-headers
+  INTERFACE FILE_SET HEADERS
+  TYPE HEADERS
+  BASE_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/include>
+  FILES ${SDK_PRIVATE_HEADERS}
+)
+target_link_libraries(xronos-sdk-private-headers INTERFACE
+  xronos-sdk-public-headers
+  xronos::xronos-core
+  xronos::xronos-runtime-interfaces
+  xronos::xronos-source-location
+  xronos::xronos-telemetry
+  xronos::xronos-validator
+)
+set_target_properties(xronos-sdk-private-headers PROPERTIES VERIFY_INTERFACE_HEADER_SETS ON)
+
+target_link_libraries(
+  xronos-sdk
+  PUBLIC xronos-sdk-public-headers
+  PRIVATE xronos-sdk-private-headers xronos::xronos-runtime-default
+)
 
 if(XRONOS_SDK_ENABLE_DIAGRAMS)
   target_link_libraries(xronos-sdk PRIVATE xronos::xronos-graph-exporter xronos::xronos-graph-messages)
@@ -90,11 +123,15 @@ endif()
 target_compile_features(xronos-sdk PUBLIC cxx_std_20)
 target_compile_options(xronos-sdk PRIVATE -Wall -Wextra -pedantic -Werror)
 set_target_properties(xronos-sdk PROPERTIES VERSION "${PROJECT_VERSION}" SOVERSION 1)
-set_target_properties(xronos-sdk PROPERTIES VERIFY_INTERFACE_HEADER_SETS ON)
 
 add_library(xronos::xronos-sdk ALIAS xronos-sdk)
+add_library(xronos::xronos-sdk-public-headers ALIAS xronos-sdk-public-headers)
 
 add_subdirectory(examples)
+
+if(XRONOS_SDK_BUILD_TESTS)
+  enable_testing()
+endif()
 add_subdirectory(test)
 
 if(XRONOS_SDK_BUILD_DOCS)
@@ -105,7 +142,7 @@ if(XRONOS_SDK_INSTALL)
   include(GNUInstallDirs)
 
   install(
-    TARGETS xronos-sdk
+    TARGETS xronos-sdk xronos-sdk-public-headers
     EXPORT xronos-sdkTargets
     FILE_SET HEADERS
     ARCHIVE  DESTINATION "${CMAKE_INSTALL_LIBDIR}" OPTIONAL
@@ -177,7 +214,8 @@ endif()
 
 set(LINT_FILES
   $<TARGET_PROPERTY:xronos-sdk,SOURCES>
-  $<TARGET_PROPERTY:xronos-sdk,HEADER_SET>
+  $<TARGET_PROPERTY:xronos-sdk-public-headers,HEADER_SET>
+  $<TARGET_PROPERTY:xronos-sdk-private-headers,HEADER_SET>
   ${EXAMPLE_SOURCES}
 )
 

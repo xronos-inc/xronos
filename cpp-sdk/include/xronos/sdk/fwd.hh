@@ -6,26 +6,30 @@
 
 namespace xronos {
 
+namespace core {
+
+struct Element;
+
+} // namespace core
+
 namespace telemetry {
 
 class AttributeManager;
 class MetricDataLoggerProvider;
 class TelemetryBackend;
+class Metric;
 
 } // namespace telemetry
 
 namespace runtime {
 
-class Environment;
-class LogicalAction;
-class InputPort;
-class OutputPort;
-class PhysicalAction;
-class Port;
-class Reaction;
-class ReactorElement;
-class Reactor;
-class Timer;
+struct GettableTrigger;
+struct SettableEffect;
+struct SchedulableEffect;
+struct ShutdownEffect;
+struct ExternalTrigger;
+struct TimeAccess;
+struct Runtime;
 
 } // namespace runtime
 
@@ -41,6 +45,13 @@ template <class T> class InputPort;
 template <class T> class OutputPort;
 template <class T> class ProgrammableTimer;
 template <class T> class PhysicalEvent;
+
+namespace detail {
+
+struct ContextAccess;
+struct ProgramContext;
+
+} // namespace detail
 
 } // namespace sdk
 

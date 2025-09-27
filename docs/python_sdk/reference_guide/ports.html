@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Ports and Connections &mdash; xronos v0.5.0  documentation</title>
+  <title>Ports and Connections &mdash; xronos v0.6.0  documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -39,7 +39,7 @@
           
           
           <a href="../../index.html" class="icon icon-home">
-            xronos v0.5.0
+            xronos v0.6.0
               <img src="../../_static/logo_written.svg" class="logo" alt="Logo"/>
           </a>
 <div role="search">
@@ -94,7 +94,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../../index.html">xronos v0.5.0</a>
+          <a href="../../index.html">xronos v0.6.0</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -269,10 +269,8 @@ received value using the <a class="reference internal" href="../api.html#xronos.
 </pre></div>
 </div>
 <p>This program will execute indefinitely as the timer will always produce new
-events and we do not use <a class="reference internal" href="../api.html#xronos.Reactor.request_shutdown" title="xronos.Reactor.request_shutdown"><code class="xref py py-func docutils literal notranslate"><span class="pre">request_shutdown()</span></code></a>. Use
-<kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">C</kbd> to abort the execution. If the program defines any
-reactions to <a class="reference internal" href="../api.html#xronos.Reactor.shutdown" title="xronos.Reactor.shutdown"><code class="xref py py-attr docutils literal notranslate"><span class="pre">shutdown</span></code></a>, these will be invoked after the
-termination signal is received.</p>
+events and we do not explicitly shutdown the program. Use
+<kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">C</kbd> to abort the execution.</p>
 <p>Note that <code class="docutils literal notranslate"><span class="pre">printer</span></code> receives the first message right at startup, and all
 subsequent messages are spaced perfectly by the timer period of 100ms. As
 mentioned in <a class="reference internal" href="periodic_timers.html#periodic-timers"><span class="std std-ref">Periodic Timers</span></a>, time does not advance while reactions execute. This

@@ -57,11 +57,12 @@ class UserInterface(xronos.Reactor, Generic[T]):
         user_input_trigger = interface.add_trigger(self._user_input)
         output_effect = interface.add_effect(self.output)
         unblock_effect = interface.add_effect(self._unblock)
+        shutdown_effect = interface.add_effect(self.shutdown)
 
         def handler() -> None:
             cmd = self.parser(user_input_trigger.get())
             if isinstance(cmd, KeyboardInterrupt):
-                self.request_shutdown()
+                shutdown_effect.trigger_shutdown()
             elif cmd:
                 output_effect.set(cmd)
 

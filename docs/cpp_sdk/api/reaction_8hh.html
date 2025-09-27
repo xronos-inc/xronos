@@ -33,7 +33,7 @@
  <tr id="projectrow">
   <td id="projectlogo"><img alt="Logo" src="logo-banner.jpg"/></td>
   <td id="projectalign">
-   <div id="projectname">xronos-sdk<span id="projectnumber">&#160;0.5.0</span>
+   <div id="projectname">xronos-sdk<span id="projectnumber">&#160;0.6.0</span>
    </div>
    <div id="projectbrief">Xronos C++ SDK</div>
   </td>
@@ -99,24 +99,25 @@ $(function(){initNavTree('reaction_8hh.html','',''); });
 </div>
 
 <div class="header">
-  <div class="summary">
-<a href="#nested-classes">Classes</a> &#124;
-<a href="#namespaces">Namespaces</a>  </div>
   <div class="headertitle"><div class="title">reaction.hh File Reference</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><code>#include &lt;cassert&gt;</code><br />
+<div class="textblock"><code>#include &lt;any&gt;</code><br />
 <code>#include &lt;cstddef&gt;</code><br />
 <code>#include &lt;cstdint&gt;</code><br />
 <code>#include &lt;functional&gt;</code><br />
 <code>#include &lt;type_traits&gt;</code><br />
+<code>#include &lt;variant&gt;</code><br />
 <code>#include &quot;<a class="el" href="element_8hh.html">xronos/sdk/element.hh</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="event__source_8hh.html">xronos/sdk/event_source.hh</a>&quot;</code><br />
 <code>#include &quot;xronos/sdk/fwd.hh&quot;</code><br />
 <code>#include &quot;<a class="el" href="metric_8hh.html">xronos/sdk/metric.hh</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="periodic__timer_8hh.html">xronos/sdk/periodic_timer.hh</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="physical__event_8hh.html">xronos/sdk/physical_event.hh</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="port_8hh.html">xronos/sdk/port.hh</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="programmable__timer_8hh.html">xronos/sdk/programmable_timer.hh</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="reactor_8hh.html">xronos/sdk/reactor.hh</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="shutdown_8hh.html">xronos/sdk/shutdown.hh</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="startup_8hh.html">xronos/sdk/startup.hh</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="time_8hh.html">xronos/sdk/time.hh</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="value__ptr_8hh.html">xronos/sdk/value_ptr.hh</a>&quot;</code><br />
 </div><table class="memberdecls">
@@ -127,13 +128,15 @@ Classes</h2></td></tr>
 <tr class="memitem:xronos_3A_3Asdk_3A_3ABaseReaction" id="r_xronos_3A_3Asdk_3A_3ABaseReaction"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxronos_1_1sdk_1_1BaseReaction.html">xronos::sdk::BaseReaction</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Base class for implementing reactions.  <a href="classxronos_1_1sdk_1_1BaseReaction.html#details">More...</a><br /></td></tr>
 <tr class="memitem:xronos_3A_3Asdk_3A_3ABaseReaction_3A_3ATrigger_3C_20T_20_3E" id="r_xronos_3A_3Asdk_3A_3ABaseReaction_3A_3ATrigger_3C_20T_20_3E"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxronos_1_1sdk_1_1BaseReaction_1_1Trigger.html">xronos::sdk::BaseReaction::Trigger&lt; T &gt;</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Declares a reaction trigger and provides read access to the triggering <a class="el" href="classxronos_1_1sdk_1_1EventSource.html" title="Interface implemented by reactor elements that can be used as triggers of reactions.">EventSource</a>.  <a href="classxronos_1_1sdk_1_1BaseReaction_1_1Trigger.html#details">More...</a><br /></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Declares a reaction trigger and provides read access to the triggering EventSource.  <a href="classxronos_1_1sdk_1_1BaseReaction_1_1Trigger.html#details">More...</a><br /></td></tr>
 <tr class="memitem:xronos_3A_3Asdk_3A_3ABaseReaction_3A_3APortEffect_3C_20T_20_3E" id="r_xronos_3A_3Asdk_3A_3ABaseReaction_3A_3APortEffect_3C_20T_20_3E"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxronos_1_1sdk_1_1BaseReaction_1_1PortEffect.html">xronos::sdk::BaseReaction::PortEffect&lt; T &gt;</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Allows a reaction to write data to a given <a class="el" href="classxronos_1_1sdk_1_1Port.html" title="Base class for reactor elements that may send or receive messages.">Port</a>.  <a href="classxronos_1_1sdk_1_1BaseReaction_1_1PortEffect.html#details">More...</a><br /></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Allows a reaction to write data to a given <a class="el" href="classxronos_1_1sdk_1_1Port.html">Port</a>.  <a href="classxronos_1_1sdk_1_1BaseReaction_1_1PortEffect.html#details">More...</a><br /></td></tr>
 <tr class="memitem:xronos_3A_3Asdk_3A_3ABaseReaction_3A_3AProgrammableTimerEffect_3C_20T_20_3E" id="r_xronos_3A_3Asdk_3A_3ABaseReaction_3A_3AProgrammableTimerEffect_3C_20T_20_3E"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxronos_1_1sdk_1_1BaseReaction_1_1ProgrammableTimerEffect.html">xronos::sdk::BaseReaction::ProgrammableTimerEffect&lt; T &gt;</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Allows a reaction to schedule future events using a <a class="el" href="classxronos_1_1sdk_1_1ProgrammableTimer.html" title="A reactor element for scheduling new events.">ProgrammableTimer</a>.  <a href="classxronos_1_1sdk_1_1BaseReaction_1_1ProgrammableTimerEffect.html#details">More...</a><br /></td></tr>
 <tr class="memitem:xronos_3A_3Asdk_3A_3ABaseReaction_3A_3AMetricEffect" id="r_xronos_3A_3Asdk_3A_3ABaseReaction_3A_3AMetricEffect"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxronos_1_1sdk_1_1BaseReaction_1_1MetricEffect.html">xronos::sdk::BaseReaction::MetricEffect</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Allows a reaction to record telemetry data using a given <a class="el" href="classxronos_1_1sdk_1_1Metric.html" title="A reactor element for recording metric data to an external data base.">Metric</a>.  <a href="classxronos_1_1sdk_1_1BaseReaction_1_1MetricEffect.html#details">More...</a><br /></td></tr>
+<tr class="memitem:xronos_3A_3Asdk_3A_3ABaseReaction_3A_3AShutdownEffect" id="r_xronos_3A_3Asdk_3A_3ABaseReaction_3A_3AShutdownEffect"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxronos_1_1sdk_1_1BaseReaction_1_1ShutdownEffect.html">xronos::sdk::BaseReaction::ShutdownEffect</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Allows a reaction to terminate the program.  <a href="classxronos_1_1sdk_1_1BaseReaction_1_1ShutdownEffect.html#details">More...</a><br /></td></tr>
 <tr class="memitem:xronos_3A_3Asdk_3A_3AReaction_3C_20R_20_3E" id="r_xronos_3A_3Asdk_3A_3AReaction_3C_20R_20_3E"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxronos_1_1sdk_1_1Reaction.html">xronos::sdk::Reaction&lt; R &gt;</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classxronos_1_1sdk_1_1Reaction.html" title="Reaction base class with reactor access.">Reaction</a> base class with reactor access.  <a href="classxronos_1_1sdk_1_1Reaction.html#details">More...</a><br /></td></tr>
 </table><table class="memberdecls">
@@ -144,6 +147,13 @@ Namespaces</h2></td></tr>
 </table>
 </div><!-- contents -->
 </div><!-- doc-content -->
+<div id="page-nav" class="page-nav-panel">
+<div id="page-nav-resize-handle"></div>
+<div id="page-nav-tree">
+<div id="page-nav-contents">
+</div><!-- page-nav-contents -->
+</div><!-- page-nav-tree -->
+</div><!-- page-nav -->
 </div><!-- container -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->

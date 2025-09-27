@@ -138,6 +138,7 @@ class SimulationAggregator(xronos.Reactor):
         current_estimate_effect = interface.add_effect(self._current_estimate)
         estimation_error_effect = interface.add_effect(self._estimation_error)
         number_of_points_effect = interface.add_effect(self._number_of_points)
+        shutdown_effect = interface.add_effect(self.shutdown)
 
         def handler() -> None:
             points_generated = [*batch_completion_trigger.get()]
@@ -156,7 +157,7 @@ class SimulationAggregator(xronos.Reactor):
             number_of_points_effect.record(self.total_generated)
 
             if self.total_generated >= self._simulation_request["total_points"]:
-                self.request_shutdown()
+                shutdown_effect.trigger_shutdown()
 
         return handler
 

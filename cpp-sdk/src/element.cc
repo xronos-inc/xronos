@@ -3,32 +3,40 @@
 
 #include "xronos/sdk/element.hh"
 
+#include <cstdint>
 #include <string>
 #include <string_view>
-#include <utility>
 
-#include "xronos/runtime/reactor_element.hh"
+#include "impl/xronos/sdk/detail/context_access.hh"
+#include "xronos/core/element.hh"
 #include "xronos/sdk/context.hh"
-#include "xronos/sdk/environment.hh"
+#include "xronos/sdk/fwd.hh"
+#include "xronos/source_location/source_location.hh"
 #include "xronos/telemetry/attribute_manager.hh"
 
 namespace xronos::sdk {
 
-Element::Element(detail::RuntimeElementPtr runtime_instance, Context context)
-    : runtime_instance_{std::move(runtime_instance)}
-    , attribute_manager_{detail::get_attribute_manager(detail::get_environment(context))} {
-  detail::store_source_location(context, runtime_instance_->uid(), runtime_instance_->fqn());
+Element::Element(const core::Element& core_element, const Context& context)
+    : core_element_(core_element)
+    , program_context_{detail::ContextAccess::get_program_context(context)} {
+  auto source_location_view = detail::ContextAccess::get_source_location(context);
+  program_context()->source_location_registry.add_source_location(
+      uid(), source_location::SourceLocation{
+                 .file = std::string{source_location_view.file},
+                 .function = std::string{source_location_view.function},
+                 .start_line = source_location_view.start_line,
+                 .end_line = source_location_view.end_line,
+                 .start_column = source_location_view.start_column,
+                 .end_column = source_location_view.end_column,
+             });
 }
 
-auto Element::name() const noexcept -> const std::string& { return runtime_instance_->name(); }
-auto Element::fqn() const noexcept -> const std::string& { return runtime_instance_->fqn(); }
+auto Element::name() const noexcept -> const std::string& { return core_element().name; }
+auto Element::fqn() const noexcept -> const std::string& { return core_element().fqn; }
+auto Element::uid() const noexcept -> std::uint64_t { return core_element().uid; }
 
 auto Element::add_attribute(std::string_view key, const AttributeValue& value) noexcept -> bool {
-  return attribute_manager_.get().add_attribute(*runtime_instance_, key, value);
-}
-
-void detail::RuntimeElementDeleter::operator()(runtime::ReactorElement* element) {
-  delete element; // NOLINT cppcoreguidelines-owning-memory
+  return program_context()->attribute_manager.add_attribute(uid(), key, value);
 }
 
 } // namespace xronos::sdk

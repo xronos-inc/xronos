@@ -615,14 +615,14 @@ class Environment:
         Raises:
             ValidationError: If an invalid connections is created.
         """
+        from_port = from_._get_sdk_instance(sdk.Element)
+        to_port = to._get_sdk_instance(sdk.Element)
+        assert isinstance(from_port, sdk.InputPort | sdk.OutputPort)
+        assert isinstance(to_port, sdk.InputPort | sdk.OutputPort)
         if delay is None:
-            self.__sdk_env.connect(
-                from_._get_sdk_instance(sdk.Port), to._get_sdk_instance(sdk.Port)
-            )
+            self.__sdk_env.connect(from_port, to_port)
         else:
-            self.__sdk_env.connect_delayed(
-                from_._get_sdk_instance(sdk.Port), to._get_sdk_instance(sdk.Port), delay
-            )
+            self.__sdk_env.connect_delayed(from_port, to_port, delay)
 
     def create_reactor(
         self,
@@ -655,7 +655,7 @@ class Environment:
         # the types of all args and kwargs and support type checking any calls
         # to this method.
         checked_class = Reactor._checked_cast_to_subclass(reactor_class)
-        context = sdk.EnvironmentContext(self.__sdk_env, get_source_location())
+        context = self.__sdk_env.context(get_source_location())
         reactor = checked_class._create_instance(name, context, *args, **kwargs)
 
         # keep a reference to the created reactor
@@ -677,16 +677,6 @@ class Environment:
             ValidationError: When the program is invalid or reaches an invalid state.
         """
         return self.__sdk_env.execute()
-
-    def request_shutdown(self) -> None:
-        """Request the termination of the currently running reactor program.
-
-        Terminates a running program at the next convenience. After completing
-        all currently active reactions, this triggers
-        :attr:`~xronos.Reactor.shutdown`. Once all reactions triggered by
-        :attr:`~xronos.Reactor.shutdown` are processed, the program terminates.
-        """
-        return self.__sdk_env.request_shutdown()
 
     def enable_telemetry(
         self, application_name: str = "xronos", endpoint: str = "localhost:4317"
@@ -895,23 +885,13 @@ class Reactor(Element):
         """
         return self.__sdk_instance.get_time_since_startup()
 
-    def request_shutdown(self) -> None:
-        """Request the termination of the currently running reactor program.
-
-        Terminates a running program at the next convenience. After completing
-        all currently active reactions, this triggers
-        :attr:`~xronos.Reactor.shutdown`. Once all reactions triggered by
-        :attr:`~xronos.Reactor.shutdown` are processed, the program terminates.
-        """
-        return self.__sdk_instance.request_shutdown()
-
     def _assemble(self) -> None:
         for _, elem in self.__elements.items():
             if isinstance(elem, Reaction):
                 elem._assemble()
 
     def _context(self, source_location: sdk.SourceLocation) -> sdk.ReactorContext:
-        return sdk.ReactorContext(self.__sdk_instance, source_location)
+        return self.__sdk_instance.context(source_location)
 
     def _add_reaction(
         self,
@@ -976,14 +956,14 @@ class Reactor(Element):
         Raises:
             ValidationError: If an invalid connections is created.
         """
+        from_port = from_._get_sdk_instance(sdk.Element)
+        to_port = to._get_sdk_instance(sdk.Element)
+        assert isinstance(from_port, sdk.InputPort | sdk.OutputPort)
+        assert isinstance(to_port, sdk.InputPort | sdk.OutputPort)
         if delay is None:
-            self.__sdk_instance.connect(
-                from_._get_sdk_instance(sdk.Port), to._get_sdk_instance(sdk.Port)
-            )
+            self.__sdk_instance.connect(from_port, to_port)
         else:
-            self.__sdk_instance.connect_delayed(
-                from_._get_sdk_instance(sdk.Port), to._get_sdk_instance(sdk.Port), delay
-            )
+            self.__sdk_instance.connect_delayed(from_port, to_port, delay)
 
     def create_reactor(
         self,
@@ -1157,6 +1137,26 @@ class MetricEffect:
         self.__sdk_metric.record(value)
 
 
+class ShutdownEffect:
+    """Allows a reaction to terminate the program.
+
+    This class is not intended to be instantiated directly. Use
+    :func:`~xronos.ReactionInterface.add_effect` instead.
+    """
+
+    def __init__(self, sdk_shutdown: sdk.ShutdownEffect) -> None:
+        self.__sdk_shutdown = sdk_shutdown
+
+    def trigger_shutdown(self) -> None:
+        """Terminate the currently running reactor program.
+
+        Terminates a running program at the next convenience. After completing all
+        currently active reactions, this triggers the Shutdown event sources. Once
+        all reactions triggered by Shutdown are processed, the program terminates.
+        """
+        self.__sdk_shutdown.trigger_shutdown()
+
+
 class ReactionInterface:
     """Helper class for defining the interfaces of a reaction.
 
@@ -1182,10 +1182,16 @@ class ReactionInterface:
             check presence and read values.
         """
         sdk_element = event_source._get_sdk_instance(sdk.Element)
-        if isinstance(sdk_element, sdk.VoidEventSource):
+        if isinstance(sdk_element, sdk.PeriodicTimer | sdk.Startup | sdk.Shutdown):
             sdk_trigger = sdk.VoidTrigger(sdk_element, self.__context)
         else:
-            assert isinstance(sdk_element, sdk.EventSource)
+            assert isinstance(
+                sdk_element,
+                sdk.InputPort
+                | sdk.OutputPort
+                | sdk.PhysicalEvent
+                | sdk.ProgrammableTimer,
+            )
             sdk_trigger = sdk.Trigger(sdk_element, self.__context)
 
         return Trigger(sdk_trigger)
@@ -1201,9 +1207,13 @@ class ReactionInterface:
     @overload
     def add_effect(self, target: Metric) -> MetricEffect: ...
 
+    @overload
+    def add_effect(self, target: Shutdown) -> ShutdownEffect: ...
+
     def add_effect(
-        self, target: InputPort[T] | OutputPort[T] | ProgrammableTimer[T] | Metric
-    ) -> PortEffect[T] | ProgrammableTimerEffect[T] | MetricEffect:
+        self,
+        target: InputPort[T] | OutputPort[T] | ProgrammableTimer[T] | Metric | Shutdown,
+    ) -> PortEffect[T] | ProgrammableTimerEffect[T] | MetricEffect | ShutdownEffect:
         """Declare a reaction effect.
 
         An effect provides read and write access to the referenced element, but
@@ -1217,16 +1227,20 @@ class ReactionInterface:
             write to ports or schedule events.
         """
         if isinstance(target, InputPort | OutputPort):
-            sdk_port = target._get_sdk_instance(sdk.Port)
+            sdk_port = target._get_sdk_instance(sdk.Element)
+            assert isinstance(sdk_port, sdk.InputPort | sdk.OutputPort)
             return PortEffect(sdk.PortEffect(sdk_port, self.__context))
         elif isinstance(target, ProgrammableTimer):
             sdk_timer = target._get_sdk_instance(sdk.ProgrammableTimer)
             return ProgrammableTimerEffect(
                 sdk.ProgrammableTimerEffect(sdk_timer, self.__context)
             )
-        elif isinstance(target, Metric):  # type: ignore [reportUnnecessaryIsInstance]
+        elif isinstance(target, Metric):
             sdk_metric = target._get_sdk_instance(sdk.Metric)
             return MetricEffect(sdk.MetricEffect(sdk_metric, self.__context))
+        elif isinstance(target, Shutdown):  # type: ignore [reportUnnecessaryIsInstance]
+            sdk_shutdown = target._get_sdk_instance(sdk.Shutdown)
+            return ShutdownEffect(sdk.ShutdownEffect(sdk_shutdown, self.__context))
         else:
             raise ValueError(f"{type(target)} is not a valid target for an effect.")
 

@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>External Input &mdash; xronos v0.5.0  documentation</title>
+  <title>External Input &mdash; xronos v0.6.0  documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -39,7 +39,7 @@
           
           
           <a href="../../index.html" class="icon icon-home">
-            xronos v0.5.0
+            xronos v0.6.0
               <img src="../../_static/logo_written.svg" class="logo" alt="Logo"/>
           </a>
 <div role="search">
@@ -93,7 +93,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../../index.html">xronos v0.5.0</a>
+          <a href="../../index.html">xronos v0.6.0</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -149,19 +149,22 @@ Consider the following example program.</p>
     <span class="nd">@xronos</span><span class="o">.</span><span class="n">reaction</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">on_input</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface</span><span class="p">):</span>
         <span class="n">input_trigger</span> <span class="o">=</span> <span class="n">interface</span><span class="o">.</span><span class="n">add_trigger</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_</span><span class="p">)</span>
-        <span class="k">return</span> <span class="k">lambda</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="n">input_trigger</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
+        <span class="n">shutdown_effect</span> <span class="o">=</span> <span class="n">interface</span><span class="o">.</span><span class="n">add_effect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shutdown</span><span class="p">)</span>
 
+        <span class="k">def</span><span class="w"> </span><span class="nf">handler</span><span class="p">():</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">input_trigger</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;exit&quot;</span><span class="p">,</span> <span class="s2">&quot;quit&quot;</span><span class="p">}:</span>
+                <span class="n">shutdown_effect</span><span class="o">.</span><span class="n">trigger_shutdown</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
 
-<span class="k">def</span><span class="w"> </span><span class="nf">parser</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
-    <span class="k">if</span> <span class="n">x</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;exit&quot;</span><span class="p">,</span> <span class="s2">&quot;quit&quot;</span><span class="p">}:</span>
-        <span class="k">raise</span> <span class="n">xronos</span><span class="o">.</span><span class="n">lib</span><span class="o">.</span><span class="n">ConsoleInput</span><span class="o">.</span><span class="n">RequestShutdown</span>
-    <span class="k">return</span> <span class="n">x</span>
+        <span class="k">return</span> <span class="n">handler</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
     <span class="n">env</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">Environment</span><span class="p">()</span>
     <span class="n">printer</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;printer&quot;</span><span class="p">,</span> <span class="n">Printer</span><span class="p">)</span>
-    <span class="n">console</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;console&quot;</span><span class="p">,</span> <span class="n">xronos</span><span class="o">.</span><span class="n">lib</span><span class="o">.</span><span class="n">ConsoleInput</span><span class="p">,</span> <span class="n">parser</span><span class="p">)</span>
+    <span class="n">console</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;console&quot;</span><span class="p">,</span> <span class="n">xronos</span><span class="o">.</span><span class="n">lib</span><span class="o">.</span><span class="n">ConsoleInput</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">)</span>
     <span class="n">env</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">console</span><span class="o">.</span><span class="n">output</span><span class="p">,</span> <span class="n">printer</span><span class="o">.</span><span class="n">input_</span><span class="p">)</span>
     <span class="n">env</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
 
@@ -182,19 +185,22 @@ Consider the following example program.</p>
     <span class="nd">@xronos</span><span class="o">.</span><span class="n">reaction</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">on_input</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface</span><span class="p">:</span> <span class="n">xronos</span><span class="o">.</span><span class="n">ReactionInterface</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">]:</span>
         <span class="n">input_trigger</span> <span class="o">=</span> <span class="n">interface</span><span class="o">.</span><span class="n">add_trigger</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_</span><span class="p">)</span>
-        <span class="k">return</span> <span class="k">lambda</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="n">input_trigger</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
+        <span class="n">shutdown_effect</span> <span class="o">=</span> <span class="n">interface</span><span class="o">.</span><span class="n">add_effect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shutdown</span><span class="p">)</span>
 
+        <span class="k">def</span><span class="w"> </span><span class="nf">handler</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">input_trigger</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;quit&quot;</span><span class="p">,</span> <span class="s2">&quot;exit&quot;</span><span class="p">}:</span>
+                <span class="n">shutdown_effect</span><span class="o">.</span><span class="n">trigger_shutdown</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
 
-<span class="k">def</span><span class="w"> </span><span class="nf">parser</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-    <span class="k">if</span> <span class="n">x</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;exit&quot;</span><span class="p">,</span> <span class="s2">&quot;quit&quot;</span><span class="p">}:</span>
-        <span class="k">raise</span> <span class="n">xronos</span><span class="o">.</span><span class="n">lib</span><span class="o">.</span><span class="n">ConsoleInput</span><span class="o">.</span><span class="n">RequestShutdown</span>
-    <span class="k">return</span> <span class="n">x</span>
+        <span class="k">return</span> <span class="n">handler</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="n">env</span> <span class="o">=</span> <span class="n">xronos</span><span class="o">.</span><span class="n">Environment</span><span class="p">()</span>
     <span class="n">printer</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;printer&quot;</span><span class="p">,</span> <span class="n">Printer</span><span class="p">)</span>
-    <span class="n">console</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;console&quot;</span><span class="p">,</span> <span class="n">xronos</span><span class="o">.</span><span class="n">lib</span><span class="o">.</span><span class="n">ConsoleInput</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">parser</span><span class="p">)</span>
+    <span class="n">console</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">create_reactor</span><span class="p">(</span><span class="s2">&quot;console&quot;</span><span class="p">,</span> <span class="n">xronos</span><span class="o">.</span><span class="n">lib</span><span class="o">.</span><span class="n">ConsoleInput</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">)</span>
     <span class="n">env</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">console</span><span class="o">.</span><span class="n">output</span><span class="p">,</span> <span class="n">printer</span><span class="o">.</span><span class="n">input_</span><span class="p">)</span>
     <span class="n">env</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
 
@@ -205,14 +211,13 @@ Consider the following example program.</p>
 </div>
 </div><div aria-labelledby="tab-0-ZGlhZ3JhbQ==" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-0-ZGlhZ3JhbQ==" name="ZGlhZ3JhbQ==" role="tabpanel" tabindex="0"><p><a class="bg-warning reference internal" href="../../_images/diagram_console.png"><img alt="diagram clock" class="bg-warning align-center" src="../../_images/diagram_console.png" style="width: 70%;" /></a></p>
 </div></div>
-<p>This program defines a simple <code class="docutils literal notranslate"><span class="pre">Printer</span></code> reactor that prints any strings that it
-receives on its input port. The <code class="docutils literal notranslate"><span class="pre">main()</span></code> function instantiates the <code class="docutils literal notranslate"><span class="pre">Printer</span></code>
+<p>This program defines a simple <code class="docutils literal notranslate"><span class="pre">Printer</span></code> reactor. It prints any strings that it
+receives on its input port. If it receives the strings <code class="docutils literal notranslate"><span class="pre">&quot;exit&quot;</span></code> or
+<code class="docutils literal notranslate"><span class="pre">&quot;quit&quot;</span></code>, it terminates the program using a <a class="reference internal" href="../api.html#xronos.ShutdownEffect" title="xronos.ShutdownEffect"><code class="xref py py-class docutils literal notranslate"><span class="pre">ShutdownEffect</span></code></a>.
+The <code class="docutils literal notranslate"><span class="pre">main()</span></code> function instantiates the <code class="docutils literal notranslate"><span class="pre">Printer</span></code>
 reactor and connects its input to an instance of
 <a class="reference internal" href="../lib.html#xronos.lib.ConsoleInput" title="xronos.lib.ConsoleInput"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConsoleInput</span></code></a>. The custom parser function that is provided
-as an argument simply forwards all received strings. However, if a string equals
-“quit” or “exit”, then it raises a
-<a class="reference internal" href="../lib.html#xronos.lib.ConsoleInput.RequestShutdown" title="xronos.lib.ConsoleInput.RequestShutdown"><code class="xref py py-exc docutils literal notranslate"><span class="pre">RequestShutdown</span></code></a> exception to instruct the
-console input reactor to stop reading input and terminate the program.</p>
+as an argument simply forwards all received strings.</p>
 <p>When executing the program, it immediately echos any lines entered by the user
 and terminates if the user types “quit” or “exit”.</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>python<span class="w"> </span>console.py

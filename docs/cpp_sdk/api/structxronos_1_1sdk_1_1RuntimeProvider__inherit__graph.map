@@ -1,0 +1,5 @@
+<map id="xronos::sdk::RuntimeProvider" name="xronos::sdk::RuntimeProvider">
+<area shape="rect" id="Node000001" title="Abstract interface for providing a concrete runtime instance." alt="" coords="5,5,220,31"/>
+<area shape="rect" id="Node000002" href="$structxronos_1_1sdk_1_1DefaultRuntimeProvider.html" title="A runtime provider that provides the default runtime." alt="" coords="9,79,217,119"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="115,44,115,79,110,79,110,44"/>
+</map>

@@ -4,33 +4,43 @@
 #include "xronos/sdk/physical_event.hh"
 
 #include <any>
+#include <cstdint>
 #include <string_view>
 
-#include "xronos/runtime/action.hh"
-#include "xronos/runtime/reaction.hh"
+#include "impl/xronos/sdk/detail/context_access.hh"
+#include "xronos/core/element.hh"
+#include "xronos/runtime/interfaces.hh"
 #include "xronos/sdk/context.hh"
-#include "xronos/sdk/element.hh"
+#include "xronos/util/assert.hh"
 
-namespace xronos::sdk::detail::runtime_physical_event {
+namespace xronos::sdk::detail {
 
-auto make_instance(std::string_view name, ReactorContext context) -> RuntimeElementPtr {
-  return make_runtime_element_pointer<runtime::PhysicalAction>(name, detail::get_reactor_instance(context));
+using CA = ContextAccess;
+
+auto register_physical_event(std::string_view name, const ReactorContext& context) -> const core::Element& {
+  return CA::get_program_context(context)->model.element_registry.add_new_element(name, core::PhysicalEventTag{},
+                                                                                  CA::get_parent_uid(context));
 }
 
-void trigger(Element& event, const std::any& value) {
-  detail::get_runtime_instance<runtime::PhysicalAction>(event).schedule(value);
+PhysicalEventImpl::PhysicalEventImpl(std::uint64_t uid, const ReactorContext& context)
+    : uid_{uid}
+    , program_context_{*CA::get_program_context(context)} {}
+
+void PhysicalEventImpl::trigger(const std::any& value) {
+  if (auto* impl = get_impl(); impl != nullptr) {
+    impl->trigger(value);
+  }
 }
 
-auto is_present(const Element& event) noexcept -> bool {
-  return detail::get_runtime_instance<runtime::PhysicalAction>(event).is_present();
+auto PhysicalEventImpl::get_impl() noexcept -> runtime::ExternalTrigger* {
+  if (impl_ == nullptr) {
+    if (program_context_.get().runtime_program_handle != nullptr) {
+      impl_ = program_context_.get().runtime_program_handle->get_external_trigger(uid_);
+      util::assert_(impl_ != nullptr);
+    }
+  }
+
+  return impl_;
 }
 
-auto get(const Element& event) noexcept -> const std::any& {
-  return detail::get_runtime_instance<runtime::PhysicalAction>(event).get();
-}
-
-void register_as_trigger_of(const Element& event, runtime::Reaction& reaction) noexcept {
-  reaction.declare_trigger(&detail::get_runtime_instance<runtime::PhysicalAction>(event));
-}
-
-} // namespace xronos::sdk::detail::runtime_physical_event
+} // namespace xronos::sdk::detail

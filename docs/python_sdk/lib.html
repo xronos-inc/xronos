@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Library Reactors &mdash; xronos v0.5.0  documentation</title>
+  <title>Library Reactors &mdash; xronos v0.6.0  documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
@@ -39,7 +39,7 @@
           
           
           <a href="../index.html" class="icon icon-home">
-            xronos v0.5.0
+            xronos v0.6.0
               <img src="../_static/logo_written.svg" class="logo" alt="Logo"/>
           </a>
 <div role="search">
@@ -59,7 +59,6 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Library Reactors</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#xronos.lib.ConsoleInput"><code class="docutils literal notranslate"><span class="pre">ConsoleInput</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#xronos.lib.ConsoleInput.output"><code class="docutils literal notranslate"><span class="pre">ConsoleInput.output</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#xronos.lib.ConsoleInput.RequestShutdown"><code class="docutils literal notranslate"><span class="pre">ConsoleInput.RequestShutdown</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#xronos.lib.ConstSource"><code class="docutils literal notranslate"><span class="pre">ConstSource</span></code></a></li>
@@ -108,7 +107,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../index.html">xronos v0.5.0</a>
+          <a href="../index.html">xronos v0.6.0</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -135,22 +134,17 @@
 Reads lines of text from <cite>stdin</cite>, applies the provided parser function and sends the
 results via the <a class="reference internal" href="#xronos.lib.ConsoleInput.output" title="xronos.lib.ConsoleInput.output"><code class="xref py py-attr docutils literal notranslate"><span class="pre">output</span></code></a> port. If the parser function raises a
 <a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.13)"><code class="xref py py-exc docutils literal notranslate"><span class="pre">ValueError</span></code></a>, the input is discarded and the reactor will continue reading
-inputs. If the parser raises an <a class="reference internal" href="#xronos.lib.ConsoleInput.RequestShutdown" title="xronos.lib.ConsoleInput.RequestShutdown"><code class="xref py py-exc docutils literal notranslate"><span class="pre">RequestShutdown</span></code></a> exception, the
-reactor will stop reading inputs and request a shutdown.</p>
+inputs.</p>
 <p>A simple example parser function that parses integers and a exit keyword from the
 console input is given below:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">simple_parser</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-    <span class="k">if</span> <span class="n">x</span> <span class="o">==</span> <span class="s2">&quot;exit&quot;</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">ConsoleInput</span><span class="o">.</span><span class="n">RequestShutdown</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
 </pre></div>
 </div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>parser</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.13)"><em>Callable</em></a><em>[</em><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>]</em><em>, </em><em>T</em><em>]</em>) – A function that parses the console input and returns the
-parsed value. Raise <a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.13)"><code class="xref py py-exc docutils literal notranslate"><span class="pre">ValueError</span></code></a> to discard the input, and raise
-<a class="reference internal" href="#xronos.lib.ConsoleInput.RequestShutdown" title="xronos.lib.ConsoleInput.RequestShutdown"><code class="xref py py-exc docutils literal notranslate"><span class="pre">RequestShutdown</span></code></a> to shutdown the program.</p>
+parsed value. Raise <a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.13)"><code class="xref py py-exc docutils literal notranslate"><span class="pre">ValueError</span></code></a> to discard the input.</p>
 </dd>
 </dl>
 <dl class="py attribute">
@@ -162,12 +156,6 @@ parsed value. Raise <a class="reference external" href="https://docs.python.org/
 <dd class="field-odd"><p><a class="reference internal" href="api.html#xronos.OutputPort" title="xronos.OutputPort">xronos.OutputPort</a>[T]</p>
 </dd>
 </dl>
-</dd></dl>
-
-<dl class="py exception">
-<dt class="sig sig-object py" id="xronos.lib.ConsoleInput.RequestShutdown">
-<em class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">RequestShutdown</span></span><a class="headerlink" href="#xronos.lib.ConsoleInput.RequestShutdown" title="Link to this definition"></a></dt>
-<dd><p>An exception that can be raised by the parser to request a shutdown.</p>
 </dd></dl>
 
 </dd></dl>

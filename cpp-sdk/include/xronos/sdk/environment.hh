@@ -6,42 +6,21 @@
 #ifndef XRONOS_SDK_ENVIRONMENT_HH
 #define XRONOS_SDK_ENVIRONMENT_HH
 
-#include <cstdint>
 #include <memory>
+#include <optional>
 #include <source_location>
 #include <stdexcept>
-#include <string>
 #include <string_view>
 #include <thread>
-#include <unordered_map>
-#include <utility>
 
 #include "xronos/sdk/context.hh"
+#include "xronos/sdk/detail/connect.hh"
 #include "xronos/sdk/detail/source_location.hh"
-#include "xronos/sdk/element.hh"
 #include "xronos/sdk/fwd.hh"
+#include "xronos/sdk/runtime_provider.hh"
 #include "xronos/sdk/time.hh"
 
 namespace xronos::sdk {
-
-namespace detail {
-
-auto get_environment_instance(Environment& environment) -> runtime::Environment&;
-void store_source_location(Environment& environment, std::uint64_t uid, std::string_view fqn,
-                           detail::SourceLocationView source_location);
-auto get_attribute_manager(Environment& environment) noexcept -> telemetry::AttributeManager&;
-auto get_metric_data_logger_provider(Environment& environment) noexcept -> telemetry::MetricDataLoggerProvider&;
-
-void runtime_connect(Environment& environment, const Element& from_port, const Element& to_port);
-void runtime_connect(Environment& environment, const Element& from_port, const Element& to_port, Duration delay);
-
-auto create_telemetry_backend(telemetry::AttributeManager& attribute_manager, std::string_view application_name,
-                              std::string_view endpoint) -> std::unique_ptr<telemetry::TelemetryBackend>;
-void send_reactor_graph(
-    const runtime::Environment& environment, const telemetry::AttributeManager& attribute_manager,
-    const std::unordered_map<std::uint64_t, std::pair<std::string, SourceLocation>>& source_locations);
-
-} // namespace detail
 
 /**
  * Exception that is thrown when a program reaches an invalid state.
@@ -87,17 +66,11 @@ public:
    *
    * Returns when the reactor program terminates. The reactor program terminates
    * when there are no more events, or after calling request_shutdown().
-   */
-  void execute();
-
-  /**
-   * Request the termination of a currently running reactor program.
    *
-   * Terminates a running program at the next convenience. After completing all
-   * currently active reactions, this triggers the Shutdown event sources. Once
-   * all reactions triggered by Shutdown are processed, the program terminates.
+   * @param runtime_provider Provider of the runtime that should be used for
+   * execution. When omitted, the default runtime is used.
    */
-  void request_shutdown();
+  void execute(const RuntimeProvider& runtime_provider = DefaultRuntimeProvider{});
 
   /**
    * Get a context object for constructing top-level reactors.
@@ -108,6 +81,11 @@ public:
    */
   [[nodiscard]] auto context(std::source_location source_location = std::source_location::current()) noexcept
       -> EnvironmentContext;
+
+  /**
+   * @internal
+   */
+  [[nodiscard]] auto context(detail::SourceLocationView source_location) noexcept -> EnvironmentContext;
 
   /**
    * Connect two ports.
@@ -122,19 +100,19 @@ public:
    * @param to The port to draw the connection to.
    */
   template <class T> void connect(const InputPort<T>& from, const InputPort<T>& to) {
-    detail::runtime_connect(*this, from, to);
+    detail::connect_impl(*program_context_, from, to, std::nullopt);
   }
   /**
    * @overload
    */
   template <class T> void connect(const OutputPort<T>& from, const OutputPort<T>& to) {
-    detail::runtime_connect(*this, from, to);
+    detail::connect_impl(*program_context_, from, to, std::nullopt);
   }
   /**
    * @overload
    */
   template <class T> void connect(const OutputPort<T>& from, const InputPort<T>& to) {
-    detail::runtime_connect(*this, from, to);
+    detail::connect_impl(*program_context_, from, to, std::nullopt);
   }
   /**
    * Connect two ports with a delay.
@@ -150,19 +128,19 @@ public:
    * @param delay The delay to apply to all messages.
    */
   template <class T> void connect(const InputPort<T>& from, const InputPort<T>& to, Duration delay) {
-    detail::runtime_connect(*this, from, to, delay);
+    detail::connect_impl(*program_context_, from, to, delay);
   }
   /**
    * @overload
    */
   template <class T> void connect(const OutputPort<T>& from, const OutputPort<T>& to, Duration delay) {
-    detail::runtime_connect(*this, from, to, delay);
+    detail::connect_impl(*program_context_, from, to, delay);
   }
   /**
    * @overload
    */
   template <class T> void connect(const OutputPort<T>& from, const InputPort<T>& to, Duration delay) {
-    detail::runtime_connect(*this, from, to, delay);
+    detail::connect_impl(*program_context_, from, to, delay);
   }
 
   /**
@@ -195,25 +173,12 @@ protected:
   Environment(unsigned workers, bool fast_fwd_execution, Duration timeout, bool render_reactor_graph);
 
 private:
-  std::unique_ptr<runtime::Environment> runtime_environment_;
-  std::unique_ptr<telemetry::AttributeManager> attribute_manager_;
-  std::unique_ptr<telemetry::MetricDataLoggerProvider> metric_data_logger_provider_;
-  std::unique_ptr<telemetry::TelemetryBackend> telemetry_backend_{nullptr};
+  std::shared_ptr<detail::ProgramContext> program_context_;
 
+  unsigned num_workers_;
+  Duration timeout_;
+  bool fast_fwd_execution_;
   bool render_reactor_graph_;
-  bool has_started_execute_{false};
-
-  [[nodiscard]] auto runtime_instance() noexcept -> runtime::Environment& { return *runtime_environment_; }
-  [[nodiscard]] auto runtime_instance() const noexcept -> const runtime::Environment& { return *runtime_environment_; }
-
-  std::unordered_map<std::uint64_t, std::pair<std::string, detail::SourceLocation>> source_locations_{};
-
-  friend void detail::store_source_location(Environment& environment, std::uint64_t uid, std::string_view fqn,
-                                            detail::SourceLocationView source_location);
-  friend auto detail::get_environment_instance(Environment& environment) -> runtime::Environment&;
-  friend auto detail::get_attribute_manager(Environment& environment) noexcept -> telemetry::AttributeManager&;
-  friend auto detail::get_metric_data_logger_provider(Environment& environment) noexcept
-      -> telemetry::MetricDataLoggerProvider&;
 };
 
 /**

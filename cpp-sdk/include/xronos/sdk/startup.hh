@@ -10,7 +10,6 @@
 
 #include "xronos/sdk/context.hh"
 #include "xronos/sdk/element.hh"
-#include "xronos/sdk/event_source.hh"
 #include "xronos/sdk/fwd.hh"
 
 namespace xronos::sdk {
@@ -20,7 +19,7 @@ namespace xronos::sdk {
  *
  * Can be used as a reaction @ref BaseReaction::Trigger "trigger".
  */
-class Startup final : public Element, public EventSource<void> {
+class Startup final : public Element {
 public:
   /**
    * Constructor.
@@ -32,11 +31,6 @@ public:
    * @param context The containing reactor's context.
    */
   Startup(std::string_view name, ReactorContext context);
-
-private:
-  [[nodiscard]] auto is_present() const noexcept -> bool final;
-
-  void register_as_trigger_of(runtime::Reaction& reaction) const noexcept final;
 };
 
 } // namespace xronos::sdk

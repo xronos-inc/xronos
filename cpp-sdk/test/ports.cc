@@ -265,7 +265,7 @@ public:
 
   [[nodiscard]] auto input() const noexcept -> auto& { return input_; }
 
-  void check_post_conditions(int expected_count) {
+  void check_post_conditions(int expected_count) const {
     EXPECT_EQ(counter_, expected_count);
     EXPECT_TRUE(check_timing_executed_);
   }

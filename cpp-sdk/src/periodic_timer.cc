@@ -3,45 +3,44 @@
 
 #include "xronos/sdk/periodic_timer.hh"
 
+#include <memory>
 #include <string_view>
 
-#include "xronos/runtime/action.hh"
-#include "xronos/runtime/reaction.hh"
+#include "impl/xronos/sdk/detail/context_access.hh"
+#include "xronos/core/element.hh"
+#include "xronos/core/element_registry.hh"
 #include "xronos/sdk/context.hh"
 #include "xronos/sdk/element.hh"
 #include "xronos/sdk/time.hh"
 
 namespace xronos::sdk {
 
+using CA = detail::ContextAccess;
+
 PeriodicTimer::PeriodicTimer(std::string_view name, ReactorContext context, Duration period, Duration offset)
-    : Element{detail::make_runtime_element_pointer<runtime::Timer>(name, detail::get_reactor_instance(context), period,
-                                                                   offset),
-              context} {}
+    : Element(CA::get_program_context(context)->model.element_registry.add_new_element(
+                  name,
+                  core::PeriodicTimerTag{std::make_unique<core::PeriodicTimerProperties>(
+                      core::PeriodicTimerProperties{.offset = offset, .period = period})},
+                  CA::get_parent_uid(context)),
+              context) {}
 
 [[nodiscard]] auto PeriodicTimer::period() const noexcept -> const Duration& {
-  return detail::get_runtime_instance<runtime::Timer>(*this).period();
+  return core::get_properties<core::PeriodicTimerTag>(core_element()).period;
 }
 
 [[nodiscard]] auto PeriodicTimer::offset() const noexcept -> const Duration& {
-  return detail::get_runtime_instance<runtime::Timer>(*this).offset();
-}
-
-[[nodiscard]] auto PeriodicTimer::is_present() const noexcept -> bool {
-  return detail::get_runtime_instance<runtime::Timer>(*this).is_present();
-}
-
-void PeriodicTimer::register_as_trigger_of(runtime::Reaction& reaction) const noexcept {
-  reaction.declare_trigger(&detail::get_runtime_instance<runtime::Timer>(*this));
+  return core::get_properties<core::PeriodicTimerTag>(core_element()).offset;
 }
 
 namespace detail {
 
 void set_timer_period(PeriodicTimer& timer, Duration period) {
-  get_runtime_instance<runtime::Timer>(timer).set_period(period);
+  core::get_properties<core::PeriodicTimerTag>(timer.core_element()).period = period;
 }
 
 void set_timer_offset(PeriodicTimer& timer, Duration offset) {
-  get_runtime_instance<runtime::Timer>(timer).set_offset(offset);
+  core::get_properties<core::PeriodicTimerTag>(timer.core_element()).offset = offset;
 }
 
 } // namespace detail

@@ -30,9 +30,10 @@ class MainReactor(xronos.Reactor):
     ) -> Callable[[], None]:
         _ = interface.add_trigger(self._request_shutdown)
         check_shutdown = interface.add_effect(self.check_shutdown)
+        shutdown_effect = interface.add_effect(self.shutdown)
 
         def handler() -> None:
-            self.request_shutdown()
+            shutdown_effect.trigger_shutdown()
             check_shutdown.schedule(True)
 
         return handler

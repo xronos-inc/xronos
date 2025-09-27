@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Object Detection with YOLO &mdash; xronos v0.5.0  documentation</title>
+  <title>Object Detection with YOLO &mdash; xronos v0.6.0  documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -37,7 +37,7 @@
           
           
           <a href="../../index.html" class="icon icon-home">
-            xronos v0.5.0
+            xronos v0.6.0
               <img src="../../_static/logo_written.svg" class="logo" alt="Logo"/>
           </a>
 <div role="search">
@@ -94,7 +94,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../../index.html">xronos v0.5.0</a>
+          <a href="../../index.html">xronos v0.6.0</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -221,7 +221,7 @@ an effect on the <code class="docutils literal notranslate"><span class="pre">fa
 frame from the camera and to forward this frame to the next reactor using the
 <code class="docutils literal notranslate"><span class="pre">frame</span></code> output port. A value is written to a port by calling <a class="reference internal" href="../api.html#xronos.PortEffect.set" title="xronos.PortEffect.set"><code class="xref py py-func docutils literal notranslate"><span class="pre">set()</span></code></a>
 on the declared port effect. If no frame could be read, the
-handler stops the program using <a class="reference internal" href="../api.html#xronos.Reactor.request_shutdown" title="xronos.Reactor.request_shutdown"><code class="xref py py-func docutils literal notranslate"><span class="pre">request_shutdown()</span></code></a>.
+handler stops the program using <a class="reference internal" href="../api.html#xronos.ShutdownEffect.trigger_shutdown" title="xronos.ShutdownEffect.trigger_shutdown"><code class="xref py py-func docutils literal notranslate"><span class="pre">trigger_shutdown()</span></code></a>.
 Finally, the handler uses <code class="docutils literal notranslate"><span class="pre">reschedule_sample_webcam</span></code> to schedule the next
 occurrence of <code class="docutils literal notranslate"><span class="pre">_sample_webcam</span></code>, so that the reaction will be triggered again in
 the future.</p>
@@ -232,6 +232,7 @@ the future.</p>
     <span class="n">interface</span><span class="o">.</span><span class="n">add_trigger</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sample_webcam</span><span class="p">)</span>
     <span class="n">sample_webcam_effect</span> <span class="o">=</span> <span class="n">interface</span><span class="o">.</span><span class="n">add_effect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sample_webcam</span><span class="p">)</span>
     <span class="n">frame_effect</span> <span class="o">=</span> <span class="n">interface</span><span class="o">.</span><span class="n">add_effect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">frame</span><span class="p">)</span>
+    <span class="n">shutdown_effect</span> <span class="o">=</span> <span class="n">interface</span><span class="o">.</span><span class="n">add_effect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shutdown</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">handler</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">ret</span><span class="p">,</span> <span class="n">_frame</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stream</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
@@ -239,7 +240,7 @@ the future.</p>
             <span class="n">frame_effect</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">_frame</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;WARNING: Failed to read frames from videostream. Shutting down.&quot;</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">request_shutdown</span><span class="p">()</span>
+            <span class="n">shutdown_effect</span><span class="o">.</span><span class="n">trigger_shutdown</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">reschedule_sample_webcam</span><span class="p">(</span><span class="n">sample_webcam_effect</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">handler</span>
@@ -357,6 +358,7 @@ The reaction handler can fully focus on sensor fusion.</p>
 <span class="k">def</span><span class="w"> </span><span class="nf">on_frame</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface</span><span class="p">:</span> <span class="n">xronos</span><span class="o">.</span><span class="n">ReactionInterface</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">]:</span>
     <span class="n">frame_trigger</span> <span class="o">=</span> <span class="n">interface</span><span class="o">.</span><span class="n">add_trigger</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">frame</span><span class="p">)</span>
     <span class="n">dnn_result_trigger</span> <span class="o">=</span> <span class="n">interface</span><span class="o">.</span><span class="n">add_trigger</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dnn_result</span><span class="p">)</span>
+    <span class="n">shutdown_effect</span> <span class="o">=</span> <span class="n">interface</span><span class="o">.</span><span class="n">add_effect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shutdown</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">handler</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">frame_trigger</span><span class="o">.</span><span class="n">is_present</span><span class="p">()</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">dnn_result_trigger</span><span class="o">.</span><span class="n">is_present</span><span class="p">():</span>
@@ -401,7 +403,7 @@ The reaction handler can fully focus on sensor fusion.</p>
                 <span class="mi">2</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="k">if</span> <span class="n">cv2</span><span class="o">.</span><span class="n">waitKey</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="nb">ord</span><span class="p">(</span><span class="s2">&quot;q&quot;</span><span class="p">):</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">request_shutdown</span><span class="p">()</span>
+                <span class="n">shutdown_effect</span><span class="o">.</span><span class="n">trigger_shutdown</span><span class="p">()</span>
 
     <span class="k">return</span> <span class="n">handler</span>
 </pre></div>

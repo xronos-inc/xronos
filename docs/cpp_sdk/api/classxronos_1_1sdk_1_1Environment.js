@@ -2,8 +2,7 @@ var classxronos_1_1sdk_1_1Environment =
 [
     [ "Environment", "classxronos_1_1sdk_1_1Environment.html#af69bc9048a8d9da4ef0c01b47b0e87e0", null ],
     [ "~Environment", "classxronos_1_1sdk_1_1Environment.html#a6ac20bab41877dc3b1b4b06c7b7339df", null ],
-    [ "execute", "classxronos_1_1sdk_1_1Environment.html#ab0bf99c5be70b7b49b8ffacdbc34fca4", null ],
-    [ "request_shutdown", "classxronos_1_1sdk_1_1Environment.html#abf5bd5148ead59aff66f2b626ba5a4fc", null ],
+    [ "execute", "classxronos_1_1sdk_1_1Environment.html#aacc1771136d50aa1989b961514ef7d24", null ],
     [ "context", "classxronos_1_1sdk_1_1Environment.html#acf5fbf8b502634daf05243d1b2c08072", null ],
     [ "connect", "classxronos_1_1sdk_1_1Environment.html#a191a332ec99da1f8a0a3fc9018ab9c59", null ],
     [ "connect", "classxronos_1_1sdk_1_1Environment.html#aa24580e62823ad50d170767a550d6d52", null ],

@@ -36,6 +36,7 @@ class SelfLoop(xronos.Reactor):
     def on_input(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
         input_ = interface.add_trigger(self.input_)
         i_event = interface.add_effect(self.internal_event)
+        shutdown_effect = interface.add_effect(self.shutdown)
 
         def handler() -> None:
             print(f"Reaction in {self.fqn} triggered")
@@ -44,7 +45,7 @@ class SelfLoop(xronos.Reactor):
             self.expected += 1
 
             if self.expected >= self.kill_at_count:
-                self.request_shutdown()
+                shutdown_effect.trigger_shutdown()
             else:
                 i_event.schedule(value=input_.get())
 

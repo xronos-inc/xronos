@@ -1,6 +1,6 @@
 variable "CONTEXT_PREFIX" { default = "." }
 
-variable "XRONOS_VERSION" { default = "0.5.0" }
+variable "XRONOS_VERSION" { default = "0.6.0" }
 
 target "base" {
   target  = "base"
@@ -104,6 +104,11 @@ target "xronos-lib-install" {
   target   = "install"
 }
 
+target "xronos-lib-install-debug" {
+  inherits = ["xronos-lib-lint"]
+  target   = "install-debug"
+}
+
 target "xronos-lib-test" {
   inherits = ["xronos-lib-lint"]
   target   = "test"
@@ -139,6 +144,7 @@ target "xronos-cpp-sdk-test" {
   target   = "test"
   contexts = {
     third-party-files = "target:third-party-cmake-files"
+    lib-debug         = "target:xronos-lib-install-debug"
   }
 }
 

@@ -4,7 +4,8 @@ var searchData=
   ['self_1',['self',['../classxronos_1_1sdk_1_1Reaction.html#a89a2834905b3ee159c60e7fb2bd87083',1,'xronos::sdk::Reaction']]],
   ['set_2',['set',['../classxronos_1_1sdk_1_1BaseReaction_1_1PortEffect.html#abc0a1a4cdf9324d44cd19158701263ce',1,'xronos::sdk::BaseReaction::PortEffect::set(const ImmutableValuePtr&lt; T &gt; &amp;value_ptr)'],['../classxronos_1_1sdk_1_1BaseReaction_1_1PortEffect.html#a336561d556448f520177a0436c5fcb98',1,'xronos::sdk::BaseReaction::PortEffect::set(MutableValuePtr&lt; T &gt; &amp;&amp;value_ptr)'],['../classxronos_1_1sdk_1_1BaseReaction_1_1PortEffect.html#acb97382b7032b6c7813b5be3de5ba65d',1,'xronos::sdk::BaseReaction::PortEffect::set(const U &amp;value)'],['../classxronos_1_1sdk_1_1BaseReaction_1_1PortEffect.html#aea3cfdacbabb9a135280cf26efe99bb9',1,'xronos::sdk::BaseReaction::PortEffect::set(U &amp;&amp;value)'],['../classxronos_1_1sdk_1_1BaseReaction_1_1PortEffect.html#a585468a65e3ff19d5b5e502f71368caf',1,'xronos::sdk::BaseReaction::PortEffect::set()']]],
   ['shutdown_3',['Shutdown',['../classxronos_1_1sdk_1_1Shutdown.html#ac07fb5e519920c786d4ff975a8014412',1,'xronos::sdk::Shutdown']]],
-  ['shutdown_4',['shutdown',['../classxronos_1_1sdk_1_1Reactor.html#afd726c53d71d34135b7d09cf8d93d540',1,'xronos::sdk::Reactor']]],
-  ['startup_5',['Startup',['../classxronos_1_1sdk_1_1Startup.html#a07f0c8856e4c68dd1ef8d389aace53cc',1,'xronos::sdk::Startup']]],
-  ['startup_6',['startup',['../classxronos_1_1sdk_1_1Reactor.html#a7ea61bf0a2571aa616b32849ade549b6',1,'xronos::sdk::Reactor']]]
+  ['shutdown_4',['shutdown',['../classxronos_1_1sdk_1_1Reactor.html#a4ccff633ed1c8526090c8305d905f984',1,'xronos::sdk::Reactor']]],
+  ['shutdowneffect_5',['ShutdownEffect',['../classxronos_1_1sdk_1_1BaseReaction_1_1ShutdownEffect.html#a193e7f5710e2a9eafb52da1d0bb2787f',1,'xronos::sdk::BaseReaction::ShutdownEffect']]],
+  ['startup_6',['Startup',['../classxronos_1_1sdk_1_1Startup.html#a07f0c8856e4c68dd1ef8d389aace53cc',1,'xronos::sdk::Startup']]],
+  ['startup_7',['startup',['../classxronos_1_1sdk_1_1Reactor.html#a8879c9091bde3a2eda91ddd59f10d375',1,'xronos::sdk::Reactor']]]
 ];

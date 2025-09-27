@@ -15,6 +15,7 @@
 #include "xronos/sdk/fwd.hh"
 
 namespace xronos::sdk {
+
 /**
  * A reactor element for recording metric data to an external data base.
  *
@@ -31,7 +32,8 @@ public:
    * @param description A human readable description of the metric.
    * @param unit The unit of values recorded using the metric.
    */
-  Metric(std::string_view name, ReactorContext context, std::string_view description, std::string_view unit = "");
+  Metric(std::string_view name, const ReactorContext& context, std::string_view description,
+         std::string_view unit = "");
 
   /**
    * Get the description.

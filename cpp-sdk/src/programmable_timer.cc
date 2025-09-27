@@ -3,40 +3,19 @@
 
 #include "xronos/sdk/programmable_timer.hh"
 
-#include <any>
 #include <string_view>
 
-#include "xronos/runtime/action.hh"
-#include "xronos/runtime/reaction.hh"
+#include "impl/xronos/sdk/detail/context_access.hh"
+#include "xronos/core/element.hh"
 #include "xronos/sdk/context.hh"
-#include "xronos/sdk/element.hh"
-#include "xronos/sdk/time.hh"
 
-namespace xronos::sdk::detail::runtime_programmable_timer {
+namespace xronos::sdk::detail {
 
-auto make_instance(std::string_view name, ReactorContext context) -> RuntimeElementPtr {
-  return detail::make_runtime_element_pointer<runtime::LogicalAction>(name, detail::get_reactor_instance(context));
+using CA = ContextAccess;
+
+auto register_programmable_timer(std::string_view name, const ReactorContext& context) -> const core::Element& {
+  return CA::get_program_context(context)->model.element_registry.add_new_element(name, core::ProgrammableTimerTag{},
+                                                                                  CA::get_parent_uid(context));
 }
 
-void schedule(Element& timer, const std::any& value, Duration delay) noexcept {
-  detail::get_runtime_instance<runtime::LogicalAction>(timer).schedule(value, delay);
-}
-
-auto is_present(const Element& timer) noexcept -> bool {
-  return detail::get_runtime_instance<runtime::LogicalAction>(timer).is_present();
-}
-
-auto get(const Element& timer) noexcept -> const std::any& {
-  return detail::get_runtime_instance<runtime::LogicalAction>(timer).get();
-}
-
-void register_as_trigger_of(const Element& timer, runtime::Reaction& reaction) noexcept {
-  reaction.declare_trigger(&detail::get_runtime_instance<runtime::LogicalAction>(timer));
-}
-
-void register_as_effect_of(const Element& timer, runtime::Reaction& reaction) noexcept {
-
-  reaction.declare_schedulable_action(&detail::get_runtime_instance<runtime::LogicalAction>(timer));
-}
-
-} // namespace xronos::sdk::detail::runtime_programmable_timer
+} // namespace xronos::sdk::detail

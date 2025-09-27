@@ -80,7 +80,7 @@ an effect on the `fame` output port. The main task of the handler is to read a
 frame from the camera and to forward this frame to the next reactor using the
 `frame` output port. A value is written to a port by calling {func}`~xronos.PortEffect.set`
 on the declared port effect. If no frame could be read, the
-handler stops the program using {func}`~xronos.Reactor.request_shutdown`.
+handler stops the program using {func}`~xronos.ShutdownEffect.trigger_shutdown`.
 Finally, the handler uses `reschedule_sample_webcam` to schedule the next
 occurrence of `_sample_webcam`, so that the reaction will be triggered again in
 the future.

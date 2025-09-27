@@ -36,6 +36,7 @@ class Display(xronos.Reactor):
     def on_frame(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
         frame_trigger = interface.add_trigger(self.frame)
         dnn_result_trigger = interface.add_trigger(self.dnn_result)
+        shutdown_effect = interface.add_effect(self.shutdown)
 
         def handler() -> None:
             if not frame_trigger.is_present() or not dnn_result_trigger.is_present():
@@ -80,7 +81,7 @@ class Display(xronos.Reactor):
                     2,
                 )
                 if cv2.waitKey(1) == ord("q"):
-                    self.request_shutdown()
+                    shutdown_effect.trigger_shutdown()
 
         return handler
 

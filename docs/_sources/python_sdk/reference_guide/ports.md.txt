@@ -98,10 +98,8 @@ Executing the program yields output similar to the following:
 ```
 
 This program will execute indefinitely as the timer will always produce new
-events and we do not use {func}`~xronos.Reactor.request_shutdown`. Use
-{kbd}`Ctrl`+{kbd}`C` to abort the execution. If the program defines any
-reactions to {attr}`~xronos.Reactor.shutdown`, these will be invoked after the
-termination signal is received.
+events and we do not explicitly shutdown the program. Use
+{kbd}`Ctrl`+{kbd}`C` to abort the execution.
 
 Note that `printer` receives the first message right at startup, and all
 subsequent messages are spaced perfectly by the timer period of 100ms. As

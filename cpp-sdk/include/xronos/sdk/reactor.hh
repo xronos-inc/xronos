@@ -9,16 +9,16 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <source_location>
 #include <string_view>
 #include <utility>
 #include <vector>
 
 #include "xronos/sdk/context.hh"
+#include "xronos/sdk/detail/connect.hh"
 #include "xronos/sdk/detail/source_location.hh"
 #include "xronos/sdk/element.hh"
-#include "xronos/sdk/environment.hh"
-#include "xronos/sdk/event_source.hh"
 #include "xronos/sdk/fwd.hh"
 #include "xronos/sdk/shutdown.hh"
 #include "xronos/sdk/startup.hh"
@@ -33,9 +33,6 @@ template <class ReactionClass>
 auto add_reaction(Reactor& reactor, std::string_view name, detail::SourceLocationView source_location)
     -> ReactionClass&;
 
-void runtime_connect(Reactor& reactor, const Element& from_port, const Element& to_port);
-void runtime_connect(Reactor& reactor, const Element& from_port, const Element& to_port, Duration delay);
-
 } // namespace detail
 
 /**
@@ -49,7 +46,7 @@ public:
    * @param name The name of the reactor instance.
    * @param parent_context Either the environment's or the containing reactor's context.
    */
-  Reactor(std::string_view name, Context parent_context);
+  Reactor(std::string_view name, const Context& parent_context);
 
   // Reactors may not be moved or copied. Copying is implicitly deleted due to
   // the unique_ptr to the runtime instance in Element. We also need to delete
@@ -72,6 +69,11 @@ protected:
    */
   [[nodiscard]] auto context(std::source_location source_location = std::source_location::current()) noexcept
       -> ReactorContext;
+
+  /**
+   * @internal
+   */
+  [[nodiscard]] auto context(detail::SourceLocationView source_location) noexcept -> ReactorContext;
 
   /**
    * Get the current timestamp.
@@ -110,7 +112,7 @@ protected:
    * @returns An event source that triggers once when the program execution
    * starts.
    */
-  [[nodiscard]] auto startup() const noexcept -> const EventSource<void>& { return startup_; }
+  [[nodiscard]] auto startup() const noexcept -> const Startup& { return startup_; }
 
   /**
    * Get the shutdown event source.
@@ -118,12 +120,7 @@ protected:
    * @returns An event source that triggers once right before the program
    * execution ends.
    */
-  [[nodiscard]] auto shutdown() const noexcept -> const EventSource<void>& { return shutdown_; }
-
-  /**
-   * @copydoc Environment::request_shutdown
-   */
-  void request_shutdown() noexcept;
+  [[nodiscard]] auto shutdown() noexcept -> Shutdown& { return shutdown_; }
 
   /**
    * @copydoc Environment::connect(const InputPort<T>&, const InputPort<T>&)
@@ -131,19 +128,19 @@ protected:
    * @see assemble()
    */
   template <class T> void connect(const InputPort<T>& from, const InputPort<T>& to) {
-    detail::runtime_connect(*this, from, to);
+    detail::connect_impl(*program_context(), from, to, std::nullopt);
   }
   /**
    * @overload
    */
   template <class T> void connect(const OutputPort<T>& from, const OutputPort<T>& to) {
-    detail::runtime_connect(*this, from, to);
+    detail::connect_impl(*program_context(), from, to, std::nullopt);
   }
   /**
    * @overload
    */
   template <class T> void connect(const OutputPort<T>& from, const InputPort<T>& to) {
-    detail::runtime_connect(*this, from, to);
+    detail::connect_impl(*program_context(), from, to, std::nullopt);
   }
 
   /**
@@ -152,19 +149,19 @@ protected:
    * @see assemble()
    */
   template <class T> void connect(const InputPort<T>& from, const InputPort<T>& to, Duration delay) {
-    detail::runtime_connect(*this, from, to, delay);
+    detail::connect_impl(*program_context(), from, to, delay);
   }
   /**
    * @overload
    */
   template <class T> void connect(const OutputPort<T>& from, const OutputPort<T>& to, Duration delay) {
-    detail::runtime_connect(*this, from, to, delay);
+    detail::connect_impl(*program_context(), from, to, delay);
   }
   /**
    * @overload
    */
   template <class T> void connect(const OutputPort<T>& from, const InputPort<T>& to, Duration delay) {
-    detail::runtime_connect(*this, from, to, delay);
+    detail::connect_impl(*program_context(), from, to, delay);
   }
 
   /**
@@ -190,11 +187,6 @@ protected:
   }
 
 private:
-  std::reference_wrapper<Environment> environment_;
-
-  Startup startup_;
-  Shutdown shutdown_;
-
   /**
    * Method that sets up the internal topology of the reactor.
    *
@@ -206,10 +198,14 @@ private:
    */
   virtual void assemble() = 0;
 
+  Startup startup_;
+  Shutdown shutdown_;
   std::vector<std::unique_ptr<BaseReaction>> reactions_{};
 
+  using Element::core_element;
+  using Element::program_context;
+
   friend BaseReaction;
-  friend auto detail::create_context(Reactor& reactor, detail::SourceLocationView source_location) -> ReactorContext;
   template <class ReactionClass>
     requires(std::is_base_of_v<BaseReaction, ReactionClass>)
   friend auto detail::add_reaction(Reactor& reactor, std::string_view name, detail::SourceLocationView source_location)
@@ -225,19 +221,18 @@ private:
  * @see BaseReaction::BaseReaction()
  */
 class ReactionProperties {
-  constexpr ReactionProperties(std::string_view name, std::uint64_t reaction_id,
-                               std::reference_wrapper<Reactor> container, ReactorContext context)
+  ReactionProperties(std::string_view name, std::uint32_t position, Reactor& container, const ReactorContext& context)
       : name_(name)
-      , reaction_id_(reaction_id)
       , container_(container)
-      , context_(context) {}
+      , context_(context)
+      , position_(position) {}
 
   std::string_view name_;
-  std::uint64_t reaction_id_;
   std::reference_wrapper<Reactor> container_;
   ReactorContext context_;
+  std::uint32_t position_;
 
-  [[nodiscard]] auto container() noexcept -> Reactor& { return container_; }
+  [[nodiscard]] auto container() const noexcept -> Reactor& { return container_; }
 
   friend BaseReaction;
   template <class R> friend class Reaction;
@@ -257,8 +252,8 @@ template <class ReactionClass>
   requires(std::is_base_of_v<BaseReaction, ReactionClass>)
 auto add_reaction(Reactor& reactor, std::string_view name, detail::SourceLocationView source_location)
     -> ReactionClass& {
-  auto reaction = std::make_unique<ReactionClass>(ReactionProperties{name, reactor.reactions_.size() + 1, reactor,
-                                                                     detail::create_context(reactor, source_location)});
+  auto reaction = std::make_unique<ReactionClass>(ReactionProperties{
+      name, static_cast<std::uint32_t>(reactor.reactions_.size()), reactor, reactor.context(source_location)});
   auto& ref = *reaction;
   reactor.reactions_.emplace_back(std::move(reaction));
   return ref;

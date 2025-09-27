@@ -157,22 +157,17 @@ class ConsoleInput(ExternalInput[T]):
     Reads lines of text from `stdin`, applies the provided parser function and sends the
     results via the :attr:`output` port. If the parser function raises a
     :exc:`ValueError`, the input is discarded and the reactor will continue reading
-    inputs. If the parser raises an :exc:`~ConsoleInput.RequestShutdown` exception, the
-    reactor will stop reading inputs and request a shutdown.
+    inputs.
 
     A simple example parser function that parses integers and a exit keyword from the
     console input is given below::
 
         def simple_parser(x: str) -> int:
-            if x == "exit":
-                raise ConsoleInput.RequestShutdown
-            else:
-                return int(x)
+            return int(x)
 
     Args:
         parser: A function that parses the console input and returns the
-            parsed value. Raise :exc:`ValueError` to discard the input, and raise
-            :exc:`~ConsoleInput.RequestShutdown` to shutdown the program.
+            parsed value. Raise :exc:`ValueError` to discard the input.
 
     Attributes:
         output(xronos.OutputPort[T]): A port that forwards the parsed input.
@@ -184,11 +179,6 @@ class ConsoleInput(ExternalInput[T]):
     ):
         super().__init__(read_input=self.__read_console_input())
         self.parser = parser
-
-    class RequestShutdown(Exception):
-        """An exception that can be raised by the parser to request a shutdown."""
-
-        pass
 
     def __read_console_input(self) -> Generator[T]:
         """Read lines of text from `stdin` and parse them using the provided parser.
@@ -212,9 +202,6 @@ class ConsoleInput(ExternalInput[T]):
                     yield self.parser(console_input)
                 except ValueError:
                     pass
-                except ConsoleInput.RequestShutdown:
-                    self.request_shutdown()
-                    break
         except EOFError:
             pass
 

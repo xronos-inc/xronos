@@ -3,277 +3,262 @@
 
 #include "xronos/graph_exporter/exporter.hh"
 
-#include <cassert>
+#include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #include <functional>
 #include <optional>
-#include <stdexcept>
+#include <ranges>
 #include <string>
+#include <string_view>
+#include <unordered_map>
 #include <variant>
+#include <vector>
 
 #include "google/protobuf/empty.pb.h"
-#include "google/protobuf/util/json_util.h"
 #include "google/protobuf/util/time_util.h"
 #include "grpcpp/client_context.h"
 #include "grpcpp/create_channel.h"
 #include "grpcpp/security/credentials.h"
 #include "grpcpp/support/status.h"
+#include "xronos/core/connection_graph.hh"
+#include "xronos/core/element.hh"
+#include "xronos/core/element_registry.hh"
+#include "xronos/core/reaction_dependency_registry.hh"
+#include "xronos/core/reactor_model.hh"
 #include "xronos/messages/reactor_graph.pb.h"
 #include "xronos/messages/source_info.pb.h"
-#include "xronos/runtime/action.hh"
-#include "xronos/runtime/assert.hh"
-#include "xronos/runtime/connection_properties.hh"
-#include "xronos/runtime/environment.hh"
-#include "xronos/runtime/misc_element.hh"
-#include "xronos/runtime/port.hh"
-#include "xronos/runtime/reaction.hh"
-#include "xronos/runtime/reactor.hh"
-#include "xronos/runtime/reactor_element.hh"
 #include "xronos/services/diagram_generator.grpc.pb.h"
 #include "xronos/services/diagram_generator.pb.h"
+#include "xronos/source_location/source_location.hh"
 #include "xronos/telemetry/attribute_manager.hh"
-#include "xronos/telemetry/metric.hh"
-
-using namespace xronos::messages;
-using namespace xronos::services;
-using namespace xronos::runtime;
-
-void export_containment(const Reactor& reactor, reactor_graph::Graph& graph) {
-  auto& containment = *graph.add_containments();
-  containment.set_container_uid(reactor.uid());
-  for (const auto* element : reactor.elements()) {
-    containment.add_containee_uids(element->uid());
-  }
-}
-
-void export_reaction_dependencies(const Reaction& reaction, reactor_graph::Graph& graph) {
-  auto& dependencies = *graph.add_dependencies();
-  dependencies.set_reaction_uid(reaction.uid());
-  for (auto* trigger : reaction.action_triggers()) {
-    dependencies.add_trigger_uids(trigger->uid());
-  }
-  for (auto* trigger : reaction.port_triggers()) {
-    dependencies.add_trigger_uids(trigger->uid());
-  }
-  for (auto* source : reaction.dependencies()) {
-    // dependencies also include the port triggers.
-    // -> all dependencies that are not triggers are sources.
-    if (!reaction.port_triggers().contains(source)) {
-      dependencies.add_source_uids(source->uid());
-    }
-  }
-  for (auto* source : reaction.action_dependencies()) {
-    dependencies.add_source_uids(source->uid());
-  }
-  for (auto* effect : reaction.antidependencies()) {
-    dependencies.add_effect_uids(effect->uid());
-  }
-  for (auto* effect : reaction.scheduable_actions()) {
-    dependencies.add_effect_uids(effect->uid());
-  }
-}
-
-auto add_new_element(const ReactorElement& element, reactor_graph::Graph& graph) -> reactor_graph::ReactorElement& {
-  auto& graph_elem = *graph.add_elements();
-  graph_elem.set_name(element.name());
-  graph_elem.set_uid(element.uid());
-  return graph_elem;
-}
-
-void export_reaction(const Reaction& reaction, reactor_graph::Graph& graph) {
-  auto& elem = add_new_element(reaction, graph);
-  auto& elem_reaction = *elem.mutable_reaction();
-  elem_reaction.set_priority(reaction.priority());
-  if (reaction.has_deadline()) {
-    using TimeUtil = google::protobuf::util::TimeUtil;
-    *elem_reaction.mutable_deadline() = TimeUtil::NanosecondsToDuration(reaction.deadline().count());
-  }
-
-  export_reaction_dependencies(reaction, graph);
-}
-
-void export_port(const Port& port, reactor_graph::Graph& graph) {
-  auto& elem = add_new_element(port, graph);
-  auto& port_elem = *elem.mutable_port();
-  reactor_assert(port.is_input() || port.is_output());
-  if (port.is_input()) {
-    port_elem.set_port_type(reactor_graph::PortType::PORT_TYPE_INPUT);
-  } else {
-    port_elem.set_port_type(reactor_graph::PortType::PORT_TYPE_OUTPUT);
-  }
-  // FIXME There is currently no way to get the port data type
-}
-
-void export_timer(const Timer& timer, reactor_graph::Graph& graph) {
-  using TimeUtil = google::protobuf::util::TimeUtil;
-  auto& elem = add_new_element(timer, graph);
-  auto& elem_timer = *elem.mutable_timer();
-  *elem_timer.mutable_offset() = TimeUtil::NanosecondsToDuration(timer.offset().count());
-  *elem_timer.mutable_period() = TimeUtil::NanosecondsToDuration(timer.period().count());
-  elem_timer.set_timer_type(reactor_graph::TimerType::TIMER_TYPE_GENERIC);
-}
-
-void export_startup(const StartupTrigger& startup, reactor_graph::Graph& graph) {
-  auto& elem = add_new_element(startup, graph);
-  auto& elem_timer = *elem.mutable_timer();
-  elem_timer.set_timer_type(reactor_graph::TimerType::TIMER_TYPE_STARTUP);
-}
-
-void export_shutdown(const ShutdownTrigger& shutdown, reactor_graph::Graph& graph) {
-  auto& elem = add_new_element(shutdown, graph);
-  auto& elem_timer = *elem.mutable_timer();
-  elem_timer.set_timer_type(reactor_graph::TimerType::TIMER_TYPE_SHUTDOWN);
-}
-
-void export_action(const BaseAction& action, reactor_graph::Graph& graph) {
-  auto& elem = add_new_element(action, graph);
-  auto& elem_action = *elem.mutable_action();
-  reactor_assert(action.is_logical() || action.is_physical());
-  if (action.is_logical()) {
-    elem_action.set_action_type(reactor_graph::ActionType::ACTION_TYPE_LOGICAL);
-  }
-  if (action.is_physical()) {
-    elem_action.set_action_type(reactor_graph::ActionType::ACTION_TYPE_PHYSICAL);
-  }
-  // FIXME There is currently no way to get the action data type
-}
-
-void export_misc(const MiscElement& misc, reactor_graph::Graph& graph,
-                 std::optional<std::reference_wrapper<const xronos::telemetry::AttributeManager>> attribute_manager) {
-  auto& elem = add_new_element(misc, graph);
-  if (misc.element_type() == "metric") {
-    const auto& metric = dynamic_cast<const xronos::telemetry::Metric&>(misc);
-    auto& metric_proto = *elem.mutable_metric();
-    metric_proto.set_unit(metric.unit());
-    metric_proto.set_description(metric.description());
-    if (attribute_manager == std::nullopt) {
-      return;
-    }
-    auto attributes =
-        xronos::telemetry::get_merged_attributes<xronos::telemetry::AttributeMap, xronos::telemetry::AttributeValue>(
-            attribute_manager->get(), misc, [](auto value) { return value; });
-    for (auto& [key, value] : attributes) {
-      if (std::holds_alternative<std::string>(value)) {
-        auto& attrs_proto = *metric_proto.add_attributes();
-        attrs_proto.set_key(key);
-        attrs_proto.set_string(std::get<std::string>(value));
-      }
-      if (std::holds_alternative<bool>(value)) {
-        auto& attrs_proto = *metric_proto.add_attributes();
-        attrs_proto.set_key(key);
-        attrs_proto.set_boolean(std::get<bool>(value));
-      }
-      if (std::holds_alternative<long>(value)) {
-        auto& attrs_proto = *metric_proto.add_attributes();
-        attrs_proto.set_key(key);
-        attrs_proto.set_integer(std::get<long>(value));
-      }
-      if (std::holds_alternative<double>(value)) {
-        auto& attrs_proto = *metric_proto.add_attributes();
-        attrs_proto.set_key(key);
-        attrs_proto.set_floatingpoint(std::get<double>(value));
-      }
-      // one of the above should hold, but if not, the attribute is silently ignored
-    }
-  } else {
-    // silently ignore the misc element
-  }
-}
-
-void export_reactor(const Reactor& reactor, reactor_graph::Graph& graph) {
-  auto& elem = add_new_element(reactor, graph);
-  elem.mutable_reactor();
-
-  // export the containment relation for this reactor
-  export_containment(reactor, graph);
-}
-
-void export_connections(const Environment& environment, reactor_graph::Graph& graph) {
-  for (const auto& [from, edges] : environment.connections()) {
-    auto& connection = *graph.add_connections();
-    connection.set_from_uid(from->uid());
-    for (const auto& [properties, to] : edges) {
-      auto& target = *connection.add_targets();
-      target.set_to_uid(to->uid());
-      auto& target_properties = *target.mutable_properties();
-      if (properties.type_ == ConnectionType::Physical) {
-        target_properties.set_is_physical(true);
-      } else if (properties.type_ == ConnectionType::Delayed) {
-        using TimeUtil = google::protobuf::util::TimeUtil;
-        *(target_properties.mutable_delay()) = TimeUtil::NanosecondsToDuration(properties.delay_.count());
-      }
-    }
-  }
-}
-
-class GraphExporterVisitor : public ReactorElementVisitor {
-private:
-  std::reference_wrapper<reactor_graph::Graph> graph;
-  std::optional<std::reference_wrapper<const xronos::telemetry::AttributeManager>> attribute_manager;
-
-public:
-  GraphExporterVisitor(
-      reactor_graph::Graph& graph,
-      std::optional<std::reference_wrapper<const xronos::telemetry::AttributeManager>> attribute_manager)
-      : graph{graph}
-      , attribute_manager(attribute_manager) {}
-
-  void visit(const Reactor& reactor) final { export_reactor(reactor, graph); }
-  void visit(const Reaction& reaction) final { export_reaction(reaction, graph); }
-  void visit(const BaseAction& action) final { export_action(action, graph); }
-  void visit(const Port& port) final { export_port(port, graph); }
-  void visit(const Timer& timer) final { export_timer(timer, graph); }
-  void visit(const StartupTrigger& startup) final { export_startup(startup, graph); }
-  void visit(const ShutdownTrigger& shutdown) final { export_shutdown(shutdown, graph); }
-  void visit(const MiscElement& misc) final { export_misc(misc, graph, attribute_manager); }
-};
-
-auto export_reactor_graph(
-    const Environment& environment, reactor_graph::Graph& graph,
-    std::optional<std::reference_wrapper<const xronos::telemetry::AttributeManager>> attribute_manager) {
-  GraphExporterVisitor visitor{graph, attribute_manager};
-  environment.visit_all_elements(visitor);
-  export_connections(environment, graph);
-}
+#include "xronos/util/assert.hh"
+#include "xronos/util/logging.hh"
 
 namespace xronos::graph_exporter {
 
-auto export_reactor_graph_to_proto(
-    const Environment& environment,
-    std::optional<std::reference_wrapper<const telemetry::AttributeManager>> attribute_manager) -> std::string {
-  reactor_graph::Graph graph;
-  export_reactor_graph(environment, graph, attribute_manager);
+namespace detail {
 
-  std::string buffer;
-  graph.SerializeToString(&buffer);
-  return buffer;
+class AttributeValueSetter {
+public:
+  AttributeValueSetter(messages::reactor_graph::Attribute& attribute)
+      : attribute_{attribute} {}
+
+  void operator()(const std::string& value) { attribute_.get().set_string(value); }
+  void operator()(bool value) { attribute_.get().set_boolean(value); }
+  void operator()(std::int64_t value) { attribute_.get().set_integer(value); }
+  void operator()(double value) { attribute_.get().set_floatingpoint(value); }
+
+private:
+  std::reference_wrapper<messages::reactor_graph::Attribute> attribute_;
+};
+
+class ElementTypeSetter {
+public:
+  ElementTypeSetter(const telemetry::AttributeManager& attribute_manager, const core::ElementRegistry& element_registry,
+                    messages::reactor_graph::ReactorElement& element)
+      : attribute_manager_{attribute_manager}
+      , element_registry_{element_registry}
+      , element_{element} {}
+
+  void operator()([[maybe_unused]] const core::InputPortTag& type) {
+    auto& port = *element_.get().mutable_port();
+    port.set_port_type(messages::reactor_graph::PortType::PORT_TYPE_INPUT);
+  }
+
+  void operator()(const core::MetricTag& type) {
+    auto& metric = *element_.get().mutable_metric();
+    metric.set_unit(type.properties->unit);
+    metric.set_description(type.properties->description);
+
+    auto attributes = attribute_manager_.get().get_attributes(element_.get().uid(), element_registry_);
+    for (const auto& [key, value] : attributes) {
+      auto& attribute = *metric.add_attributes();
+      attribute.set_key(key);
+      std::visit(AttributeValueSetter{attribute}, value);
+    }
+  }
+
+  void operator()([[maybe_unused]] const core::OutputPortTag& type) {
+    auto& port = *element_.get().mutable_port();
+    port.set_port_type(messages::reactor_graph::PortType::PORT_TYPE_OUTPUT);
+  }
+
+  void operator()(const core::PeriodicTimerTag& type) {
+    using TimeUtil = google::protobuf::util::TimeUtil;
+    auto& timer = *element_.get().mutable_timer();
+    *timer.mutable_offset() = TimeUtil::NanosecondsToDuration(type.properties->offset.count());
+    *timer.mutable_period() = TimeUtil::NanosecondsToDuration(type.properties->period.count());
+    timer.set_timer_type(messages::reactor_graph::TimerType::TIMER_TYPE_GENERIC);
+  }
+
+  void operator()([[maybe_unused]] const core::PhysicalEventTag& type) {
+    auto& action = *element_.get().mutable_action();
+    action.set_action_type(messages::reactor_graph::ActionType::ACTION_TYPE_PHYSICAL);
+  }
+
+  void operator()([[maybe_unused]] const core::ProgrammableTimerTag& type) {
+    auto& action = *element_.get().mutable_action();
+    action.set_action_type(messages::reactor_graph::ActionType::ACTION_TYPE_LOGICAL);
+  }
+
+  void operator()(const core::ReactionTag& type) {
+    auto& reaction = *element_.get().mutable_reaction();
+    reaction.set_priority(type.properties->position + 1);
+  }
+
+  void operator()([[maybe_unused]] const core::ReactorTag& type) { element_.get().mutable_reactor(); }
+
+  void operator()([[maybe_unused]] const core::ShutdownTag& type) {
+    auto& timer = *element_.get().mutable_timer();
+    timer.set_timer_type(messages::reactor_graph::TimerType::TIMER_TYPE_SHUTDOWN);
+  }
+
+  void operator()([[maybe_unused]] const core::StartupTag& type) {
+    auto& timer = *element_.get().mutable_timer();
+    timer.set_timer_type(messages::reactor_graph::TimerType::TIMER_TYPE_STARTUP);
+  }
+
+private:
+  std::reference_wrapper<const telemetry::AttributeManager> attribute_manager_;
+  std::reference_wrapper<const core::ElementRegistry> element_registry_;
+  std::reference_wrapper<messages::reactor_graph::ReactorElement> element_;
+};
+
+void serialize_reactor_elements(const core::ElementRegistry& element_registry,
+                                const telemetry::AttributeManager& attribute_manager,
+                                messages::reactor_graph::Graph& graph) {
+  for (const auto& core_element : element_registry.elements()) {
+    auto& proto_element = *graph.add_elements();
+    proto_element.set_name(core_element.name);
+    proto_element.set_uid(core_element.uid);
+    std::visit(ElementTypeSetter{attribute_manager, element_registry, proto_element}, core_element.type);
+  }
 }
 
-auto export_reactor_graph_to_json(
-    const Environment& environment, const std::optional<source_info::SourceInfo>& source_info,
-    std::optional<std::reference_wrapper<const telemetry::AttributeManager>> attribute_manager, bool pretty)
-    -> std::string {
-  using namespace google::protobuf::util;
-
-  diagram_generator::GraphWithMetadata gwm;
-  if (source_info.has_value()) {
-    *gwm.mutable_source_info() = source_info.value();
+void serialize_connections(const core::ConnectionGraph& connection_graph, messages::reactor_graph::Graph& graph) {
+  // The connection graph is indexed by target uid. We first convert it to a map
+  // that is indexed by source uid.
+  std::unordered_map<std::uint64_t, std::vector<const core::ConnectionProperties*>> connection_properties;
+  for (const auto& properties : connection_graph.connections()) {
+    connection_properties[properties.from_uid].push_back(&properties);
   }
 
-  reactor_graph::Graph graph;
-  export_reactor_graph(environment, graph, attribute_manager);
-
-  *gwm.mutable_graph() = graph;
-
-  std::string buffer;
-  JsonPrintOptions options;
-  options.add_whitespace = pretty;
-  auto status = MessageToJsonString(gwm, &buffer, options);
-  if (!status.ok()) {
-    throw std::runtime_error(std::string{status.message()});
+  for (const auto& [from_uid, properties] : connection_properties) {
+    auto& connection = *graph.add_connections();
+    connection.set_from_uid(from_uid);
+    for (const core::ConnectionProperties* props : properties) {
+      auto& target = *connection.add_targets();
+      target.set_to_uid(props->to_uid);
+      auto& target_properties = *target.mutable_properties();
+      target_properties.set_is_physical(false);
+      if (props->delay.has_value()) {
+        using TimeUtil = google::protobuf::util::TimeUtil;
+        *(target_properties.mutable_delay()) = TimeUtil::NanosecondsToDuration(props->delay.value().count());
+      }
+    }
   }
-  return buffer;
+}
+
+auto serialize_containment(const core::ElementRegistry& element_registry, messages::reactor_graph::Graph& graph) {
+  // First, create a map of container uids to their continee uids.
+  std::unordered_map<std::uint64_t, std::vector<std::uint64_t>> containees;
+  // Add a map entry for each reactor
+  for (const auto& reactor : element_registry.elements_of_type<core::ReactorTag>()) {
+    auto res = containees.try_emplace(reactor.uid);
+    util::assert_(res.second);
+  };
+
+  // Fill in the containees
+  for (const auto& element : element_registry.elements()) {
+    if (element.parent_uid.has_value()) {
+      containees[element.parent_uid.value()].push_back(element.uid);
+    }
+  }
+
+  // Serialize the data structure
+  for (const auto& [container_uid, containee_uids] : containees) {
+    auto& containment = *graph.add_containments();
+    containment.set_container_uid(container_uid);
+    for (auto containee_uid : containee_uids) {
+      containment.add_containee_uids(containee_uid);
+    }
+  }
+}
+
+auto serialize_reaction_dependencies(const core::ElementRegistry& element_registry,
+                                     const core::ReactionDependencyRegistry& reaction_dependency_registry,
+                                     messages::reactor_graph::Graph& graph) {
+  for (const auto& reaction : element_registry.elements_of_type<core::ReactionTag>()) {
+    auto& dependencies = *graph.add_dependencies();
+    dependencies.set_reaction_uid(reaction.uid);
+    for (std::uint64_t trigger_uid : reaction_dependency_registry.get_triggers(reaction.uid)) {
+      dependencies.add_trigger_uids(trigger_uid);
+    }
+    for (std::uint64_t effect_uid : reaction_dependency_registry.get_effects(reaction.uid)) {
+      // The diagram server currently cannot visualize shutdown effects
+      if (!std::holds_alternative<core::ShutdownTag>(element_registry.get(effect_uid).type)) {
+        dependencies.add_effect_uids(effect_uid);
+      }
+    }
+  }
+}
+
+void serialize_reactor_model(const core::ReactorModel& model, const telemetry::AttributeManager& attribute_manager,
+                             messages::reactor_graph::Graph& graph) {
+  serialize_reactor_elements(model.element_registry, attribute_manager, graph);
+  serialize_connections(model.connection_graph, graph);
+  serialize_containment(model.element_registry, graph);
+  serialize_reaction_dependencies(model.element_registry, model.reaction_dependency_registry, graph);
+}
+
+void serialize_fqn(std::string_view fqn, messages::source_info::ElementSourceInfo& source_info) {
+  std::size_t start = 0;
+  std::size_t end = 0;
+  while ((end = fqn.find('.', start)) != std::string_view::npos) {
+    source_info.add_fqn(std::string(fqn.substr(start, end - start)));
+    start = end + 1;
+  }
+  source_info.add_fqn(std::string(fqn.substr(start)));
+}
+
+void serialize_source_locations(const core::ElementRegistry& element_registry,
+                                const source_location::SourceLocationRegistry& source_location_registry,
+                                messages::source_info::SourceInfo& source_infos) {
+  for (const auto& [uid, source_location] : source_location_registry.all_locations()) {
+    auto* source_info = source_infos.add_infos();
+    source_info->set_uid(uid);
+
+    serialize_fqn(element_registry.get(uid).fqn, *source_info);
+
+    auto* frame = source_info->mutable_frame();
+    frame->set_file(source_location.file);
+    frame->set_function(source_location.function);
+    frame->set_lineno(source_location.start_line);
+    frame->set_end_lineno(source_location.end_line);
+    frame->set_col_offset(source_location.start_column);
+    frame->set_end_col_offset(source_location.end_column);
+  }
+}
+
+auto send_reactor_graph_to_diagram_server(const core::ReactorModel& model,
+                                          const telemetry::AttributeManager& attribute_manager,
+                                          const source_location::SourceLocationRegistry& source_location_registry,
+                                          const std::string& host) -> ::grpc::Status {
+  auto channel = ::grpc::CreateChannel(host, ::grpc::InsecureChannelCredentials());
+  auto stub = services::diagram_generator::DiagramGenerator::NewStub(channel);
+  ::grpc::ClientContext context;
+
+  services::diagram_generator::GraphWithMetadata gwm{};
+
+  serialize_source_locations(model.element_registry, source_location_registry, *gwm.mutable_source_info());
+
+  serialize_reactor_model(model, attribute_manager, *gwm.mutable_graph());
+
+  ::google::protobuf::Empty response;
+  auto status = stub->receive_graph(&context, gwm, &response);
+
+  return status;
 }
 
 auto get_diagram_server_endpoint() -> std::string {
@@ -288,46 +273,19 @@ auto get_diagram_server_endpoint() -> std::string {
   return std::string{diagram_server_endpoint_host} + ":" + std::string{diagram_server_endpoint_port};
 }
 
-namespace detail {
-
-auto send_reactor_graph_to_diagram_server(
-    const Environment& environment, const std::optional<source_info::SourceInfo>& source_info,
-    std::optional<std::reference_wrapper<const telemetry::AttributeManager>> attribute_manager, const std::string& host)
-    -> ::grpc::Status {
-
-  auto channel = grpc::CreateChannel(host, grpc::InsecureChannelCredentials());
-  auto stub = diagram_generator::DiagramGenerator::NewStub(channel);
-  grpc::ClientContext context;
-
-  diagram_generator::GraphWithMetadata gwm;
-  if (source_info.has_value()) {
-    *gwm.mutable_source_info() = source_info.value();
-  }
-
-  reactor_graph::Graph graph;
-  export_reactor_graph(environment, graph, attribute_manager);
-
-  *gwm.mutable_graph() = graph;
-
-  ::google::protobuf::Empty response;
-  auto status = stub->receive_graph(&context, gwm, &response);
-
-  return status;
-}
-
 } // namespace detail
 
-void send_reactor_graph_to_diagram_server(
-    const Environment& environment, const std::optional<source_info::SourceInfo>& source_info,
-    std::optional<std::reference_wrapper<const telemetry::AttributeManager>> attribute_manager) {
-  std::string host{get_diagram_server_endpoint()};
-  log::Debug() << "Sending reactor graph to diagram server endpoint at " << host;
+void send_reactor_graph_to_diagram_server(const core::ReactorModel& model,
+                                          const telemetry::AttributeManager& attribute_manager,
+                                          const source_location::SourceLocationRegistry& source_location_registry) {
+  std::string host{detail::get_diagram_server_endpoint()};
+  util::log::debug() << "Sending reactor graph to diagram server endpoint at " << host;
 
-  auto status = detail::send_reactor_graph_to_diagram_server(environment, source_info, attribute_manager, host);
+  auto status = detail::send_reactor_graph_to_diagram_server(model, attribute_manager, source_location_registry, host);
 
   constexpr int ERROR_CODE_FAILED_TO_CONNECT = 14;
   if (!status.ok() && status.error_code() != ERROR_CODE_FAILED_TO_CONNECT) {
-    log::Warn() << "Sending the reactor graph for rendering failed with message: " << status.error_message();
+    util::log::warn() << "Sending the reactor graph for rendering failed with message: " << status.error_message();
     return;
   }
 }

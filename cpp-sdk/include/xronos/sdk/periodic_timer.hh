@@ -10,7 +10,6 @@
 
 #include "xronos/sdk/context.hh"
 #include "xronos/sdk/element.hh"
-#include "xronos/sdk/event_source.hh"
 #include "xronos/sdk/fwd.hh"
 #include "xronos/sdk/time.hh"
 
@@ -28,7 +27,7 @@ void set_timer_offset(PeriodicTimer& timer, Duration offset);
  *
  * Can be used as a reaction @ref BaseReaction::Trigger "trigger".
  */
-class PeriodicTimer final : public Element, public EventSource<void> {
+class PeriodicTimer final : public Element {
 public:
   /**
    * Constructor.
@@ -58,10 +57,6 @@ public:
   [[nodiscard]] auto offset() const noexcept -> const Duration&;
 
 private:
-  [[nodiscard]] auto is_present() const noexcept -> bool final;
-
-  void register_as_trigger_of(runtime::Reaction& reaction) const noexcept final;
-
   friend void detail::set_timer_period(PeriodicTimer& timer, Duration period);
   friend void detail::set_timer_offset(PeriodicTimer& timer, Duration offset);
 };

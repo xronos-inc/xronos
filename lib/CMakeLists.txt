@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.28)
 
-project(xronos-lib LANGUAGES CXX VERSION "0.5.0")
-set(PROJECT_VERSION "0.5.0")
+project(xronos-lib LANGUAGES CXX VERSION "0.6.0")
+set(PROJECT_VERSION "0.6.0")
 
 # require C++ 20
 set(CMAKE_CXX_STANDARD 20 CACHE STRING "The C++ standard." FORCE)
@@ -16,7 +16,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(BUILD_SHARED_LIBS "Build using shared libraries" Off)
 option(RUNTIME_VALIDATE "Enable runtime validation" ON)
-set(RUNTIME_LOG_LEVEL 3 CACHE STRING "The log level used by the runtime")
+set(XRONOS_LOG_LEVEL 2 CACHE STRING "The xronos internal log level")
 
 set(INSTALL_DEFAULT ON)
 set(BUILD_TESTS_DEFAULT ON)
@@ -44,20 +44,27 @@ endif()
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-if(DEFINED XRONOS_RUNTIME_SOURCE_DIRECTORY)
-  include(FetchContent)
-  FetchContent_Declare(
-    runtime
-    SOURCE_DIR "${XRONOS_RUNTIME_SOURCE_DIRECTORY}"
-  )
-  FetchContent_MakeAvailable(runtime)
-else()
-  add_subdirectory(runtime)
-endif()
+include(../third-party/expected-lite/expected-lite.cmake)
+include(../third-party/fmt/fmt.cmake)
 
+add_subdirectory(core)
+add_subdirectory(runtime-default)
+add_subdirectory(runtime-interfaces)
+add_subdirectory(source-location)
 add_subdirectory(telemetry)
+add_subdirectory(util)
+add_subdirectory(validator)
 
-set(TARGETS xronos-runtime xronos-telemetry)
+set(TARGETS
+  xronos-core
+  xronos-runtime-default
+  xronos-runtime-default-impl
+  xronos-runtime-interfaces
+  xronos-source-location
+  xronos-telemetry
+  xronos-util
+  xronos-validator
+)
 
 if(XRONOS_LIB_WITH_GRAPH_EXPORTER)
   include(../third-party/absl/absl.cmake)
@@ -115,10 +122,20 @@ if(XRONOS_LIB_INSTALL)
 endif()
 
 set(LINT_FILES
-  $<TARGET_PROPERTY:xronos-runtime,SOURCES>
-  $<TARGET_PROPERTY:xronos-runtime,HEADER_SET>
+  $<TARGET_PROPERTY:xronos-core,SOURCES>
+  $<TARGET_PROPERTY:xronos-core,HEADER_SET>
+  $<TARGET_PROPERTY:xronos-runtime-interfaces,HEADER_SET>
+  $<TARGET_PROPERTY:xronos-runtime-default,SOURCES>
+  $<TARGET_PROPERTY:xronos-runtime-default,HEADER_SET>
+  $<TARGET_PROPERTY:xronos-runtime-default-impl,SOURCES>
+  $<TARGET_PROPERTY:xronos-runtime-default-impl,HEADER_SET>
+  $<TARGET_PROPERTY:xronos-source-location,HEADER_SET>
   $<TARGET_PROPERTY:xronos-telemetry,SOURCES>
   $<TARGET_PROPERTY:xronos-telemetry,HEADER_SET>
+  $<TARGET_PROPERTY:xronos-util,SOURCES>
+  $<TARGET_PROPERTY:xronos-util,HEADER_SET>
+  $<TARGET_PROPERTY:xronos-validator,SOURCES>
+  $<TARGET_PROPERTY:xronos-validator,HEADER_SET>
 )
 
 if(XRONOS_LIB_WITH_GRAPH_EXPORTER)
@@ -140,7 +157,7 @@ if(XRONOS_LIB_WITH_GRAPH_EXPORTER)
   set(FORMAT_FILES ${FORMAT_FILES} ${GRAPH_EXPORTER_TEST_SOURCES})
 endif()
 if(XRONOS_LIB_WITH_OTEL)
-  set(FORMAT_FILES ${FORMAT_FILES} ${TELEMETRY_OTEL_TEST_SOURCES})
+  set(FORMAT_FILES ${FORMAT_FILES} ${TELEMETRY_TEST_SOURCES})
 endif()
 
 add_custom_target(xronos-lib-format

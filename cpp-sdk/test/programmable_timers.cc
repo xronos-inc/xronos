@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: BSD-3-Clause
 
 #include "xronos/sdk.hh"
+#include "xronos/sdk/environment.hh"
+#include "xronos/sdk/reaction.hh"
 
 #include "gtest/gtest.h"
 
@@ -109,9 +111,9 @@ protected:
   public:
     using Reactor::Reactor;
 
-    [[nodiscard]] auto& input() noexcept { return input_; }
-    [[nodiscard]] auto& output_void() noexcept { return output_void_; }
-    [[nodiscard]] auto& output_int() noexcept { return output_int_; }
+    [[nodiscard]] auto input() noexcept -> auto& { return input_; }
+    [[nodiscard]] auto output_void() noexcept -> auto& { return output_void_; }
+    [[nodiscard]] auto output_int() noexcept -> auto& { return output_int_; }
 
   private:
     ProgrammableTimer<void> programmable_timer_void_{"programmable_timer_void_", context()};
@@ -169,7 +171,7 @@ protected:
   public:
     using Reactor::Reactor;
 
-    [[nodiscard]] auto& output() noexcept { return output_; }
+    [[nodiscard]] auto output() noexcept -> auto& { return output_; }
 
   private:
     PeriodicTimer timer_{"timer", context(), GetParam()};
@@ -188,8 +190,8 @@ protected:
   class Receiver : public Reactor {
   public:
     using Reactor::Reactor;
-    [[nodiscard]] auto& input_void() noexcept { return input_void_; }
-    [[nodiscard]] auto& input_int() noexcept { return input_int_; }
+    [[nodiscard]] auto input_void() noexcept -> auto& { return input_void_; }
+    [[nodiscard]] auto input_int() noexcept -> auto& { return input_int_; }
 
   private:
     PeriodicTimer reference_{"reference", context(), GetParam()};
@@ -237,5 +239,59 @@ TEST_P(ProgrammableTimerAsDelayTest, run) {
 }
 
 INSTANTIATE_TEST_SUITE_P(delay_test, ProgrammableTimerAsDelayTest, ::testing::Values(1s, 200ms, 3s));
+
+class TestProgrammableTimerStarvationReactor : public Reactor {
+  using Reactor::Reactor;
+
+  ProgrammableTimer<void> next_{"next", context()};
+  unsigned count_{0};
+  bool shutdown_invoked_{false};
+
+  class NextReaction : public Reaction<TestProgrammableTimerStarvationReactor> {
+    using Reaction<TestProgrammableTimerStarvationReactor>::Reaction;
+    Trigger<void> startup_trigger{self().startup(), context()};
+    Trigger<void> next_trigger{self().next_, context()};
+    ProgrammableTimerEffect<void> next_effect{self().next_, context()};
+    void handler() final {
+      if (startup_trigger.is_present()) {
+        EXPECT_FALSE(next_trigger.is_present());
+        EXPECT_EQ(self().count_, 0);
+        next_effect.schedule();
+      } else {
+        EXPECT_TRUE(next_trigger.is_present());
+        EXPECT_TRUE(next_trigger.is_present());
+        EXPECT_EQ(self().count_, 1);
+      }
+      self().count_++;
+    }
+  };
+
+  class ShutdownReaction : public Reaction<TestProgrammableTimerStarvationReactor> {
+    using Reaction<TestProgrammableTimerStarvationReactor>::Reaction;
+    Trigger<void> shutdown_trigger{self().shutdown(), context()};
+    void handler() final {
+      EXPECT_TRUE(shutdown_trigger.is_present());
+      EXPECT_EQ(self().count_, 2);
+      self().shutdown_invoked_ = true;
+    }
+  };
+
+  void assemble() final {
+    add_reaction<NextReaction>("next_reaction");
+    add_reaction<ShutdownReaction>("shutdown_reaction");
+  }
+
+public:
+  void check() const { EXPECT_TRUE(shutdown_invoked_); }
+};
+
+TEST(programmable_timers, Starvation) {
+  TestEnvironment env{};
+
+  TestProgrammableTimerStarvationReactor reactor{"reactor", env.context()};
+  env.execute();
+
+  reactor.check();
+}
 
 } // namespace xronos::sdk::test

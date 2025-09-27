@@ -2926,4 +2926,4 @@ MSCGEN_TOOL            =
 MSCFILE_DIRS           =
 
 # introduced in doxygen 1.14.0
-PAGE_OUTLINE_PANEL     = NO
+PAGE_OUTLINE_PANEL     = YES
