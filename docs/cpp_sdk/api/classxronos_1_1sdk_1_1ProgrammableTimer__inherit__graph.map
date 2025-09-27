@@ -1,9 +1,5 @@
 <map id="xronos::sdk::ProgrammableTimer&lt; T &gt;" name="xronos::sdk::ProgrammableTimer&lt; T &gt;">
-<area shape="rect" id="Node000001" title="A reactor element for scheduling new events." alt="" coords="92,80,293,120"/>
-<area shape="rect" id="Node000004" href="$classxronos_1_1sdk_1_1ProgrammableTimer_3_01void_01_4.html" title="A reactor element for scheduling new events." alt="" coords="92,191,293,231"/>
-<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="195,134,195,190,190,190,190,134"/>
-<area shape="rect" id="Node000002" href="$classxronos_1_1sdk_1_1Element.html" title="Base class for all reactor elements." alt="" coords="5,5,164,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="113,37,169,78,166,82,109,41"/>
-<area shape="rect" id="Node000003" href="$classxronos_1_1sdk_1_1EventSource.html" title="Interface implemented by reactor elements that can be used as triggers of reactions." alt="" coords="189,5,413,31"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="276,41,220,82,217,78,273,37"/>
+<area shape="rect" id="Node000001" title="A reactor element for scheduling new events." alt="" coords="5,79,207,119"/>
+<area shape="rect" id="Node000002" href="$classxronos_1_1sdk_1_1Element.html" title="Base class for all reactor elements." alt="" coords="27,5,185,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="109,44,109,79,103,79,103,44"/>
 </map>

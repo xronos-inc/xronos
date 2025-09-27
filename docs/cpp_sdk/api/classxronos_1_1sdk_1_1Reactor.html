@@ -33,7 +33,7 @@
  <tr id="projectrow">
   <td id="projectlogo"><img alt="Logo" src="logo-banner.jpg"/></td>
   <td id="projectalign">
-   <div id="projectname">xronos-sdk<span id="projectnumber">&#160;0.5.0</span>
+   <div id="projectname">xronos-sdk<span id="projectnumber">&#160;0.6.0</span>
    </div>
    <div id="projectbrief">Xronos C++ SDK</div>
   </td>
@@ -99,11 +99,6 @@ $(function(){initNavTree('classxronos_1_1sdk_1_1Reactor.html','','classxronos_1_
 </div>
 
 <div class="header">
-  <div class="summary">
-<a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#pro-methods">Protected Member Functions</a> &#124;
-<a href="#pri-methods">Private Member Functions</a> &#124;
-<a href="classxronos_1_1sdk_1_1Reactor-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">xronos::sdk::Reactor Class Reference<span class="mlabels"><span class="mlabel abstract">abstract</span></span></div></div>
 </div><!--header-->
 <div class="contents">
@@ -120,13 +115,15 @@ Inheritance diagram for xronos::sdk::Reactor:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-pub-methods" class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a08fdea7dec55e5c5fff9802dea6380e7" id="r_a08fdea7dec55e5c5fff9802dea6380e7"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a08fdea7dec55e5c5fff9802dea6380e7">Reactor</a> (std::string_view <a class="el" href="classxronos_1_1sdk_1_1Element.html#aa85c0cc3344ff5646dcac93cc0f25d41">name</a>, <a class="el" href="namespacexronos_1_1sdk.html#a9840a0a466e3f605206c729182bb7e19">Context</a> parent_context)</td></tr>
-<tr class="memdesc:a08fdea7dec55e5c5fff9802dea6380e7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructor.  <br /></td></tr>
+<tr class="memitem:acbf73b45ece66bca5acf359239e5e093" id="r_acbf73b45ece66bca5acf359239e5e093"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#acbf73b45ece66bca5acf359239e5e093">Reactor</a> (std::string_view <a class="el" href="classxronos_1_1sdk_1_1Element.html#aa85c0cc3344ff5646dcac93cc0f25d41">name</a>, const <a class="el" href="namespacexronos_1_1sdk.html#a9840a0a466e3f605206c729182bb7e19">Context</a> &amp;parent_context)</td></tr>
+<tr class="memdesc:acbf73b45ece66bca5acf359239e5e093"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructor.  <br /></td></tr>
 <tr class="inherit_header pub_methods_classxronos_1_1sdk_1_1Element"><td colspan="2" onclick="javascript:dynsection.toggleInherit('pub_methods_classxronos_1_1sdk_1_1Element')"><span class="dynarrow"><span class="arrowhead closed"></span></span>Public Member Functions inherited from <a class="el" href="classxronos_1_1sdk_1_1Element.html">xronos::sdk::Element</a></td></tr>
 <tr class="memitem:aa85c0cc3344ff5646dcac93cc0f25d41 inherit pub_methods_classxronos_1_1sdk_1_1Element" id="r_aa85c0cc3344ff5646dcac93cc0f25d41"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxronos_1_1sdk_1_1Element.html#aa85c0cc3344ff5646dcac93cc0f25d41">name</a> () const noexcept -&gt; const std::string &amp;</td></tr>
 <tr class="memdesc:aa85c0cc3344ff5646dcac93cc0f25d41 inherit pub_methods_classxronos_1_1sdk_1_1Element"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the element's name.  <br /></td></tr>
 <tr class="memitem:af93126c8a89905baf60a3c801da6fc55 inherit pub_methods_classxronos_1_1sdk_1_1Element" id="r_af93126c8a89905baf60a3c801da6fc55"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxronos_1_1sdk_1_1Element.html#af93126c8a89905baf60a3c801da6fc55">fqn</a> () const noexcept -&gt; const std::string &amp;</td></tr>
 <tr class="memdesc:af93126c8a89905baf60a3c801da6fc55 inherit pub_methods_classxronos_1_1sdk_1_1Element"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the element's fully qualified name.  <br /></td></tr>
+<tr class="memitem:adf9920543573ff1b8b0d6195d506e5c0 inherit pub_methods_classxronos_1_1sdk_1_1Element" id="r_adf9920543573ff1b8b0d6195d506e5c0"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxronos_1_1sdk_1_1Element.html#adf9920543573ff1b8b0d6195d506e5c0">uid</a> () const noexcept -&gt; std::uint64_t</td></tr>
+<tr class="memdesc:adf9920543573ff1b8b0d6195d506e5c0 inherit pub_methods_classxronos_1_1sdk_1_1Element"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the element's unique ID.  <br /></td></tr>
 <tr class="memitem:a732c42bbeeb04873b20e33ad5810ace1 inherit pub_methods_classxronos_1_1sdk_1_1Element" id="r_a732c42bbeeb04873b20e33ad5810ace1"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxronos_1_1sdk_1_1Element.html#a732c42bbeeb04873b20e33ad5810ace1">add_attribute</a> (std::string_view key, const <a class="el" href="namespacexronos_1_1sdk.html#a7aba71a9986bafcad6311f5178e8db1c">AttributeValue</a> &amp;value) noexcept -&gt; bool</td></tr>
 <tr class="memdesc:a732c42bbeeb04873b20e33ad5810ace1 inherit pub_methods_classxronos_1_1sdk_1_1Element"><td class="mdescLeft">&#160;</td><td class="mdescRight">Annotate an element with an attribute.  <br /></td></tr>
 <tr class="memitem:a503bcd838c184deeff62edb2e8f4c2be inherit pub_methods_classxronos_1_1sdk_1_1Element" id="r_a503bcd838c184deeff62edb2e8f4c2be"><td class="memTemplParams" colspan="2">template&lt;std::ranges::input_range R&gt; <br />
@@ -138,6 +135,12 @@ requires requires(std::ranges::range_value_t&lt;R&gt; pair) { { pair.first } -&g
 <tr class="memitem:ac2a007cae1bd4d8456e258730e2d24f6 inherit pub_methods_classxronos_1_1sdk_1_1Element" id="r_ac2a007cae1bd4d8456e258730e2d24f6"><td class="memItemLeft" align="right" valign="top">
 virtual&#160;</td><td class="memItemRight" valign="bottom"><b>~Element</b> ()=default</td></tr>
 <tr class="memdesc:ac2a007cae1bd4d8456e258730e2d24f6 inherit pub_methods_classxronos_1_1sdk_1_1Element"><td class="mdescLeft">&#160;</td><td class="mdescRight">Virtual destructor. <br /></td></tr>
+<tr class="memitem:ac16a2b7fc470e70fe538227887358b7d inherit pub_methods_classxronos_1_1sdk_1_1Element" id="r_ac16a2b7fc470e70fe538227887358b7d"><td class="memItemLeft" align="right" valign="top">
+&#160;</td><td class="memItemRight" valign="bottom"><b>Element</b> (<a class="el" href="classxronos_1_1sdk_1_1Element.html">Element</a> &amp;&amp;)=default</td></tr>
+<tr class="memdesc:ac16a2b7fc470e70fe538227887358b7d inherit pub_methods_classxronos_1_1sdk_1_1Element"><td class="mdescLeft">&#160;</td><td class="mdescRight">Move constructor. <br /></td></tr>
+<tr class="memitem:a5ca15ef8e392caa8efb6b5bc761e4455 inherit pub_methods_classxronos_1_1sdk_1_1Element" id="r_a5ca15ef8e392caa8efb6b5bc761e4455"><td class="memItemLeft" align="right" valign="top">
+auto&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="classxronos_1_1sdk_1_1Element.html">Element</a> &amp;&amp;) -&gt; <a class="el" href="classxronos_1_1sdk_1_1Element.html">Element</a> &amp;=default</td></tr>
+<tr class="memdesc:a5ca15ef8e392caa8efb6b5bc761e4455 inherit pub_methods_classxronos_1_1sdk_1_1Element"><td class="mdescLeft">&#160;</td><td class="mdescRight">Move assignment operator. <br /></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-pro-methods" class="groupheader"><a id="pro-methods" name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
@@ -148,13 +151,11 @@ Protected Member Functions</h2></td></tr>
 <tr class="memitem:a454f95f3179ee59dd74af15111f17c8b" id="r_a454f95f3179ee59dd74af15111f17c8b"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a454f95f3179ee59dd74af15111f17c8b">get_lag</a> () const noexcept -&gt; <a class="el" href="namespacexronos_1_1sdk.html#a8c9cae9122b3793094b7b18e6a519382">Duration</a></td></tr>
 <tr class="memdesc:a454f95f3179ee59dd74af15111f17c8b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the current lag.  <br /></td></tr>
 <tr class="memitem:a5be88d4b424ad5e694cd5048b2f4783a" id="r_a5be88d4b424ad5e694cd5048b2f4783a"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a5be88d4b424ad5e694cd5048b2f4783a">get_time_since_startup</a> () const noexcept -&gt; <a class="el" href="namespacexronos_1_1sdk.html#a8c9cae9122b3793094b7b18e6a519382">Duration</a></td></tr>
-<tr class="memdesc:a5be88d4b424ad5e694cd5048b2f4783a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the time that passed since the <a class="el" href="#a7ea61bf0a2571aa616b32849ade549b6">startup</a> event.  <br /></td></tr>
-<tr class="memitem:a7ea61bf0a2571aa616b32849ade549b6" id="r_a7ea61bf0a2571aa616b32849ade549b6"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a7ea61bf0a2571aa616b32849ade549b6">startup</a> () const noexcept -&gt; const <a class="el" href="classxronos_1_1sdk_1_1EventSource.html">EventSource</a>&lt; void &gt; &amp;</td></tr>
-<tr class="memdesc:a7ea61bf0a2571aa616b32849ade549b6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the startup event source.  <br /></td></tr>
-<tr class="memitem:afd726c53d71d34135b7d09cf8d93d540" id="r_afd726c53d71d34135b7d09cf8d93d540"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#afd726c53d71d34135b7d09cf8d93d540">shutdown</a> () const noexcept -&gt; const <a class="el" href="classxronos_1_1sdk_1_1EventSource.html">EventSource</a>&lt; void &gt; &amp;</td></tr>
-<tr class="memdesc:afd726c53d71d34135b7d09cf8d93d540"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the shutdown event source.  <br /></td></tr>
-<tr class="memitem:afb9c6728c3c89c63adf6821b39e3aae1" id="r_afb9c6728c3c89c63adf6821b39e3aae1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#afb9c6728c3c89c63adf6821b39e3aae1">request_shutdown</a> () noexcept</td></tr>
-<tr class="memdesc:afb9c6728c3c89c63adf6821b39e3aae1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Request the termination of a currently running reactor program.     <br /></td></tr>
+<tr class="memdesc:a5be88d4b424ad5e694cd5048b2f4783a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the time that passed since the <a class="el" href="#a8879c9091bde3a2eda91ddd59f10d375">startup</a> event.  <br /></td></tr>
+<tr class="memitem:a8879c9091bde3a2eda91ddd59f10d375" id="r_a8879c9091bde3a2eda91ddd59f10d375"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a8879c9091bde3a2eda91ddd59f10d375">startup</a> () const noexcept -&gt; const <a class="el" href="classxronos_1_1sdk_1_1Startup.html">Startup</a> &amp;</td></tr>
+<tr class="memdesc:a8879c9091bde3a2eda91ddd59f10d375"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the startup event source.  <br /></td></tr>
+<tr class="memitem:a4ccff633ed1c8526090c8305d905f984" id="r_a4ccff633ed1c8526090c8305d905f984"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a4ccff633ed1c8526090c8305d905f984">shutdown</a> () noexcept -&gt; <a class="el" href="classxronos_1_1sdk_1_1Shutdown.html">Shutdown</a> &amp;</td></tr>
+<tr class="memdesc:a4ccff633ed1c8526090c8305d905f984"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the shutdown event source.  <br /></td></tr>
 <tr class="memitem:ad7c74c413cf9c0144ef083439c7be834" id="r_ad7c74c413cf9c0144ef083439c7be834"><td class="memTemplParams" colspan="2">template&lt;class T&gt; </td></tr>
 <tr class="memitem:ad7c74c413cf9c0144ef083439c7be834 template"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ad7c74c413cf9c0144ef083439c7be834">connect</a> (const <a class="el" href="classxronos_1_1sdk_1_1InputPort.html">InputPort</a>&lt; T &gt; &amp;from, const <a class="el" href="classxronos_1_1sdk_1_1InputPort.html">InputPort</a>&lt; T &gt; &amp;to)</td></tr>
 <tr class="memdesc:ad7c74c413cf9c0144ef083439c7be834"><td class="mdescLeft">&#160;</td><td class="mdescRight">Connect two ports.     <br /></td></tr>
@@ -190,8 +191,8 @@ Private Member Functions</h2></td></tr>
 <a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>An abstract reactor that can be subclassed to define new reactors. </p>
 </div><a name="doc-constructors" id="doc-constructors"></a><h2 id="header-doc-constructors" class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="a08fdea7dec55e5c5fff9802dea6380e7" name="a08fdea7dec55e5c5fff9802dea6380e7"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a08fdea7dec55e5c5fff9802dea6380e7">&#9670;&#160;</a></span>Reactor()</h2>
+<a id="acbf73b45ece66bca5acf359239e5e093" name="acbf73b45ece66bca5acf359239e5e093"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acbf73b45ece66bca5acf359239e5e093">&#9670;&#160;</a></span>Reactor()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -204,7 +205,7 @@ Private Member Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="namespacexronos_1_1sdk.html#a9840a0a466e3f605206c729182bb7e19">Context</a></td>          <td class="paramname"><span class="paramname"><em>parent_context</em></span>&#160;)</td>
+          <td class="paramtype">const <a class="el" href="namespacexronos_1_1sdk.html#a9840a0a466e3f605206c729182bb7e19">Context</a> &amp;</td>          <td class="paramname"><span class="paramname"><em>parent_context</em></span>&#160;)</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -336,13 +337,13 @@ Private Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Get the time that passed since the <a class="el" href="#a7ea61bf0a2571aa616b32849ade549b6">startup</a> event. </p>
+<p>Get the time that passed since the <a class="el" href="#a8879c9091bde3a2eda91ddd59f10d375">startup</a> event. </p>
 <dl class="section return"><dt>Returns</dt><dd>The difference between the current timestamp given by <a class="el" href="#a34f00f9cb17f870d0dd86bd8f759bfe4" title="Get the current timestamp.">get_time()</a> and the timestamp at which the program started. </dd></dl>
 
 </div>
 </div>
-<a id="a7ea61bf0a2571aa616b32849ade549b6" name="a7ea61bf0a2571aa616b32849ade549b6"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a7ea61bf0a2571aa616b32849ade549b6">&#9670;&#160;</a></span>startup()</h2>
+<a id="a8879c9091bde3a2eda91ddd59f10d375" name="a8879c9091bde3a2eda91ddd59f10d375"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8879c9091bde3a2eda91ddd59f10d375">&#9670;&#160;</a></span>startup()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -354,7 +355,7 @@ Private Member Functions</h2></td></tr>
           <td class="memname">auto xronos::sdk::Reactor::startup </td>
           <td>(</td>
           <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
-          <td> const -&gt; const <a class="el" href="classxronos_1_1sdk_1_1EventSource.html">EventSource</a>&lt;void&gt;&amp; </td>
+          <td> const -&gt; const <a class="el" href="classxronos_1_1sdk_1_1Startup.html">Startup</a>&amp; </td>
         </tr>
       </table>
   </td>
@@ -369,8 +370,8 @@ Private Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="afd726c53d71d34135b7d09cf8d93d540" name="afd726c53d71d34135b7d09cf8d93d540"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#afd726c53d71d34135b7d09cf8d93d540">&#9670;&#160;</a></span>shutdown()</h2>
+<a id="a4ccff633ed1c8526090c8305d905f984" name="a4ccff633ed1c8526090c8305d905f984"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4ccff633ed1c8526090c8305d905f984">&#9670;&#160;</a></span>shutdown()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -382,7 +383,7 @@ Private Member Functions</h2></td></tr>
           <td class="memname">auto xronos::sdk::Reactor::shutdown </td>
           <td>(</td>
           <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
-          <td> const -&gt; const <a class="el" href="classxronos_1_1sdk_1_1EventSource.html">EventSource</a>&lt;void&gt;&amp; </td>
+          <td> -&gt; <a class="el" href="classxronos_1_1sdk_1_1Shutdown.html">Shutdown</a>&amp; </td>
         </tr>
       </table>
   </td>
@@ -394,34 +395,6 @@ Private Member Functions</h2></td></tr>
 
 <p>Get the shutdown event source. </p>
 <dl class="section return"><dt>Returns</dt><dd>An event source that triggers once right before the program execution ends. </dd></dl>
-
-</div>
-</div>
-<a id="afb9c6728c3c89c63adf6821b39e3aae1" name="afb9c6728c3c89c63adf6821b39e3aae1"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#afb9c6728c3c89c63adf6821b39e3aae1">&#9670;&#160;</a></span>request_shutdown()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">void xronos::sdk::Reactor::request_shutdown </td>
-          <td>(</td>
-          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel protected">protected</span><span class="mlabel noexcept">noexcept</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Request the termination of a currently running reactor program.    </p>
-<p>Terminates a running program at the next convenience. After completing all currently active reactions, this triggers the <a class="el" href="classxronos_1_1sdk_1_1Shutdown.html" title="A reactor element that emits an event right before the program shuts down.">Shutdown</a> event sources. Once all reactions triggered by <a class="el" href="classxronos_1_1sdk_1_1Shutdown.html" title="A reactor element that emits an event right before the program shuts down.">Shutdown</a> are processed, the program terminates.    </p>
 
 </div>
 </div>
@@ -609,6 +582,13 @@ requires (std::is_base_of_v&lt;<a class="el" href="classxronos_1_1sdk_1_1BaseRea
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
+<div id="page-nav" class="page-nav-panel">
+<div id="page-nav-resize-handle"></div>
+<div id="page-nav-tree">
+<div id="page-nav-contents">
+</div><!-- page-nav-contents -->
+</div><!-- page-nav-tree -->
+</div><!-- page-nav -->
 </div><!-- container -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->

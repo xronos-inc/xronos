@@ -33,7 +33,7 @@
  <tr id="projectrow">
   <td id="projectlogo"><img alt="Logo" src="logo-banner.jpg"/></td>
   <td id="projectalign">
-   <div id="projectname">xronos-sdk<span id="projectnumber">&#160;0.5.0</span>
+   <div id="projectname">xronos-sdk<span id="projectnumber">&#160;0.6.0</span>
    </div>
    <div id="projectbrief">Xronos C++ SDK</div>
   </td>
@@ -99,11 +99,6 @@ $(function(){initNavTree('namespacexronos_1_1sdk.html','',''); });
 </div>
 
 <div class="header">
-  <div class="summary">
-<a href="#namespaces">Namespaces</a> &#124;
-<a href="#nested-classes">Classes</a> &#124;
-<a href="#typedef-members">Typedefs</a> &#124;
-<a href="#func-members">Functions</a>  </div>
   <div class="headertitle"><div class="title">xronos::sdk Namespace Reference</div></div>
 </div><!--header-->
 <div class="contents">
@@ -120,16 +115,14 @@ Namespaces</h2></td></tr>
 Classes</h2></td></tr>
 <tr class="memitem:BaseReaction" id="r_BaseReaction"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxronos_1_1sdk_1_1BaseReaction.html">BaseReaction</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Base class for implementing reactions.  <a href="classxronos_1_1sdk_1_1BaseReaction.html#details">More...</a><br /></td></tr>
+<tr class="memitem:DefaultRuntimeProvider" id="r_DefaultRuntimeProvider"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structxronos_1_1sdk_1_1DefaultRuntimeProvider.html">DefaultRuntimeProvider</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A runtime provider that provides the default runtime.  <a href="structxronos_1_1sdk_1_1DefaultRuntimeProvider.html#details">More...</a><br /></td></tr>
 <tr class="memitem:Element" id="r_Element"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxronos_1_1sdk_1_1Element.html">Element</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Base class for all reactor elements.  <a href="classxronos_1_1sdk_1_1Element.html#details">More...</a><br /></td></tr>
 <tr class="memitem:Environment" id="r_Environment"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxronos_1_1sdk_1_1Environment.html">Environment</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The entry point for assembling and executing reactor programs.  <a href="classxronos_1_1sdk_1_1Environment.html#details">More...</a><br /></td></tr>
 <tr class="memitem:EnvironmentContext" id="r_EnvironmentContext"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxronos_1_1sdk_1_1EnvironmentContext.html">EnvironmentContext</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Opaque data type used for constructing reactors.  <a href="classxronos_1_1sdk_1_1EnvironmentContext.html#details">More...</a><br /></td></tr>
-<tr class="memitem:EventSource" id="r_EventSource"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxronos_1_1sdk_1_1EventSource.html">EventSource</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Interface implemented by reactor elements that can be used as <a class="el" href="classxronos_1_1sdk_1_1BaseReaction_1_1Trigger.html">triggers</a> of reactions.  <a href="classxronos_1_1sdk_1_1EventSource.html#details">More...</a><br /></td></tr>
-<tr class="memitem:EventSource_3C_20void_20_3E" id="r_EventSource_3C_20void_20_3E"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxronos_1_1sdk_1_1EventSource_3_01void_01_4.html">EventSource&lt; void &gt;</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Interface implemented by reactor elements that can be used as <a class="el" href="classxronos_1_1sdk_1_1BaseReaction_1_1Trigger.html">triggers</a> of reactions.     <a href="classxronos_1_1sdk_1_1EventSource_3_01void_01_4.html#details">More...</a><br /></td></tr>
 <tr class="memitem:InputPort" id="r_InputPort"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxronos_1_1sdk_1_1InputPort.html">InputPort</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A reactor element for receiving messages from other reactors.  <a href="classxronos_1_1sdk_1_1InputPort.html#details">More...</a><br /></td></tr>
 <tr class="memitem:Metric" id="r_Metric"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxronos_1_1sdk_1_1Metric.html">Metric</a></td></tr>
@@ -140,16 +133,9 @@ Classes</h2></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A reactor element that emits events in regular intervals.  <a href="classxronos_1_1sdk_1_1PeriodicTimer.html#details">More...</a><br /></td></tr>
 <tr class="memitem:PhysicalEvent" id="r_PhysicalEvent"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxronos_1_1sdk_1_1PhysicalEvent.html">PhysicalEvent</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A reactor element for receiving events from external sources.  <a href="classxronos_1_1sdk_1_1PhysicalEvent.html#details">More...</a><br /></td></tr>
-<tr class="memitem:PhysicalEvent_3C_20void_20_3E" id="r_PhysicalEvent_3C_20void_20_3E"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxronos_1_1sdk_1_1PhysicalEvent_3_01void_01_4.html">PhysicalEvent&lt; void &gt;</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A reactor element for receiving events from external sources.  <a href="classxronos_1_1sdk_1_1PhysicalEvent_3_01void_01_4.html#details">More...</a><br /></td></tr>
 <tr class="memitem:Port" id="r_Port"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxronos_1_1sdk_1_1Port.html">Port</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Base class for reactor elements that may send or receive messages.  <a href="classxronos_1_1sdk_1_1Port.html#details">More...</a><br /></td></tr>
-<tr class="memitem:Port_3C_20void_20_3E" id="r_Port_3C_20void_20_3E"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxronos_1_1sdk_1_1Port_3_01void_01_4.html">Port&lt; void &gt;</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Base class for reactor elements that may send or receive messages.  <a href="classxronos_1_1sdk_1_1Port_3_01void_01_4.html#details">More...</a><br /></td></tr>
 <tr class="memitem:ProgrammableTimer" id="r_ProgrammableTimer"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxronos_1_1sdk_1_1ProgrammableTimer.html">ProgrammableTimer</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A reactor element for scheduling new events.  <a href="classxronos_1_1sdk_1_1ProgrammableTimer.html#details">More...</a><br /></td></tr>
-<tr class="memitem:ProgrammableTimer_3C_20void_20_3E" id="r_ProgrammableTimer_3C_20void_20_3E"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxronos_1_1sdk_1_1ProgrammableTimer_3_01void_01_4.html">ProgrammableTimer&lt; void &gt;</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A reactor element for scheduling new events.  <a href="classxronos_1_1sdk_1_1ProgrammableTimer_3_01void_01_4.html#details">More...</a><br /></td></tr>
 <tr class="memitem:Reaction" id="r_Reaction"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxronos_1_1sdk_1_1Reaction.html">Reaction</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classxronos_1_1sdk_1_1Reaction.html" title="Reaction base class with reactor access.">Reaction</a> base class with reactor access.  <a href="classxronos_1_1sdk_1_1Reaction.html#details">More...</a><br /></td></tr>
 <tr class="memitem:ReactionContext" id="r_ReactionContext"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxronos_1_1sdk_1_1ReactionContext.html">ReactionContext</a></td></tr>
@@ -160,6 +146,8 @@ Classes</h2></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">An abstract reactor that can be subclassed to define new reactors.  <a href="classxronos_1_1sdk_1_1Reactor.html#details">More...</a><br /></td></tr>
 <tr class="memitem:ReactorContext" id="r_ReactorContext"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxronos_1_1sdk_1_1ReactorContext.html">ReactorContext</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Opaque data type used for constructing <a class="el" href="classxronos_1_1sdk_1_1Element.html">Elements</a>.  <a href="classxronos_1_1sdk_1_1ReactorContext.html#details">More...</a><br /></td></tr>
+<tr class="memitem:RuntimeProvider" id="r_RuntimeProvider"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structxronos_1_1sdk_1_1RuntimeProvider.html">RuntimeProvider</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Abstract interface for providing a concrete runtime instance.  <a href="structxronos_1_1sdk_1_1RuntimeProvider.html#details">More...</a><br /></td></tr>
 <tr class="memitem:Shutdown" id="r_Shutdown"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxronos_1_1sdk_1_1Shutdown.html">Shutdown</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A reactor element that emits an event right before the program shuts down.  <a href="classxronos_1_1sdk_1_1Shutdown.html#details">More...</a><br /></td></tr>
 <tr class="memitem:Startup" id="r_Startup"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxronos_1_1sdk_1_1Startup.html">Startup</a></td></tr>
@@ -324,6 +312,13 @@ given @p args.
 </div>
 </div><!-- contents -->
 </div><!-- doc-content -->
+<div id="page-nav" class="page-nav-panel">
+<div id="page-nav-resize-handle"></div>
+<div id="page-nav-tree">
+<div id="page-nav-contents">
+</div><!-- page-nav-contents -->
+</div><!-- page-nav-tree -->
+</div><!-- page-nav -->
 </div><!-- container -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->

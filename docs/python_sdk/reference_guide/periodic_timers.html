@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Periodic Timers &mdash; xronos v0.5.0  documentation</title>
+  <title>Periodic Timers &mdash; xronos v0.6.0  documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -39,7 +39,7 @@
           
           
           <a href="../../index.html" class="icon icon-home">
-            xronos v0.5.0
+            xronos v0.6.0
               <img src="../../_static/logo_written.svg" class="logo" alt="Logo"/>
           </a>
 <div role="search">
@@ -89,7 +89,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../../index.html">xronos v0.5.0</a>
+          <a href="../../index.html">xronos v0.6.0</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -136,6 +136,7 @@ following example into a new file called <code class="docutils literal notransla
     <span class="nd">@xronos</span><span class="o">.</span><span class="n">reaction</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">on_timer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface</span><span class="p">):</span>
         <span class="n">interface</span><span class="o">.</span><span class="n">add_trigger</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_timer</span><span class="p">)</span>
+        <span class="n">shutdown_effect</span> <span class="o">=</span> <span class="n">interface</span><span class="o">.</span><span class="n">add_effect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shutdown</span><span class="p">)</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">handler</span><span class="p">():</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_count</span> <span class="o">+=</span> <span class="mi">1</span>
@@ -144,7 +145,7 @@ following example into a new file called <code class="docutils literal notransla
                 <span class="sa">f</span><span class="s2">&quot;(count=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_count</span><span class="si">}</span><span class="s2">)&quot;</span>
             <span class="p">)</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_count</span> <span class="o">==</span> <span class="n">MAX_COUNT</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">request_shutdown</span><span class="p">()</span>
+                <span class="n">shutdown_effect</span><span class="o">.</span><span class="n">trigger_shutdown</span><span class="p">()</span>
 
         <span class="k">return</span> <span class="n">handler</span>
 
@@ -188,6 +189,7 @@ following example into a new file called <code class="docutils literal notransla
     <span class="nd">@xronos</span><span class="o">.</span><span class="n">reaction</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">on_timer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface</span><span class="p">:</span> <span class="n">xronos</span><span class="o">.</span><span class="n">ReactionInterface</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">]:</span>
         <span class="n">interface</span><span class="o">.</span><span class="n">add_trigger</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_timer</span><span class="p">)</span>
+        <span class="n">shutdown_effect</span> <span class="o">=</span> <span class="n">interface</span><span class="o">.</span><span class="n">add_effect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shutdown</span><span class="p">)</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">handler</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_count</span> <span class="o">+=</span> <span class="mi">1</span>
@@ -196,7 +198,7 @@ following example into a new file called <code class="docutils literal notransla
                 <span class="sa">f</span><span class="s2">&quot;(count=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_count</span><span class="si">}</span><span class="s2">)&quot;</span>
             <span class="p">)</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_count</span> <span class="o">==</span> <span class="n">MAX_COUNT</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">request_shutdown</span><span class="p">()</span>
+                <span class="n">shutdown_effect</span><span class="o">.</span><span class="n">trigger_shutdown</span><span class="p">()</span>
 
         <span class="k">return</span> <span class="n">handler</span>
 
@@ -229,8 +231,10 @@ according to an argument that it receives. It further defines the state variable
 the reaction in our “Hello, World!” example. It prints the current time, the
 reactors name and ‘Hello!’. The <code class="docutils literal notranslate"><span class="pre">goodbye</span></code> reaction produces a similar output in
 response to the builtin <a class="reference internal" href="../api.html#xronos.Reactor.shutdown" title="xronos.Reactor.shutdown"><code class="xref py py-attr docutils literal notranslate"><span class="pre">shutdown</span></code></a> event.</p>
-<p>The reaction <code class="docutils literal notranslate"><span class="pre">on_timer</span></code> declares the timer as its trigger and defines a reaction
-handler that is a little bit more complex than the simple lambda function we
+<p>The reaction <code class="docutils literal notranslate"><span class="pre">on_timer</span></code> declares the timer as its trigger.
+In addition to the trigger, the reaction also defines an <em>effect</em>. Concretely,
+it declares a <a class="reference internal" href="../api.html#xronos.ShutdownEffect" title="xronos.ShutdownEffect"><code class="xref py py-class docutils literal notranslate"><span class="pre">ShutdownEffect</span></code></a> that can be used to shutdown the program.
+The reaction handler is a bit more complex than the simple lambda function we
 have seen so far. The reaction defines a nested <code class="docutils literal notranslate"><span class="pre">handler</span></code> function that it then
 returns.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">handler</span><span class="p">():</span>
@@ -240,16 +244,16 @@ returns.</p>
         <span class="sa">f</span><span class="s2">&quot;(count=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_count</span><span class="si">}</span><span class="s2">)&quot;</span>
     <span class="p">)</span>
     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_count</span> <span class="o">==</span> <span class="n">MAX_COUNT</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">request_shutdown</span><span class="p">()</span>
+        <span class="n">shutdown_effect</span><span class="o">.</span><span class="n">trigger_shutdown</span><span class="p">()</span>
 
 <span class="k">return</span> <span class="n">handler</span>
 </pre></div>
 </div>
 <p>The handler performs multiple steps. First, it increments the <code class="docutils literal notranslate"><span class="pre">self._count</span></code>
-variable. It then prints the current time, the timer’s name and
-the current count. Finally, it checks if the count has reached <code class="docutils literal notranslate"><span class="pre">MAX_COUNT</span></code>, in
-which case <a class="reference internal" href="../api.html#xronos.Reactor.request_shutdown" title="xronos.Reactor.request_shutdown"><code class="xref py py-func docutils literal notranslate"><span class="pre">request_shutdown()</span></code></a> is called to terminate
-the program.</p>
+variable. It then prints the current time, the timer’s name and the current
+count. Finally, it checks if the count has reached <code class="docutils literal notranslate"><span class="pre">MAX_COUNT</span></code>, in which case
+<a class="reference internal" href="../api.html#xronos.ShutdownEffect.trigger_shutdown" title="xronos.ShutdownEffect.trigger_shutdown"><code class="xref py py-func docutils literal notranslate"><span class="pre">trigger_shutdown()</span></code></a> is called to terminate the
+program.</p>
 <p>The program runs for about 4 seconds and produces output similar to the following:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>python<span class="w"> </span>timer.py
 <span class="go">2024-11-29 10:17:13.893071: timed says &#39;Hello!&#39;</span>

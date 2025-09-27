@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>API Documentation &mdash; xronos v0.5.0  documentation</title>
+  <title>API Documentation &mdash; xronos v0.6.0  documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
@@ -37,7 +37,7 @@
           
           
           <a href="../index.html" class="icon icon-home">
-            xronos v0.5.0
+            xronos v0.6.0
               <img src="../_static/logo_written.svg" class="logo" alt="Logo"/>
           </a>
 <div role="search">
@@ -66,7 +66,6 @@
 <li class="toctree-l3"><a class="reference internal" href="#xronos.Environment.create_reactor"><code class="docutils literal notranslate"><span class="pre">Environment.create_reactor()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#xronos.Environment.enable_telemetry"><code class="docutils literal notranslate"><span class="pre">Environment.enable_telemetry()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#xronos.Environment.execute"><code class="docutils literal notranslate"><span class="pre">Environment.execute()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#xronos.Environment.request_shutdown"><code class="docutils literal notranslate"><span class="pre">Environment.request_shutdown()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#xronos.EventSource"><code class="docutils literal notranslate"><span class="pre">EventSource</span></code></a><ul>
@@ -158,7 +157,6 @@
 <li class="toctree-l3"><a class="reference internal" href="#xronos.Reactor.get_time"><code class="docutils literal notranslate"><span class="pre">Reactor.get_time()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#xronos.Reactor.get_time_since_startup"><code class="docutils literal notranslate"><span class="pre">Reactor.get_time_since_startup()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#xronos.Reactor.name"><code class="docutils literal notranslate"><span class="pre">Reactor.name</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#xronos.Reactor.request_shutdown"><code class="docutils literal notranslate"><span class="pre">Reactor.request_shutdown()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#xronos.Reactor.shutdown"><code class="docutils literal notranslate"><span class="pre">Reactor.shutdown</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#xronos.Reactor.startup"><code class="docutils literal notranslate"><span class="pre">Reactor.startup</span></code></a></li>
 </ul>
@@ -168,6 +166,10 @@
 <li class="toctree-l3"><a class="reference internal" href="#xronos.Shutdown.add_attributes"><code class="docutils literal notranslate"><span class="pre">Shutdown.add_attributes()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#xronos.Shutdown.fqn"><code class="docutils literal notranslate"><span class="pre">Shutdown.fqn</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#xronos.Shutdown.name"><code class="docutils literal notranslate"><span class="pre">Shutdown.name</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#xronos.ShutdownEffect"><code class="docutils literal notranslate"><span class="pre">ShutdownEffect</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#xronos.ShutdownEffect.trigger_shutdown"><code class="docutils literal notranslate"><span class="pre">ShutdownEffect.trigger_shutdown()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#xronos.Startup"><code class="docutils literal notranslate"><span class="pre">Startup</span></code></a><ul>
@@ -218,7 +220,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../index.html">xronos v0.5.0</a>
+          <a href="../index.html">xronos v0.6.0</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -239,7 +241,7 @@
 <span id="api-documentation"></span><h1>API Documentation<a class="headerlink" href="#module-xronos" title="Link to this heading"></a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="xronos.Element">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xronos.</span></span><span class="sig-name descname"><span class="pre">Element</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sdk_instance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Element</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xronos.Element" title="Link to this definition"></a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xronos.</span></span><span class="sig-name descname"><span class="pre">Element</span></span><a class="headerlink" href="#xronos.Element" title="Link to this definition"></a></dt>
 <dd><p>A reactor element.</p>
 <p>Reactor elements are objects that can be contained by reactors and that have
 special meaning to the Xronos SDK.</p>
@@ -405,7 +407,7 @@ typically port 4137 on the host running the <a class="reference internal" href="
 processing reactions.</p>
 <p>Returns when the reactor program terminates. The reactor program
 terminates when there are no more events, or after calling
-<a class="reference internal" href="#xronos.Environment.request_shutdown" title="xronos.Environment.request_shutdown"><code class="xref py py-func docutils literal notranslate"><span class="pre">request_shutdown()</span></code></a>.</p>
+<code class="xref py py-func docutils literal notranslate"><span class="pre">request_shutdown()</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Raises<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference internal" href="#xronos.ValidationError" title="xronos.ValidationError"><strong>ValidationError</strong></a> – When the program is invalid or reaches an invalid state.</p>
@@ -413,23 +415,11 @@ terminates when there are no more events, or after calling
 </dl>
 </dd></dl>
 
-<dl class="py method">
-<dt class="sig sig-object py" id="xronos.Environment.request_shutdown">
-<span class="sig-name descname"><span class="pre">request_shutdown</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></span><a class="headerlink" href="#xronos.Environment.request_shutdown" title="Link to this definition"></a></dt>
-<dd><p>Request the termination of the currently running reactor program.</p>
-<p>Terminates a running program at the next convenience. After completing
-all currently active reactions, this triggers
-<a class="reference internal" href="#xronos.Reactor.shutdown" title="xronos.Reactor.shutdown"><code class="xref py py-attr docutils literal notranslate"><span class="pre">shutdown</span></code></a>. Once all reactions triggered by
-<a class="reference internal" href="#xronos.Reactor.shutdown" title="xronos.Reactor.shutdown"><code class="xref py py-attr docutils literal notranslate"><span class="pre">shutdown</span></code></a> are processed, the program terminates.</p>
-<dl class="field-list simple">
-</dl>
-</dd></dl>
-
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="xronos.EventSource">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xronos.</span></span><span class="sig-name descname"><span class="pre">EventSource</span></span><span class="sig-paren">[</span><em class="sig-param"><span class="n"><span class="pre">T</span></span></em><span class="sig-paren">]</span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sdk_instance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Element</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xronos.EventSource" title="Link to this definition"></a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xronos.</span></span><span class="sig-name descname"><span class="pre">EventSource</span></span><span class="sig-paren">[</span><em class="sig-param"><span class="n"><span class="pre">T</span></span></em><span class="sig-paren">]</span><a class="headerlink" href="#xronos.EventSource" title="Link to this definition"></a></dt>
 <dd><p>An element that may emit events and act as reaction trigger.</p>
 <dl class="field-list simple">
 </dl>
@@ -490,7 +480,7 @@ environment), the FQN is equal to the name.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="xronos.InputPort">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xronos.</span></span><span class="sig-name descname"><span class="pre">InputPort</span></span><span class="sig-paren">[</span><em class="sig-param"><span class="n"><span class="pre">T</span></span></em><span class="sig-paren">]</span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sdk_instance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Element</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xronos.InputPort" title="Link to this definition"></a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xronos.</span></span><span class="sig-name descname"><span class="pre">InputPort</span></span><span class="sig-paren">[</span><em class="sig-param"><span class="n"><span class="pre">T</span></span></em><span class="sig-paren">]</span><a class="headerlink" href="#xronos.InputPort" title="Link to this definition"></a></dt>
 <dd><p>A reactor element for receiving messages from other reactors.</p>
 <p>Input ports can be used as a reaction <a class="reference internal" href="#xronos.Trigger" title="xronos.Trigger"><code class="xref py py-class docutils literal notranslate"><span class="pre">Trigger</span></code></a>
 and provide an interface for reactors to receive messages from other
@@ -578,7 +568,7 @@ environment), the FQN is equal to the name.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="xronos.Metric">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xronos.</span></span><span class="sig-name descname"><span class="pre">Metric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sdk_instance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Element</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xronos.Metric" title="Link to this definition"></a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xronos.</span></span><span class="sig-name descname"><span class="pre">Metric</span></span><a class="headerlink" href="#xronos.Metric" title="Link to this definition"></a></dt>
 <dd><p>A reactor element for recording metric data to an external data base.</p>
 <p>Can be used by a reaction as a <a class="reference internal" href="#xronos.MetricEffect" title="xronos.MetricEffect"><code class="xref py py-class docutils literal notranslate"><span class="pre">MetricEffect</span></code></a> allowing the
 reaction handler to record values using the metric.</p>
@@ -670,7 +660,7 @@ environment), the FQN is equal to the name.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="xronos.MetricEffect">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xronos.</span></span><span class="sig-name descname"><span class="pre">MetricEffect</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sdk_metric</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">MetricEffect</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xronos.MetricEffect" title="Link to this definition"></a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xronos.</span></span><span class="sig-name descname"><span class="pre">MetricEffect</span></span><a class="headerlink" href="#xronos.MetricEffect" title="Link to this definition"></a></dt>
 <dd><p>Allows a reaction to record telemetry data using a given <a class="reference internal" href="#xronos.Metric" title="xronos.Metric"><code class="xref py py-class docutils literal notranslate"><span class="pre">Metric</span></code></a>.</p>
 <p>This class is not intended to be instantiated directly. Use
 <a class="reference internal" href="#xronos.ReactionInterface.add_effect" title="xronos.ReactionInterface.add_effect"><code class="xref py py-func docutils literal notranslate"><span class="pre">add_effect()</span></code></a> instead.</p>
@@ -691,7 +681,7 @@ environment), the FQN is equal to the name.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="xronos.OutputPort">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xronos.</span></span><span class="sig-name descname"><span class="pre">OutputPort</span></span><span class="sig-paren">[</span><em class="sig-param"><span class="n"><span class="pre">T</span></span></em><span class="sig-paren">]</span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sdk_instance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Element</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xronos.OutputPort" title="Link to this definition"></a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xronos.</span></span><span class="sig-name descname"><span class="pre">OutputPort</span></span><span class="sig-paren">[</span><em class="sig-param"><span class="n"><span class="pre">T</span></span></em><span class="sig-paren">]</span><a class="headerlink" href="#xronos.OutputPort" title="Link to this definition"></a></dt>
 <dd><p>A reactor element for sending messages to other reactors.</p>
 <p>Output ports can be used as a <a class="reference internal" href="#xronos.PortEffect" title="xronos.PortEffect"><code class="xref py py-class docutils literal notranslate"><span class="pre">PortEffect</span></code></a> and provide an interface
 for reactors to send messages to other reactors.</p>
@@ -778,7 +768,7 @@ environment), the FQN is equal to the name.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="xronos.PeriodicTimer">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xronos.</span></span><span class="sig-name descname"><span class="pre">PeriodicTimer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sdk_instance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Element</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xronos.PeriodicTimer" title="Link to this definition"></a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xronos.</span></span><span class="sig-name descname"><span class="pre">PeriodicTimer</span></span><a class="headerlink" href="#xronos.PeriodicTimer" title="Link to this definition"></a></dt>
 <dd><p>A reactor element that emits events in regular intervals.</p>
 <p>Can be used as a reaction <a class="reference internal" href="#xronos.Trigger" title="xronos.Trigger"><code class="xref py py-class docutils literal notranslate"><span class="pre">Trigger</span></code></a>.</p>
 <p>This class is not intended to be instantiated directly. Use
@@ -880,7 +870,7 @@ and the first event emitted by the timer (optional).</p></li>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="xronos.PhysicalEvent">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xronos.</span></span><span class="sig-name descname"><span class="pre">PhysicalEvent</span></span><span class="sig-paren">[</span><em class="sig-param"><span class="n"><span class="pre">T</span></span></em><span class="sig-paren">]</span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sdk_instance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Element</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xronos.PhysicalEvent" title="Link to this definition"></a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xronos.</span></span><span class="sig-name descname"><span class="pre">PhysicalEvent</span></span><span class="sig-paren">[</span><em class="sig-param"><span class="n"><span class="pre">T</span></span></em><span class="sig-paren">]</span><a class="headerlink" href="#xronos.PhysicalEvent" title="Link to this definition"></a></dt>
 <dd><p>A reactor element for receiving events from external sources.</p>
 <p>Physical events may be used to trigger reactions from a context outside of
 the scope of the reactor program. These could be external event handlers that
@@ -1030,7 +1020,7 @@ previous value is overwritten.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="xronos.ProgrammableTimer">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xronos.</span></span><span class="sig-name descname"><span class="pre">ProgrammableTimer</span></span><span class="sig-paren">[</span><em class="sig-param"><span class="n"><span class="pre">T</span></span></em><span class="sig-paren">]</span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sdk_instance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Element</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xronos.ProgrammableTimer" title="Link to this definition"></a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xronos.</span></span><span class="sig-name descname"><span class="pre">ProgrammableTimer</span></span><span class="sig-paren">[</span><em class="sig-param"><span class="n"><span class="pre">T</span></span></em><span class="sig-paren">]</span><a class="headerlink" href="#xronos.ProgrammableTimer" title="Link to this definition"></a></dt>
 <dd><p>A reactor element for scheduling new events.</p>
 <p>Programmable timers may be used by reactions to schedule new events that
 will be emitted in the future. They can be used both as a reaction
@@ -1116,7 +1106,7 @@ timer.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="xronos.ProgrammableTimerEffect">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xronos.</span></span><span class="sig-name descname"><span class="pre">ProgrammableTimerEffect</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sdk_effect</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ProgrammableTimerEffect</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xronos.ProgrammableTimerEffect" title="Link to this definition"></a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xronos.</span></span><span class="sig-name descname"><span class="pre">ProgrammableTimerEffect</span></span><a class="headerlink" href="#xronos.ProgrammableTimerEffect" title="Link to this definition"></a></dt>
 <dd><p>Allows a reaction to schedule future events using a <a class="reference internal" href="#xronos.ProgrammableTimer" title="xronos.ProgrammableTimer"><code class="xref py py-class docutils literal notranslate"><span class="pre">ProgrammableTimer</span></code></a>.</p>
 <p>This class is not intended to be instantiated directly. Use
 <a class="reference internal" href="#xronos.ReactionInterface.add_effect" title="xronos.ReactionInterface.add_effect"><code class="xref py py-func docutils literal notranslate"><span class="pre">add_effect()</span></code></a> instead.</p>
@@ -1153,20 +1143,20 @@ class is passed automatically to any method decorated with
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="xronos.ReactionInterface.add_effect">
-<span class="sig-name descname"><span class="pre">add_effect</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#xronos.InputPort" title="xronos._core.InputPort"><span class="pre">InputPort</span></a><span class="p"><span class="pre">[</span></span><span class="pre">T</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#xronos.OutputPort" title="xronos._core.OutputPort"><span class="pre">OutputPort</span></a><span class="p"><span class="pre">[</span></span><span class="pre">T</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#xronos.ProgrammableTimer" title="xronos._core.ProgrammableTimer"><span class="pre">ProgrammableTimer</span></a><span class="p"><span class="pre">[</span></span><span class="pre">T</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#xronos.Metric" title="xronos._core.Metric"><span class="pre">Metric</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#xronos.PortEffect" title="xronos._core.PortEffect"><span class="pre">PortEffect</span></a><span class="p"><span class="pre">[</span></span><span class="pre">T</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#xronos.ProgrammableTimerEffect" title="xronos._core.ProgrammableTimerEffect"><span class="pre">ProgrammableTimerEffect</span></a><span class="p"><span class="pre">[</span></span><span class="pre">T</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#xronos.MetricEffect" title="xronos._core.MetricEffect"><span class="pre">MetricEffect</span></a></span></span><a class="headerlink" href="#xronos.ReactionInterface.add_effect" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">add_effect</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#xronos.InputPort" title="xronos._core.InputPort"><span class="pre">InputPort</span></a><span class="p"><span class="pre">[</span></span><span class="pre">T</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#xronos.OutputPort" title="xronos._core.OutputPort"><span class="pre">OutputPort</span></a><span class="p"><span class="pre">[</span></span><span class="pre">T</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#xronos.ProgrammableTimer" title="xronos._core.ProgrammableTimer"><span class="pre">ProgrammableTimer</span></a><span class="p"><span class="pre">[</span></span><span class="pre">T</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#xronos.Metric" title="xronos._core.Metric"><span class="pre">Metric</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#xronos.Shutdown" title="xronos._core.Shutdown"><span class="pre">Shutdown</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#xronos.PortEffect" title="xronos._core.PortEffect"><span class="pre">PortEffect</span></a><span class="p"><span class="pre">[</span></span><span class="pre">T</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#xronos.ProgrammableTimerEffect" title="xronos._core.ProgrammableTimerEffect"><span class="pre">ProgrammableTimerEffect</span></a><span class="p"><span class="pre">[</span></span><span class="pre">T</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#xronos.MetricEffect" title="xronos._core.MetricEffect"><span class="pre">MetricEffect</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#xronos.ShutdownEffect" title="xronos._core.ShutdownEffect"><span class="pre">ShutdownEffect</span></a></span></span><a class="headerlink" href="#xronos.ReactionInterface.add_effect" title="Link to this definition"></a></dt>
 <dd><p>Declare a reaction effect.</p>
 <p>An effect provides read and write access to the referenced element, but
 does not trigger the reaction.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>target</strong> (<a class="reference internal" href="#xronos.InputPort" title="xronos._core.InputPort"><em>InputPort</em></a><em>[</em><em>T</em><em>] </em><em>| </em><a class="reference internal" href="#xronos.OutputPort" title="xronos._core.OutputPort"><em>OutputPort</em></a><em>[</em><em>T</em><em>] </em><em>| </em><a class="reference internal" href="#xronos.ProgrammableTimer" title="xronos._core.ProgrammableTimer"><em>ProgrammableTimer</em></a><em>[</em><em>T</em><em>] </em><em>| </em><a class="reference internal" href="#xronos.Metric" title="xronos._core.Metric"><em>Metric</em></a>) – The reactor element to declare as the reaction effect.</p>
+<dd class="field-odd"><p><strong>target</strong> (<a class="reference internal" href="#xronos.InputPort" title="xronos._core.InputPort"><em>InputPort</em></a><em>[</em><em>T</em><em>] </em><em>| </em><a class="reference internal" href="#xronos.OutputPort" title="xronos._core.OutputPort"><em>OutputPort</em></a><em>[</em><em>T</em><em>] </em><em>| </em><a class="reference internal" href="#xronos.ProgrammableTimer" title="xronos._core.ProgrammableTimer"><em>ProgrammableTimer</em></a><em>[</em><em>T</em><em>] </em><em>| </em><a class="reference internal" href="#xronos.Metric" title="xronos._core.Metric"><em>Metric</em></a><em> | </em><a class="reference internal" href="#xronos.Shutdown" title="xronos._core.Shutdown"><em>Shutdown</em></a>) – The reactor element to declare as the reaction effect.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>A new effect object that can be used by the reaction handler to
 write to ports or schedule events.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference internal" href="#xronos.PortEffect" title="xronos._core.PortEffect"><em>PortEffect</em></a>[<em>T</em>] | <a class="reference internal" href="#xronos.ProgrammableTimerEffect" title="xronos._core.ProgrammableTimerEffect"><em>ProgrammableTimerEffect</em></a>[<em>T</em>] | <a class="reference internal" href="#xronos.MetricEffect" title="xronos._core.MetricEffect"><em>MetricEffect</em></a></p>
+<dd class="field-odd"><p><a class="reference internal" href="#xronos.PortEffect" title="xronos._core.PortEffect"><em>PortEffect</em></a>[<em>T</em>] | <a class="reference internal" href="#xronos.ProgrammableTimerEffect" title="xronos._core.ProgrammableTimerEffect"><em>ProgrammableTimerEffect</em></a>[<em>T</em>] | <a class="reference internal" href="#xronos.MetricEffect" title="xronos._core.MetricEffect"><em>MetricEffect</em></a> | <a class="reference internal" href="#xronos.ShutdownEffect" title="xronos._core.ShutdownEffect"><em>ShutdownEffect</em></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1364,18 +1354,6 @@ an internal clock to control how a program advances.</p>
 <dd><p>Name of the element (read-only).</p>
 </dd></dl>
 
-<dl class="py method">
-<dt class="sig sig-object py" id="xronos.Reactor.request_shutdown">
-<span class="sig-name descname"><span class="pre">request_shutdown</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></span><a class="headerlink" href="#xronos.Reactor.request_shutdown" title="Link to this definition"></a></dt>
-<dd><p>Request the termination of the currently running reactor program.</p>
-<p>Terminates a running program at the next convenience. After completing
-all currently active reactions, this triggers
-<a class="reference internal" href="#xronos.Reactor.shutdown" title="xronos.Reactor.shutdown"><code class="xref py py-attr docutils literal notranslate"><span class="pre">shutdown</span></code></a>. Once all reactions triggered by
-<a class="reference internal" href="#xronos.Reactor.shutdown" title="xronos.Reactor.shutdown"><code class="xref py py-attr docutils literal notranslate"><span class="pre">shutdown</span></code></a> are processed, the program terminates.</p>
-<dl class="field-list simple">
-</dl>
-</dd></dl>
-
 <dl class="py property">
 <dt class="sig sig-object py" id="xronos.Reactor.shutdown">
 <em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">shutdown</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#xronos.Shutdown" title="xronos._core.Shutdown"><span class="pre">Shutdown</span></a></em><a class="headerlink" href="#xronos.Reactor.shutdown" title="Link to this definition"></a></dt>
@@ -1394,7 +1372,7 @@ all currently active reactions, this triggers
 
 <dl class="py class">
 <dt class="sig sig-object py" id="xronos.Shutdown">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xronos.</span></span><span class="sig-name descname"><span class="pre">Shutdown</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sdk_instance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Element</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xronos.Shutdown" title="Link to this definition"></a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xronos.</span></span><span class="sig-name descname"><span class="pre">Shutdown</span></span><a class="headerlink" href="#xronos.Shutdown" title="Link to this definition"></a></dt>
 <dd><p>A reactor element that emits an event right before the program shuts down.</p>
 <p>Can be used as a reaction <a class="reference internal" href="#xronos.Trigger" title="xronos.Trigger"><code class="xref py py-class docutils literal notranslate"><span class="pre">Trigger</span></code></a>.</p>
 <dl class="field-list simple">
@@ -1455,8 +1433,29 @@ environment), the FQN is equal to the name.</p>
 </dd></dl>
 
 <dl class="py class">
+<dt class="sig sig-object py" id="xronos.ShutdownEffect">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xronos.</span></span><span class="sig-name descname"><span class="pre">ShutdownEffect</span></span><a class="headerlink" href="#xronos.ShutdownEffect" title="Link to this definition"></a></dt>
+<dd><p>Allows a reaction to terminate the program.</p>
+<p>This class is not intended to be instantiated directly. Use
+<a class="reference internal" href="#xronos.ReactionInterface.add_effect" title="xronos.ReactionInterface.add_effect"><code class="xref py py-func docutils literal notranslate"><span class="pre">add_effect()</span></code></a> instead.</p>
+<dl class="field-list simple">
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="xronos.ShutdownEffect.trigger_shutdown">
+<span class="sig-name descname"><span class="pre">trigger_shutdown</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></span><a class="headerlink" href="#xronos.ShutdownEffect.trigger_shutdown" title="Link to this definition"></a></dt>
+<dd><p>Terminate the currently running reactor program.</p>
+<p>Terminates a running program at the next convenience. After completing all
+currently active reactions, this triggers the Shutdown event sources. Once
+all reactions triggered by Shutdown are processed, the program terminates.</p>
+<dl class="field-list simple">
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="xronos.Startup">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xronos.</span></span><span class="sig-name descname"><span class="pre">Startup</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sdk_instance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Element</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xronos.Startup" title="Link to this definition"></a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xronos.</span></span><span class="sig-name descname"><span class="pre">Startup</span></span><a class="headerlink" href="#xronos.Startup" title="Link to this definition"></a></dt>
 <dd><p>A reactor element that emits an event program starts executing.</p>
 <p>Can be used as a reaction <a class="reference internal" href="#xronos.Trigger" title="xronos.Trigger"><code class="xref py py-class docutils literal notranslate"><span class="pre">Trigger</span></code></a>.</p>
 <dl class="field-list simple">

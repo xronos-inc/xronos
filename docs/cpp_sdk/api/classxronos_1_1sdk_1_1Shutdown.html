@@ -33,7 +33,7 @@
  <tr id="projectrow">
   <td id="projectlogo"><img alt="Logo" src="logo-banner.jpg"/></td>
   <td id="projectalign">
-   <div id="projectname">xronos-sdk<span id="projectnumber">&#160;0.5.0</span>
+   <div id="projectname">xronos-sdk<span id="projectnumber">&#160;0.6.0</span>
    </div>
    <div id="projectbrief">Xronos C++ SDK</div>
   </td>
@@ -99,9 +99,6 @@ $(function(){initNavTree('classxronos_1_1sdk_1_1Shutdown.html','','classxronos_1
 </div>
 
 <div class="header">
-  <div class="summary">
-<a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="classxronos_1_1sdk_1_1Shutdown-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">xronos::sdk::Shutdown Class Reference<span class="mlabels"><span class="mlabel final">final</span></span></div></div>
 </div><!--header-->
 <div class="contents">
@@ -113,7 +110,7 @@ $(function(){initNavTree('classxronos_1_1sdk_1_1Shutdown.html','','classxronos_1
 <div class="dynheader">
 Inheritance diagram for xronos::sdk::Shutdown:</div>
 <div class="dyncontent">
-<div class="center"><iframe scrolling="no" loading="lazy" frameborder="0" src="classxronos_1_1sdk_1_1Shutdown__inherit__graph.svg" width="400" height="222"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
+<div class="center"><iframe scrolling="no" loading="lazy" frameborder="0" src="classxronos_1_1sdk_1_1Shutdown__inherit__graph.svg" width="180" height="110"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-pub-methods" class="groupheader"><a id="pub-methods" name="pub-methods"></a>
@@ -125,6 +122,8 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:aa85c0cc3344ff5646dcac93cc0f25d41 inherit pub_methods_classxronos_1_1sdk_1_1Element"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the element's name.  <br /></td></tr>
 <tr class="memitem:af93126c8a89905baf60a3c801da6fc55 inherit pub_methods_classxronos_1_1sdk_1_1Element" id="r_af93126c8a89905baf60a3c801da6fc55"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxronos_1_1sdk_1_1Element.html#af93126c8a89905baf60a3c801da6fc55">fqn</a> () const noexcept -&gt; const std::string &amp;</td></tr>
 <tr class="memdesc:af93126c8a89905baf60a3c801da6fc55 inherit pub_methods_classxronos_1_1sdk_1_1Element"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the element's fully qualified name.  <br /></td></tr>
+<tr class="memitem:adf9920543573ff1b8b0d6195d506e5c0 inherit pub_methods_classxronos_1_1sdk_1_1Element" id="r_adf9920543573ff1b8b0d6195d506e5c0"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxronos_1_1sdk_1_1Element.html#adf9920543573ff1b8b0d6195d506e5c0">uid</a> () const noexcept -&gt; std::uint64_t</td></tr>
+<tr class="memdesc:adf9920543573ff1b8b0d6195d506e5c0 inherit pub_methods_classxronos_1_1sdk_1_1Element"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the element's unique ID.  <br /></td></tr>
 <tr class="memitem:a732c42bbeeb04873b20e33ad5810ace1 inherit pub_methods_classxronos_1_1sdk_1_1Element" id="r_a732c42bbeeb04873b20e33ad5810ace1"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxronos_1_1sdk_1_1Element.html#a732c42bbeeb04873b20e33ad5810ace1">add_attribute</a> (std::string_view key, const <a class="el" href="namespacexronos_1_1sdk.html#a7aba71a9986bafcad6311f5178e8db1c">AttributeValue</a> &amp;value) noexcept -&gt; bool</td></tr>
 <tr class="memdesc:a732c42bbeeb04873b20e33ad5810ace1 inherit pub_methods_classxronos_1_1sdk_1_1Element"><td class="mdescLeft">&#160;</td><td class="mdescRight">Annotate an element with an attribute.  <br /></td></tr>
 <tr class="memitem:a503bcd838c184deeff62edb2e8f4c2be inherit pub_methods_classxronos_1_1sdk_1_1Element" id="r_a503bcd838c184deeff62edb2e8f4c2be"><td class="memTemplParams" colspan="2">template&lt;std::ranges::input_range R&gt; <br />
@@ -136,6 +135,12 @@ requires requires(std::ranges::range_value_t&lt;R&gt; pair) { { pair.first } -&g
 <tr class="memitem:ac2a007cae1bd4d8456e258730e2d24f6 inherit pub_methods_classxronos_1_1sdk_1_1Element" id="r_ac2a007cae1bd4d8456e258730e2d24f6"><td class="memItemLeft" align="right" valign="top">
 virtual&#160;</td><td class="memItemRight" valign="bottom"><b>~Element</b> ()=default</td></tr>
 <tr class="memdesc:ac2a007cae1bd4d8456e258730e2d24f6 inherit pub_methods_classxronos_1_1sdk_1_1Element"><td class="mdescLeft">&#160;</td><td class="mdescRight">Virtual destructor. <br /></td></tr>
+<tr class="memitem:ac16a2b7fc470e70fe538227887358b7d inherit pub_methods_classxronos_1_1sdk_1_1Element" id="r_ac16a2b7fc470e70fe538227887358b7d"><td class="memItemLeft" align="right" valign="top">
+&#160;</td><td class="memItemRight" valign="bottom"><b>Element</b> (<a class="el" href="classxronos_1_1sdk_1_1Element.html">Element</a> &amp;&amp;)=default</td></tr>
+<tr class="memdesc:ac16a2b7fc470e70fe538227887358b7d inherit pub_methods_classxronos_1_1sdk_1_1Element"><td class="mdescLeft">&#160;</td><td class="mdescRight">Move constructor. <br /></td></tr>
+<tr class="memitem:a5ca15ef8e392caa8efb6b5bc761e4455 inherit pub_methods_classxronos_1_1sdk_1_1Element" id="r_a5ca15ef8e392caa8efb6b5bc761e4455"><td class="memItemLeft" align="right" valign="top">
+auto&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="classxronos_1_1sdk_1_1Element.html">Element</a> &amp;&amp;) -&gt; <a class="el" href="classxronos_1_1sdk_1_1Element.html">Element</a> &amp;=default</td></tr>
+<tr class="memdesc:a5ca15ef8e392caa8efb6b5bc761e4455 inherit pub_methods_classxronos_1_1sdk_1_1Element"><td class="mdescLeft">&#160;</td><td class="mdescRight">Move assignment operator. <br /></td></tr>
 </table>
 <a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>A reactor element that emits an event right before the program shuts down. </p>
@@ -161,7 +166,7 @@ virtual&#160;</td><td class="memItemRight" valign="bottom"><b>~Element</b> ()=de
 </div><div class="memdoc">
 
 <p>Constructor. </p>
-<p>Typically user code should not need to instantiate this directly, as each reactor provides an instance via <a class="el" href="classxronos_1_1sdk_1_1Reactor.html#afd726c53d71d34135b7d09cf8d93d540" title="Get the shutdown event source.">Reactor::shutdown()</a>.</p>
+<p>Typically user code should not need to instantiate this directly, as each reactor provides an instance via <a class="el" href="classxronos_1_1sdk_1_1Reactor.html#a4ccff633ed1c8526090c8305d905f984" title="Get the shutdown event source.">Reactor::shutdown()</a>.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">name</td><td>The name of the element. </td></tr>
@@ -177,6 +182,13 @@ virtual&#160;</td><td class="memItemRight" valign="bottom"><b>~Element</b> ()=de
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
+<div id="page-nav" class="page-nav-panel">
+<div id="page-nav-resize-handle"></div>
+<div id="page-nav-tree">
+<div id="page-nav-contents">
+</div><!-- page-nav-contents -->
+</div><!-- page-nav-tree -->
+</div><!-- page-nav -->
 </div><!-- container -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
