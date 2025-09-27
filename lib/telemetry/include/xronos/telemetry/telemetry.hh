@@ -4,8 +4,8 @@
 #ifndef XRONOS_TELEMETRY_TELEMETRY_HH
 #define XRONOS_TELEMETRY_TELEMETRY_HH
 
-#include "metric.hh"
-#include "xronos/runtime/data_logger.hh"
+#include "xronos/telemetry/metric.hh"
+#include "xronos/telemetry/reaction.hh"
 
 namespace xronos::telemetry {
 
@@ -13,20 +13,19 @@ class TelemetryBackend {
 public:
   virtual ~TelemetryBackend() = default;
   virtual void initialize() = 0;
-  virtual void shutdown() = 0;
-  virtual auto runtime_data_logger() -> runtime::RuntimeDataLogger& = 0;
+  virtual auto reaction_span_logger() -> ReactionSpanLogger& = 0;
   virtual auto metric_data_logger() -> MetricDataLogger& = 0;
 };
 
 class NoopTelemetryBackend : public TelemetryBackend {
-  runtime::NoopRuntimeDataLogger runtime_data_logger_{};
-  NoopMetricDataLogger metric_data_logger_{};
-
 public:
   void initialize() final {};
-  void shutdown() final {};
-  auto runtime_data_logger() -> runtime::RuntimeDataLogger& final { return runtime_data_logger_; }
+  auto reaction_span_logger() -> ReactionSpanLogger& final { return reaction_span_logger_; }
   auto metric_data_logger() -> MetricDataLogger& final { return metric_data_logger_; }
+
+private:
+  NoopReactionSpanLogger reaction_span_logger_{};
+  NoopMetricDataLogger metric_data_logger_{};
 };
 
 } // namespace xronos::telemetry

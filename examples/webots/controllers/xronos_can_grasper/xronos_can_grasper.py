@@ -35,12 +35,13 @@ class Simulator(xronos.Reactor):
     @xronos.reaction
     def on_step(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
         _ = interface.add_trigger(self.__step_timer)
+        shutdown_effect = interface.add_effect(self.shutdown)
 
         def handler() -> None:
             if self.__robot.step(TIME_STEP) != -1:
                 self.__done_step_event.trigger(None)
             else:
-                self.request_shutdown()
+                shutdown_effect.trigger_shutdown()
 
         return handler
 

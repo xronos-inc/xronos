@@ -4,7 +4,7 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "xronos"
-version = "0.5.0"
+version = "0.6.0"
 description = "Reactors for Python"
 authors = [
   { name = "Christian Menard", email = "christian@xronos.com" },
@@ -43,7 +43,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dashboard = [
-  'xronos-dashboard==0.5.0',
+  'xronos-dashboard==0.6.0',
 ]
 
 [project.urls]
@@ -57,7 +57,7 @@ log_cli_level = "WARNING"
 
 [tool.scikit-build]
 build-dir = "build"
-cmake.build-type = "Release"
+cmake.build-type = "Debug"
 ninja.make-fallback = false
 build.targets = ["_cpp_sdk"]
 wheel.license-files = [

@@ -4,30 +4,31 @@
 #ifndef XRONOS_GRAPH_EXPORTER_EXPORTER_HH
 #define XRONOS_GRAPH_EXPORTER_EXPORTER_HH
 
-#include <functional>
-#include <optional>
 #include <string>
 
-#include "xronos/messages/source_info.pb.h"
-#include "xronos/runtime/environment.hh"
+#include "grpcpp/support/status.h"
+#include "xronos/core/reactor_model.hh"
+#include "xronos/messages/reactor_graph.pb.h"
+#include "xronos/source_location/source_location.hh"
 #include "xronos/telemetry/attribute_manager.hh"
 
 namespace xronos::graph_exporter {
 
-auto export_reactor_graph_to_proto(
-    const runtime::Environment& environment,
-    std::optional<std::reference_wrapper<const telemetry::AttributeManager>> attribute_manager) -> std::string;
+void send_reactor_graph_to_diagram_server(const core::ReactorModel& model,
+                                          const telemetry::AttributeManager& attribute_manager,
+                                          const source_location::SourceLocationRegistry& source_location_registry);
 
-auto export_reactor_graph_to_json(
-    const runtime::Environment& environment,
-    const std::optional<xronos::messages::source_info::SourceInfo>& source_info,
-    std::optional<std::reference_wrapper<const telemetry::AttributeManager>> attribute_manager, bool pretty)
-    -> std::string;
+namespace detail {
 
-void send_reactor_graph_to_diagram_server(
-    const runtime::Environment& environment,
-    const std::optional<xronos::messages::source_info::SourceInfo>& source_info,
-    std::optional<std::reference_wrapper<const telemetry::AttributeManager>> attribute_manager);
+void serialize_reactor_model(const core::ReactorModel& model, const telemetry::AttributeManager& attribute_manager,
+                             messages::reactor_graph::Graph& graph);
+
+auto send_reactor_graph_to_diagram_server(const core::ReactorModel& model,
+                                          const telemetry::AttributeManager& attribute_manager,
+                                          const source_location::SourceLocationRegistry& source_location_registry,
+                                          const std::string& host) -> ::grpc::Status;
+
+} // namespace detail
 
 } // namespace xronos::graph_exporter
 

@@ -5,24 +5,18 @@
 
 #include <string_view>
 
-#include "xronos/runtime/action.hh"
-#include "xronos/runtime/reaction.hh"
+#include "impl/xronos/sdk/detail/context_access.hh"
+#include "xronos/core/element.hh"
 #include "xronos/sdk/context.hh"
 #include "xronos/sdk/element.hh"
 
 namespace xronos::sdk {
 
+using CA = detail::ContextAccess;
+
 Shutdown::Shutdown(std::string_view name, ReactorContext context)
-    : Element{
-          detail::make_runtime_element_pointer<runtime::ShutdownTrigger>(name, detail::get_reactor_instance(context)),
-          context} {}
-
-[[nodiscard]] auto Shutdown::is_present() const noexcept -> bool {
-  return detail::get_runtime_instance<runtime::ShutdownTrigger>(*this).is_present();
-}
-
-void Shutdown::register_as_trigger_of(runtime::Reaction& reaction) const noexcept {
-  reaction.declare_trigger(&detail::get_runtime_instance<runtime::ShutdownTrigger>(*this));
-}
+    : Element{CA::get_program_context(context)->model.element_registry.add_new_element(name, core::ShutdownTag{},
+                                                                                       CA::get_parent_uid(context)),
+              context} {}
 
 } // namespace xronos::sdk

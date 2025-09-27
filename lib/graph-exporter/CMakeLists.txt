@@ -3,9 +3,14 @@ file(GLOB_RECURSE HEADERS CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/include
 
 add_library(xronos-graph-exporter ${SOURCES})
 target_link_libraries(xronos-graph-exporter
-                      PUBLIC xronos-runtime
-                             xronos-graph-messages
-                             xronos-telemetry)
+                      PUBLIC
+                        xronos-core
+                        xronos-graph-messages
+                        xronos-source-location
+                        xronos-telemetry
+                      PRIVATE
+                        xronos-util
+)
 target_sources(
   xronos-graph-exporter
   PUBLIC FILE_SET HEADERS
@@ -24,7 +29,7 @@ if(XRONOS_LIB_BUILD_TESTS)
   add_executable(xronos-graph-exporter-tests ${TEST_SOURCES})
   target_link_libraries(
     xronos-graph-exporter-tests
-    PRIVATE xronos-runtime xronos-graph-exporter xronos-graph-messages xronos-telemetry
+    PRIVATE xronos-core xronos-graph-exporter xronos-graph-messages xronos-telemetry xronos-util
             Catch2::Catch2WithMain)
   catch_discover_tests(xronos-graph-exporter-tests)
 endif()

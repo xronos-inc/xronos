@@ -19,8 +19,8 @@ RUN cmake -S . -B build \
       -DENABLE_CLANG_TIDY=OFF \
       -Duse_libclang=ON \
       -DCMAKE_CXX_FLAGS="-w"
-RUN cmake --build build --config Release -- -j$(nproc)
-RUN cmake --build build --target install --config Release
+RUN cmake --build build -j$(nproc)
+RUN cmake --build build --target install
 RUN /install/bin/doxygen --version
 
 FROM scratch AS install

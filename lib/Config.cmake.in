@@ -24,4 +24,7 @@ endif()
 
 find_dependency(opentelemetry-cpp CONFIG REQUIRED)
 
+find_dependency(fmt CONFIG REQUIRED)
+find_dependency(expected-lite CONFIG REQUIRED)
+
 include("${CMAKE_CURRENT_LIST_DIR}/xronos-libTargets.cmake")

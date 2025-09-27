@@ -1,103 +1,56 @@
 // SPDX-FileCopyrightText: Copyright (c) 2025 Xronos Inc.
 // SPDX-License-Identifier: BSD-3-Clause
 
-#include "xronos/runtime/reactor.hh"
-
 #include <chrono>
-#include <functional>
 #include <source_location>
 #include <string_view>
-#include <utility>
-#include <variant>
 
-#include "xronos/runtime/assert.hh"
-#include "xronos/runtime/connection_properties.hh"
-#include "xronos/runtime/environment.hh"
-#include "xronos/runtime/port.hh"
+#include "impl/xronos/sdk/detail/context_access.hh"
+#include "xronos/core/element.hh"
 #include "xronos/sdk/context.hh"
 #include "xronos/sdk/detail/source_location.hh"
 #include "xronos/sdk/element.hh"
-#include "xronos/sdk/environment.hh"
 #include "xronos/sdk/reactor.hh"
 #include "xronos/sdk/startup.hh"
 #include "xronos/sdk/time.hh"
 
 namespace xronos::sdk {
 
-class ReactorWrapper : public runtime::Reactor {
-public:
-  ReactorWrapper(std::string_view name, runtime::Reactor& container, std::function<void()> assemble_callback)
-      : runtime::Reactor{name, container}
-      , assemble_callback_{std::move(assemble_callback)} {}
-  ReactorWrapper(std::string_view name, runtime::Environment& environment, std::function<void()> assemble_callback)
-      : runtime::Reactor{name, environment}
-      , assemble_callback_{std::move(assemble_callback)} {}
+using CA = detail::ContextAccess;
 
-private:
-  void assemble() final { assemble_callback_(); }
-  std::function<void()> assemble_callback_;
-};
-
-namespace detail {
-
-auto make_reactor_wrapper(std::string_view name, ReactorContext context, std::function<void()> assemble) {
-  return detail::make_runtime_element_pointer<ReactorWrapper>(name, detail::get_reactor_instance(context),
-                                                              std::move(assemble));
-}
-
-auto make_reactor_wrapper(std::string_view name, EnvironmentContext context, std::function<void()> assemble) {
-  return detail::make_runtime_element_pointer<ReactorWrapper>(
-      name, detail::get_environment_instance(detail::get_environment(context)), std::move(assemble));
-}
-
-void runtime_connect(Reactor& reactor, const Element& from_port, const Element& to_port) {
-  auto& runtime_environment = detail::get_runtime_instance<runtime::Reactor>(reactor).environment();
-  try {
-    runtime_environment.draw_connection(detail::get_runtime_instance<runtime::Port>(from_port),
-                                        detail::get_runtime_instance<runtime::Port>(to_port), {});
-  } catch (const runtime::ValidationError& e) {
-    throw ValidationError(e.what());
-  }
-}
-
-void runtime_connect(Reactor& reactor, const Element& from_port, const Element& to_port, Duration delay) {
-  auto& runtime_environment = detail::get_runtime_instance<runtime::Reactor>(reactor).environment();
-  try {
-    runtime_environment.draw_connection(detail::get_runtime_instance<runtime::Port>(from_port),
-                                        detail::get_runtime_instance<runtime::Port>(to_port),
-                                        {.type_ = runtime::ConnectionType::Delayed, .delay_ = delay});
-  } catch (const runtime::ValidationError& e) {
-    throw ValidationError(e.what());
-  }
-}
-
-} // namespace detail
-
-Reactor::Reactor(std::string_view name, Context parent_context)
-    : Element{std::visit(
-                  [name, this](auto ctx) { return detail::make_reactor_wrapper(name, ctx, [this]() { assemble(); }); },
-                  parent_context),
+Reactor::Reactor(std::string_view name, const Context& parent_context)
+    : Element{CA::get_program_context(parent_context)
+                  ->model.element_registry.add_new_element(name, core::ReactorTag{},
+                                                           CA::get_parent_uid(parent_context)),
               parent_context}
-    , environment_{std::visit([](auto ctx) -> Environment& { return detail::get_environment(ctx); }, parent_context)}
     , startup_{"startup", this->context()}
-    , shutdown_{"shutdown", this->context()} {}
+    , shutdown_{"shutdown", this->context()} {
+  program_context()->assemble_callbacks.emplace_back([this]() { assemble(); });
+}
 
 [[nodiscard]] auto Reactor::context(std::source_location source_location) noexcept -> ReactorContext {
-  return detail::create_context(*this, detail::SourceLocationView::from_std(source_location));
+  return context(detail::SourceLocationView::from_std(source_location));
+}
+
+[[nodiscard]] auto Reactor::context(detail::SourceLocationView source_location) noexcept -> ReactorContext {
+  return CA::create_reactor_context(program_context(), core_element().uid, source_location);
 }
 
 auto Reactor::get_time() const noexcept -> TimePoint {
-  return detail::get_runtime_instance<runtime::Reactor>(*this).get_logical_time();
+  if (program_context()->runtime_program_handle == nullptr) {
+    return TimePoint::min();
+  }
+  return program_context()->runtime_program_handle->get_time_access(uid())->get_timestamp();
 }
 
 auto Reactor::get_lag() const noexcept -> Duration { return std::chrono::system_clock::now() - get_time(); }
 
 auto Reactor::get_time_since_startup() const noexcept -> Duration {
-  return detail::get_runtime_instance<runtime::Reactor>(*this).get_elapsed_logical_time();
-}
-
-void Reactor::request_shutdown() noexcept {
-  detail::get_runtime_instance<runtime::Reactor>(*this).environment().sync_shutdown();
+  if (program_context()->runtime_program_handle == nullptr) {
+    return Duration::zero();
+  }
+  const auto* time_access = program_context()->runtime_program_handle->get_time_access(uid());
+  return time_access->get_timestamp() - time_access->get_start_timestamp();
 }
 
 } // namespace xronos::sdk

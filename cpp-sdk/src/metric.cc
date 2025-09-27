@@ -4,33 +4,50 @@
 #include "xronos/sdk/metric.hh"
 
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <string_view>
 
+#include "impl/xronos/sdk/detail/context_access.hh"
+#include "xronos/core/element.hh"
 #include "xronos/sdk/context.hh"
-#include "xronos/sdk/element.hh"
-#include "xronos/sdk/environment.hh"
+#include "xronos/sdk/fwd.hh"
 #include "xronos/telemetry/metric.hh"
 
 namespace xronos::sdk {
 
-Metric::Metric(std::string_view name, ReactorContext context, std::string_view description, std::string_view unit)
-    : Element(detail::make_runtime_element_pointer<telemetry::Metric>(
-                  name, detail::get_reactor_instance(context),
-                  detail::get_metric_data_logger_provider(detail::get_environment(context)), description, unit),
-              context) {}
+using CA = detail::ContextAccess;
 
-void Metric::record(double value) noexcept { detail::get_runtime_instance<telemetry::Metric>(*this).record(value); }
+Metric::Metric(std::string_view name, const ReactorContext& context, std::string_view description,
+               std::string_view unit)
+    : Element{CA::get_program_context(context)->model.element_registry.add_new_element(
+                  name,
+                  core::MetricTag{std::make_unique<core::MetricProperties>(
+                      core::MetricProperties{.description = std::string{description}, .unit = std::string{unit}})},
+                  CA::get_parent_uid(context)),
+              context} {}
+
+void Metric::record(double value) noexcept {
+  if (program_context()->runtime_program_handle != nullptr) {
+    const auto& elem = core_element();
+    program_context()->metric_data_logger_provider.logger().record(
+        elem, *program_context()->runtime_program_handle->get_time_access(elem.parent_uid.value()), value);
+  }
+}
 void Metric::record(std::int64_t value) noexcept {
-  detail::get_runtime_instance<telemetry::Metric>(*this).record(value);
+  if (program_context()->runtime_program_handle != nullptr) {
+    const auto& elem = core_element();
+    program_context()->metric_data_logger_provider.logger().record(
+        elem, *program_context()->runtime_program_handle->get_time_access(elem.parent_uid.value()), value);
+  }
 }
 
 auto Metric::description() const noexcept -> const std::string& {
-  return detail::get_runtime_instance<telemetry::Metric>(*this).description();
+  return std::get<core::MetricTag>(core_element().type).properties->description;
 }
 
 auto Metric::unit() const noexcept -> const std::string& {
-  return detail::get_runtime_instance<telemetry::Metric>(*this).unit();
+  return std::get<core::MetricTag>(core_element().type).properties->unit;
 }
 
 } // namespace xronos::sdk

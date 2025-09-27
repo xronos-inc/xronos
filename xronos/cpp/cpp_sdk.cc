@@ -1,18 +1,12 @@
 // SPDX-FileCopyrightText: Copyright (c) 2025 Xronos Inc.
 // SPDX-License-Identifier: BSD-3-Clause
 
-#include <atomic>
 #include <cassert>
-#include <chrono>
-#include <condition_variable>
 #include <csignal>
 #include <cstdint>
 #include <functional>
-#include <iostream>
-#include <mutex>
 #include <string>
 #include <string_view>
-#include <thread>
 #include <unordered_map>
 #include <utility>
 
@@ -25,9 +19,11 @@
 #include "pybind11/stl.h" // IWYU pragma: keep
 
 #include "xronos/sdk.hh"
+#include "xronos/sdk/context.hh"
 #include "xronos/sdk/detail/source_location.hh"
 #include "xronos/sdk/element.hh"
-#include "xronos/sdk/event_source.hh"
+#include "xronos/sdk/periodic_timer.hh"
+#include "xronos/sdk/reaction.hh"
 #include "xronos/sdk/shutdown.hh"
 #include "xronos/sdk/startup.hh"
 
@@ -67,6 +63,7 @@ public:
   using BaseReaction::MetricEffect;
   using BaseReaction::PortEffect;
   using BaseReaction::ProgrammableTimerEffect;
+  using BaseReaction::ShutdownEffect;
   using BaseReaction::Trigger;
 
   void set_handler(std::function<void()> handler) noexcept {
@@ -85,62 +82,25 @@ private:
 
 class PyEnvironment : public Environment {
 public:
+  // Replaces Python's signal handler with the default handler and restores
+  // Python's handler when destructed. This ensures that Ctrl+C aborts the
+  // program immediately, but it does not raise a KeyboardInterrupt while a
+  // Xronos program is running.
   class SigintHandler {
-  private:
-    constexpr static auto SIGINT_POLL_INTERVAL = std::chrono::milliseconds(100);
-    inline static std::atomic<bool> sigint_called{false};
-    static void siginit_handler([[maybe_unused]] int signal) { sigint_called = true; }
-    std::mutex mtx_exited;
-    bool exited{false};
-    std::condition_variable cv_exited;
-
-    void (*external_sigint_handler)(int){nullptr};
-
-    std::thread polling_thread;
-
-    void sigint_polling(Environment* environment) {
-      // Poll because it is not generally safe to access condition variables from signal
-      // handlers
-      std::unique_lock lock(mtx_exited);
-      // This thread checks periodically if SIGINT has been received. As an optimization,
-      // it exits early without waiting for the next polling interval if the environment
-      // has already exited.
-      while (!sigint_called && !exited) {
-        cv_exited.wait_for(lock, SIGINT_POLL_INTERVAL);
-      }
-      if (sigint_called) {
-        environment->request_shutdown();
-        std::cout << "SIGINT received. Requesting shutdown of the environment (press "
-                     "Ctrl+C again to force)\n";
-        (void)signal(SIGINT, SIG_DFL); // Restore the default signal handler to allow the
-                                       // user to force the shutdown by pressing Ctrl+C again
-      }
-    }
-
   public:
-    SigintHandler(Environment* environment)
-        : external_sigint_handler(signal(SIGINT, &siginit_handler)) {
-      polling_thread = std::thread([this, environment]() { sigint_polling(environment); });
-    }
+    SigintHandler()
+        : python_sigint_handler(signal(SIGINT, SIG_DFL)) {}
     ~SigintHandler() {
-      {
-        std::unique_lock lock(mtx_exited);
-        exited = true;
-        cv_exited.notify_all();
-      }
-      polling_thread.join();
-      if (sigint_called) {
-        external_sigint_handler(SIGINT); // run CPython's default signal handler, which will
-                                         // raise a KeyboardInterrupt or trigger any
-                                         // user-defined Python-level signal handler at the
-                                         // next Python bytecode instruction
-      }
-      (void)signal(SIGINT, external_sigint_handler);
+      // Restore the Python handler
+      (void)signal(SIGINT, python_sigint_handler);
     }
     SigintHandler(const SigintHandler&) = delete;
     SigintHandler(SigintHandler&&) = delete;
     void operator=(const SigintHandler&) = delete;
     void operator=(SigintHandler&&) = delete;
+
+  private:
+    void (*python_sigint_handler)(int){nullptr};
   };
 
   PyEnvironment(unsigned workers, bool fast, bool render_reactor_graph, Duration timeout = Duration::max())
@@ -148,7 +108,7 @@ public:
 
   void execute() {
     py::gil_scoped_release release;
-    SigintHandler sigint_handler(this); // acts as a scoped guard
+    SigintHandler sigint_handler{}; // acts as a scoped guard
     Environment::execute();
   }
 };
@@ -159,10 +119,10 @@ public:
       : Reactor{name, parent_context}
       , assemble_callback_{std::move(assemble_callback)} {}
 
+  using Reactor::context;
   using Reactor::get_lag;
   using Reactor::get_time;
   using Reactor::get_time_since_startup;
-  using Reactor::request_shutdown;
   using Reactor::shutdown;
   using Reactor::startup;
 
@@ -201,13 +161,8 @@ PYBIND11_MODULE(_cpp_sdk, mod, py::mod_gil_not_used()) {
            py::arg("file_"), py::arg("function"), py::arg("start_line"), py::arg("end_line"), py::arg("start_column"),
            py::arg("end_column"));
 
-  py::class_<EnvironmentContext>(mod, "EnvironmentContext")
-      .def(py::init(py::overload_cast<Environment&, detail::SourceLocationView>(&detail::create_context)),
-           py::arg("environment"), py::arg("source_location"));
-
-  py::class_<ReactorContext>(mod, "ReactorContext")
-      .def(py::init(py::overload_cast<Reactor&, detail::SourceLocationView>(&detail::create_context)),
-           py::arg("reactor"), py::arg("source_location"));
+  py::class_<EnvironmentContext>(mod, "EnvironmentContext");
+  py::class_<ReactorContext>(mod, "ReactorContext");
 
   py::class_<Environment>(mod, "BaseEnvironment");
 
@@ -216,7 +171,6 @@ PYBIND11_MODULE(_cpp_sdk, mod, py::mod_gil_not_used()) {
       .def(py::init<unsigned, bool, bool, Duration>(), py::arg("workers"), py::arg("fast"),
            py::arg("render_reactor_graph"), py::arg("timeout"))
       .def("execute", &PyEnvironment::execute)
-      .def("request_shutdown", &PyEnvironment::request_shutdown)
       .def("enable_telemetry", &PyEnvironment::enable_telemetry, py::arg("application_name"), py::arg("endpoint"))
       .def("connect",
            py::overload_cast<const InputPort<GilWrapper>&, const InputPort<GilWrapper>&>(
@@ -241,7 +195,9 @@ PYBIND11_MODULE(_cpp_sdk, mod, py::mod_gil_not_used()) {
       .def("connect_delayed",
            py::overload_cast<const OutputPort<GilWrapper>&, const InputPort<GilWrapper>&, Duration>(
                &PyEnvironment::connect<GilWrapper>),
-           py::arg("from_"), py::arg("to"), py::arg("delay"));
+           py::arg("from_"), py::arg("to"), py::arg("delay"))
+      .def("context", py::overload_cast<detail::SourceLocationView>(&PyEnvironment::context),
+           py::arg("source_location"));
 
   py::class_<Element>(mod, "Element")
       .def_property_readonly("name", &Element::name)
@@ -259,7 +215,6 @@ PYBIND11_MODULE(_cpp_sdk, mod, py::mod_gil_not_used()) {
       .def("get_lag", &PyReactor::get_lag)
       .def("get_time", &PyReactor::get_time)
       .def("get_time_since_startup", &PyReactor::get_time_since_startup)
-      .def("request_shutdown", &PyReactor::request_shutdown)
       .def_property_readonly("startup", &PyReactor::startup)
       .def_property_readonly("shutdown", &PyReactor::shutdown)
       .def("add_reaction", &PyReactor::add_reaction, py::return_value_policy::reference, py::arg("name"),
@@ -283,17 +238,14 @@ PYBIND11_MODULE(_cpp_sdk, mod, py::mod_gil_not_used()) {
       .def(
           "connect_delayed",
           py::overload_cast<const OutputPort<GilWrapper>&, const InputPort<GilWrapper>&, Duration>(&PyReactor::connect),
-          py::arg("from_"), py::arg("to"), py::arg("delay"));
+          py::arg("from_"), py::arg("to"), py::arg("delay"))
+      .def("context", py::overload_cast<detail::SourceLocationView>(&PyReactor::context), py::arg("source_location"));
 
-  py::class_<EventSource<GilWrapper>>(mod, "EventSource");
+  py::class_<Startup, Element>(mod, "Startup");
 
-  py::class_<EventSource<void>>(mod, "VoidEventSource");
+  py::class_<Shutdown, Element>(mod, "Shutdown");
 
-  py::class_<Startup, EventSource<void>, Element>(mod, "Startup");
-
-  py::class_<Shutdown, EventSource<void>, Element>(mod, "Shutdown");
-
-  py::class_<PeriodicTimer, EventSource<void>, Element>(mod, "PeriodicTimer")
+  py::class_<PeriodicTimer, Element>(mod, "PeriodicTimer")
       .def(py::init<std::string_view, ReactorContext, Duration, Duration>(), py::arg("name"), py::arg("context"),
            py::arg("period"), py::arg("offset"))
       .def("offset", &PeriodicTimer::offset)
@@ -301,18 +253,16 @@ PYBIND11_MODULE(_cpp_sdk, mod, py::mod_gil_not_used()) {
       .def("set_offset", &detail::set_timer_offset, py::arg("offset"))
       .def("set_period", &detail::set_timer_period, py::arg("period"));
 
-  py::class_<Port<GilWrapper>, EventSource<GilWrapper>, Element>(mod, "Port");
-
-  py::class_<InputPort<GilWrapper>, Port<GilWrapper>>(mod, "InputPort")
+  py::class_<InputPort<GilWrapper>, Element>(mod, "InputPort")
       .def(py::init<std::string_view, ReactorContext>(), py::arg("name"), py::arg("context"));
 
-  py::class_<OutputPort<GilWrapper>, Port<GilWrapper>>(mod, "OutputPort")
+  py::class_<OutputPort<GilWrapper>, Element>(mod, "OutputPort")
       .def(py::init<std::string_view, ReactorContext>(), py::arg("name"), py::arg("context"));
 
-  py::class_<ProgrammableTimer<GilWrapper>, EventSource<GilWrapper>, Element>(mod, "ProgrammableTimer")
+  py::class_<ProgrammableTimer<GilWrapper>, Element>(mod, "ProgrammableTimer")
       .def(py::init<std::string_view, ReactorContext>(), py::arg("name"), py::arg("context"));
 
-  py::class_<PhysicalEvent<GilWrapper>, EventSource<GilWrapper>, Element>(mod, "PhysicalEvent")
+  py::class_<PhysicalEvent<GilWrapper>, Element>(mod, "PhysicalEvent")
       .def(py::init<std::string_view, ReactorContext>(), py::arg("name"), py::arg("context"))
       .def(
           "trigger",
@@ -334,16 +284,22 @@ PYBIND11_MODULE(_cpp_sdk, mod, py::mod_gil_not_used()) {
       .def("context", &PyReaction::context);
 
   py::class_<PyReaction::Trigger<void>>(mod, "VoidTrigger")
-      .def(py::init<const EventSource<void>&, ReactionContext>(), py::arg("trigger"), py::arg("context"))
+      .def(py::init<const PeriodicTimer&, ReactionContext>(), py::arg("trigger"), py::arg("context"))
+      .def(py::init<const Startup&, ReactionContext>(), py::arg("trigger"), py::arg("context"))
+      .def(py::init<const Shutdown&, ReactionContext>(), py::arg("trigger"), py::arg("context"))
       .def("is_present", &PyReaction::Trigger<void>::is_present);
 
   py::class_<PyReaction::Trigger<GilWrapper>>(mod, "Trigger")
-      .def(py::init<const EventSource<GilWrapper>&, ReactionContext>(), py::arg("trigger"), py::arg("context"))
+      .def(py::init<const InputPort<GilWrapper>&, ReactionContext>(), py::arg("trigger"), py::arg("context"))
+      .def(py::init<const OutputPort<GilWrapper>&, ReactionContext>(), py::arg("trigger"), py::arg("context"))
+      .def(py::init<const PhysicalEvent<GilWrapper>&, ReactionContext>(), py::arg("trigger"), py::arg("context"))
+      .def(py::init<const ProgrammableTimer<GilWrapper>&, ReactionContext>(), py::arg("trigger"), py::arg("context"))
       .def("is_present", &PyReaction::Trigger<GilWrapper>::is_present)
       .def("get", [](const PyReaction::Trigger<GilWrapper>& trigger) { return trigger.get()->get(); });
 
   py::class_<PyReaction::PortEffect<GilWrapper>>(mod, "PortEffect")
-      .def(py::init<Port<GilWrapper>&, ReactionContext>(), py::arg("port"), py::arg("context"))
+      .def(py::init<InputPort<GilWrapper>&, ReactionContext>(), py::arg("effect"), py::arg("context"))
+      .def(py::init<OutputPort<GilWrapper>&, ReactionContext>(), py::arg("effect"), py::arg("context"))
       .def(
           "set",
           [](PyReaction::PortEffect<GilWrapper>& effect, const py::object& value) { effect.set(GilWrapper{value}); },
@@ -365,4 +321,8 @@ PYBIND11_MODULE(_cpp_sdk, mod, py::mod_gil_not_used()) {
       .def(py::init<Metric&, ReactionContext>(), py::arg("metric"), py::arg("context"))
       .def("record", py::overload_cast<std::int64_t>(&PyReaction::MetricEffect::record), py::arg("value"))
       .def("record", py::overload_cast<double>(&PyReaction::MetricEffect::record), py::arg("value"));
+
+  py::class_<PyReaction::ShutdownEffect>(mod, "ShutdownEffect")
+      .def(py::init<Shutdown&, ReactionContext>(), py::arg("shutdown"), py::arg("context"))
+      .def("trigger_shutdown", &PyReaction::ShutdownEffect::trigger_shutdown);
 }

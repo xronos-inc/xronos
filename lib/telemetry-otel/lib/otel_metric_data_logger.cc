@@ -7,12 +7,15 @@
 
 #include "common.hh"
 #include "opentelemetry/trace/tracer.h"
+#include "xronos/core/element.hh"
+#include "xronos/runtime/interfaces.hh"
 #include "xronos/telemetry/metric.hh"
 
 using namespace xronos::telemetry;
 using namespace xronos::telemetry::otel;
 
-void OtelMetricDataLogger::record(const Metric& metric, MetricValue value) {
+void OtelMetricDataLogger::record(const core::Element& metric, const runtime::TimeAccess& time_access,
+                                  MetricValue value) {
   auto current_span = opentelemetry::trace::Tracer::GetCurrentSpan();
   if (!current_span->GetContext().IsValid()) {
     // Either tracing is disabled or there is no current span. The latter case
@@ -22,10 +25,12 @@ void OtelMetricDataLogger::record(const Metric& metric, MetricValue value) {
     return;
   }
 
-  auto attributes = get_low_cardinality_attributes(attribute_manager_, metric);
+  const auto& metric_properties = *std::get<core::MetricTag>(metric.type).properties;
+
+  auto attributes = get_low_cardinality_attributes(attribute_manager_, element_registry_, metric);
 
   // add additional low cardinality attributes
-  attributes["xronos.unit"] = metric.unit();
+  attributes["xronos.unit"] = metric_properties.unit;
 
   // Compute list of low cardinality attributes. This assumes that all
   // attributes set so far are low cardinality. We need to explicitly own this
@@ -38,10 +43,10 @@ void OtelMetricDataLogger::record(const Metric& metric, MetricValue value) {
   attributes["xronos.value"] = std::visit([](const auto& arg) { return OtelAttributeValue{arg}; }, value);
 
   // add additional high cardinality attributes
-  set_common_high_cardinality_attributes(metric, attributes);
-  attributes["xronos.description"] = metric.description();
+  set_common_high_cardinality_attributes(time_access, attributes);
+  attributes["xronos.description"] = metric_properties.description;
 
   // log the event
-  auto timestamp = metric.container()->get_tag().time_point();
-  current_span->AddEvent(metric.fqn(), timestamp, attributes);
+  auto timestamp = time_access.get_timestamp();
+  current_span->AddEvent(metric.fqn, timestamp, attributes);
 }

@@ -18,37 +18,19 @@ It supports real-time telemetry, system visualization, and modular design with a
 - ⏱️ **Deterministic Concurrency**: Reactor-based execution model guarantees predictable behavior.
 - 🧠 **Automatic System Visualization**: Architecture diagrams generated from code.
 
-## Usage
+## Getting Started
 
-- **Python users**: See [docs.xronos.com/python\_sdk/getting\_started.html](https://docs.xronos.com/python_sdk/getting_started.html)
-- **C++ users**: See [docs.xronos.com/cpp\_sdk/getting\_started.html](https://docs.xronos.com/cpp_sdk/getting_started.html)
-- **VS Code users**: The optional [Xronos VS Code Extension](https://marketplace.visualstudio.com/items?itemName=xronos.xronos) renders diagrams of your programs
+- **Python users**: [Python Getting Started Guide](https://docs.xronos.com/python_sdk/getting_started.html)
+- **C++ users**: [C++ Getting Started Guide](https://docs.xronos.com/cpp_sdk/getting_started.html)
+- **VS Code users**: optional [Xronos VS Code Extension](https://marketplace.visualstudio.com/items?itemName=xronos.xronos) for rendering diagrams of your programs
 
-## Repository Structure
+## Examples and Tutorials
 
-```bash
-.
-├── cpp-sdk/        # C++ SDK
-├── docker-bake.hcl # build definitions
-├── docs/           # source for https://docs.xronos.com
-├── examples/       # python SDK examples
-├── lib/            # core Xronos libraries
-├── third-party/    # third-party libraries
-├── xronos/         # Python SDK
-└── README.md       # project overview (this file)
-```
-
-## Building from Source
-
-
-We use [docker bake](https://docs.docker.com/build/bake/) as our top-level build
-tool. To build locally, install [docker](https://docker.com) and the [buildx
-extension](https://github.com/docker/buildx) (if not included in your docker
-installation). Then run:
-
-```bash
-docker buildx bake build
-```
+- **Python**:
+   - [Examples](./examples)
+   - [Tutorials](https://docs.xronos.com/python_sdk/tutorials/index.html)
+- **C++**:
+   - [Examples](./cpp-sdk/examples)
 
 ## Links
 

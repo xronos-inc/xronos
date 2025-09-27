@@ -83,7 +83,7 @@ void OtelTelemetryBackend::initialize() {
   Provider::SetTracerProvider(std::move(tracer_provider));
 }
 
-void OtelTelemetryBackend::shutdown() {
+OtelTelemetryBackend::~OtelTelemetryBackend() {
   using namespace opentelemetry::trace;
   // This will destroy the previously configured trace provider and flush all pending data
   Provider::SetTracerProvider(std::make_shared<NoopTracerProvider>());

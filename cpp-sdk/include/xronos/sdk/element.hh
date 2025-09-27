@@ -23,29 +23,6 @@
 
 namespace xronos::sdk {
 
-namespace detail {
-
-struct RuntimeElementDeleter {
-  void operator()(runtime::ReactorElement* element);
-};
-
-// Using a custom deleter allows us to move the pointer without requiring a
-// complete definition of runtime::ReactorElement. This is necessary for hiding
-// the runtime code from the templated SDK classes (pImpl).
-using RuntimeElementPtr = std::unique_ptr<runtime::ReactorElement, RuntimeElementDeleter>;
-
-template <class RuntimeElement>
-  requires(std::is_base_of_v<runtime::ReactorElement, RuntimeElement>)
-[[nodiscard]] auto get_runtime_instance(const Element& element) -> RuntimeElement&;
-
-template <class RuntimeElement, class... Args>
-  requires(std::is_base_of_v<runtime::ReactorElement, RuntimeElement>)
-auto make_runtime_element_pointer(Args&&... args) {
-  return RuntimeElementPtr(new RuntimeElement(std::forward<Args>(args)...));
-}
-
-} // namespace detail
-
 /**
  * Possible value types for an attribute.
  */
@@ -77,6 +54,13 @@ public:
    * @returns The element's fully qualified name.
    */
   [[nodiscard]] auto fqn() const noexcept -> const std::string&;
+
+  /**
+   * Get the element's unique ID.
+   *
+   * Returns an integer ID that is unique within an environment.
+   */
+  [[nodiscard]] auto uid() const noexcept -> std::uint64_t;
 
   /**
    * Annotate an element with an attribute.
@@ -129,34 +113,33 @@ public:
         std::span<const std::pair<std::string_view, AttributeValue>>(attributes.begin(), attributes.size()));
   }
 
-  /**
-   * Virtual destructor.
-   */
+  /** Virtual destructor. */
   virtual ~Element() = default;
+
+  /** Move constructor. */
+  Element(Element&&) = default;
+  /** @internal */
+  Element(const Element&) = delete;
+  /** Move assignment operator. */
+  auto operator=(Element&&) -> Element& = default;
+  /** @internal */
+  auto operator=(const Element&) -> Element& = delete;
 
 protected:
   /** @internal */
-  Element(detail::RuntimeElementPtr runtime_instance, Context context);
+  Element(const core::Element& core_element, const Context& context);
+
+  /** @internal */
+  [[nodiscard]] auto program_context() const noexcept -> const auto& { return program_context_; }
+
+  /** @internal */
+  [[nodiscard]] auto core_element() const noexcept -> const core::Element& { return core_element_; }
 
 private:
-  detail::RuntimeElementPtr runtime_instance_;
-  std::reference_wrapper<telemetry::AttributeManager> attribute_manager_;
-
-  template <class RuntimeElement>
-    requires(std::is_base_of_v<runtime::ReactorElement, RuntimeElement>)
-  friend auto detail::get_runtime_instance(const Element& element) -> RuntimeElement&;
+  std::reference_wrapper<const core::Element> core_element_;
+  std::shared_ptr<detail::ProgramContext> program_context_;
 };
 
 } // namespace xronos::sdk
-
-namespace xronos::sdk::detail {
-
-template <class RuntimeElement>
-  requires(std::is_base_of_v<runtime::ReactorElement, RuntimeElement>)
-[[nodiscard]] auto get_runtime_instance(const Element& element) -> RuntimeElement& {
-  return dynamic_cast<RuntimeElement&>(*element.runtime_instance_);
-}
-
-} // namespace xronos::sdk::detail
 
 #endif // XRONOS_SDK_ELEMENT_HH

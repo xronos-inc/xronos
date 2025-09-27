@@ -10,9 +10,7 @@
 
 using namespace std::literals::chrono_literals;
 
-namespace xronos::sdk::test {
-
-namespace loops {
+namespace xronos::sdk::test::loops {
 
 class FeedbackVoid : public Reactor {
 public:
@@ -21,7 +19,7 @@ public:
   [[nodiscard]] auto output() const noexcept -> auto& { return output_; }
   [[nodiscard]] auto input() const noexcept -> auto& { return input_; }
 
-  void chek_post_conditions(int offset) {
+  void chek_post_conditions(int offset) const {
     EXPECT_GT(messages_sent_, 0);
     EXPECT_GT(messages_received_, 0);
     EXPECT_EQ(messages_sent_ + offset, messages_received_);
@@ -64,7 +62,7 @@ public:
   [[nodiscard]] auto output() const noexcept -> auto& { return output_; }
   [[nodiscard]] auto input() const noexcept -> auto& { return input_; }
 
-  void chek_post_conditions(int expected) { EXPECT_EQ(messages_received_, expected); }
+  void chek_post_conditions(int expected) const { EXPECT_EQ(messages_received_, expected); }
 
 private:
   InputPort<void> input_{"input", context()};
@@ -92,7 +90,7 @@ public:
   [[nodiscard]] auto output() const noexcept -> auto& { return output_; }
   [[nodiscard]] auto input() const noexcept -> auto& { return input_; }
 
-  void chek_post_conditions(int offset) {
+  void chek_post_conditions(int offset) const {
     EXPECT_GT(messages_sent_, 0);
     EXPECT_GT(messages_received_, 0);
     EXPECT_EQ(messages_sent_ + offset, messages_received_);
@@ -138,7 +136,7 @@ public:
   [[nodiscard]] auto output() const noexcept -> auto& { return output_; }
   [[nodiscard]] auto input() const noexcept -> auto& { return input_; }
 
-  void chek_post_conditions(int expected) { EXPECT_EQ(messages_received_, expected); }
+  void chek_post_conditions(int expected) const { EXPECT_EQ(messages_received_, expected); }
 
 private:
   InputPort<unsigned> input_{"input", context()};
@@ -167,7 +165,7 @@ public:
   [[nodiscard]] auto output() const noexcept -> auto& { return output_; }
   [[nodiscard]] auto input() const noexcept -> auto& { return input_; }
 
-  void chek_post_conditions(int offset) {
+  void chek_post_conditions(int offset) const {
     EXPECT_GT(messages_sent_, 0);
     EXPECT_GT(messages_received_, 0);
     EXPECT_EQ(messages_sent_ + offset, messages_received_);
@@ -343,6 +341,4 @@ TEST(loops, DirectFeedbackSelfTriggered) {
   loop.chek_post_conditions(-1);
 }
 
-} // namespace loops
-
-} // namespace xronos::sdk::test
+} // namespace xronos::sdk::test::loops

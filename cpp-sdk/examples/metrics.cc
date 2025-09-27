@@ -14,7 +14,7 @@ using namespace std::literals::chrono_literals;
 
 class Ramp : public sdk::Reactor {
 public:
-  Ramp(std::string_view name, sdk::Context context)
+  Ramp(std::string_view name, const sdk::Context& context)
       : sdk::Reactor{name, context} {
     value_.add_attribute("value_category", "result");
   }
@@ -46,7 +46,7 @@ private:
 
 class Square : public sdk::Reactor {
 public:
-  Square(std::string_view name, sdk::Context context)
+  Square(std::string_view name, const sdk::Context& context)
       : sdk::Reactor{name, context} {
     input_value_.add_attribute("value_category", "input");
     result_.add_attribute("value_category", "result");

@@ -3,9 +3,8 @@ set(TEST_SOURCES ${TEST_SOURCES} PARENT_SCOPE)  # make the variable available in
 
 if(XRONOS_SDK_BUILD_TESTS)
   include(../../third-party/googletest/googletest.cmake)
-  enable_testing()
   add_executable(xronos-sdk-tests ${TEST_SOURCES})
-  target_link_libraries(xronos-sdk-tests PRIVATE xronos-sdk GTest::gtest_main)
+  target_link_libraries(xronos-sdk-tests PRIVATE xronos::xronos-sdk GTest::gtest_main xronos::xronos-util)
   include(GoogleTest)
   gtest_discover_tests(xronos-sdk-tests)
 endif()

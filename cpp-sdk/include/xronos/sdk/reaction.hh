@@ -6,19 +6,23 @@
 #ifndef XRONOS_SDK_REACTION_HH
 #define XRONOS_SDK_REACTION_HH
 
-#include <cassert>
+#include <any>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <type_traits>
+#include <variant>
 
 #include "xronos/sdk/element.hh"
-#include "xronos/sdk/event_source.hh"
 #include "xronos/sdk/fwd.hh"
 #include "xronos/sdk/metric.hh"
+#include "xronos/sdk/periodic_timer.hh"
+#include "xronos/sdk/physical_event.hh"
 #include "xronos/sdk/port.hh"
 #include "xronos/sdk/programmable_timer.hh"
 #include "xronos/sdk/reactor.hh"
+#include "xronos/sdk/shutdown.hh"
+#include "xronos/sdk/startup.hh"
 #include "xronos/sdk/time.hh"
 #include "xronos/sdk/value_ptr.hh"
 
@@ -35,11 +39,11 @@ namespace xronos::sdk {
  */
 class ReactionContext {
 private:
-  constexpr ReactionContext(runtime::Reaction& reaction_instance)
+  ReactionContext(BaseReaction& reaction_instance)
       : reaction_instance_{reaction_instance} {}
 
-  std::reference_wrapper<runtime::Reaction> reaction_instance_;
-  constexpr auto reaction_instance() noexcept -> runtime::Reaction& { return reaction_instance_; }
+  std::reference_wrapper<BaseReaction> reaction_instance_;
+  [[nodiscard]] auto reaction_instance() const noexcept -> BaseReaction& { return reaction_instance_; }
 
   friend BaseReaction;
 };
@@ -71,7 +75,57 @@ public:
    * be invoked directly. Use the Reactor::add_reaction() factory method
    * instead.
    */
-  BaseReaction(ReactionProperties properties);
+  BaseReaction(const ReactionProperties& properties);
+
+private:
+  class TriggerImpl {
+  protected:
+    TriggerImpl(std::uint64_t trigger_uid, const ReactionContext& context);
+
+    [[nodiscard]] auto get() const noexcept -> std::any;
+    [[nodiscard]] auto is_present() const noexcept -> bool;
+
+  private:
+    std::uint64_t trigger_uid_;
+    std::uint64_t reaction_uid_;
+    std::reference_wrapper<const detail::ProgramContext> program_context_;
+
+    mutable const runtime::GettableTrigger* impl_{nullptr};
+    [[nodiscard]] auto get_impl() const noexcept -> const runtime::GettableTrigger*;
+  };
+
+  class PortEffectImpl {
+  protected:
+    PortEffectImpl(std::uint64_t effect_uid, const ReactionContext& context);
+
+    void set(const std::any& value) noexcept;
+    [[nodiscard]] auto get() const noexcept -> std::any;
+    [[nodiscard]] auto is_present() const noexcept -> bool;
+
+  private:
+    std::uint64_t effect_uid_;
+    std::uint64_t reaction_uid_;
+    std::reference_wrapper<const detail::ProgramContext> program_context_;
+
+    mutable runtime::SettableEffect* impl_{nullptr};
+    [[nodiscard]] auto get_impl() noexcept -> runtime::SettableEffect*;
+    [[nodiscard]] auto get_impl() const noexcept -> const runtime::SettableEffect*;
+  };
+
+  class ProgrammableTimerEffectImpl {
+  protected:
+    ProgrammableTimerEffectImpl(std::uint64_t effect_uid, const ReactionContext& context);
+
+    void schedule(const std::any& value, Duration delay) noexcept;
+
+  private:
+    std::uint64_t effect_uid_;
+    std::uint64_t reaction_uid_;
+    std::reference_wrapper<const detail::ProgramContext> program_context_;
+
+    runtime::SchedulableEffect* impl_{nullptr};
+    [[nodiscard]] auto get_impl() noexcept -> runtime::SchedulableEffect*;
+  };
 
 protected:
   /**
@@ -80,7 +134,7 @@ protected:
    *
    * @returns This reaction's context.
    */
-  [[nodiscard]] auto context() noexcept -> ReactionContext;
+  [[nodiscard]] auto context() noexcept -> auto { return ReactionContext{*this}; };
 
   /**
    * Declares a reaction trigger and provides read access to the triggering
@@ -89,23 +143,48 @@ protected:
    * @tparam T The value type associated with events received on the triggering
    * event source.
    */
-  template <class T> class Trigger {
+  template <class T> class Trigger : public TriggerImpl {
   public:
     /**
      * Constructor.
      *
-     * Constructing a Trigger automatically registers the specified event source
-     * with the reaction, causing the reaction handler to run whenever the event
-     * source emits an event.
+     * Constructing a Trigger automatically registers the given event source as
+     * a trigger of the reaction, causing the reaction handler to run whenever
+     * the event source emits an event.
      *
-     * @param trigger An EventSource source that should trigger the reaction.
+     * @param trigger An event source that should trigger the reaction.
      * @param context Context of the reaction the trigger is declared for. Can
      * be obtained using context().
      */
-    Trigger(const EventSource<T>& trigger, ReactionContext context)
-        : trigger_{trigger} {
-      trigger.register_as_trigger_of(context.reaction_instance());
-    }
+    Trigger(const InputPort<T>& trigger, const ReactionContext& context)
+        : TriggerImpl{trigger.uid(), context} {}
+
+    /** @overload */
+    Trigger(const OutputPort<T>& trigger, const ReactionContext& context)
+        : TriggerImpl{trigger.uid(), context} {}
+
+    /** @overload */
+    Trigger(const PhysicalEvent<T>& trigger, const ReactionContext& context)
+        : TriggerImpl{trigger.uid(), context} {}
+
+    /** @overload */
+    Trigger(const ProgrammableTimer<T>& trigger, const ReactionContext& context)
+        : TriggerImpl{trigger.uid(), context} {}
+
+    /** @overload */
+    Trigger(const PeriodicTimer& trigger, const ReactionContext& context)
+      requires(std::is_same_v<T, void>)
+        : TriggerImpl{trigger.uid(), context} {}
+
+    /** @overload */
+    Trigger(const Startup& trigger, const ReactionContext& context)
+      requires(std::is_same_v<T, void>)
+        : TriggerImpl{trigger.uid(), context} {}
+
+    /** @overload */
+    Trigger(const Shutdown& trigger, const ReactionContext& context)
+      requires(std::is_same_v<T, void>)
+        : TriggerImpl{trigger.uid(), context} {}
 
     /**
      * Get the value of a currently present event.
@@ -116,7 +195,10 @@ protected:
     [[nodiscard]] auto get() const noexcept -> ImmutableValuePtr<T>
       requires(!std::is_same_v<T, void>)
     {
-      return trigger_.get().get();
+      if (!is_present()) {
+        return ImmutableValuePtr<T>{nullptr};
+      }
+      return std::any_cast<ImmutableValuePtr<T>>(TriggerImpl::get());
     }
 
     /**
@@ -124,10 +206,7 @@ protected:
      *
      * @returns `true` if an event is present, `false` otherwise.
      */
-    [[nodiscard]] auto is_present() const noexcept -> bool { return trigger_.get().is_present(); }
-
-  private:
-    std::reference_wrapper<const EventSource<T>> trigger_;
+    [[nodiscard]] auto is_present() const noexcept -> bool { return TriggerImpl::is_present(); }
   };
 
   /**
@@ -136,7 +215,7 @@ protected:
    * @tparam T The value type associated with the port.
    * @ingroup effects
    */
-  template <class T> class PortEffect {
+  template <class T> class PortEffect : public PortEffectImpl {
   public:
     /**
      * Constructor.
@@ -145,10 +224,12 @@ protected:
      * @param context The context of the reaction the effect is declared for.
      * Can be obtained using context().
      */
-    PortEffect(Port<T>& port, ReactionContext context)
-        : port_{port} {
-      detail::runtime_port::register_as_effect_of(port, context.reaction_instance());
-    }
+    PortEffect(InputPort<T>& port, const ReactionContext& context)
+        : PortEffectImpl{port.uid(), context} {}
+
+    /** @overload */
+    PortEffect(OutputPort<T>& port, const ReactionContext& context)
+        : PortEffectImpl{port.uid(), context} {}
 
     /**
      * Write a value to the port sending a message to connected ports.
@@ -163,7 +244,7 @@ protected:
     void set(const ImmutableValuePtr<T>& value_ptr)
       requires(!std::is_same_v<T, void>)
     {
-      port_.get().set(value_ptr);
+      PortEffectImpl::set(value_ptr);
     }
     /**
      * @overload
@@ -205,7 +286,7 @@ protected:
     void set()
       requires(std::is_same_v<T, void>)
     {
-      port_.get().set();
+      PortEffectImpl::set(std::monostate{});
     }
 
     // Disambiguate set(0) by explicitly deleting set(nullptr_t)
@@ -223,7 +304,10 @@ protected:
     [[nodiscard]] auto get() const noexcept -> ImmutableValuePtr<T>
       requires(!std::is_same_v<T, void>)
     {
-      return port_.get().get();
+      if (!is_present()) {
+        return ImmutableValuePtr<T>{nullptr};
+      }
+      return std::any_cast<ImmutableValuePtr<T>>(PortEffectImpl::get());
     }
 
     /**
@@ -231,10 +315,7 @@ protected:
      *
      * @returns `true` if an event is present, `false` otherwise.
      */
-    [[nodiscard]] auto is_present() const noexcept -> bool { return port_.get().is_present(); }
-
-  private:
-    std::reference_wrapper<Port<T>> port_;
+    [[nodiscard]] auto is_present() const noexcept -> bool { return PortEffectImpl::is_present(); }
   };
 
   /**
@@ -243,7 +324,7 @@ protected:
    * @tparam T The value type associated with the programmable timer.
    * @ingroup effects
    */
-  template <class T> class ProgrammableTimerEffect {
+  template <class T> class ProgrammableTimerEffect : public ProgrammableTimerEffectImpl {
   public:
     /**
      * Constructor.
@@ -253,10 +334,8 @@ protected:
      * @param context The context of the reaction the effect is declared for.
      * Can be obtained using context().
      */
-    ProgrammableTimerEffect(ProgrammableTimer<T>& timer, ReactionContext context)
-        : event_{timer} {
-      detail::runtime_programmable_timer::register_as_effect_of(timer, context.reaction_instance());
-    }
+    ProgrammableTimerEffect(ProgrammableTimer<T>& timer, const ReactionContext& context)
+        : ProgrammableTimerEffectImpl{timer.uid(), context} {}
 
     /**
      * Schedule a future event.
@@ -267,7 +346,7 @@ protected:
     void schedule(const ImmutableValuePtr<T>& value_ptr, Duration delay = Duration::zero())
       requires(!std::is_same_v<T, void>)
     {
-      event_.get().schedule(value_ptr, delay);
+      ProgrammableTimerEffectImpl::schedule(value_ptr, delay);
     }
     /**
      * @overload
@@ -309,7 +388,7 @@ protected:
     void schedule(Duration delay = Duration::zero())
       requires(std::is_same_v<T, void>)
     {
-      event_.get().schedule(delay);
+      ProgrammableTimerEffectImpl::schedule(std::monostate{}, delay);
     }
 
     // Disambiguate schedule(0) by explicitly deleting schedule(nullptr_t)
@@ -317,9 +396,6 @@ protected:
     void schedule(V, Duration delay = Duration::zero())
       requires(std::is_same_v<V, std::nullptr_t>)
     = delete;
-
-  private:
-    std::reference_wrapper<ProgrammableTimer<T>> event_;
   };
 
   /**
@@ -336,7 +412,7 @@ protected:
      * @param context The context of the reaction the effect is declared for.
      * Can be obtained using context().
      */
-    MetricEffect(Metric& metric, [[maybe_unused]] ReactionContext context)
+    MetricEffect(Metric& metric, [[maybe_unused]] const ReactionContext& context)
         : metric_{metric} {}
 
     /**
@@ -355,6 +431,37 @@ protected:
     std::reference_wrapper<Metric> metric_;
   };
 
+  /**
+   * Allows a reaction to terminate the program.
+   */
+  class ShutdownEffect {
+  public:
+    /**
+     * Constructor.
+     *
+     * @param shutdown The shutdown event source used to trigger termination of the program.
+     * @param context The context of the reaction the effect is declared for.
+     * Can be obtained using context().
+     */
+    ShutdownEffect(Shutdown& shutdown, const ReactionContext& context);
+
+    /**
+     * Terminate the currently running reactor program.
+     *
+     * Terminates a running program at the next convenience. After completing all
+     * currently active reactions, this triggers the Shutdown event sources. Once
+     * all reactions triggered by Shutdown are processed, the program terminates.
+     */
+    void trigger_shutdown() noexcept;
+
+  private:
+    std::uint64_t effect_uid_;
+    std::uint64_t reaction_uid_;
+    std::reference_wrapper<const detail::ProgramContext> program_context_;
+    runtime::ShutdownEffect* impl_{nullptr};
+    [[nodiscard]] auto get_impl() noexcept -> runtime::ShutdownEffect*;
+  };
+
 private:
   /**
    * The reaction handler.
@@ -363,6 +470,9 @@ private:
    * code must override this method to define a reaction's behavior.
    */
   virtual void handler() = 0;
+
+  using Element::core_element;
+  using Element::program_context;
 };
 
 /**
@@ -378,7 +488,7 @@ public:
   /**
    * @copydoc BaseReaction::BaseReaction
    */
-  Reaction(ReactionProperties properties)
+  Reaction(const ReactionProperties& properties)
       : BaseReaction(properties)
       , self_(dynamic_cast<R&>(properties.container())) {}
 

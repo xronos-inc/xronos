@@ -20,7 +20,7 @@ from xronos.lib import (
     SuccessorSource,
     TimerSource,
 )
-from xronos.lib._abstract_source import AbstractSource, AbstractTimerSource
+from xronos.lib._abstract_source import AbstractTimerSource
 
 T = TypeVar("T")
 
@@ -60,35 +60,6 @@ class PrintAndAssert(xronos.Reactor, Generic[T]):
         return self._assert_count
 
 
-class ShutdownSource(AbstractSource[T]):
-    """A reactor that produces a single output at shutdown."""
-
-    def __init__(self, value: T) -> None:
-        super().__init__()
-        self.__value: T = value
-
-    @override
-    def _shutdown_handler(self) -> T:
-        return self.__value
-
-
-class StartupAndShutdownSource(AbstractSource[T]):
-    """A reactor that produces a single output at startup and shutdown."""
-
-    def __init__(self, startup_value: T, shutdown_value: T) -> None:
-        super().__init__()
-        self.__startup_value: T = startup_value
-        self.__shutdown_value: T = shutdown_value
-
-    @override
-    def _startup_handler(self) -> T:
-        return self.__startup_value
-
-    @override
-    def _shutdown_handler(self) -> T:
-        return self.__shutdown_value
-
-
 class SimultaneousSource(AbstractTimerSource[T]):
     """A reactor that produces simultaneous outputs at startup."""
 
@@ -121,44 +92,6 @@ def test_startup_source() -> None:
     )
     env.execute()
     assert printer.count() == 1
-
-
-def test_shutdown_source() -> None:
-    """Test the AbstractSource with only a shutdown trigger."""
-    env = xronos.Environment()
-    value = "goodbye"
-    printer = env.create_reactor(
-        "Startup Printer", PrintAndAssert[str], assert_value=lambda: value
-    )
-    env.connect(
-        env.create_reactor("Shutdown Source", ShutdownSource, value=value).output,
-        printer.result,
-    )
-    env.execute()
-    assert printer.count() == 1
-
-
-def test_startup_and_shutdown_source() -> None:
-    """Test the AbstractSource with both startup and shutdown triggers."""
-    env = xronos.Environment()
-    values = ["hello", "goodbye"]
-
-    printer = env.create_reactor(
-        "StartupAndShutdown Printer",
-        PrintAndAssert[str],
-        assert_value=lambda: values[printer.count()],
-    )
-    source = env.create_reactor(
-        "StartupAndShutdown Source",
-        StartupAndShutdownSource,
-        startup_value=values[0],
-        shutdown_value=values[1],
-    )
-    env.connect(
-        source.output,
-        printer.result,
-    )
-    env.execute()
 
 
 @pytest.mark.skipif(

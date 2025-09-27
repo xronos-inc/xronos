@@ -27,7 +27,7 @@ private:
 
 public:
   // Constructor taking duration parameters
-  RandomDelay(std::string_view name, sdk::Context context, std::chrono::milliseconds min_delay,
+  RandomDelay(std::string_view name, const sdk::Context& context, std::chrono::milliseconds min_delay,
               std::chrono::milliseconds max_delay)
       : sdk::Reactor(name, context)
       , dist(1, (max_delay - min_delay) / std::chrono::milliseconds(1)) {}
@@ -65,7 +65,7 @@ private:
   std::atomic<bool> terminate_{false};
 
 public:
-  KeyboardInput(std::string_view name, sdk::Context context)
+  KeyboardInput(std::string_view name, const sdk::Context& context)
       : sdk::Reactor(name, context) {}
 
   auto quit() -> sdk::OutputPort<void>& { return quit_; }
@@ -136,8 +136,7 @@ private:
   std::chrono::milliseconds total_time_{0};
 
 public:
-  GameLogic(std::string_view name, sdk::Context context)
-      : sdk::Reactor(name, context) {}
+  using sdk::Reactor::Reactor;
 
   auto request_prompt() -> sdk::OutputPort<void>& { return request_prompt_; }
   auto prompt() -> sdk::InputPort<void>& { return prompt_; }
@@ -168,12 +167,13 @@ public:
 
   class Response : public sdk::Reaction<GameLogic> {
     using sdk::Reaction<GameLogic>::Reaction;
-    PortEffect<void> request_effect{self().request_prompt(), context()};
     Trigger<void> enter_trigger{self().enter(), context()};
+    PortEffect<void> request_effect{self().request_prompt(), context()};
+    ShutdownEffect shutdown_effect{self().shutdown(), context()};
     void handler() final {
       if (self().prompt_time_ == sdk::TimePoint::min()) {
         std::cout << "YOU CHEATED!\n";
-        self().request_shutdown();
+        shutdown_effect.trigger_shutdown();
       } else {
         auto elapsed = self().get_time() - self().prompt_time_;
         auto time_in_ms = std::chrono::duration_cast<std::chrono::milliseconds>(elapsed);
@@ -189,7 +189,8 @@ public:
   class Quit : public sdk::Reaction<GameLogic> {
     using sdk::Reaction<GameLogic>::Reaction;
     Trigger<void> quit_trigger{self().quit_, context()};
-    void handler() final { self().request_shutdown(); }
+    ShutdownEffect shutdown_effect{self().shutdown(), context()};
+    void handler() final { shutdown_effect.trigger_shutdown(); }
   };
 
   void assemble() final {

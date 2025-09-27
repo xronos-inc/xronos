@@ -117,10 +117,11 @@ class TrainingController(xronos.Reactor):
     def on_timer(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
         interface.add_trigger(self._training_timer)
         data_effect = interface.add_effect(self.output_data)
+        shutdown_effect = interface.add_effect(self.shutdown)
 
         def handler() -> None:
             if self.epoch >= self.max_epochs:
-                self.request_shutdown()
+                shutdown_effect.trigger_shutdown()
                 return
 
             data_effect.set(self.X[self.current_idx])
@@ -131,6 +132,7 @@ class TrainingController(xronos.Reactor):
     def on_prediction(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
         pred_trigger = interface.add_trigger(self.input_pred)
         gradient_effect = interface.add_effect(self.output_gradient)
+        shutdown_effect = interface.add_effect(self.shutdown)
 
         def handler() -> None:
             pred = pred_trigger.get()
@@ -146,7 +148,7 @@ class TrainingController(xronos.Reactor):
             if self.current_idx == len(self.X) - 1 and self.check_convergence(
                 pred_loss
             ):
-                self.request_shutdown()
+                shutdown_effect.trigger_shutdown()
                 return
 
             # take derivative of the loss function to calculate gradient
