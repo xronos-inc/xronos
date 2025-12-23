@@ -1,4 +1,5 @@
 auditwheel
+build
 patchelf
 pytest
 pytest-mock

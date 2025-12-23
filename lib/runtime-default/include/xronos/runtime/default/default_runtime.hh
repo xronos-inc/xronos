@@ -4,9 +4,10 @@
 #ifndef XRONOS_RUNTIME_DEFAULT_DEFAULT_RUNTIME_HH
 #define XRONOS_RUNTIME_DEFAULT_DEFAULT_RUNTIME_HH
 
+#include <memory>
+
 #include "xronos/core/reactor_model.hh"
 #include "xronos/runtime/interfaces.hh"
-#include <memory>
 
 namespace xronos::runtime::default_ {
 

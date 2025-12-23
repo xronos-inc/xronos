@@ -4,24 +4,26 @@
 #ifndef XRONOS_CORE_ELEMENT_HH
 #define XRONOS_CORE_ELEMENT_HH
 
-#include <chrono>
+#include <any>
+#include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <memory>
 #include <optional>
+#include <span>
 #include <string>
 #include <variant>
+#include <vector>
+
+#include "xronos/core/time.hh"
 
 namespace xronos::core {
 
 using ElementID = std::uint64_t;
 
-using Duration = std::chrono::nanoseconds;
-using TimePoint = std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds>;
-
 struct ReactionProperties {
   std::function<void()> handler;
-  std::uint32_t position;
+  std::uint32_t position{};
 };
 
 struct MetricProperties {
@@ -34,15 +36,24 @@ struct PeriodicTimerProperties {
   Duration period;
 };
 
+struct PortProperties {
+  std::function<std::vector<std::byte>(const std::any&)> serializer{nullptr};
+  std::function<std::any(std::span<const std::byte>)> deserializer{nullptr};
+};
+
 // These <name>Tag classes are used similarly to enum values. They identify the
 // concrete element type. Some tags are annotated with additional type specific
 // properties. We use the indirection of an std::unique_ptr here to ensure that
 // tag types remain small (8 bytes on most 64-bit machines).
-struct InputPortTag {};
+struct InputPortTag {
+  std::unique_ptr<PortProperties> properties;
+};
 struct MetricTag {
   std::unique_ptr<MetricProperties> properties;
 };
-struct OutputPortTag {};
+struct OutputPortTag {
+  std::unique_ptr<PortProperties> properties;
+};
 struct PeriodicTimerTag {
   std::unique_ptr<PeriodicTimerProperties> properties;
 };
@@ -71,6 +82,13 @@ auto get_properties(const Element& element) noexcept -> auto&
   requires requires(T type) { type.properties; }
 {
   return *std::get<T>(element.type).properties;
+}
+
+inline auto get_port_properties(const Element& element) -> PortProperties& {
+  if (std::holds_alternative<InputPortTag>(element.type)) {
+    return get_properties<InputPortTag>(element);
+  }
+  return get_properties<OutputPortTag>(element);
 }
 
 } // namespace xronos::core

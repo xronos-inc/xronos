@@ -4,9 +4,9 @@ var hierarchy =
       [ "xronos::sdk::BaseReaction", "classxronos_1_1sdk_1_1BaseReaction.html", [
         [ "xronos::sdk::Reaction< R >", "classxronos_1_1sdk_1_1Reaction.html", null ]
       ] ],
-      [ "xronos::sdk::InputPort< T >", "classxronos_1_1sdk_1_1InputPort.html", null ],
+      [ "xronos::sdk::InputPort< T, Serializer >", "classxronos_1_1sdk_1_1InputPort.html", null ],
       [ "xronos::sdk::Metric", "classxronos_1_1sdk_1_1Metric.html", null ],
-      [ "xronos::sdk::OutputPort< T >", "classxronos_1_1sdk_1_1OutputPort.html", null ],
+      [ "xronos::sdk::OutputPort< T, Serializer >", "classxronos_1_1sdk_1_1OutputPort.html", null ],
       [ "xronos::sdk::PeriodicTimer", "classxronos_1_1sdk_1_1PeriodicTimer.html", null ],
       [ "xronos::sdk::PhysicalEvent< T >", "classxronos_1_1sdk_1_1PhysicalEvent.html", null ],
       [ "xronos::sdk::ProgrammableTimer< T >", "classxronos_1_1sdk_1_1ProgrammableTimer.html", null ],
@@ -24,9 +24,9 @@ var hierarchy =
       ] ]
     ] ],
     [ "xronos::sdk::BaseReaction::MetricEffect", "classxronos_1_1sdk_1_1BaseReaction_1_1MetricEffect.html", null ],
-    [ "xronos::sdk::Port< T >", "classxronos_1_1sdk_1_1Port.html", null ],
-    [ "xronos::sdk::BaseReaction::PortEffect< T >", "classxronos_1_1sdk_1_1BaseReaction_1_1PortEffect.html", null ],
-    [ "xronos::sdk::BaseReaction::ProgrammableTimerEffect< T >", "classxronos_1_1sdk_1_1BaseReaction_1_1ProgrammableTimerEffect.html", null ],
+    [ "xronos::sdk::NoSerializer&lt; T &gt;", "structxronos_1_1sdk_1_1NoSerializer.html", null ],
+    [ "xronos::sdk::BaseReaction::PortEffect&lt; T &gt;", "classxronos_1_1sdk_1_1BaseReaction_1_1PortEffect.html", null ],
+    [ "xronos::sdk::BaseReaction::ProgrammableTimerEffect&lt; T &gt;", "classxronos_1_1sdk_1_1BaseReaction_1_1ProgrammableTimerEffect.html", null ],
     [ "xronos::sdk::ReactionContext", "classxronos_1_1sdk_1_1ReactionContext.html", null ],
     [ "xronos::sdk::ReactionProperties", "classxronos_1_1sdk_1_1ReactionProperties.html", null ],
     [ "xronos::sdk::ReactorContext", "classxronos_1_1sdk_1_1ReactorContext.html", null ],
@@ -34,5 +34,5 @@ var hierarchy =
       [ "xronos::sdk::DefaultRuntimeProvider", "structxronos_1_1sdk_1_1DefaultRuntimeProvider.html", null ]
     ] ],
     [ "xronos::sdk::BaseReaction::ShutdownEffect", "classxronos_1_1sdk_1_1BaseReaction_1_1ShutdownEffect.html", null ],
-    [ "xronos::sdk::BaseReaction::Trigger< T >", "classxronos_1_1sdk_1_1BaseReaction_1_1Trigger.html", null ]
+    [ "xronos::sdk::BaseReaction::Trigger&lt; T &gt;", "classxronos_1_1sdk_1_1BaseReaction_1_1Trigger.html", null ]
 ];

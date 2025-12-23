@@ -40,9 +40,6 @@ class Environment;
 class Reactor;
 class BaseReaction;
 class PeriodicTimer;
-template <class T> class Port;
-template <class T> class InputPort;
-template <class T> class OutputPort;
 template <class T> class ProgrammableTimer;
 template <class T> class PhysicalEvent;
 

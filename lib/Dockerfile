@@ -2,7 +2,7 @@
 
 FROM scratch AS src
 WORKDIR /xronos/lib
-COPY --parents core graph-exporter graph-messages runtime-default runtime-interfaces source-location telemetry telemetry-otel util validator .
+COPY --parents core graph-exporter graph-messages logical-time runtime-default runtime-interfaces source-location telemetry telemetry-otel util validator .
 COPY CMakeLists.txt Config.cmake.in .
 
 FROM base AS common

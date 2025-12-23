@@ -1,6 +1,9 @@
 var searchData=
 [
-  ['shutdown_0',['Shutdown',['../classxronos_1_1sdk_1_1Shutdown.html',1,'xronos::sdk']]],
-  ['shutdowneffect_1',['ShutdownEffect',['../classxronos_1_1sdk_1_1BaseReaction_1_1ShutdownEffect.html',1,'xronos::sdk::BaseReaction']]],
-  ['startup_2',['Startup',['../classxronos_1_1sdk_1_1Startup.html',1,'xronos::sdk']]]
+  ['reaction_0',['Reaction',['../classxronos_1_1sdk_1_1Reaction.html',1,'xronos::sdk']]],
+  ['reactioncontext_1',['ReactionContext',['../classxronos_1_1sdk_1_1ReactionContext.html',1,'xronos::sdk']]],
+  ['reactionproperties_2',['ReactionProperties',['../classxronos_1_1sdk_1_1ReactionProperties.html',1,'xronos::sdk']]],
+  ['reactor_3',['Reactor',['../classxronos_1_1sdk_1_1Reactor.html',1,'xronos::sdk']]],
+  ['reactorcontext_4',['ReactorContext',['../classxronos_1_1sdk_1_1ReactorContext.html',1,'xronos::sdk']]],
+  ['runtimeprovider_5',['RuntimeProvider',['../structxronos_1_1sdk_1_1RuntimeProvider.html',1,'xronos::sdk']]]
 ];

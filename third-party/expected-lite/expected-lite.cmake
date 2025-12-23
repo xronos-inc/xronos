@@ -1,4 +1,4 @@
-set(EXPECTED_LITE_VERSION "0.9.0" CACHE STRING "expected-lite version")
+set(EXPECTED_LITE_VERSION "0.10.0" CACHE STRING "expected-lite version")
 
 include(FetchContent)
 

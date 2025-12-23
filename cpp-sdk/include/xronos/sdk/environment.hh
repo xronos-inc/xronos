@@ -17,6 +17,7 @@
 #include "xronos/sdk/detail/connect.hh"
 #include "xronos/sdk/detail/source_location.hh"
 #include "xronos/sdk/fwd.hh"
+#include "xronos/sdk/port.hh"
 #include "xronos/sdk/runtime_provider.hh"
 #include "xronos/sdk/time.hh"
 
@@ -99,21 +100,31 @@ public:
    * @param from The port to draw the connection from
    * @param to The port to draw the connection to.
    */
-  template <class T> void connect(const InputPort<T>& from, const InputPort<T>& to) {
+  template <class T, template <class> class FromSerializer, template <class> class ToSerializer>
+    requires std::is_same_v<FromSerializer<T>, NoSerializer<T>> || std::is_same_v<ToSerializer<T>, NoSerializer<T>> ||
+             std::is_same_v<FromSerializer<T>, ToSerializer<T>>
+  void connect(const InputPort<T, FromSerializer>& from, const InputPort<T, ToSerializer>& to) {
     detail::connect_impl(*program_context_, from, to, std::nullopt);
   }
   /**
    * @overload
    */
-  template <class T> void connect(const OutputPort<T>& from, const OutputPort<T>& to) {
+  template <class T, template <class> class FromSerializer, template <class> class ToSerializer>
+    requires std::is_same_v<FromSerializer<T>, NoSerializer<T>> || std::is_same_v<ToSerializer<T>, NoSerializer<T>> ||
+             std::is_same_v<FromSerializer<T>, ToSerializer<T>>
+  void connect(const OutputPort<T, FromSerializer>& from, const OutputPort<T, ToSerializer>& to) {
     detail::connect_impl(*program_context_, from, to, std::nullopt);
   }
   /**
    * @overload
    */
-  template <class T> void connect(const OutputPort<T>& from, const InputPort<T>& to) {
+  template <class T, template <class> class FromSerializer, template <class> class ToSerializer>
+    requires std::is_same_v<FromSerializer<T>, NoSerializer<T>> || std::is_same_v<ToSerializer<T>, NoSerializer<T>> ||
+             std::is_same_v<FromSerializer<T>, ToSerializer<T>>
+  void connect(const OutputPort<T, FromSerializer>& from, const InputPort<T, ToSerializer>& to) {
     detail::connect_impl(*program_context_, from, to, std::nullopt);
   }
+
   /**
    * Connect two ports with a delay.
    *
@@ -127,19 +138,28 @@ public:
    * @param to The port to draw the connection to.
    * @param delay The delay to apply to all messages.
    */
-  template <class T> void connect(const InputPort<T>& from, const InputPort<T>& to, Duration delay) {
+  template <class T, template <class> class FromSerializer, template <class> class ToSerializer>
+    requires std::is_same_v<FromSerializer<T>, NoSerializer<T>> || std::is_same_v<ToSerializer<T>, NoSerializer<T>> ||
+             std::is_same_v<FromSerializer<T>, ToSerializer<T>>
+  void connect(const InputPort<T, FromSerializer>& from, const InputPort<T, ToSerializer>& to, Duration delay) {
     detail::connect_impl(*program_context_, from, to, delay);
   }
   /**
    * @overload
    */
-  template <class T> void connect(const OutputPort<T>& from, const OutputPort<T>& to, Duration delay) {
+  template <class T, template <class> class FromSerializer, template <class> class ToSerializer>
+    requires std::is_same_v<FromSerializer<T>, NoSerializer<T>> || std::is_same_v<ToSerializer<T>, NoSerializer<T>> ||
+             std::is_same_v<FromSerializer<T>, ToSerializer<T>>
+  void connect(const OutputPort<T, FromSerializer>& from, const OutputPort<T, ToSerializer>& to, Duration delay) {
     detail::connect_impl(*program_context_, from, to, delay);
   }
   /**
    * @overload
    */
-  template <class T> void connect(const OutputPort<T>& from, const InputPort<T>& to, Duration delay) {
+  template <class T, template <class> class FromSerializer, template <class> class ToSerializer>
+    requires std::is_same_v<FromSerializer<T>, NoSerializer<T>> || std::is_same_v<ToSerializer<T>, NoSerializer<T>> ||
+             std::is_same_v<FromSerializer<T>, ToSerializer<T>>
+  void connect(const OutputPort<T, FromSerializer>& from, const InputPort<T, ToSerializer>& to, Duration delay) {
     detail::connect_impl(*program_context_, from, to, delay);
   }
 

@@ -8,6 +8,10 @@ target_include_directories(
 target_link_libraries(xronos-graph-messages PUBLIC protobuf::libprotobuf
                                                    gRPC::grpc gRPC::grpc++)
 set_target_properties(xronos-graph-messages PROPERTIES VERSION "${PROJECT_VERSION}" SOVERSION 1)
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  target_compile_options(xronos-graph-messages PUBLIC -Wno-nullability-extension)
+endif()
+
 
 protobuf_generate(
   TARGET xronos-graph-messages

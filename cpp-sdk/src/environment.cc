@@ -98,11 +98,6 @@ void Environment::execute(const RuntimeProvider& runtime_provider) {
   } catch (const runtime::ValidationError& e) {
     throw ValidationError(e.what());
   }
-
-  if (program_context_->runtime_program_handle != nullptr) {
-    program_context_->runtime_program_handle->wait_until_program_terminates();
-    program_context_->runtime_program_handle->rethrow_exception_if_any();
-  }
 }
 
 auto Environment::context(std::source_location source_location) noexcept -> EnvironmentContext {

@@ -1,5 +1,5 @@
-<map id="xronos::sdk::InputPort&lt; T &gt;" name="xronos::sdk::InputPort&lt; T &gt;">
-<area shape="rect" id="Node000001" title="A reactor element for receiving messages from other reactors." alt="" coords="5,79,208,104"/>
-<area shape="rect" id="Node000002" href="$classxronos_1_1sdk_1_1Element.html" title="Base class for all reactor elements." alt="" coords="27,5,186,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="109,44,109,79,104,79,104,44"/>
+<map id="xronos::sdk::InputPort&lt; T, Serializer &gt;" name="xronos::sdk::InputPort&lt; T, Serializer &gt;">
+<area shape="rect" id="Node000001" title="A reactor element for receiving messages from other reactors." alt="" coords="5,79,169,119"/>
+<area shape="rect" id="Node000002" href="$classxronos_1_1sdk_1_1Element.html" title="Base class for all reactor elements." alt="" coords="8,5,167,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="90,44,90,79,85,79,85,44"/>
 </map>

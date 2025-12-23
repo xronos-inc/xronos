@@ -22,9 +22,11 @@ manual-build
 
 # build artifacts
 **/.cache/
+**/.sdist/
 **/.tmp-earthly-out/
 
 # release artifacts
+**/dist/
 **/target/
 **/*.whl
 release/

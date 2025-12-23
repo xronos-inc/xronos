@@ -1,4 +1,4 @@
-set(XRONOS_GRPC_VERSION "v1.74.1" CACHE STRING "grpc version")
+set(XRONOS_GRPC_VERSION "v1.76.0" CACHE STRING "grpc version")
 set(XRONOS_GRPC_PROVIDER "module" CACHE STRING "grpc provider (module|package|none)")
 
 function(add_grpc)
