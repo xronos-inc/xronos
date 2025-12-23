@@ -40,9 +40,7 @@ def test_exception_causality_cycle() -> None:
     env = xronos.Environment(fast=True)
 
     with pytest.raises(
-        xronos.ValidationError,
-        match=r"There is a loop in the dependency graph. Graph was written to "
-        "/tmp/reactor_dependency_graph.dot",
+        xronos.ValidationError, match=r"The reaction graph contains a dependency cycle!"
     ):
         run(env)
 

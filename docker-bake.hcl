@@ -1,6 +1,6 @@
 variable "CONTEXT_PREFIX" { default = "." }
 
-variable "XRONOS_VERSION" { default = "0.6.0" }
+variable "XRONOS_VERSION" { default = "0.7.0" }
 
 target "base" {
   target  = "base"
@@ -77,7 +77,7 @@ target "third-party-catch2" {
 target "third-party-doxygen" {
   inherits = ["_third-party-common"]
   contexts = {
-    doxygen-src = "https://github.com/doxygen/doxygen.git#Release_1_14_0",
+    doxygen-src = "https://github.com/doxygen/doxygen.git#Release_1_15_0",
   }
   context = "${CONTEXT_PREFIX}/third-party/doxygen"
 }
@@ -182,6 +182,18 @@ target "xronos-py-wheel" {
   output = ["${CONTEXT_PREFIX}/xronos"]
 }
 
+target "xronos-py-sdist" {
+  target  = "sdist"
+  context = "${CONTEXT_PREFIX}/xronos"
+  contexts = {
+    py-venv         = "target:py-venv-313"
+    cpp-sdk-src     = "target:xronos-cpp-sdk-src"
+    lib-src         = "target:xronos-lib-src"
+    third-party-src = "target:third-party-cmake-files"
+  }
+  output = ["${CONTEXT_PREFIX}/xronos"]
+}
+
 target "xronos-py-test-src" {
   target  = "test-src"
   context = "${CONTEXT_PREFIX}/xronos"
@@ -236,6 +248,16 @@ target "_xronos-examples-common" {
     xronos-wheel = "target:xronos-py-wheel-${replace(version, ".", "")}"
   }
   output = [{ type = "cacheonly" }]
+}
+
+target "xronos-examples-hello-ros2-comparison-lint" {
+  name     = "xronos-examples-ros2-comparison-lint-${replace(version, ".", "")}"
+  inherits = ["_xronos-examples-common-${replace(version, ".", "")}"]
+  matrix = {
+    version = ["3.12"]
+  }
+  target  = "lint"
+  context = "${CONTEXT_PREFIX}/examples/hello-ros2-comparison/"
 }
 
 target "xronos-examples-keyboard-synth-lint" {
@@ -367,6 +389,7 @@ variable "LINT_TARGETS" {
     "xronos-cpp-sdk-lint",
     "xronos-py-lint-py",
     "xronos-py-lint-cpp",
+    "xronos-examples-hello-ros2-comparison-lint",
     "xronos-examples-keyboard-synth-lint",
     "xronos-examples-montecarlo-lint",
     "xronos-examples-robot-arm-lint",
@@ -384,6 +407,7 @@ group "lint" {
 variable "BUILD_TARGETS" {
   default = [
     "xronos-cpp-sdk-pkgs",
+    "xronos-py-sdist",
     "xronos-py-wheel",
   ]
 }

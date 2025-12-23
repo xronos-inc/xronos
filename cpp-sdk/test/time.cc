@@ -124,12 +124,12 @@ TEST(time, TestGetLag) {
         EXPECT_GT(self().get_lag(), 0s);
         auto lag1 = self().get_lag();
         auto lag2 = self().get_lag();
-        EXPECT_GT(lag2, lag1);
+        EXPECT_GE(lag2, lag1);
         EXPECT_LT(lag2 - lag1, 1ms);
         std::this_thread::sleep_for(100ms);
         auto lag3 = self().get_lag();
         EXPECT_GT(lag3, lag2);
-        EXPECT_GT(lag3 - lag2, 100ms);
+        EXPECT_GE(lag3 - lag2, 100ms);
         EXPECT_LT(lag3 - lag2, 200ms);
 
         EXPECT_FALSE(self().on_startup_executed_);

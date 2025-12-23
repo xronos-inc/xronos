@@ -2,11 +2,11 @@ cmake_minimum_required(VERSION 3.28)
 
 project(xronos-sdk
   LANGUAGES CXX
-  VERSION "0.6.0"
+  VERSION "0.7.0"
   HOMEPAGE_URL "https://docs.xronos.com"
   DESCRIPTION "The Xronos C++ SDK for writing reactor programs."
 )
-set(PROJECT_VERSION "0.6.0")
+set(PROJECT_VERSION "0.7.0")
 
 # require C++ 20
 set(CMAKE_CXX_STANDARD 20 CACHE STRING "The C++ standard." FORCE)
@@ -112,6 +112,14 @@ target_link_libraries(
   PUBLIC xronos-sdk-public-headers
   PRIVATE xronos-sdk-private-headers xronos::xronos-runtime-default
 )
+
+# Make sure that only the SDK symbols are exported. All symbols from internal
+# libs and third-party libs are hidden.
+if(${CMAKE_HOST_SYSTEM_NAME} MATCHES "Linux")
+  target_link_options(xronos-sdk PRIVATE -Wl,--exclude-libs,ALL)
+elseif(${CMAKE_HOST_SYSTEM_NAME} MATCHES "Darwin")
+  target_link_options(xronos-sdk PRIVATE -Wl,-exported_symbols_list,${CMAKE_CURRENT_LIST_DIR}/exported_symbols.txt)
+endif()
 
 if(XRONOS_SDK_ENABLE_DIAGRAMS)
   target_link_libraries(xronos-sdk PRIVATE xronos::xronos-graph-exporter xronos::xronos-graph-messages)

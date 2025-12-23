@@ -10,8 +10,8 @@
 #include <stdexcept>
 #include <string_view>
 
-#include "xronos/core/element.hh"
 #include "xronos/core/reactor_model.hh"
+#include "xronos/core/time.hh"
 
 namespace xronos::runtime {
 
@@ -80,8 +80,6 @@ struct ProgramHandle {
   [[nodiscard]] virtual auto get_external_trigger(std::uint64_t external_trigger_uid) noexcept -> ExternalTrigger* = 0;
 
   virtual void execute() = 0;
-  virtual void wait_until_program_terminates() = 0;
-  virtual void rethrow_exception_if_any() const = 0;
 
   virtual ~ProgramHandle() = default;
 };

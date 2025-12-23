@@ -6,6 +6,6 @@ COPY . /examples
 FROM py-venv AS base
 WORKDIR /xronos
 RUN mkdir wheels
-COPY --from=xronos-wheel /xronos-*.whl ./wheels
+COPY --from=xronos-wheel /dist/xronos-*.whl ./wheels
 WORKDIR /xronos/examples
 COPY mypy.ini ruff.toml pyrightconfig.json pytest.ini .

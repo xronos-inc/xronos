@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: Copyright (c) 2025 Xronos Inc.
 # SPDX-License-Identifier: BSD-3-Clause
 
+import re
 from typing import Generic, TypeVar
 
 import pytest  # pyright: ignore
@@ -29,10 +30,12 @@ class StartupAndShutdownSource(xronos.Reactor, Generic[T]):
 
         with pytest.raises(  # pyright: ignore
             xronos.ValidationError,
-            match="Cannot connect port invalid.StartupSource2.output to port "
-            "invalid.output because it already has an inbound connection from "
-            "port invalid.StartupSource1.output. Each port may have at most one "
-            "inbound connection.",
+            match=re.escape(
+                "Cannot connect port invalid.StartupSource2.output to port "
+                "invalid.output because it already has an inbound connection from "
+                "port invalid.StartupSource1.output. Each port may have at most one "
+                "inbound connection."
+            ),
         ):
             self.connect(self._startup_reactor2.output, self.output)
 

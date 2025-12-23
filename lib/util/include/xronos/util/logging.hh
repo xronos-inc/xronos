@@ -30,14 +30,16 @@ public:
     ostream_.get() << prefix;
   }
   ~Logger() {
-    if constexpr (print_source_location) {
-      if (lock_.owns_lock()) {
-        // Print source location only if we are still holding the lock. If this
-        // logger does not hold the lock, it means that it was moved away from,
-        // and we'll let the other logger instance print the source location.
+    if (lock_.owns_lock()) {
+      // Print newline and (optionally) source location only if we are still
+      // holding the lock. If this logger does not hold the lock, it means that
+      // it was moved away from, and we'll let the other logger terminate the
+      // line.
+      if constexpr (print_source_location) {
         ostream_.get() << " (" << location_.function_name() << ", " << location_.file_name() << ":" << location_.line()
-                       << ")\n";
+                       << ')';
       }
+      ostream_.get() << '\n';
     }
   }
   Logger(const Logger&) = delete;

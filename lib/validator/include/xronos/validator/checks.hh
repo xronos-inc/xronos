@@ -15,6 +15,7 @@ namespace xronos::validator {
 auto run_all_checks(const core::ReactorModel& model) -> nonstd::expected<void, std::vector<std::string>>;
 
 auto check_shutdown_reactions(const core::ReactorModel& model) -> nonstd::expected<void, std::vector<std::string>>;
+auto check_periodic_timers(const core::ReactorModel& model) -> nonstd::expected<void, std::vector<std::string>>;
 
 } // namespace xronos::validator
 

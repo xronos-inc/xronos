@@ -13,7 +13,7 @@ using namespace std::literals::chrono_literals;
 class Counter : public sdk::Reactor {
 public:
   using sdk::Reactor::Reactor;
-  auto output() -> sdk::OutputPort<std::uint64_t>& { return output_; }
+  [[nodiscard]] auto output() const -> const auto& { return output_; }
 
 private:
   sdk::ProgrammableTimer<std::uint64_t> count_{"count", context()};
@@ -40,7 +40,7 @@ private:
 template <class T> class Printer : public sdk::Reactor {
 public:
   using sdk::Reactor::Reactor;
-  auto input() -> sdk::InputPort<T>& { return input_; }
+  [[nodiscard]] auto input() const -> const auto& { return input_; }
 
 private:
   sdk::InputPort<std::uint64_t> input_{"input", context()};

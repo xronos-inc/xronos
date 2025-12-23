@@ -20,7 +20,8 @@ inline namespace operators {
 auto operator<<(std::ostream& os, std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> tp)
     -> std::ostream& {
   // print time down to the second
-  std::time_t time = std::chrono::system_clock::to_time_t(tp);
+  std::time_t time =
+      std::chrono::system_clock::to_time_t(std::chrono::time_point_cast<std::chrono::system_clock::duration>(tp));
   {
     static std::mutex mutex{};
     std::lock_guard<std::mutex> lock{mutex};

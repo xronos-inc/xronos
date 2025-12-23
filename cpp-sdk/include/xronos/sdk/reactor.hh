@@ -20,6 +20,7 @@
 #include "xronos/sdk/detail/source_location.hh"
 #include "xronos/sdk/element.hh"
 #include "xronos/sdk/fwd.hh"
+#include "xronos/sdk/port.hh"
 #include "xronos/sdk/shutdown.hh"
 #include "xronos/sdk/startup.hh"
 #include "xronos/sdk/time.hh"
@@ -123,44 +124,62 @@ protected:
   [[nodiscard]] auto shutdown() noexcept -> Shutdown& { return shutdown_; }
 
   /**
-   * @copydoc Environment::connect(const InputPort<T>&, const InputPort<T>&)
+   * @copydoc Environment::connect(const InputPort<T, FromSerializer>&, const InputPort<T, ToSerializer>&)
    *
    * @see assemble()
    */
-  template <class T> void connect(const InputPort<T>& from, const InputPort<T>& to) {
+  template <class T, template <class> class FromSerializer, template <class> class ToSerializer>
+    requires std::is_same_v<FromSerializer<T>, NoSerializer<T>> || std::is_same_v<ToSerializer<T>, NoSerializer<T>> ||
+             std::is_same_v<FromSerializer<T>, ToSerializer<T>>
+  void connect(const InputPort<T, FromSerializer>& from, const InputPort<T, ToSerializer>& to) {
     detail::connect_impl(*program_context(), from, to, std::nullopt);
   }
   /**
    * @overload
    */
-  template <class T> void connect(const OutputPort<T>& from, const OutputPort<T>& to) {
+  template <class T, template <class> class FromSerializer, template <class> class ToSerializer>
+    requires std::is_same_v<FromSerializer<T>, NoSerializer<T>> || std::is_same_v<ToSerializer<T>, NoSerializer<T>> ||
+             std::is_same_v<FromSerializer<T>, ToSerializer<T>>
+  void connect(const OutputPort<T, FromSerializer>& from, const OutputPort<T, ToSerializer>& to) {
     detail::connect_impl(*program_context(), from, to, std::nullopt);
   }
   /**
    * @overload
    */
-  template <class T> void connect(const OutputPort<T>& from, const InputPort<T>& to) {
+  template <class T, template <class> class FromSerializer, template <class> class ToSerializer>
+    requires std::is_same_v<FromSerializer<T>, NoSerializer<T>> || std::is_same_v<ToSerializer<T>, NoSerializer<T>> ||
+             std::is_same_v<FromSerializer<T>, ToSerializer<T>>
+  void connect(const OutputPort<T, FromSerializer>& from, const InputPort<T, ToSerializer>& to) {
     detail::connect_impl(*program_context(), from, to, std::nullopt);
   }
 
   /**
-   * @copydoc Environment::connect(const InputPort<T>&, const InputPort<T>&, Duration)
+   * @copydoc Environment::connect(const InputPort<T, FromSerializer>&, const InputPort<T, ToSerializer>&, Duration)
    *
    * @see assemble()
    */
-  template <class T> void connect(const InputPort<T>& from, const InputPort<T>& to, Duration delay) {
+  template <class T, template <class> class FromSerializer, template <class> class ToSerializer>
+    requires std::is_same_v<FromSerializer<T>, NoSerializer<T>> || std::is_same_v<ToSerializer<T>, NoSerializer<T>> ||
+             std::is_same_v<FromSerializer<T>, ToSerializer<T>>
+  void connect(const InputPort<T, FromSerializer>& from, const InputPort<T, ToSerializer>& to, Duration delay) {
     detail::connect_impl(*program_context(), from, to, delay);
   }
   /**
    * @overload
    */
-  template <class T> void connect(const OutputPort<T>& from, const OutputPort<T>& to, Duration delay) {
+  template <class T, template <class> class FromSerializer, template <class> class ToSerializer>
+    requires std::is_same_v<FromSerializer<T>, NoSerializer<T>> || std::is_same_v<ToSerializer<T>, NoSerializer<T>> ||
+             std::is_same_v<FromSerializer<T>, ToSerializer<T>>
+  void connect(const OutputPort<T, FromSerializer>& from, const OutputPort<T, ToSerializer>& to, Duration delay) {
     detail::connect_impl(*program_context(), from, to, delay);
   }
   /**
    * @overload
    */
-  template <class T> void connect(const OutputPort<T>& from, const InputPort<T>& to, Duration delay) {
+  template <class T, template <class> class FromSerializer, template <class> class ToSerializer>
+    requires std::is_same_v<FromSerializer<T>, NoSerializer<T>> || std::is_same_v<ToSerializer<T>, NoSerializer<T>> ||
+             std::is_same_v<FromSerializer<T>, ToSerializer<T>>
+  void connect(const OutputPort<T, FromSerializer>& from, const InputPort<T, ToSerializer>& to, Duration delay) {
     detail::connect_impl(*program_context(), from, to, delay);
   }
 

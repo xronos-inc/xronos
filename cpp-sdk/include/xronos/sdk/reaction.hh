@@ -156,11 +156,13 @@ protected:
      * @param context Context of the reaction the trigger is declared for. Can
      * be obtained using context().
      */
-    Trigger(const InputPort<T>& trigger, const ReactionContext& context)
+    template <template <class> class Serializer>
+    Trigger(const InputPort<T, Serializer>& trigger, const ReactionContext& context)
         : TriggerImpl{trigger.uid(), context} {}
 
     /** @overload */
-    Trigger(const OutputPort<T>& trigger, const ReactionContext& context)
+    template <template <class> class Serializer>
+    Trigger(const OutputPort<T, Serializer>& trigger, const ReactionContext& context)
         : TriggerImpl{trigger.uid(), context} {}
 
     /** @overload */
@@ -224,11 +226,13 @@ protected:
      * @param context The context of the reaction the effect is declared for.
      * Can be obtained using context().
      */
-    PortEffect(InputPort<T>& port, const ReactionContext& context)
+    template <template <class> class Serializer>
+    PortEffect(InputPort<T, Serializer>& port, const ReactionContext& context)
         : PortEffectImpl{port.uid(), context} {}
 
     /** @overload */
-    PortEffect(OutputPort<T>& port, const ReactionContext& context)
+    template <template <class> class Serializer>
+    PortEffect(OutputPort<T, Serializer>& port, const ReactionContext& context)
         : PortEffectImpl{port.uid(), context} {}
 
     /**

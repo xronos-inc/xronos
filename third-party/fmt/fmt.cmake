@@ -1,4 +1,4 @@
-set(FMT_VERSION "12.0.0" CACHE STRING "{fmt} version")
+set(FMT_VERSION "12.1.0" CACHE STRING "{fmt} version")
 
 include(FetchContent)
 

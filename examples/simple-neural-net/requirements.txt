@@ -1,2 +1,2 @@
-xronos==0.6.0
+xronos==0.7.0
 numpy==2.2.0

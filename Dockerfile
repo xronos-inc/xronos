@@ -84,7 +84,7 @@ RUN . /venv/bin/activate && pyright --version
 
 
 FROM scratch AS configs
-COPY .clang-format .clang-tidy dev-requirements.txt pip-build-constraints.txt /
+COPY .clang-format .clang-tidy dev-requirements.txt /
 
 FROM hashicorp/terraform:1.11 AS check-format
 WORKDIR /xronos

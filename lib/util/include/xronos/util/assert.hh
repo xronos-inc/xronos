@@ -37,6 +37,10 @@ inline void assert_(bool condition, std::string_view message = "",
   }
 }
 
+inline void not_implemented(const std::source_location& location = std::source_location::current()) {
+  assert_(false, "Called a function that is not implemented!", location);
+}
+
 } // namespace xronos::util
 
 #endif // XRONOS_UTIL_ASSERT_HH

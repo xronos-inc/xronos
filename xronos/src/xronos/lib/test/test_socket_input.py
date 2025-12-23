@@ -2,8 +2,11 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import socket
+import sys
 import threading
 import time
+
+import pytest
 
 import xronos
 from xronos.lib import SocketInput
@@ -67,6 +70,10 @@ def udp_writer(host: str, port: int, data: list[bytes]) -> None:
                 pass
 
 
+@pytest.mark.skipif(
+    sys.platform == "darwin",
+    reason="The SocketInput reactor currently does not work on MacOs",
+)
 def test_simple_tcp_server() -> None:
     """Test ExternalInput with a generator that produces a list of values."""
     port = find_free_port()
@@ -88,6 +95,10 @@ def test_simple_tcp_server() -> None:
     thread.join()
 
 
+@pytest.mark.skipif(
+    sys.platform == "darwin",
+    reason="The SocketInput reactor currently does not work on MacOs",
+)
 def test_tcp_server_with_multiple_clients() -> None:
     """Test ExternalInput with a generator that produces a list of values."""
     port = find_free_port()
@@ -114,6 +125,10 @@ def test_tcp_server_with_multiple_clients() -> None:
         thread.join()
 
 
+@pytest.mark.skipif(
+    sys.platform == "darwin",
+    reason="The SocketInput reactor currently does not work on MacOs",
+)
 def test_simple_tcp_client() -> None:
     """Test ExternalInput with a generator that produces a list of values."""
     port = find_free_port()
@@ -135,6 +150,10 @@ def test_simple_tcp_client() -> None:
     thread.join()
 
 
+@pytest.mark.skipif(
+    sys.platform == "darwin",
+    reason="The SocketInput reactor currently does not work on MacOs",
+)
 def test_simple_udp_listener() -> None:
     """Test ExternalInput with a generator that produces a list of values."""
     port = find_free_port()

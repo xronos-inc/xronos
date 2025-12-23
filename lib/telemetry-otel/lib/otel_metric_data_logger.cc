@@ -3,6 +3,7 @@
 
 #include "xronos/telemetry/otel/otel_metric_data_logger.hh"
 
+#include <chrono>
 #include <variant>
 
 #include "common.hh"
@@ -47,6 +48,6 @@ void OtelMetricDataLogger::record(const core::Element& metric, const runtime::Ti
   attributes["xronos.description"] = metric_properties.description;
 
   // log the event
-  auto timestamp = time_access.get_timestamp();
+  auto timestamp = std::chrono::time_point_cast<std::chrono::system_clock::duration>(time_access.get_timestamp());
   current_span->AddEvent(metric.fqn, timestamp, attributes);
 }

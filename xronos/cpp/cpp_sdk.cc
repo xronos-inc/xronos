@@ -23,9 +23,11 @@
 #include "xronos/sdk/detail/source_location.hh"
 #include "xronos/sdk/element.hh"
 #include "xronos/sdk/periodic_timer.hh"
+#include "xronos/sdk/port.hh"
 #include "xronos/sdk/reaction.hh"
 #include "xronos/sdk/shutdown.hh"
 #include "xronos/sdk/startup.hh"
+#include "xronos/sdk/time.hh"
 
 using namespace xronos::sdk;
 namespace py = pybind11;
@@ -173,28 +175,28 @@ PYBIND11_MODULE(_cpp_sdk, mod, py::mod_gil_not_used()) {
       .def("execute", &PyEnvironment::execute)
       .def("enable_telemetry", &PyEnvironment::enable_telemetry, py::arg("application_name"), py::arg("endpoint"))
       .def("connect",
-           py::overload_cast<const InputPort<GilWrapper>&, const InputPort<GilWrapper>&>(
-               &PyEnvironment::connect<GilWrapper>),
+           static_cast<void (Environment::*)(const InputPort<GilWrapper>&, const InputPort<GilWrapper>&)>(
+               &Environment::connect),
            py::arg("from_"), py::arg("to"))
       .def("connect",
-           py::overload_cast<const OutputPort<GilWrapper>&, const OutputPort<GilWrapper>&>(
-               &PyEnvironment::connect<GilWrapper>),
+           static_cast<void (Environment::*)(const OutputPort<GilWrapper>&, const OutputPort<GilWrapper>&)>(
+               &Environment::connect),
            py::arg("from_"), py::arg("to"))
       .def("connect",
-           py::overload_cast<const OutputPort<GilWrapper>&, const InputPort<GilWrapper>&>(
-               &PyEnvironment::connect<GilWrapper>),
+           static_cast<void (Environment::*)(const OutputPort<GilWrapper>&, const InputPort<GilWrapper>&)>(
+               &Environment::connect),
            py::arg("from_"), py::arg("to"))
       .def("connect_delayed",
-           py::overload_cast<const InputPort<GilWrapper>&, const InputPort<GilWrapper>&, Duration>(
-               &PyEnvironment::connect<GilWrapper>),
+           static_cast<void (Environment::*)(const InputPort<GilWrapper>&, const InputPort<GilWrapper>&, Duration)>(
+               &Environment::connect),
            py::arg("from_"), py::arg("to"), py::arg("delay"))
       .def("connect_delayed",
-           py::overload_cast<const OutputPort<GilWrapper>&, const OutputPort<GilWrapper>&, Duration>(
-               &PyEnvironment::connect<GilWrapper>),
+           static_cast<void (Environment::*)(const OutputPort<GilWrapper>&, const OutputPort<GilWrapper>&, Duration)>(
+               &Environment::connect),
            py::arg("from_"), py::arg("to"), py::arg("delay"))
       .def("connect_delayed",
-           py::overload_cast<const OutputPort<GilWrapper>&, const InputPort<GilWrapper>&, Duration>(
-               &PyEnvironment::connect<GilWrapper>),
+           static_cast<void (Environment::*)(const OutputPort<GilWrapper>&, const InputPort<GilWrapper>&, Duration)>(
+               &Environment::connect),
            py::arg("from_"), py::arg("to"), py::arg("delay"))
       .def("context", py::overload_cast<detail::SourceLocationView>(&PyEnvironment::context),
            py::arg("source_location"));

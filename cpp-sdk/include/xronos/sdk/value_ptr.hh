@@ -51,7 +51,7 @@ template <class T> using ImmutableValuePtr = detail::ImmutableValuePtr<T, detail
  * `std::make_shared()`.
  *
  * @tparam T The type of the value to be created.
- * @tparam Args The types of T`'s constructor arguments. Usually, this does not
+ * @tparam Args The types of `T`'s constructor arguments. Usually, this does not
  * need to be given explicitly and will be inferred automatically from the
  * given @p args.
  * @param args Arguments to be forwarded to `T`'s constructor.
@@ -73,7 +73,7 @@ template <class T, class... Args> auto make_immutable_value(Args&&... args) -> I
  * `std::make_unique()`.
  *
  * @tparam T The type of the value to be created.
- * @tparam Args The types of T`'s constructor arguments. Usually, this does not
+ * @tparam Args The types of `T`'s constructor arguments. Usually, this does not
  * need to be given explicitly and will be inferred automatically from the
  * given @p args.
  * @param args Arguments to be forwarded to `T`'s constructor.

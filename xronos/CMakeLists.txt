@@ -17,15 +17,30 @@ set(CMAKE_COLOR_DIAGNOSTICS ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 include(FetchContent)
-FetchContent_Declare(
-  xronos-sdk
-  SOURCE_DIR "${PROJECT_SOURCE_DIR}/../cpp-sdk"
-  EXCLUDE_FROM_ALL TRUE
-  FIND_PACKAGE_ARGS CONFIG
-)
+if(${SKBUILD_STATE} STREQUAL "sdist")
+  message("Building sdist.")
+  file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/../cpp-sdk" DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}/sdist")
+  file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/../lib" DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}/sdist")
+  file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/../third-party" DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}/sdist")
+  return()
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/sdist")
+  message("Building from sdist.")
+  FetchContent_Declare(
+    xronos-sdk
+    SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/sdist/cpp-sdk"
+  )
+else()
+  message("Building from source tree.")
+  FetchContent_Declare(
+    xronos-sdk
+    SOURCE_DIR "${PROJECT_SOURCE_DIR}/../cpp-sdk"
+    FIND_PACKAGE_ARGS CONFIG
+  )
+endif()
 FetchContent_MakeAvailable(xronos-sdk)
 
-add_compile_options(-Wall -Wextra -pedantic -Werror)
 
 find_package(Python 3.10.0...<3.15.0 REQUIRED COMPONENTS Interpreter
   Development.Module)
@@ -33,6 +48,13 @@ find_package(pybind11 CONFIG REQUIRED)
 
 python_add_library(_cpp_sdk MODULE "${CMAKE_CURRENT_SOURCE_DIR}/cpp/cpp_sdk.cc" WITH_SOABI)
 target_link_libraries(_cpp_sdk PRIVATE xronos::xronos-sdk pybind11::headers)
+target_compile_options(_cpp_sdk PRIVATE -Wall -Wextra -pedantic -Werror)
+
+if(${CMAKE_HOST_SYSTEM_NAME} MATCHES "Linux")
+  target_link_options(_cpp_sdk PRIVATE -Wl,--exclude-libs,ALL)
+elseif(${CMAKE_HOST_SYSTEM_NAME} MATCHES "Darwin")
+  target_link_options(_cpp_sdk PRIVATE -Wl,-exported_symbols_list,${CMAKE_CURRENT_LIST_DIR}/exported_symbols.txt)
+endif()
 
 target_include_directories(_cpp_sdk PRIVATE "${CMAKE_CURRENT_LIST_DIR}/include")
 set_target_properties(_cpp_sdk PROPERTIES
