@@ -1,7 +1,7 @@
 var classxronos_1_1sdk_1_1BaseReaction_1_1Trigger =
 [
-    [ "Trigger", "classxronos_1_1sdk_1_1BaseReaction_1_1Trigger.html#a4855223776a5086213a5c1a55faf07aa", null ],
-    [ "Trigger", "classxronos_1_1sdk_1_1BaseReaction_1_1Trigger.html#a4b39d7179a425fa352b886828072ff78", null ],
+    [ "Trigger", "classxronos_1_1sdk_1_1BaseReaction_1_1Trigger.html#af98242377de7d6cf75a4a003194ddfd4", null ],
+    [ "Trigger", "classxronos_1_1sdk_1_1BaseReaction_1_1Trigger.html#af41f22df9074b6e59da4656bd00abb39", null ],
     [ "Trigger", "classxronos_1_1sdk_1_1BaseReaction_1_1Trigger.html#accadf2388ab443bfaf3c99fb82d77ab8", null ],
     [ "Trigger", "classxronos_1_1sdk_1_1BaseReaction_1_1Trigger.html#aeff55694ff43dfbb6410d9ba37c212fb", null ],
     [ "Trigger", "classxronos_1_1sdk_1_1BaseReaction_1_1Trigger.html#a99c9792da5e1dd8d709898af93920bee", null ],
