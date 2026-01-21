@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (c) 2025 Xronos Inc.
+// SPDX-FileCopyrightText: Copyright (c) Xronos Inc.
 // SPDX-License-Identifier: BSD-3-Clause
 
 /** @file */
@@ -13,6 +13,7 @@
 #include <memory>
 #include <ranges>
 #include <span>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -27,6 +28,15 @@ namespace xronos::sdk {
  * Possible value types for an attribute.
  */
 using AttributeValue = std::variant<std::string, bool, std::int64_t, double>;
+
+/**
+ * Exception that is thrown when creating an element with a name that is already
+ * in use.
+ */
+class DuplicateNameError : public std::runtime_error {
+public:
+  using std::runtime_error::runtime_error;
+};
 
 /**
  * Base class for all reactor elements.

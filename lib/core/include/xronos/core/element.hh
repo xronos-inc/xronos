@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (c) 2025 Xronos Inc.
+// SPDX-FileCopyrightText: Copyright (c) Xronos Inc.
 // SPDX-License-Identifier: BSD-3-Clause
 
 #ifndef XRONOS_CORE_ELEMENT_HH
@@ -12,6 +12,7 @@
 #include <optional>
 #include <span>
 #include <string>
+#include <string_view>
 #include <variant>
 #include <vector>
 
@@ -84,12 +85,9 @@ auto get_properties(const Element& element) noexcept -> auto&
   return *std::get<T>(element.type).properties;
 }
 
-inline auto get_port_properties(const Element& element) -> PortProperties& {
-  if (std::holds_alternative<InputPortTag>(element.type)) {
-    return get_properties<InputPortTag>(element);
-  }
-  return get_properties<OutputPortTag>(element);
-}
+auto get_port_properties(const Element& element) -> PortProperties&;
+
+auto element_type_as_string(const ElementType& type) -> std::string_view;
 
 } // namespace xronos::core
 

@@ -13,7 +13,7 @@ It supports real-time telemetry, system visualization, and modular design with a
 
 - 🦾 **Turnkey Telemetry**: Built-in support for monitoring, tracing, and timing.
 - ⚙️ **Modern APIs**: Intuitive and consistent interfaces in both Python and C++.
-- 🪶 **Lightweight**: 20MB pip install; no OS version lock-in.
+- 🪶 **Lightweight**: 7MB pip install; no OS version lock-in.
 - 🧩 **Modular Architecture**: Component-based design for separation of concerns.
 - ⏱️ **Deterministic Concurrency**: Reactor-based execution model guarantees predictable behavior.
 - 🧠 **Automatic System Visualization**: Architecture diagrams generated from code.

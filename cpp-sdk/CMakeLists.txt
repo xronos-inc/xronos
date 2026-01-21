@@ -2,11 +2,11 @@ cmake_minimum_required(VERSION 3.28)
 
 project(xronos-sdk
   LANGUAGES CXX
-  VERSION "0.7.0"
+  VERSION "0.8.0"
   HOMEPAGE_URL "https://docs.xronos.com"
   DESCRIPTION "The Xronos C++ SDK for writing reactor programs."
 )
-set(PROJECT_VERSION "0.7.0")
+set(PROJECT_VERSION "0.8.0")
 
 # require C++ 20
 set(CMAKE_CXX_STANDARD 20 CACHE STRING "The C++ standard." FORCE)
@@ -110,7 +110,7 @@ set_target_properties(xronos-sdk-private-headers PROPERTIES VERIFY_INTERFACE_HEA
 target_link_libraries(
   xronos-sdk
   PUBLIC xronos-sdk-public-headers
-  PRIVATE xronos-sdk-private-headers xronos::xronos-runtime-default
+  PRIVATE xronos-sdk-private-headers xronos::xronos-runtime-default fmt::fmt-header-only
 )
 
 # Make sure that only the SDK symbols are exported. All symbols from internal

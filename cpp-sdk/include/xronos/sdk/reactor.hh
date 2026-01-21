@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (c) 2025 Xronos Inc.
+// SPDX-FileCopyrightText: Copyright (c) Xronos Inc.
 // SPDX-License-Identifier: BSD-3-Clause
 
 /** @file */
@@ -57,7 +57,7 @@ public:
   Reactor(const Reactor&) = delete;
   auto operator=(Reactor&&) = delete;
   auto operator=(const Reactor&) = delete;
-  ~Reactor() override = default;
+  ~Reactor() override;
 
 protected:
   /**

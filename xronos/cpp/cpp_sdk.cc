@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (c) 2025 Xronos Inc.
+// SPDX-FileCopyrightText: Copyright (c) Xronos Inc.
 // SPDX-License-Identifier: BSD-3-Clause
 
 #include <cassert>
@@ -157,11 +157,25 @@ PYBIND11_MODULE(_cpp_sdk, mod, py::mod_gil_not_used()) {
 
   auto validation_error = py::register_exception<ValidationError>(mod, "ValidationError");
   validation_error.doc() = "Exception that is thrown when a program reaches an invalid state.";
+  // Overwriting the module ensures that Python tracebacks show
+  // `xronos.ValidationError` instead of `xronos._cpp_sdk.ValidationError` when
+  // the exception is thrown.
+  validation_error.attr("__module__") = "xronos";
+
+  auto duplicate_name_error = py::register_exception<DuplicateNameError>(mod, "DuplicateNameError");
+  duplicate_name_error.doc() = "Exception that is thrown when creating an element with a name that is already in use.";
+  duplicate_name_error.attr("__module__") = "xronos";
 
   py::class_<detail::SourceLocationView>(mod, "SourceLocation")
       .def(py::init<std::string_view, std::string_view, std::uint32_t, std::uint32_t, std::uint32_t, std::uint32_t>(),
            py::arg("file_"), py::arg("function"), py::arg("start_line"), py::arg("end_line"), py::arg("start_column"),
-           py::arg("end_column"));
+           py::arg("end_column"))
+      .def_readonly("file_", &detail::SourceLocationView::file)
+      .def_readonly("function", &detail::SourceLocationView::function)
+      .def_readonly("start_line", &detail::SourceLocationView::start_line)
+      .def_readonly("end_line", &detail::SourceLocationView::end_line)
+      .def_readonly("start_column", &detail::SourceLocationView::start_column)
+      .def_readonly("end_column", &detail::SourceLocationView::end_column);
 
   py::class_<EnvironmentContext>(mod, "EnvironmentContext");
   py::class_<ReactorContext>(mod, "ReactorContext");

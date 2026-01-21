@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (c) 2025 Xronos Inc.
+// SPDX-FileCopyrightText: Copyright (c) Xronos Inc.
 // SPDX-License-Identifier: BSD-3-Clause
 
 #include "xronos/sdk/element.hh"
@@ -6,8 +6,11 @@
 #include <cstdint>
 #include <string>
 #include <string_view>
+#include <utility>
 
+#include "fmt/format.h"
 #include "impl/xronos/sdk/detail/context_access.hh"
+#include "impl/xronos/sdk/detail/element.hh"
 #include "xronos/core/element.hh"
 #include "xronos/sdk/context.hh"
 #include "xronos/sdk/fwd.hh"
@@ -17,7 +20,7 @@
 namespace xronos::sdk {
 
 Element::Element(const core::Element& core_element, const Context& context)
-    : core_element_(core_element)
+    : core_element_{core_element}
     , program_context_{detail::ContextAccess::get_program_context(context)} {
   auto source_location_view = detail::ContextAccess::get_source_location(context);
   program_context()->source_location_registry.add_source_location(
@@ -38,5 +41,23 @@ auto Element::uid() const noexcept -> std::uint64_t { return core_element().uid;
 auto Element::add_attribute(std::string_view key, const AttributeValue& value) noexcept -> bool {
   return program_context()->attribute_manager.add_attribute(uid(), key, value);
 }
+
+namespace detail {
+
+auto register_element(std::string_view name, core::ElementType type, const Context& context) -> const core::Element& {
+  auto element = ContextAccess::get_program_context(context)->model.element_registry.add_new_element(
+      name, std::move(type), ContextAccess::get_parent_uid(context));
+
+  if (!element.has_value()) {
+    auto source_location = ContextAccess::get_source_location(context);
+
+    throw ::xronos::sdk::DuplicateNameError(
+        fmt::format("{}:{}: {}", source_location.file, source_location.start_line, element.error()));
+  }
+
+  return *element;
+}
+
+} // namespace detail
 
 } // namespace xronos::sdk

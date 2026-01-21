@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (c) 2025 Xronos Inc.
+// SPDX-FileCopyrightText: Copyright (c) Xronos Inc.
 // SPDX-License-Identifier: BSD-3-Clause
 
 #include "xronos/sdk/reaction.hh"
@@ -9,7 +9,8 @@
 #include <utility>
 #include <variant>
 
-#include "impl/xronos/sdk/detail/context_access.hh"
+#include "impl/xronos/sdk/detail/element.hh"
+#include "impl/xronos/sdk/detail/program_context.hh"
 #include "xronos/core/element.hh"
 #include "xronos/runtime/interfaces.hh"
 #include "xronos/sdk/context.hh"
@@ -22,25 +23,22 @@
 
 namespace xronos::sdk {
 
-using CA = detail::ContextAccess;
-
 BaseReaction::BaseReaction(const ReactionProperties& properties)
-    : Element{CA::get_program_context(properties.context_)
-                  ->model.element_registry.add_new_element(
-                      properties.name_,
-                      core::ReactionTag{std::make_unique<core::ReactionProperties>(core::ReactionProperties{
-                          .handler =
-                              [this]() {
-                                if (program_context()->runtime_program_handle == nullptr) {
-                                  throw ValidationError{"Reaction called without a valid execution context."};
-                                }
-                                auto scope =
-                                    program_context()->telemetry_backend->reaction_span_logger().record_reaction_span(
-                                        uid(), *program_context()->runtime_program_handle);
-                                handler();
-                              },
-                          .position = properties.position_})},
-                      CA::get_parent_uid(properties.context_)),
+    : Element{detail::register_element(
+                  properties.name_,
+                  core::ReactionTag{std::make_unique<core::ReactionProperties>(core::ReactionProperties{
+                      .handler =
+                          [this]() {
+                            if (program_context()->runtime_program_handle == nullptr) {
+                              throw ValidationError{"Reaction called without a valid execution context."};
+                            }
+                            auto scope =
+                                program_context()->telemetry_backend->reaction_span_logger().record_reaction_span(
+                                    uid(), *program_context()->runtime_program_handle);
+                            handler();
+                          },
+                      .position = properties.position_})},
+                  properties.context_),
               properties.context_} {}
 
 BaseReaction::TriggerImpl::TriggerImpl(std::uint64_t trigger_uid, const ReactionContext& context)

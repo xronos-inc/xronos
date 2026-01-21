@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (c) 2025 Xronos Inc.
+// SPDX-FileCopyrightText: Copyright (c) Xronos Inc.
 // SPDX-License-Identifier: BSD-3-Clause
 
 #include <cstddef>
@@ -132,7 +132,8 @@ void check_reaction_element(const reactor_graph::ReactorElement& graph_elem, con
 TEST_CASE("Serialization of a single empty reactor", "[exporter]") {
   core::ReactorModel model{};
   telemetry::AttributeManager attribute_manager{};
-  const auto& empty = model.element_registry.add_new_element("empty", core::ReactorTag{}, std::nullopt);
+  const core::Element& empty =
+      model.element_registry.add_new_element("empty", core::ReactorTag{}, std::nullopt).value();
 
   reactor_graph::Graph graph{};
   graph_exporter::detail::serialize_reactor_model(model, attribute_manager, graph);
@@ -156,24 +157,43 @@ TEST_CASE("Serialization of various reactor elements", "[exporter]") {
   core::ReactorModel model{};
   telemetry::AttributeManager attribute_manager{};
 
-  const auto& elements = model.element_registry.add_new_element("elements", core::ReactorTag{}, std::nullopt);
-  const auto& startup = model.element_registry.add_new_element("startup", core::StartupTag{}, elements.uid);
-  const auto& shutdown = model.element_registry.add_new_element("shutdown", core::ShutdownTag{}, elements.uid);
-  const auto& timer1 = model.element_registry.add_new_element(
-      "timer1", core::PeriodicTimerTag{std::make_unique<core::PeriodicTimerProperties>(1s, 2s)}, elements.uid);
-  const auto& timer2 = model.element_registry.add_new_element(
-      "timer2", core::PeriodicTimerTag{std::make_unique<core::PeriodicTimerProperties>(12ms, 42us)}, elements.uid);
-  const auto& programmable =
-      model.element_registry.add_new_element("programmable", core::ProgrammableTimerTag{}, elements.uid);
-  const auto& physical_event =
-      model.element_registry.add_new_element("physical_event", core::PhysicalEventTag{}, elements.uid);
-  const auto& input = model.element_registry.add_new_element("input", core::InputPortTag{}, elements.uid);
-  const auto& output = model.element_registry.add_new_element("output", core::OutputPortTag{}, elements.uid);
-  const auto& reaction1 = model.element_registry.add_new_element(
-      "reaction1", core::ReactionTag{std::make_unique<core::ReactionProperties>([]() {}, 0)}, elements.uid);
-  const auto& reaction3 = model.element_registry.add_new_element(
-      "reaction3", core::ReactionTag{std::make_unique<core::ReactionProperties>([]() {}, 2)}, elements.uid);
-  const auto& empty = model.element_registry.add_new_element("empty", core::ReactorTag{}, elements.uid);
+  const core::Element& elements =
+      model.element_registry.add_new_element("elements", core::ReactorTag{}, std::nullopt).value();
+  const core::Element& startup =
+      model.element_registry.add_new_element("startup", core::StartupTag{}, elements.uid).value();
+  const core::Element& shutdown =
+      model.element_registry.add_new_element("shutdown", core::ShutdownTag{}, elements.uid).value();
+  const core::Element& timer1 =
+      model.element_registry
+          .add_new_element("timer1", core::PeriodicTimerTag{std::make_unique<core::PeriodicTimerProperties>(1s, 2s)},
+                           elements.uid)
+          .value();
+  const core::Element& timer2 =
+      model.element_registry
+          .add_new_element("timer2",
+                           core::PeriodicTimerTag{std::make_unique<core::PeriodicTimerProperties>(12ms, 42us)},
+                           elements.uid)
+          .value();
+  const core::Element& programmable =
+      model.element_registry.add_new_element("programmable", core::ProgrammableTimerTag{}, elements.uid).value();
+  const core::Element& physical_event =
+      model.element_registry.add_new_element("physical_event", core::PhysicalEventTag{}, elements.uid).value();
+  const core::Element& input =
+      model.element_registry.add_new_element("input", core::InputPortTag{}, elements.uid).value();
+  const core::Element& output =
+      model.element_registry.add_new_element("output", core::OutputPortTag{}, elements.uid).value();
+  const core::Element& reaction1 =
+      model.element_registry
+          .add_new_element("reaction1", core::ReactionTag{std::make_unique<core::ReactionProperties>([]() {}, 0)},
+                           elements.uid)
+          .value();
+  const core::Element& reaction3 =
+      model.element_registry
+          .add_new_element("reaction3", core::ReactionTag{std::make_unique<core::ReactionProperties>([]() {}, 2)},
+                           elements.uid)
+          .value();
+  const core::Element& empty =
+      model.element_registry.add_new_element("empty", core::ReactorTag{}, elements.uid).value();
 
   reactor_graph::Graph graph{};
   graph_exporter::detail::serialize_reactor_model(model, attribute_manager, graph);
@@ -286,22 +306,32 @@ TEST_CASE("Test serialization of port connections", "[exporter]") {
   core::ReactorModel model{};
   telemetry::AttributeManager attribute_manager{};
 
-  const auto& src = model.element_registry.add_new_element("src", core::ReactorTag{}, std::nullopt);
-  const auto& src_output = model.element_registry.add_new_element("output", core::OutputPortTag{}, src.uid);
-  const auto& src_src = model.element_registry.add_new_element("src", core::ReactorTag{}, src.uid);
-  const auto& src_src_output = model.element_registry.add_new_element("output", core::OutputPortTag{}, src_src.uid);
-  const auto& sink1 = model.element_registry.add_new_element("sink1", core::ReactorTag{}, std::nullopt);
-  const auto& sink1_input = model.element_registry.add_new_element("input", core::InputPortTag{}, sink1.uid);
-  const auto& sink2 = model.element_registry.add_new_element("sink2", core::ReactorTag{}, std::nullopt);
-  const auto& sink2_input = model.element_registry.add_new_element("input", core::InputPortTag{}, sink2.uid);
-  const auto& sink3 = model.element_registry.add_new_element("sink3", core::ReactorTag{}, std::nullopt);
-  const auto& sink3_input = model.element_registry.add_new_element("input", core::InputPortTag{}, sink3.uid);
-  const auto& sink1_sink1 = model.element_registry.add_new_element("sink1", core::ReactorTag{}, std::nullopt);
-  const auto& sink1_sink1_input =
-      model.element_registry.add_new_element("input", core::InputPortTag{}, sink1_sink1.uid);
-  const auto& sink1_sink2 = model.element_registry.add_new_element("sink2", core::ReactorTag{}, std::nullopt);
-  const auto& sink1_sink2_input =
-      model.element_registry.add_new_element("input", core::InputPortTag{}, sink1_sink2.uid);
+  const core::Element& src = model.element_registry.add_new_element("src", core::ReactorTag{}, std::nullopt).value();
+  const core::Element& src_output =
+      model.element_registry.add_new_element("output", core::OutputPortTag{}, src.uid).value();
+  const core::Element& src_src = model.element_registry.add_new_element("src", core::ReactorTag{}, src.uid).value();
+  const core::Element& src_src_output =
+      model.element_registry.add_new_element("output", core::OutputPortTag{}, src_src.uid).value();
+  const core::Element& sink1 =
+      model.element_registry.add_new_element("sink1", core::ReactorTag{}, std::nullopt).value();
+  const core::Element& sink1_input =
+      model.element_registry.add_new_element("input", core::InputPortTag{}, sink1.uid).value();
+  const core::Element& sink2 =
+      model.element_registry.add_new_element("sink2", core::ReactorTag{}, std::nullopt).value();
+  const core::Element& sink2_input =
+      model.element_registry.add_new_element("input", core::InputPortTag{}, sink2.uid).value();
+  const core::Element& sink3 =
+      model.element_registry.add_new_element("sink3", core::ReactorTag{}, std::nullopt).value();
+  const core::Element& sink3_input =
+      model.element_registry.add_new_element("input", core::InputPortTag{}, sink3.uid).value();
+  const core::Element& sink1_sink1 =
+      model.element_registry.add_new_element("sink1", core::ReactorTag{}, sink1.uid).value();
+  const core::Element& sink1_sink1_input =
+      model.element_registry.add_new_element("input", core::InputPortTag{}, sink1_sink1.uid).value();
+  const core::Element& sink1_sink2 =
+      model.element_registry.add_new_element("sink2", core::ReactorTag{}, sink1.uid).value();
+  const core::Element& sink1_sink2_input =
+      model.element_registry.add_new_element("input", core::InputPortTag{}, sink1_sink2.uid).value();
 
   SECTION("Check regular connection") {
     model.connection_graph.add_connection(
@@ -398,14 +428,24 @@ TEST_CASE("Test serialization of reaction dependencies", "[exporter]") {
   core::ReactorModel model{};
   telemetry::AttributeManager attribute_manager{};
 
-  const auto& reaction1 = model.element_registry.add_new_element(
-      "reaction1", core::ReactionTag{std::make_unique<core::ReactionProperties>(nullptr, 0)}, std::nullopt);
-  const auto& reaction2 = model.element_registry.add_new_element(
-      "reaction2", core::ReactionTag{std::make_unique<core::ReactionProperties>(nullptr, 1)}, std::nullopt);
-  const auto& elem1 = model.element_registry.add_new_element("elem1", core::InputPortTag{}, std::nullopt);
-  const auto& elem2 = model.element_registry.add_new_element("elem2", core::InputPortTag{}, std::nullopt);
-  const auto& elem3 = model.element_registry.add_new_element("elem3", core::InputPortTag{}, std::nullopt);
-  const auto& elem4 = model.element_registry.add_new_element("elem4", core::InputPortTag{}, std::nullopt);
+  const core::Element& reaction1 =
+      model.element_registry
+          .add_new_element("reaction1", core::ReactionTag{std::make_unique<core::ReactionProperties>(nullptr, 0)},
+                           std::nullopt)
+          .value();
+  const core::Element& reaction2 =
+      model.element_registry
+          .add_new_element("reaction2", core::ReactionTag{std::make_unique<core::ReactionProperties>(nullptr, 1)},
+                           std::nullopt)
+          .value();
+  const core::Element& elem1 =
+      model.element_registry.add_new_element("elem1", core::InputPortTag{}, std::nullopt).value();
+  const core::Element& elem2 =
+      model.element_registry.add_new_element("elem2", core::InputPortTag{}, std::nullopt).value();
+  const core::Element& elem3 =
+      model.element_registry.add_new_element("elem3", core::InputPortTag{}, std::nullopt).value();
+  const core::Element& elem4 =
+      model.element_registry.add_new_element("elem4", core::InputPortTag{}, std::nullopt).value();
 
   SECTION("Check dependencies for reaction1") {
     model.reaction_dependency_registry.register_reaction_effect(reaction1.uid, elem1.uid);

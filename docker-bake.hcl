@@ -1,6 +1,6 @@
 variable "CONTEXT_PREFIX" { default = "." }
 
-variable "XRONOS_VERSION" { default = "0.7.0" }
+variable "XRONOS_VERSION" { default = "0.8.0" }
 
 target "base" {
   target  = "base"
@@ -77,7 +77,7 @@ target "third-party-catch2" {
 target "third-party-doxygen" {
   inherits = ["_third-party-common"]
   contexts = {
-    doxygen-src = "https://github.com/doxygen/doxygen.git#Release_1_15_0",
+    doxygen-src = "https://github.com/doxygen/doxygen.git#Release_1_16_1",
   }
   context = "${CONTEXT_PREFIX}/third-party/doxygen"
 }
@@ -260,6 +260,12 @@ target "xronos-examples-hello-ros2-comparison-lint" {
   context = "${CONTEXT_PREFIX}/examples/hello-ros2-comparison/"
 }
 
+target "xronos-examples-isaac-lint" {
+  inherits = ["_xronos-examples-common-311"]
+  target   = "lint"
+  context  = "${CONTEXT_PREFIX}/examples/isaac/"
+}
+
 target "xronos-examples-keyboard-synth-lint" {
   name     = "xronos-examples-keyboard-synth-lint-${replace(version, ".", "")}"
   inherits = ["_xronos-examples-common-${replace(version, ".", "")}"]
@@ -390,6 +396,7 @@ variable "LINT_TARGETS" {
     "xronos-py-lint-py",
     "xronos-py-lint-cpp",
     "xronos-examples-hello-ros2-comparison-lint",
+    "xronos-examples-isaac-lint",
     "xronos-examples-keyboard-synth-lint",
     "xronos-examples-montecarlo-lint",
     "xronos-examples-robot-arm-lint",

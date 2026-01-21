@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (c) 2025 Xronos Inc.
+// SPDX-FileCopyrightText: Copyright (c) Xronos Inc.
 // SPDX-License-Identifier: BSD-3-Clause
 
 #include "xronos/sdk/metric.hh"
@@ -9,6 +9,7 @@
 #include <string_view>
 
 #include "impl/xronos/sdk/detail/context_access.hh"
+#include "impl/xronos/sdk/detail/element.hh"
 #include "xronos/core/element.hh"
 #include "xronos/sdk/context.hh"
 #include "xronos/sdk/fwd.hh"
@@ -20,11 +21,10 @@ using CA = detail::ContextAccess;
 
 Metric::Metric(std::string_view name, const ReactorContext& context, std::string_view description,
                std::string_view unit)
-    : Element{CA::get_program_context(context)->model.element_registry.add_new_element(
-                  name,
-                  core::MetricTag{std::make_unique<core::MetricProperties>(
-                      core::MetricProperties{.description = std::string{description}, .unit = std::string{unit}})},
-                  CA::get_parent_uid(context)),
+    : Element{detail::register_element(name,
+                                       core::MetricTag{std::make_unique<core::MetricProperties>(core::MetricProperties{
+                                           .description = std::string{description}, .unit = std::string{unit}})},
+                                       context),
               context} {}
 
 void Metric::record(double value) noexcept {
