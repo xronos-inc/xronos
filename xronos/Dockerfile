@@ -15,7 +15,7 @@ FROM common AS build-wheel
 ENV CMAKE_PREFIX_PATH=/install
 ENV LD_LIBRARY_PATH=/install/lib
 RUN . /venv/bin/activate && pip wheel . --no-deps
-RUN . /venv/bin/activate && auditwheel repair xronos-*.whl --plat manylinux_2_35_$(uname -m) --strip
+RUN . /venv/bin/activate && auditwheel repair xronos-*.whl --strip
 
 FROM scratch AS wheel
 COPY --from=build-wheel /xronos/xronos/wheelhouse/xronos-*.whl /dist/

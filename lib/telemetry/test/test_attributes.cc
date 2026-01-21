@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (c) 2025 Xronos Inc.
+// SPDX-FileCopyrightText: Copyright (c) Xronos Inc.
 // SPDX-License-Identifier: BSD-3-Clause
 
 #include <cstdint>
@@ -18,7 +18,7 @@ TEST_CASE("Single reactor", "[attribute manager]") {
   core::ElementRegistry element_registry{};
   telemetry::AttributeManager attribute_manager{};
 
-  const auto& reactor = element_registry.add_new_element("reactor", core::ReactorTag{}, std::nullopt);
+  const core::Element& reactor = element_registry.add_new_element("reactor", core::ReactorTag{}, std::nullopt).value();
 
   SECTION("Attributes should be empty initially") {
     auto attributes = attribute_manager.get_attributes(reactor.uid, element_registry);
@@ -70,13 +70,17 @@ TEST_CASE("Hierarchy", "[attribute manager]") {
   core::ElementRegistry element_registry{};
   telemetry::AttributeManager attribute_manager{};
 
-  const auto& top = element_registry.add_new_element("top", core::ReactorTag{}, std::nullopt);
-  const auto& nested1 = element_registry.add_new_element("nested1", core::ReactorTag{}, top.uid);
-  const auto& nested2 = element_registry.add_new_element("nested2", core::ReactorTag{}, top.uid);
-  const auto& timer1 = element_registry.add_new_element("timer", core::PeriodicTimerTag{}, nested1.uid);
-  const auto& timer2 = element_registry.add_new_element("timer", core::PeriodicTimerTag{}, nested2.uid);
-  const auto& reaction1 = element_registry.add_new_element("reaction", core::ReactionTag{}, nested1.uid);
-  const auto& reaction2 = element_registry.add_new_element("reaction", core::ReactionTag{}, nested2.uid);
+  const core::Element& top = element_registry.add_new_element("top", core::ReactorTag{}, std::nullopt).value();
+  const core::Element& nested1 = element_registry.add_new_element("nested1", core::ReactorTag{}, top.uid).value();
+  const core::Element& nested2 = element_registry.add_new_element("nested2", core::ReactorTag{}, top.uid).value();
+  const core::Element& timer1 =
+      element_registry.add_new_element("timer", core::PeriodicTimerTag{}, nested1.uid).value();
+  const core::Element& timer2 =
+      element_registry.add_new_element("timer", core::PeriodicTimerTag{}, nested2.uid).value();
+  const core::Element& reaction1 =
+      element_registry.add_new_element("reaction", core::ReactionTag{}, nested1.uid).value();
+  const core::Element& reaction2 =
+      element_registry.add_new_element("reaction", core::ReactionTag{}, nested2.uid).value();
 
   std::vector<std::uint64_t> uids{top.uid,    nested1.uid,   nested2.uid,  timer1.uid,
                                   timer2.uid, reaction1.uid, reaction2.uid};

@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (c) 2025 Xronos Inc.
+# SPDX-FileCopyrightText: Copyright (c) Xronos Inc.
 # SPDX-License-Identifier: BSD-3-Clause
 
 import datetime
@@ -7,7 +7,17 @@ from typing import Callable
 class ValidationError(Exception):
     def __init__(self, message: str) -> None: ...
 
+class DuplicateNameError(Exception):
+    def __init__(self, message: str) -> None: ...
+
 class SourceLocation:
+    file_: str
+    function: str
+    start_line: int
+    end_line: int
+    start_column: int
+    end_column: int
+
     def __init__(
         self,
         file_: str,

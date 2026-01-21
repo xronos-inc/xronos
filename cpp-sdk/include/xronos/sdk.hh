@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (c) 2025 Xronos Inc.
+// SPDX-FileCopyrightText: Copyright (c) Xronos Inc.
 // SPDX-License-Identifier: BSD-3-Clause
 
 /**
@@ -16,6 +16,7 @@
 
 // IWYU pragma: begin_exports
 #include "xronos/sdk/context.hh"
+#include "xronos/sdk/element.hh"
 #include "xronos/sdk/environment.hh"
 #include "xronos/sdk/metric.hh"
 #include "xronos/sdk/periodic_timer.hh"

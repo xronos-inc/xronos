@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (c) 2025 Xronos Inc.
+# SPDX-FileCopyrightText: Copyright (c) Xronos Inc.
 # SPDX-License-Identifier: BSD-3-Clause
 
 from xronos._core import (
@@ -7,6 +7,7 @@ from xronos._core import (
     EventSource,
     InputPort,
     InputPortDeclaration,
+    InvalidReactionHandler,
     Metric,
     MetricDeclaration,
     MetricEffect,
@@ -29,15 +30,18 @@ from xronos._core import (
     reaction,
 )
 from xronos._cpp_sdk import (  # type: ignore reportMissingModuleSource
+    DuplicateNameError,
     ValidationError,
 )
 
 __all__ = [
+    "DuplicateNameError",
     "Element",
     "Environment",
     "EventSource",
     "InputPort",
     "InputPortDeclaration",
+    "InvalidReactionHandler",
     "Metric",
     "MetricDeclaration",
     "MetricEffect",

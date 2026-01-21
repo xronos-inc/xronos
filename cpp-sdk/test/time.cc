@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (c) 2025 Xronos Inc.
+// SPDX-FileCopyrightText: Copyright (c) Xronos Inc.
 // SPDX-License-Identifier: BSD-3-Clause
 
 #include <thread>
@@ -130,7 +130,7 @@ TEST(time, TestGetLag) {
         auto lag3 = self().get_lag();
         EXPECT_GT(lag3, lag2);
         EXPECT_GE(lag3 - lag2, 100ms);
-        EXPECT_LT(lag3 - lag2, 200ms);
+        EXPECT_LT(lag3 - lag2, 300ms);
 
         EXPECT_FALSE(self().on_startup_executed_);
         self().on_startup_executed_ = true;

@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (c) 2025 Xronos Inc.
+# SPDX-FileCopyrightText: Copyright (c) Xronos Inc.
 # SPDX-License-Identifier: BSD-3-Clause
 
 # Ignore access to protected/private members. We use access to protected
@@ -42,6 +42,12 @@ Elem = TypeVar("Elem", bound="Element")
 
 AttributeValue: TypeAlias = str | bool | int | float
 AttributeMap: TypeAlias = dict[str, AttributeValue]
+
+
+class InvalidReactionHandler(TypeError):
+    """Exception that is thrown when a reaction returns an invalid handler."""
+
+    pass
 
 
 def get_source_location() -> sdk.SourceLocation:
@@ -900,7 +906,9 @@ class Reactor(Element):
         source_location: sdk.SourceLocation,
     ) -> "Reaction":
         sdk_reaction = self.__sdk_instance.add_reaction(name, source_location)
-        return Reaction(sdk_reaction, lambda: declaration(sdk_reaction.context()))
+        return Reaction(
+            sdk_reaction, lambda: declaration(sdk_reaction.context()), source_location
+        )
 
     @overload
     def connect(
@@ -1250,14 +1258,73 @@ class Reaction(Element):
         self,
         sdk_instance: sdk.Reaction,
         declaration: Callable[[], Callable[[], None]],
+        source_location: sdk.SourceLocation,
     ) -> None:
         super().__init__(sdk_instance)
         self.__declaration = declaration
+        self.__source_location = source_location
 
     def _assemble(self):
         sdk_reaction = self._get_sdk_instance(sdk.Reaction)
         handler = self.__declaration()
+
+        if error_message := self.__check_handler_signature(sdk_reaction, handler):
+            raise InvalidReactionHandler(
+                f"{self.__source_location.file_}:{self.__source_location.start_line}: "
+                f"{error_message}"
+            )
+
         sdk_reaction.set_handler(handler)
+
+    @staticmethod
+    def __check_handler_signature(
+        sdk_reaction: sdk.Reaction, handler: object
+    ) -> None | str:
+        if handler is None:
+            return (
+                f"Reaction {sdk_reaction.fqn} has no reaction handler. "
+                "Did you forget to return a handler from the reaction declaration?"
+            )
+        if not callable(handler):
+            return (
+                f"The reaction handler returned for reaction {sdk_reaction.fqn} "
+                "is not callable."
+            )
+
+        try:
+            signature = inspect.signature(handler)
+        except (TypeError, ValueError):
+            # An error during inspection can have many reasons, including that
+            # the object is a bound C/C++ function. Since we cannot inspect
+            # without a valid signature, we will just assume that the handler
+            # is valid.
+            return None
+
+        # Check that, if there are keyword or positional arguments, they have a
+        # default value.
+        for parameter in signature.parameters.values():
+            if (
+                parameter.kind
+                in (
+                    parameter.POSITIONAL_ONLY,
+                    parameter.POSITIONAL_OR_KEYWORD,
+                    parameter.KEYWORD_ONLY,
+                )
+                and parameter.default is parameter.empty
+            ):
+                kind = (
+                    "keyword"
+                    if parameter.kind == parameter.KEYWORD_ONLY
+                    else "positional"
+                )
+                return (
+                    "Reaction handlers must be callable without arguments, "
+                    f"but the handler for reaction {sdk_reaction.fqn} requires "
+                    f"the {kind} argument {parameter.name}."
+                )
+
+        # Returning None means no errors
+        return None
 
     def __call__(self) -> None:
         raise RuntimeError("Reactions may not be called directly")

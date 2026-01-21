@@ -1,11 +1,9 @@
-# SPDX-FileCopyrightText: (c) 2022 The Lingua Franca Coordination Language.
-# SPDX-License-Identifier: BSD-2-Clause
-#
-# Modifications Copyright (c) 2025 Xronos Inc.
+# SPDX-FileCopyrightText: Copyright (c) Xronos Inc.
+# SPDX-FileCopyrightText: Copyright (c) 2022 The Lingua Franca Coordination Language.
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # This file contains portions from the Lingua Franca Coordination Language
-# under BSD-2-Clause and modifications by Xronos Inc. under BSD-3-Clause.
+# under BSD-2-Clause and modifications Xronos Inc. under BSD-3-Clause.
 
 import argparse
 from typing import Optional

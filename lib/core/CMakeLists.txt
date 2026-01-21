@@ -9,6 +9,7 @@ target_sources(
   BASE_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>
   FILES ${HEADERS}
 )
+target_link_libraries(xronos-core PUBLIC xronos-util nonstd::expected-lite PRIVATE fmt::fmt-header-only)
 
 target_compile_options(xronos-core PRIVATE -Wall -Wextra -pedantic -Werror)
 set_target_properties(xronos-core PROPERTIES VERIFY_INTERFACE_HEADER_SETS ON)

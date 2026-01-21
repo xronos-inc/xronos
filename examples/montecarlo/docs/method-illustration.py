@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: (c) 2025 Xronos Inc.
+# SPDX-FileCopyrightText: Copyright (c) Xronos Inc.
 # SPDX-License-Identifier: BSD-3-Clause
 
 from typing import Tuple

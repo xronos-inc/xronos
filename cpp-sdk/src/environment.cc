@@ -1,10 +1,11 @@
-// SPDX-FileCopyrightText: Copyright (c) 2025 Xronos Inc.
+// SPDX-FileCopyrightText: Copyright (c) Xronos Inc.
 // SPDX-License-Identifier: BSD-3-Clause
 
 #include "xronos/sdk/environment.hh"
 
 #include <cstddef>
 #include <memory>
+#include <ranges>
 #include <source_location>
 #include <stdexcept>
 #include <string>
@@ -64,7 +65,7 @@ void Environment::execute(const RuntimeProvider& runtime_provider) {
   }
 
   // invoke the assemble callbacks
-  for (auto& callback : program_context_->assemble_callbacks) {
+  for (auto& callback : program_context_->assemble_callbacks | std::views::values) {
     (callback)();
   }
 
