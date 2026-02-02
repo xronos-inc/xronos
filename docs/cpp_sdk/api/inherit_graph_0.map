@@ -1,7 +1,9 @@
 <map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="Node000000" title=" " alt="" coords="5,5,120,31"/>
-<area shape="rect" id="Node000001" title=" " alt="" coords="168,5,307,31"/>
-<area shape="poly" id="edge1_Node000000_Node000001" title=" " alt="" coords="134,15,168,15,168,21,134,21"/>
-<area shape="rect" id="Node000002" href="$classxronos_1_1sdk_1_1ValidationError.html" title="Exception that is thrown when a program reaches an invalid state." alt="" coords="355,5,556,31"/>
-<area shape="poly" id="edge2_Node000001_Node000002" title=" " alt="" coords="320,15,354,15,354,21,320,21"/>
+<area shape="rect" id="Node000000" title=" " alt="" coords="5,42,120,67"/>
+<area shape="rect" id="Node000001" title=" " alt="" coords="168,42,307,67"/>
+<area shape="poly" id="edge1_Node000000_Node000001" title=" " alt="" coords="134,52,168,52,168,57,134,57"/>
+<area shape="rect" id="Node000002" href="$classxronos_1_1sdk_1_1DuplicateNameError.html" title="Exception that is thrown when creating an element with a name that is already in use." alt="" coords="355,5,561,45"/>
+<area shape="poly" id="edge2_Node000001_Node000002" title=" " alt="" coords="320,41,354,36,355,42,321,46"/>
+<area shape="rect" id="Node000003" href="$classxronos_1_1sdk_1_1ValidationError.html" title="Exception that is thrown when a program reaches an invalid state." alt="" coords="357,70,559,95"/>
+<area shape="poly" id="edge3_Node000001_Node000003" title=" " alt="" coords="321,63,358,67,357,73,320,68"/>
 </map>

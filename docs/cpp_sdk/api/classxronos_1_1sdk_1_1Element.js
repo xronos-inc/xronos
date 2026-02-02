@@ -6,7 +6,7 @@ var classxronos_1_1sdk_1_1Element =
     [ "fqn", "classxronos_1_1sdk_1_1Element.html#af93126c8a89905baf60a3c801da6fc55", null ],
     [ "uid", "classxronos_1_1sdk_1_1Element.html#adf9920543573ff1b8b0d6195d506e5c0", null ],
     [ "add_attribute", "classxronos_1_1sdk_1_1Element.html#a732c42bbeeb04873b20e33ad5810ace1", null ],
-    [ "add_attributes", "classxronos_1_1sdk_1_1Element.html#a503bcd838c184deeff62edb2e8f4c2be", null ],
+    [ "add_attributes", "classxronos_1_1sdk_1_1Element.html#aa4ab79cdbb629abcb045085239bf0182", null ],
     [ "add_attributes", "classxronos_1_1sdk_1_1Element.html#addccf4d34d6bb4396142ae57a8dc085d", null ],
     [ "operator=", "classxronos_1_1sdk_1_1Element.html#a5ca15ef8e392caa8efb6b5bc761e4455", null ]
 ];

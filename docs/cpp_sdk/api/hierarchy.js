@@ -20,6 +20,7 @@ var hierarchy =
     [ "xronos::sdk::EnvironmentContext", "classxronos_1_1sdk_1_1EnvironmentContext.html", null ],
     [ "std::exception", null, [
       [ "std::runtime_error", null, [
+        [ "xronos::sdk::DuplicateNameError", "classxronos_1_1sdk_1_1DuplicateNameError.html", null ],
         [ "xronos::sdk::ValidationError", "classxronos_1_1sdk_1_1ValidationError.html", null ]
       ] ]
     ] ],

@@ -24,7 +24,7 @@ using the pre-built binary artifacts.
 `````{tabs}
 ````{group-tab} binary artifacts
 ```cmake
-set(XRONOS_SDK_VERSION "0.7.0" CACHE STRING "Xronos SDK version")
+set(XRONOS_SDK_VERSION "0.8.0" CACHE STRING "Xronos SDK version")
 include(FetchContent)
 FetchContent_Declare(
   "xronos-sdk"
@@ -37,7 +37,7 @@ find_package(xronos-sdk)
 ````
 ````{group-tab} from source
 ```cmake
-set(XRONOS_SDK_VERSION "0.7.0" CACHE STRING "Xronos SDK version")
+set(XRONOS_SDK_VERSION "0.8.0" CACHE STRING "Xronos SDK version")
 include(FetchContent)
 FetchContent_Declare(
   "xronos-sdk"
@@ -127,7 +127,7 @@ cmake_minimum_required(VERSION 3.28)
 
 project(hello LANGUAGES CXX)
 
-set(XRONOS_SDK_VERSION "0.7.0" CACHE STRING "Xronos SDK version")
+set(XRONOS_SDK_VERSION "0.8.0" CACHE STRING "Xronos SDK version")
 include(FetchContent)
 FetchContent_Declare(
   "xronos-sdk"
@@ -148,7 +148,7 @@ cmake_minimum_required(VERSION 3.28)
 
 project(hello LANGUAGES CXX)
 
-set(XRONOS_SDK_VERSION "0.7.0" CACHE STRING "Xronos SDK version")
+set(XRONOS_SDK_VERSION "0.8.0" CACHE STRING "Xronos SDK version")
 include(FetchContent)
 FetchContent_Declare(
   "xronos-sdk"

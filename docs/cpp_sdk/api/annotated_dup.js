@@ -4,6 +4,7 @@ var annotated_dup =
       [ "sdk", "namespacexronos_1_1sdk.html", [
         [ "EnvironmentContext", "classxronos_1_1sdk_1_1EnvironmentContext.html", null ],
         [ "ReactorContext", "classxronos_1_1sdk_1_1ReactorContext.html", null ],
+        [ "DuplicateNameError", "classxronos_1_1sdk_1_1DuplicateNameError.html", null ],
         [ "Element", "classxronos_1_1sdk_1_1Element.html", "classxronos_1_1sdk_1_1Element" ],
         [ "ValidationError", "classxronos_1_1sdk_1_1ValidationError.html", null ],
         [ "Environment", "classxronos_1_1sdk_1_1Environment.html", "classxronos_1_1sdk_1_1Environment" ],

@@ -5,9 +5,9 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Index &mdash; xronos v0.7.0  documentation</title>
+  <title>Index &mdash; xronos v0.8.0  documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
       <link rel="stylesheet" type="text/css" href="_static/fix_stacking.css?v=30aa6f93" />
 
@@ -16,8 +16,8 @@
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
       <script src="_static/documentation_options.js?v=5929fcd5"></script>
-      <script src="_static/doctools.js?v=9bcbadda"></script>
-      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="_static/clipboard.min.js?v=a7894cd8"></script>
       <script src="_static/copybutton.js?v=35a8b989"></script>
     <script src="_static/js/theme.js"></script>
@@ -34,7 +34,7 @@
           
           
           <a href="index.html" class="icon icon-home">
-            xronos v0.7.0
+            xronos v0.8.0
               <img src="_static/logo_written.svg" class="logo" alt="Logo"/>
           </a>
 <div role="search">
@@ -78,7 +78,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="index.html">xronos v0.7.0</a>
+          <a href="index.html">xronos v0.8.0</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -174,12 +174,24 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="python_sdk/api.html#xronos.ReactionInterface.add_effect">add_effect() (xronos.ReactionInterface method)</a>
 </li>
-      <li><a href="python_sdk/api.html#xronos.ValidationError.add_note">add_note() (xronos.ValidationError method)</a>
+      <li><a href="python_sdk/api.html#xronos.DuplicateNameError.add_note">add_note() (xronos.DuplicateNameError method)</a>
+
+      <ul>
+        <li><a href="python_sdk/api.html#xronos.InvalidReactionHandler.add_note">(xronos.InvalidReactionHandler method)</a>
 </li>
+        <li><a href="python_sdk/api.html#xronos.ValidationError.add_note">(xronos.ValidationError method)</a>
+</li>
+      </ul></li>
       <li><a href="python_sdk/api.html#xronos.ReactionInterface.add_trigger">add_trigger() (xronos.ReactionInterface method)</a>
 </li>
-      <li><a href="python_sdk/api.html#xronos.ValidationError.args">args (xronos.ValidationError attribute)</a>
+      <li><a href="python_sdk/api.html#xronos.DuplicateNameError.args">args (xronos.DuplicateNameError attribute)</a>
+
+      <ul>
+        <li><a href="python_sdk/api.html#xronos.InvalidReactionHandler.args">(xronos.InvalidReactionHandler attribute)</a>
 </li>
+        <li><a href="python_sdk/api.html#xronos.ValidationError.args">(xronos.ValidationError attribute)</a>
+</li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
@@ -213,6 +225,10 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="python_sdk/api.html#xronos.Metric.description">description (xronos.Metric property)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="python_sdk/api.html#xronos.DuplicateNameError">DuplicateNameError</a>
 </li>
   </ul></td>
 </tr></table>
@@ -296,6 +312,8 @@
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="python_sdk/api.html#xronos.InvalidReactionHandler">InvalidReactionHandler</a>
+</li>
       <li><a href="python_sdk/api.html#xronos.PortEffect.is_present">is_present() (xronos.PortEffect method)</a>
 
       <ul>
@@ -491,8 +509,14 @@
 <h2 id="W">W</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="python_sdk/api.html#xronos.ValidationError.with_traceback">with_traceback() (xronos.ValidationError method)</a>
+      <li><a href="python_sdk/api.html#xronos.DuplicateNameError.with_traceback">with_traceback() (xronos.DuplicateNameError method)</a>
+
+      <ul>
+        <li><a href="python_sdk/api.html#xronos.InvalidReactionHandler.with_traceback">(xronos.InvalidReactionHandler method)</a>
 </li>
+        <li><a href="python_sdk/api.html#xronos.ValidationError.with_traceback">(xronos.ValidationError method)</a>
+</li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
@@ -527,7 +551,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2025, Xronos Inc..</p>
+    <p>&#169; Copyright 2024-2026, Xronos Inc.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
