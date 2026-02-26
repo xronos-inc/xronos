@@ -25,6 +25,7 @@ using ElementID = std::uint64_t;
 struct ReactionProperties {
   std::function<void()> handler;
   std::uint32_t position{};
+  std::optional<Duration> deadline;
 };
 
 struct MetricProperties {

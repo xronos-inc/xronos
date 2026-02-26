@@ -183,7 +183,9 @@ def test_ramp_source() -> None:
     period = datetime.timedelta(seconds=1)
     env = xronos.Environment(timeout=duration, fast=True)
     printer = env.create_reactor(
-        "PrintAndAssert", PrintAndAssert[int], assert_value=lambda: printer.count()
+        "PrintAndAssert",
+        PrintAndAssert[int],
+        assert_value=lambda: printer.count(),  # noqa: PLW0108
     )
     timer = env.create_reactor("TimerSource", TimerSource, period=period)
     ramp = env.create_reactor(

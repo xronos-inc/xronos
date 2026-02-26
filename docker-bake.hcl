@@ -1,6 +1,6 @@
 variable "CONTEXT_PREFIX" { default = "." }
 
-variable "XRONOS_VERSION" { default = "0.8.0" }
+variable "XRONOS_VERSION" { default = "0.9.0" }
 
 target "base" {
   target  = "base"
@@ -174,29 +174,29 @@ target "xronos-py-wheel" {
     version = ["3.10", "3.11", "3.12", "3.13", "3.13t", "3.14", "3.14t"]
   }
   target  = "wheel"
-  context = "${CONTEXT_PREFIX}/xronos"
+  context = "${CONTEXT_PREFIX}/python-sdk"
   contexts = {
     py-venv = "target:py-venv-${replace(version, ".", "")}"
     cpp-sdk = "target:xronos-cpp-sdk-install"
   }
-  output = ["${CONTEXT_PREFIX}/xronos"]
+  output = ["${CONTEXT_PREFIX}/python-sdk"]
 }
 
 target "xronos-py-sdist" {
   target  = "sdist"
-  context = "${CONTEXT_PREFIX}/xronos"
+  context = "${CONTEXT_PREFIX}/python-sdk"
   contexts = {
     py-venv         = "target:py-venv-313"
     cpp-sdk-src     = "target:xronos-cpp-sdk-src"
     lib-src         = "target:xronos-lib-src"
     third-party-src = "target:third-party-cmake-files"
   }
-  output = ["${CONTEXT_PREFIX}/xronos"]
+  output = ["${CONTEXT_PREFIX}/python-sdk"]
 }
 
 target "xronos-py-test-src" {
   target  = "test-src"
-  context = "${CONTEXT_PREFIX}/xronos"
+  context = "${CONTEXT_PREFIX}/python-sdk"
   output  = [{ type = "cacheonly" }]
 }
 
@@ -223,18 +223,10 @@ target "xronos-py-lint-cpp" {
   }
 }
 
-target "xronos-examples-base" {
-  name = "xronos-examples-base-${replace(version, ".", "")}"
-  matrix = {
-    version = ["3.10", "3.11", "3.12", "3.13", "3.13t", "3.14", "3.14t"]
-  }
-  target  = "base"
+target "xronos-examples-common-files" {
+  target  = "common-files"
   context = "${CONTEXT_PREFIX}/examples"
-  contexts = {
-    py-venv      = "target:py-venv-${replace(version, ".", "")}"
-    xronos-wheel = "target:xronos-py-wheel-${replace(version, ".", "")}"
-  }
-  output = [{ type = "cacheonly" }]
+  output  = [{ type = "cacheonly" }]
 }
 
 target "_xronos-examples-common" {
@@ -243,7 +235,7 @@ target "_xronos-examples-common" {
     version = ["3.10", "3.11", "3.12", "3.13", "3.13t", "3.14", "3.14t"]
   }
   contexts = {
-    base         = "target:xronos-examples-base-${replace(version, ".", "")}"
+    common-files = "target:xronos-examples-common-files"
     py-venv      = "target:py-venv-${replace(version, ".", "")}"
     xronos-wheel = "target:xronos-py-wheel-${replace(version, ".", "")}"
   }

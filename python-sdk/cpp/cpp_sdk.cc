@@ -5,6 +5,7 @@
 #include <csignal>
 #include <cstdint>
 #include <functional>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -130,7 +131,7 @@ public:
 
   static auto add_reaction(Reactor& reactor, std::string_view name, detail::SourceLocationView location)
       -> const PyReaction& {
-    return detail::add_reaction<PyReaction>(reactor, name, location);
+    return detail::add_reaction<PyReaction>(reactor, name, std::nullopt, location);
   }
 
   void connect(const InputPort<GilWrapper>& from, const InputPort<GilWrapper>& to) { Reactor::connect(from, to); }

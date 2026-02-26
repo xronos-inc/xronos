@@ -720,7 +720,7 @@ class Reactor(Element):
             )
 
         super().__init__(
-            sdk.Reactor(self.__name, self.__container_context, lambda: self._assemble())
+            sdk.Reactor(self.__name, self.__container_context, self._assemble)
         )
         self.__initialized = True
 

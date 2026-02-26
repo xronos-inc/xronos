@@ -77,7 +77,7 @@ class Webserver(xronos.Reactor):
     ) -> Callable[[], None]:
         """Signal shutdown of the websocket server."""
         interface.add_trigger(self.request_service_stop)
-        return lambda: self.__server_stop_thread.start()
+        return self.__server_stop_thread.start
 
     @xronos.reaction
     def __on_stopped_callback(

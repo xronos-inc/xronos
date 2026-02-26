@@ -1,8 +1,9 @@
 # syntax=docker/dockerfile:1-labs
 
-FROM base AS common
-WORKDIR /xronos
-RUN . /venv/bin/activate && pip install --no-index --find-links=wheels xronos
+FROM py-venv AS common
+WORKDIR /xronos/examples
+COPY --from=common-files /xronos/examples/* ./
+RUN --mount=from=xronos-wheel,source=/dist,target=/dist . /venv/bin/activate && pip install --no-cache-dir /dist/xronos-*.whl
 WORKDIR /xronos/examples/hello-ros2-comparison
 COPY --parents xronos ros .
 

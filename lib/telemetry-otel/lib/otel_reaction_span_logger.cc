@@ -10,6 +10,7 @@
 #include "common.hh"
 #include "opentelemetry/trace/scope.h"
 #include "opentelemetry/trace/span.h"
+#include "xronos/core/element.hh"
 #include "xronos/runtime/interfaces.hh"
 #include "xronos/telemetry/reaction.hh"
 #include "xronos/util/assert.hh"
@@ -46,7 +47,13 @@ auto OtelReactionSpanLogger::record_reaction_span(std::uint64_t reaction_uid,
   attributes["xronos.schema.low_cardinality_attributes"] = low_cardinality_attributes;
 
   util::assert_(element.parent_uid.has_value());
-  set_common_high_cardinality_attributes(*program_handle.get_time_access(element.parent_uid.value()), attributes);
+  const runtime::TimeAccess& time_access = *program_handle.get_time_access(element.parent_uid.value());
+  set_common_high_cardinality_attributes(time_access, attributes);
+
+  auto deadline = core::get_properties<core::ReactionTag>(element).deadline;
+  if (deadline.has_value()) {
+    attributes["xronos.deadline"] = (time_access.get_timestamp().time_since_epoch() + *deadline).count();
+  }
 
   auto tracer = get_tracer();
   auto span = tracer->StartSpan(element.fqn, attributes);

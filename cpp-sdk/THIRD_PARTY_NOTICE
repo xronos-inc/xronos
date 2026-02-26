@@ -20,7 +20,7 @@ For the full license text, see:
 Component: address_sorting
 License: BSD 3-Clause License
 License text: https://opensource.org/licenses/BSD-3-Clause
-Source: https://github.com/grpc/grpc/tree/v1.76.0/third_party/address_sorting
+Source: https://github.com/grpc/grpc/tree/v1.78.0/third_party/address_sorting
 
 For the full license text, see:
 [third-party-licenses/address_sorting_LICENSE](third-party-licenses/address_sorting_LICENSE)
@@ -59,7 +59,7 @@ For the full license text, see:
 ---
 
 Component: gRPC
-Version: v1.76.0
+Version: v1.78.0
 License: Apache License 2.0
 License text: https://www.apache.org/licenses/LICENSE-2.0
 Source: https://github.com/grpc/grpc
@@ -81,7 +81,7 @@ For the full license text, see:
 ---
 
 Component: OpenTelemetry C++
-Version: v1.24.0
+Version: v1.25.0
 License: Apache License 2.0
 License text: https://www.apache.org/licenses/LICENSE-2.0
 Source: https://github.com/open-telemetry/opentelemetry-cpp
@@ -127,7 +127,7 @@ For the full license text, see:
 Component: utf8_range
 License: MIT License
 License text: https://opensource.org/licenses/MIT
-Source: https://github.com/grpc/grpc/tree/v1.76.0/third_party/utf8_range
+Source: https://github.com/grpc/grpc/tree/v1.78.0/third_party/utf8_range
 
 For the full license text, see:
 [third-party-licenses/utf8_range_LICENSE](third-party-licenses/utf8_range_LICENSE)

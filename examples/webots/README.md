@@ -25,10 +25,10 @@ SDK. The code can be found in `controllers/xronos_can_grasper/xronos_can_grasper
 
 ## Running the Demo
 
-Install the Python dependencies.
+Install xronos.
 
 ```shell
-pip install -r requirements.txt
+pip install xronos
 ```
 
 Then run webots using the following command.

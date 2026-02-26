@@ -5,9 +5,10 @@
 # pyright: standard
 
 import datetime
-from typing import Any, Callable, List, Literal, TypedDict
+from typing import Any, Callable, List, Literal, TypedDict, cast
 
 import numpy as np
+import numpy.typing as npt
 import xronos
 
 
@@ -28,8 +29,8 @@ class NeuralPredictor:
     def sigmoid(self, x: np.ndarray) -> Any:
         return 1 / (1 + np.exp(-np.clip(x, -100, 100)))
 
-    def relu(self, x: np.ndarray) -> np.ndarray:
-        return np.maximum(0, x)
+    def relu(self, x: npt.NDArray) -> npt.NDArray:
+        return cast(npt.NDArray, np.maximum(0, x))
 
     def get_activation(self, name: str) -> Callable[[np.ndarray], np.ndarray]:
         activations = {"relu": self.relu, "sigmoid": self.sigmoid}

@@ -1,4 +1,4 @@
-set(XRONOS_OPENTELEMETRY_VERSION "1.24.0" CACHE STRING "Opentelemetry version")
+set(XRONOS_OPENTELEMETRY_VERSION "1.25.0" CACHE STRING "Opentelemetry version")
 set(XRONOS_OPENTELEMETRY_PROVIDER "module" CACHE STRING "opentelemetry provider (module|package|none)")
 
 function(add_opentelemetry)
