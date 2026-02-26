@@ -1,15 +1,13 @@
 # syntax=docker/dockerfile:1-labs
 
-FROM py-venv AS dependencies
+FROM py-venv AS common
+WORKDIR /xronos/examples
 COPY requirements.txt ./
 RUN sed -i /^xronos/d requirements.txt
-RUN . /venv/bin/activate && pip wheel -r requirements.txt --wheel-dir=wheels
+RUN . /venv/bin/activate && pip install --no-cache-dir -r requirements.txt
+COPY --from=common-files /xronos/examples/* ./
+RUN --mount=from=xronos-wheel,source=/dist,target=/dist . /venv/bin/activate && pip install --no-cache-dir /dist/xronos-*.whl
 
-FROM base AS common
-WORKDIR /xronos
-COPY --from=dependencies /xronos/wheels wheels
-COPY requirements.txt .
-RUN . /venv/bin/activate && pip install --no-index --find-links=wheels -r requirements.txt
 WORKDIR /xronos/examples/YOLO
 COPY *.py .
 COPY --parents test .

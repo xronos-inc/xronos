@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Copyright (c) Xronos Inc.
 // SPDX-License-Identifier: BSD-3-Clause
 
-extern crate tonic_build;
+extern crate tonic_prost_build;
 
 pub fn main() {
     let root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
@@ -13,7 +13,7 @@ pub fn main() {
 
     let descriptor_path =
         std::path::PathBuf::from(std::env::var("OUT_DIR").unwrap()).join("proto_descriptor.bin");
-    tonic_build::configure()
+    tonic_prost_build::configure()
         .file_descriptor_set_path(&descriptor_path)
         .compile_well_known_types(true)
         .extern_path(".google.protobuf", "::pbjson_types")

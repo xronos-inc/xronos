@@ -1,14 +1,14 @@
 # syntax=docker/dockerfile:1-labs
 
 FROM scratch AS src
-WORKDIR /xronos/xronos
+WORKDIR /xronos/python-sdk
 COPY pyproject.toml README.md CMakeLists.txt LICENSE THIRD_PARTY_NOTICE .
 COPY --parents cpp src third-party-licenses .
 
 FROM py-venv AS common
 COPY --from=cpp-sdk /install /install
-COPY --from=src /xronos/xronos /xronos/xronos
-WORKDIR /xronos/xronos
+COPY --from=src /xronos/python-sdk /xronos/python-sdk
+WORKDIR /xronos/python-sdk
 
 
 FROM common AS build-wheel
@@ -18,20 +18,20 @@ RUN . /venv/bin/activate && pip wheel . --no-deps
 RUN . /venv/bin/activate && auditwheel repair xronos-*.whl --strip
 
 FROM scratch AS wheel
-COPY --from=build-wheel /xronos/xronos/wheelhouse/xronos-*.whl /dist/
+COPY --from=build-wheel /xronos/python-sdk/wheelhouse/xronos-*.whl /dist/
 
 
 FROM py-venv AS build-sdist
 COPY --from=cpp-sdk-src /xronos/cpp-sdk /xronos/cpp-sdk
 COPY --from=lib-src /xronos/lib /xronos/lib
 COPY --from=third-party-src /third-party /xronos/third-party
-COPY --from=src /xronos/xronos /xronos/xronos
-WORKDIR /xronos/xronos
+COPY --from=src /xronos/python-sdk /xronos/python-sdk
+WORKDIR /xronos/python-sdk
 COPY exported_symbols.txt .
 RUN . /venv/bin/activate && python -m build . --sdist
 
 FROM scratch AS sdist
-COPY --from=build-sdist /xronos/xronos/dist /dist
+COPY --from=build-sdist /xronos/python-sdk/dist /dist
 
 
 FROM scratch AS test-src

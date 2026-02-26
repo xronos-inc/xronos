@@ -4,14 +4,17 @@
 #include "xronos/sdk/reaction.hh"
 
 #include <any>
+#include <chrono>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <utility>
 #include <variant>
 
 #include "impl/xronos/sdk/detail/element.hh"
 #include "impl/xronos/sdk/detail/program_context.hh"
 #include "xronos/core/element.hh"
+#include "xronos/core/time.hh"
 #include "xronos/runtime/interfaces.hh"
 #include "xronos/sdk/context.hh"
 #include "xronos/sdk/element.hh"
@@ -37,9 +40,40 @@ BaseReaction::BaseReaction(const ReactionProperties& properties)
                                     uid(), *program_context()->runtime_program_handle);
                             handler();
                           },
-                      .position = properties.position_})},
+                      .position = properties.position_,
+                      .deadline = properties.deadline_})},
                   properties.context_),
               properties.context_} {}
+
+auto BaseReaction::deadline() const noexcept -> std::optional<TimePoint> {
+  auto relative_deadline = core::get_properties<core::ReactionTag>(core_element()).deadline;
+
+  if (!relative_deadline.has_value()) {
+    return std::nullopt;
+  }
+
+  auto now =
+      program_context()->runtime_program_handle->get_time_access(core_element().parent_uid.value())->get_timestamp();
+
+  // guard against overflow
+  if (TimePoint::max() - now < *relative_deadline) {
+    return TimePoint::max();
+  }
+
+  return now + *relative_deadline;
+}
+
+auto BaseReaction::remaining_slack() const noexcept -> Duration {
+  auto deadline_ = deadline();
+
+  if (!deadline_.has_value()) {
+    return Duration::max();
+  }
+
+  return *deadline_ - std::chrono::system_clock::now();
+}
+
+auto BaseReaction::is_before_deadline() const noexcept -> bool { return remaining_slack() > Duration::zero(); }
 
 BaseReaction::TriggerImpl::TriggerImpl(std::uint64_t trigger_uid, const ReactionContext& context)
     : trigger_uid_{trigger_uid}

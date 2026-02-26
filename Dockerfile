@@ -1,4 +1,4 @@
-FROM ubuntu:22.04 AS base
+FROM ubuntu:jammy-20260109 AS base
 WORKDIR /xronos
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -78,15 +78,16 @@ FROM base AS py-venv
 ARG python_version
 COPY dev-requirements.txt ./
 RUN python$python_version -m venv /venv
-RUN . /venv/bin/activate && pip install -r dev-requirements.txt
+RUN . /venv/bin/activate && pip install --no-cache-dir -r dev-requirements.txt
 # Run pyright once to install its node dependencies
 RUN . /venv/bin/activate && pyright --version
+ENV MYPY_CACHE_DIR=/dev/null
 
 
 FROM scratch AS configs
-COPY .clang-format .clang-tidy dev-requirements.txt /
+COPY .clang-tidy .clang-format dev-requirements.txt /
 
-FROM hashicorp/terraform:1.11 AS check-format
+FROM hashicorp/terraform:1.14 AS check-format
 WORKDIR /xronos
 # Need to rename the file because terraform fmt errors out for .hcl (without tftest)
 COPY docker-bake.hcl docker-bake.tftest.hcl

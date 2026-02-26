@@ -31,8 +31,8 @@ namespace detail {
 
 template <class ReactionClass>
   requires(std::is_base_of_v<BaseReaction, ReactionClass>)
-auto add_reaction(Reactor& reactor, std::string_view name, detail::SourceLocationView source_location)
-    -> ReactionClass&;
+auto add_reaction(Reactor& reactor, std::string_view name, std::optional<Duration> deadline,
+                  detail::SourceLocationView source_location) -> ReactionClass&;
 
 } // namespace detail
 
@@ -186,9 +186,9 @@ protected:
   /**
    * Instantiate and add a new reaction to the reactor.
    *
-   * This is intended to be invoked when overloading assemble() in a subclass.
-   * This factor method presents the only mechanism for correctly registering a
-   * reaction for execution by the runtime.
+   * This factory method is intended to be invoked when overloading assemble()
+   * in a subclass. It instantiates a reaction and registers it for execution by
+   * the runtime.
    *
    * @tparam ReactionClass The reaction class to instantiate. This is typically a
    * subclass of Reaction.
@@ -198,11 +198,43 @@ protected:
    * should be omitted to use the default argument.
    *
    * @see assemble()
+   * @see add_reaction_with_deadline()
    */
   template <class ReactionClass>
     requires(std::is_base_of_v<BaseReaction, ReactionClass>)
   void add_reaction(std::string_view name, std::source_location source_location = std::source_location::current()) {
-    detail::add_reaction<ReactionClass>(*this, name, detail::SourceLocationView::from_std(source_location));
+    detail::add_reaction<ReactionClass>(*this, name, std::nullopt,
+                                        detail::SourceLocationView::from_std(source_location));
+  }
+
+  /**
+   * Instantiate and add a new reaction with a deadline to the reactor.
+   *
+   * This factory method is intended to be invoked when overloading assemble()
+   * in a subclass. It instantiates a reaction and registers it for execution by
+   * the runtime.
+   *
+   * In contrast to add_reaction(), this method annotates the added reaction
+   * with a deadline. The deadline is relative to the timestamp of the
+   * triggering events. The deadline is violated if the lag exceeds the given
+   * duration.
+   *
+   * @tparam ReactionClass The reaction class to instantiate. This is typically a
+   * subclass of Reaction.
+   *
+   * @param name The name of the reaction
+   * @param deadline Relative deadline of the reaction
+   * @param source_location Source location of the call site. Normally this
+   * should be omitted to use the default argument.
+   *
+   * @see assemble()
+   * @see add_reaction()
+   */
+  template <class ReactionClass>
+    requires(std::is_base_of_v<BaseReaction, ReactionClass>)
+  void add_reaction_with_deadline(std::string_view name, Duration deadline,
+                                  std::source_location source_location = std::source_location::current()) {
+    detail::add_reaction<ReactionClass>(*this, name, deadline, detail::SourceLocationView::from_std(source_location));
   }
 
 private:
@@ -227,8 +259,8 @@ private:
   friend BaseReaction;
   template <class ReactionClass>
     requires(std::is_base_of_v<BaseReaction, ReactionClass>)
-  friend auto detail::add_reaction(Reactor& reactor, std::string_view name, detail::SourceLocationView source_location)
-      -> ReactionClass&;
+  friend auto detail::add_reaction(Reactor& reactor, std::string_view name, std::optional<Duration> deadline,
+                                   detail::SourceLocationView source_location) -> ReactionClass&;
 };
 
 /**
@@ -240,16 +272,19 @@ private:
  * @see BaseReaction::BaseReaction()
  */
 class ReactionProperties {
-  ReactionProperties(std::string_view name, std::uint32_t position, Reactor& container, const ReactorContext& context)
+  ReactionProperties(std::string_view name, std::uint32_t position, std::optional<Duration> deadline,
+                     Reactor& container, const ReactorContext& context)
       : name_(name)
       , container_(container)
       , context_(context)
-      , position_(position) {}
+      , position_(position)
+      , deadline_(deadline) {}
 
   std::string_view name_;
   std::reference_wrapper<Reactor> container_;
   ReactorContext context_;
   std::uint32_t position_;
+  std::optional<Duration> deadline_;
 
   [[nodiscard]] auto container() const noexcept -> Reactor& { return container_; }
 
@@ -257,8 +292,8 @@ class ReactionProperties {
   template <class R> friend class Reaction;
   template <class ReactionClass>
     requires(std::is_base_of_v<BaseReaction, ReactionClass>)
-  friend auto detail::add_reaction(Reactor& reactor, std::string_view name, detail::SourceLocationView source_location)
-      -> ReactionClass&;
+  friend auto detail::add_reaction(Reactor& reactor, std::string_view name, std::optional<Duration> deadline,
+                                   detail::SourceLocationView source_location) -> ReactionClass&;
 };
 
 } // namespace xronos::sdk
@@ -269,10 +304,11 @@ namespace xronos::sdk::detail {
 
 template <class ReactionClass>
   requires(std::is_base_of_v<BaseReaction, ReactionClass>)
-auto add_reaction(Reactor& reactor, std::string_view name, detail::SourceLocationView source_location)
-    -> ReactionClass& {
-  auto reaction = std::make_unique<ReactionClass>(ReactionProperties{
-      name, static_cast<std::uint32_t>(reactor.reactions_.size()), reactor, reactor.context(source_location)});
+auto add_reaction(Reactor& reactor, std::string_view name, std::optional<Duration> deadline,
+                  detail::SourceLocationView source_location) -> ReactionClass& {
+  auto reaction =
+      std::make_unique<ReactionClass>(ReactionProperties{name, static_cast<std::uint32_t>(reactor.reactions_.size()),
+                                                         deadline, reactor, reactor.context(source_location)});
   auto& ref = *reaction;
   reactor.reactions_.emplace_back(std::move(reaction));
   return ref;

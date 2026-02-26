@@ -10,6 +10,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <optional>
 #include <type_traits>
 #include <variant>
 
@@ -76,6 +77,44 @@ public:
    * instead.
    */
   BaseReaction(const ReactionProperties& properties);
+
+protected:
+  /**
+   * Get the deadline associated with the current handler invocation.
+   *
+   * If the reaction was created using Reactor::add_reaction_with_deadline(),
+   * this returns the absolute deadline (time point) until which the handler
+   * needs to complete.
+   *
+   * This should only be called from the reaction handler.
+   *
+   * @returns The deadline for the current handler invocation or std::nullopt if no
+   * deadline is set.
+   */
+  [[nodiscard]] auto deadline() const noexcept -> std::optional<TimePoint>;
+
+  /**
+   * Get the time remaining until the deadline.
+   *
+   * Calculates the remaining time for completing the handler within the
+   * deadline. A negative slack indicates that the deadline was violated.
+   *
+   * This should only be called from the reaction handler.
+   *
+   * @returns The time left for completing the handler without violating the
+   * deadline. If there is no deadline, Duration::max() is returned.
+   */
+  [[nodiscard]] auto remaining_slack() const noexcept -> Duration;
+
+  /**
+   * Check if the currently executing handler is before the deadline.
+   *
+   * This should only be called from the reaction handler.
+   *
+   * @returns true if the execution is before the deadline and false
+   * if the deadline was missed.
+   */
+  [[nodiscard]] auto is_before_deadline() const noexcept -> bool;
 
 private:
   class TriggerImpl {
