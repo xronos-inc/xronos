@@ -9,6 +9,7 @@ var searchData=
   ['reactor_2ehh_6',['reactor.hh',['../reactor_8hh.html',1,'']]],
   ['reactorcontext_7',['ReactorContext',['../classxronos_1_1sdk_1_1ReactorContext.html',1,'xronos::sdk']]],
   ['record_8',['record',['../classxronos_1_1sdk_1_1BaseReaction_1_1MetricEffect.html#a6853410dfbe6784dbd64efd739c7f2b0',1,'xronos::sdk::BaseReaction::MetricEffect::record(double value) noexcept'],['../classxronos_1_1sdk_1_1BaseReaction_1_1MetricEffect.html#af5c63dc5d581c369c048b48a4c477211',1,'xronos::sdk::BaseReaction::MetricEffect::record(std::int64_t value) noexcept']]],
-  ['runtime_5fprovider_2ehh_9',['runtime_provider.hh',['../runtime__provider_8hh.html',1,'']]],
-  ['runtimeprovider_10',['RuntimeProvider',['../structxronos_1_1sdk_1_1RuntimeProvider.html',1,'xronos::sdk']]]
+  ['remaining_5fslack_9',['remaining_slack',['../classxronos_1_1sdk_1_1BaseReaction.html#ad475e02790a6919c90ec6634831bb51c',1,'xronos::sdk::BaseReaction']]],
+  ['runtime_5fprovider_2ehh_10',['runtime_provider.hh',['../runtime__provider_8hh.html',1,'']]],
+  ['runtimeprovider_11',['RuntimeProvider',['../structxronos_1_1sdk_1_1RuntimeProvider.html',1,'xronos::sdk']]]
 ];

@@ -33,7 +33,7 @@
  <tr id="projectrow">
   <td id="projectlogo"><img alt="Logo" src="logo-banner.jpg"/></td>
   <td id="projectalign">
-   <div id="projectname">xronos-sdk<span id="projectnumber">&#160;0.8.0</span>
+   <div id="projectname">xronos-sdk<span id="projectnumber">&#160;0.9.0</span>
    </div>
    <div id="projectbrief">Xronos C++ SDK</div>
   </td>
@@ -180,6 +180,9 @@ template&lt;class T, template&lt; class &gt; class FromSerializer, template&lt; 
 <tr class="memitem:a6041c1c45a444b63d490f19d8e254597" id="r_a6041c1c45a444b63d490f19d8e254597"><td class="memTemplParams" colspan="2">template&lt;class ReactionClass&gt; </td></tr>
 <tr class="memitem:a6041c1c45a444b63d490f19d8e254597 template"><td class="memItemLeft">void&#160;</td><td class="memItemRight"><a class="el" href="#a6041c1c45a444b63d490f19d8e254597">add_reaction</a> (std::string_view <a class="el" href="classxronos_1_1sdk_1_1Element.html#aa85c0cc3344ff5646dcac93cc0f25d41">name</a>, std::source_location source_location=std::source_location::current())</td></tr>
 <tr class="memdesc:a6041c1c45a444b63d490f19d8e254597"><td class="mdescLeft">&#160;</td><td class="mdescRight">Instantiate and add a new reaction to the reactor.  <br /></td></tr>
+<tr class="memitem:a1a06468a633f8760244f8b6d5383c9ae" id="r_a1a06468a633f8760244f8b6d5383c9ae"><td class="memTemplParams" colspan="2">template&lt;class ReactionClass&gt; </td></tr>
+<tr class="memitem:a1a06468a633f8760244f8b6d5383c9ae template"><td class="memItemLeft">void&#160;</td><td class="memItemRight"><a class="el" href="#a1a06468a633f8760244f8b6d5383c9ae">add_reaction_with_deadline</a> (std::string_view <a class="el" href="classxronos_1_1sdk_1_1Element.html#aa85c0cc3344ff5646dcac93cc0f25d41">name</a>, <a class="el" href="namespacexronos_1_1sdk.html#a8c9cae9122b3793094b7b18e6a519382">Duration</a> deadline, std::source_location source_location=std::source_location::current())</td></tr>
+<tr class="memdesc:a1a06468a633f8760244f8b6d5383c9ae"><td class="mdescLeft">&#160;</td><td class="mdescRight">Instantiate and add a new reaction with a deadline to the reactor.  <br /></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-pri-methods" class="groupheader"><a id="pri-methods" name="pri-methods"></a>
 Private Member Functions</h2></td></tr>
@@ -528,7 +531,7 @@ template&lt;class ReactionClass&gt; </div>
 </div><div class="memdoc">
 
 <p>Instantiate and add a new reaction to the reactor. </p>
-<p>This is intended to be invoked when overloading <a class="el" href="#a26d392ae889a45767bbc4812b7794215" title="Method that sets up the internal topology of the reactor.">assemble()</a> in a subclass. This factor method presents the only mechanism for correctly registering a reaction for execution by the runtime.</p>
+<p>This factory method is intended to be invoked when overloading <a class="el" href="#a26d392ae889a45767bbc4812b7794215" title="Method that sets up the internal topology of the reactor.">assemble()</a> in a subclass. It instantiates a reaction and registers it for execution by the runtime.</p>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">ReactionClass</td><td>The reaction class to instantiate. This is typically a subclass of <a class="el" href="classxronos_1_1sdk_1_1Reaction.html" title="Reaction base class with reactor access.">Reaction</a>.</td></tr>
@@ -542,7 +545,66 @@ template&lt;class ReactionClass&gt; </div>
   </table>
   </dd>
 </dl>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="#a26d392ae889a45767bbc4812b7794215" title="Method that sets up the internal topology of the reactor.">assemble()</a> </dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="#a26d392ae889a45767bbc4812b7794215" title="Method that sets up the internal topology of the reactor.">assemble()</a> </dd>
+<dd>
+<a class="el" href="#a1a06468a633f8760244f8b6d5383c9ae" title="Instantiate and add a new reaction with a deadline to the reactor.">add_reaction_with_deadline()</a> </dd></dl>
+
+</div>
+</div>
+<a id="a1a06468a633f8760244f8b6d5383c9ae" name="a1a06468a633f8760244f8b6d5383c9ae"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1a06468a633f8760244f8b6d5383c9ae">&#9670;&#160;</a></span>add_reaction_with_deadline()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class ReactionClass&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void xronos::sdk::Reactor::add_reaction_with_deadline </td>
+          <td>(</td>
+          <td class="paramtype">std::string_view</td>          <td class="paramname"><span class="paramname"><em>name</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="namespacexronos_1_1sdk.html#a8c9cae9122b3793094b7b18e6a519382">Duration</a></td>          <td class="paramname"><span class="paramname"><em>deadline</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::source_location</td>          <td class="paramname"><span class="paramname"><em>source_location</em></span><span class="paramdefsep"> = </span><span class="paramdefval">std::source_location::current()</span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel protected">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Instantiate and add a new reaction with a deadline to the reactor. </p>
+<p>This factory method is intended to be invoked when overloading <a class="el" href="#a26d392ae889a45767bbc4812b7794215" title="Method that sets up the internal topology of the reactor.">assemble()</a> in a subclass. It instantiates a reaction and registers it for execution by the runtime.</p>
+<p>In contrast to <a class="el" href="#a6041c1c45a444b63d490f19d8e254597" title="Instantiate and add a new reaction to the reactor.">add_reaction()</a>, this method annotates the added reaction with a deadline. The deadline is relative to the timestamp of the triggering events. The deadline is violated if the lag exceeds the given duration.</p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">ReactionClass</td><td>The reaction class to instantiate. This is typically a subclass of <a class="el" href="classxronos_1_1sdk_1_1Reaction.html" title="Reaction base class with reactor access.">Reaction</a>.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname"><a class="el" href="classxronos_1_1sdk_1_1Element.html#aa85c0cc3344ff5646dcac93cc0f25d41" title="Get the element&#39;s name.">name</a></td><td>The name of the reaction </td></tr>
+    <tr><td class="paramname">deadline</td><td>Relative deadline of the reaction </td></tr>
+    <tr><td class="paramname">source_location</td><td>Source location of the call site. Normally this should be omitted to use the default argument.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="#a26d392ae889a45767bbc4812b7794215" title="Method that sets up the internal topology of the reactor.">assemble()</a> </dd>
+<dd>
+<a class="el" href="#a6041c1c45a444b63d490f19d8e254597" title="Instantiate and add a new reaction to the reactor.">add_reaction()</a> </dd></dl>
 
 </div>
 </div>

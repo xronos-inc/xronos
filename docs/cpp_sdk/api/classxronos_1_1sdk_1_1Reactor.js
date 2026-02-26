@@ -14,5 +14,6 @@ var classxronos_1_1sdk_1_1Reactor =
     [ "connect", "classxronos_1_1sdk_1_1Reactor.html#aa2f49c35325f8d01a4ff873d387a45de", null ],
     [ "connect", "classxronos_1_1sdk_1_1Reactor.html#aaf29f45c0890216a8dd1a4ecba1cef77", null ],
     [ "add_reaction", "classxronos_1_1sdk_1_1Reactor.html#a6041c1c45a444b63d490f19d8e254597", null ],
+    [ "add_reaction_with_deadline", "classxronos_1_1sdk_1_1Reactor.html#a1a06468a633f8760244f8b6d5383c9ae", null ],
     [ "assemble", "classxronos_1_1sdk_1_1Reactor.html#a26d392ae889a45767bbc4812b7794215", null ]
 ];

@@ -33,7 +33,7 @@
  <tr id="projectrow">
   <td id="projectlogo"><img alt="Logo" src="logo-banner.jpg"/></td>
   <td id="projectalign">
-   <div id="projectname">xronos-sdk<span id="projectnumber">&#160;0.8.0</span>
+   <div id="projectname">xronos-sdk<span id="projectnumber">&#160;0.9.0</span>
    </div>
    <div id="projectbrief">Xronos C++ SDK</div>
   </td>
@@ -156,6 +156,12 @@ auto&#160;</td><td class="memItemRight"><b>operator=</b> (<a class="el" href="cl
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-pro-methods" class="groupheader"><a id="pro-methods" name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
+<tr class="memitem:a358338764d535c04fea4b44c3842d816" id="r_a358338764d535c04fea4b44c3842d816"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a358338764d535c04fea4b44c3842d816">deadline</a> () const noexcept -&gt; std::optional&lt; <a class="el" href="namespacexronos_1_1sdk.html#a5b7ca0046f8286a60c080a22f2a115a3">TimePoint</a> &gt;</td></tr>
+<tr class="memdesc:a358338764d535c04fea4b44c3842d816"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the deadline associated with the current handler invocation.  <br /></td></tr>
+<tr class="memitem:ad475e02790a6919c90ec6634831bb51c" id="r_ad475e02790a6919c90ec6634831bb51c"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#ad475e02790a6919c90ec6634831bb51c">remaining_slack</a> () const noexcept -&gt; <a class="el" href="namespacexronos_1_1sdk.html#a8c9cae9122b3793094b7b18e6a519382">Duration</a></td></tr>
+<tr class="memdesc:ad475e02790a6919c90ec6634831bb51c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the time remaining until the deadline.  <br /></td></tr>
+<tr class="memitem:a2eb2e497edeaea165c6cda134213835e" id="r_a2eb2e497edeaea165c6cda134213835e"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a2eb2e497edeaea165c6cda134213835e">is_before_deadline</a> () const noexcept -&gt; bool</td></tr>
+<tr class="memdesc:a2eb2e497edeaea165c6cda134213835e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check if the currently executing handler is before the deadline.  <br /></td></tr>
 <tr class="memitem:a11e3362127921212583679691369268c" id="r_a11e3362127921212583679691369268c"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a11e3362127921212583679691369268c">context</a> () noexcept -&gt; auto</td></tr>
 <tr class="memdesc:a11e3362127921212583679691369268c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a context object for constructing reaction <a class="el" href="classxronos_1_1sdk_1_1BaseReaction_1_1Trigger.html" title="xronos::sdk::BaseReaction::Trigger">triggers</a> and <a class="el" href="group__effects.html" title="effects Reaction effect classes.">effects Reaction effect classes.</a>.  <br /></td></tr>
 </table><table class="memberdecls">
@@ -194,6 +200,95 @@ Private Member Functions</h2></td></tr>
 </div>
 </div>
 <a name="doc-func-members" id="doc-func-members"></a><h2 id="header-doc-func-members" class="groupheader">Member Function Documentation</h2>
+<a id="a358338764d535c04fea4b44c3842d816" name="a358338764d535c04fea4b44c3842d816"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a358338764d535c04fea4b44c3842d816">&#9670;&#160;</a></span>deadline()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">auto xronos::sdk::BaseReaction::deadline </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td> const -&gt;  std::optional&lt; <a class="el" href="namespacexronos_1_1sdk.html#a5b7ca0046f8286a60c080a22f2a115a3">TimePoint</a> &gt;</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel nodiscard">nodiscard</span><span class="mlabel protected">protected</span><span class="mlabel noexcept">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get the deadline associated with the current handler invocation. </p>
+<p>If the reaction was created using <a class="el" href="classxronos_1_1sdk_1_1Reactor.html#a1a06468a633f8760244f8b6d5383c9ae" title="Instantiate and add a new reaction with a deadline to the reactor.">Reactor::add_reaction_with_deadline()</a>, this returns the absolute deadline (time point) until which the handler needs to complete.</p>
+<p>This should only be called from the reaction handler.</p>
+<dl class="section return"><dt>Returns</dt><dd>The deadline for the current handler invocation or std::nullopt if no deadline is set. </dd></dl>
+
+</div>
+</div>
+<a id="ad475e02790a6919c90ec6634831bb51c" name="ad475e02790a6919c90ec6634831bb51c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad475e02790a6919c90ec6634831bb51c">&#9670;&#160;</a></span>remaining_slack()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">auto xronos::sdk::BaseReaction::remaining_slack </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td> const -&gt;  <a class="el" href="namespacexronos_1_1sdk.html#a8c9cae9122b3793094b7b18e6a519382">Duration</a></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel nodiscard">nodiscard</span><span class="mlabel protected">protected</span><span class="mlabel noexcept">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get the time remaining until the deadline. </p>
+<p>Calculates the remaining time for completing the handler within the deadline. A negative slack indicates that the deadline was violated.</p>
+<p>This should only be called from the reaction handler.</p>
+<dl class="section return"><dt>Returns</dt><dd>The time left for completing the handler without violating the deadline. If there is no deadline, Duration::max() is returned. </dd></dl>
+
+</div>
+</div>
+<a id="a2eb2e497edeaea165c6cda134213835e" name="a2eb2e497edeaea165c6cda134213835e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2eb2e497edeaea165c6cda134213835e">&#9670;&#160;</a></span>is_before_deadline()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">auto xronos::sdk::BaseReaction::is_before_deadline </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td> const -&gt;  bool</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel nodiscard">nodiscard</span><span class="mlabel protected">protected</span><span class="mlabel noexcept">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Check if the currently executing handler is before the deadline. </p>
+<p>This should only be called from the reaction handler.</p>
+<dl class="section return"><dt>Returns</dt><dd>true if the execution is before the deadline and false if the deadline was missed. </dd></dl>
+
+</div>
+</div>
 <a id="a11e3362127921212583679691369268c" name="a11e3362127921212583679691369268c"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a11e3362127921212583679691369268c">&#9670;&#160;</a></span>context()</h2>
 
