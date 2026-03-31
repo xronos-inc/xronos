@@ -119,14 +119,22 @@ void check_port_element(const reactor_graph::ReactorElement& graph_elem, const c
   REQUIRE(elem_port.port_type() == expected_port_type);
 }
 
-void check_reaction_element(const reactor_graph::ReactorElement& graph_elem, const core::Element& core_elem) {
+void check_reaction_element(const reactor_graph::ReactorElement& graph_elem, const core::Element& core_elem,
+                            std::optional<core::Duration> expected_deadline = std::nullopt) {
+  using TimeUtil = google::protobuf::util::TimeUtil;
   check_base_element(graph_elem, core_elem);
   REQUIRE(graph_elem.has_reaction());
   const auto& elem_reaction = graph_elem.reaction();
   util::assert_(std::holds_alternative<core::ReactionTag>(core_elem.type));
   const auto& properties = *std::get<core::ReactionTag>(core_elem.type).properties;
   REQUIRE(elem_reaction.priority() == properties.position + 1);
-  REQUIRE_FALSE(elem_reaction.has_deadline());
+  REQUIRE(properties.deadline == expected_deadline);
+  if (expected_deadline.has_value()) {
+    REQUIRE(elem_reaction.has_deadline());
+    REQUIRE(TimeUtil::DurationToNanoseconds(elem_reaction.deadline()) == expected_deadline->count());
+  } else {
+    REQUIRE_FALSE(elem_reaction.has_deadline());
+  }
 }
 
 TEST_CASE("Serialization of a single empty reactor", "[exporter]") {
@@ -505,6 +513,39 @@ TEST_CASE("Test serialization of reaction dependencies", "[exporter]") {
     REQUIRE(reaction1_dependency.trigger_uids().empty());
     REQUIRE(reaction1_dependency.source_uids().empty());
     REQUIRE(reaction1_dependency.effect_uids().empty());
+  }
+}
+
+TEST_CASE("Test serialization of reaction deadline", "[exporter]") {
+  core::ReactorModel model{};
+  telemetry::AttributeManager attribute_manager{};
+
+  const core::Element& without_deadline =
+      model.element_registry
+          .add_new_element("without_deadline",
+                           core::ReactionTag{std::make_unique<core::ReactionProperties>(nullptr, 0, std::nullopt)},
+                           std::nullopt)
+          .value();
+  const core::Element& with_deadline =
+      model.element_registry
+          .add_new_element("with_deadline",
+                           core::ReactionTag{std::make_unique<core::ReactionProperties>(nullptr, 1, 42ms)},
+                           std::nullopt)
+          .value();
+
+  reactor_graph::Graph graph{};
+  graph_exporter::detail::serialize_reactor_model(model, attribute_manager, graph);
+
+  REQUIRE(graph.elements_size() == 2);
+
+  SECTION("Reaction without deadline has no serialized deadline") {
+    const auto& graph_elem = lookup_element(graph, without_deadline.uid);
+    check_reaction_element(graph_elem, without_deadline);
+  }
+
+  SECTION("Reaction with deadline serializes deadline") {
+    const auto& graph_elem = lookup_element(graph, with_deadline.uid);
+    check_reaction_element(graph_elem, with_deadline, 42ms);
   }
 }
 

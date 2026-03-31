@@ -1,6 +1,6 @@
 variable "CONTEXT_PREFIX" { default = "." }
 
-variable "XRONOS_VERSION" { default = "0.9.0" }
+variable "XRONOS_VERSION" { default = "0.10.0" }
 
 target "base" {
   target  = "base"

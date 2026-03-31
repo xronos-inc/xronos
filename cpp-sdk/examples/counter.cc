@@ -34,7 +34,7 @@ private:
     }
   };
 
-  void assemble() final { add_reaction<CountReaction>("count"); }
+  void assemble() final { add_reaction<CountReaction>("on_count"); }
 };
 
 template <class T> class Printer : public sdk::Reactor {

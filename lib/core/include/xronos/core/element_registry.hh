@@ -28,7 +28,8 @@ public:
   [[nodiscard]] auto elements() const noexcept { return std::views::all(elements_); }
 
   template <class T> [[nodiscard]] auto elements_of_type() const noexcept {
-    return elements() | std::views::filter([](const auto& elem) { return std::holds_alternative<T>(elem.type); });
+    return elements() |
+           std::views::filter([](const auto& elem) -> auto { return std::holds_alternative<T>(elem.type); });
   }
 
 private:

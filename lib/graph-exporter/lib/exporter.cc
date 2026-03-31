@@ -105,6 +105,10 @@ public:
   void operator()(const core::ReactionTag& type) {
     auto& reaction = *element_.get().mutable_reaction();
     reaction.set_priority(type.properties->position + 1);
+    if (const auto& deadline = type.properties->deadline; deadline.has_value()) {
+      using TimeUtil = google::protobuf::util::TimeUtil;
+      *reaction.mutable_deadline() = TimeUtil::NanosecondsToDuration(deadline->count());
+    }
   }
 
   void operator()([[maybe_unused]] const core::ReactorTag& type) { element_.get().mutable_reactor(); }

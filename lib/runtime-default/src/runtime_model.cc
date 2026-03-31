@@ -8,8 +8,9 @@
 #include "xronos/core/connection_graph.hh"
 #include "xronos/core/element.hh"
 #include "xronos/core/reactor_model.hh"
-#include "xronos/runtime/default/detail/dependency_analysis.hh"
+#include "xronos/dependency_graph/dependency_graph.hh"
 #include "xronos/runtime/default/detail/runtime_model.hh"
+#include "xronos/runtime/interfaces.hh"
 #include "xronos/util/logging.hh"
 #include "xronos/util/visitor.hh"
 
@@ -39,10 +40,16 @@ void RuntimeModel::init(const core::ReactorModel& model) {
     }
   }
 
-  DependencyAnalyzer dependency_analyzer;
-  dependency_analyzer.init(model, end_to_end_connections | std::views::values | std::views::join);
+  dependency_graph::DependencyGraph dependency_graph;
+  dependency_graph.init(model);
 
-  ordered_reaction_uids = dependency_analyzer.get_reaction_uids_ordered();
+  auto result = dependency_graph.total_order(model.element_registry);
+  if (result.has_value()) {
+    ordered_reaction_uids = *result;
+  } else {
+    util::log::error() << result.error();
+    throw ValidationError{"There is a dependency cycle!"};
+  }
   if constexpr (util::log::debug_enabled) {
     auto debug = util::log::debug();
     debug << "Total order of all reactions: \n";

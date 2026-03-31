@@ -47,7 +47,7 @@ pytest-mock==3.15.1
     # via -r dev-requirements.in
 pytest-subprocess==1.5.3
     # via -r dev-requirements.in
-ruff==0.15.2
+ruff==0.15.7
     # via -r dev-requirements.in
 typing-extensions==4.15.0
     # via
