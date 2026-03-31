@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.28)
 
-project(xronos-lib LANGUAGES CXX VERSION "0.9.0")
-set(PROJECT_VERSION "0.9.0")
+project(xronos-lib LANGUAGES CXX VERSION "0.10.0")
+set(PROJECT_VERSION "0.10.0")
 
 # require C++ 20
 set(CMAKE_CXX_STANDARD 20 CACHE STRING "The C++ standard." FORCE)
@@ -48,6 +48,7 @@ include(../third-party/expected-lite/expected-lite.cmake)
 include(../third-party/fmt/fmt.cmake)
 
 add_subdirectory(core)
+add_subdirectory(dependency-graph)
 add_subdirectory(logical-time)
 add_subdirectory(runtime-default)
 add_subdirectory(runtime-interfaces)
@@ -58,6 +59,7 @@ add_subdirectory(validator)
 
 set(TARGETS
   xronos-core
+  xronos-dependency-graph
   xronos-logical-time
   xronos-runtime-default
   xronos-runtime-interfaces
@@ -125,6 +127,8 @@ endif()
 set(LINT_FILES
   $<TARGET_PROPERTY:xronos-core,SOURCES>
   $<TARGET_PROPERTY:xronos-core,HEADER_SET>
+  $<TARGET_PROPERTY:xronos-dependency-graph,SOURCES>
+  $<TARGET_PROPERTY:xronos-dependency-graph,HEADER_SET>
   $<TARGET_PROPERTY:xronos-logical-time,SOURCES>
   $<TARGET_PROPERTY:xronos-logical-time,HEADER_SET>
   $<TARGET_PROPERTY:xronos-runtime-interfaces,HEADER_SET>

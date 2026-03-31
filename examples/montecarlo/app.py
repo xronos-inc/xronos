@@ -29,7 +29,7 @@ executor = ThreadPoolExecutor(max_workers=4)  # Adjust max_workers as needed.
 
 @app.get("/", response_class=HTMLResponse)
 async def get_visualization(request: Request):  # type: ignore
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse(request, "index.html")
 
 
 @app.get("/favicon.svg", include_in_schema=False)

@@ -39,9 +39,7 @@ def main(fast: bool = False) -> None:
 def test_exception_causality_cycle() -> None:
     env = xronos.Environment(fast=True)
 
-    with pytest.raises(
-        xronos.ValidationError, match=r"The reaction graph contains a dependency cycle!"
-    ):
+    with pytest.raises(xronos.ValidationError):
         run(env)
 
 

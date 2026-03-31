@@ -13,6 +13,7 @@
 #include "xronos/core/element.hh"
 #include "xronos/core/reactor_model.hh"
 #include "xronos/core/time.hh"
+#include "xronos/dependency_graph/dependency_graph.hh"
 
 namespace xronos::validator {
 
@@ -41,7 +42,8 @@ template <typename... Checks> auto run_checks(Checks&&... checks) -> nonstd::exp
 
 auto run_all_checks(const core::ReactorModel& model) -> nonstd::expected<void, std::vector<std::string>> {
   return detail::run_checks([&] { return check_shutdown_reactions(model); },
-                            [&] { return check_periodic_timers(model); });
+                            [&] { return check_periodic_timers(model); },
+                            [&] { return check_dependency_cycles(model); });
 }
 
 auto check_periodic_timers(const core::ReactorModel& model) -> nonstd::expected<void, std::vector<std::string>> {
@@ -63,6 +65,14 @@ auto check_periodic_timers(const core::ReactorModel& model) -> nonstd::expected<
   }
 
   return {};
+}
+
+auto check_dependency_cycles(const core::ReactorModel& model) -> nonstd::expected<void, std::vector<std::string>> {
+  dependency_graph::DependencyGraph dependency_graph;
+  dependency_graph.init(model);
+  auto result = dependency_graph.total_order(model.element_registry);
+  return result.transform_error([](const std::string& error) { return std::vector<std::string>{error}; })
+      .transform([](const auto&) {});
 }
 
 } // namespace xronos::validator

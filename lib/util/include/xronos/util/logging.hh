@@ -53,7 +53,7 @@ public:
   }
 
   static void set_ostream(std::ostream& ostream) {
-    std::lock_guard<std::mutex> lock{mutex_};
+    std::scoped_lock lock{mutex_};
     ostream_ = ostream;
   }
 

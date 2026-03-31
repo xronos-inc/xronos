@@ -58,7 +58,7 @@ public:
 
   auto get_attributes(std::uint64_t uid, const core::ElementRegistry& element_registry) const -> AttributeMap {
     return get_attributes_converted<AttributeMap, AttributeValue>(uid, element_registry,
-                                                                  [](const auto& value) { return value; });
+                                                                  [](const auto& value) -> auto { return value; });
   }
 
 private:
@@ -86,7 +86,7 @@ void AttributeManager::get_attributes_recursive(std::uint64_t uid, const core::E
                                                 const std::function<ValueType(const AttributeValue&)>& convert,
                                                 MapType& result) const {
   {
-    std::lock_guard<std::mutex> lock{mutex_};
+    std::scoped_lock lock{mutex_};
     auto iterator = attribute_maps_.find(uid);
     if (iterator != attribute_maps_.end()) {
       for (const auto& [key, value] : iterator->second) {

@@ -8,6 +8,7 @@ target_link_libraries(xronos-validator
                         nonstd::expected-lite
                       PRIVATE
                         fmt::fmt-header-only
+                        xronos-dependency-graph
 )
 target_sources(
   xronos-validator

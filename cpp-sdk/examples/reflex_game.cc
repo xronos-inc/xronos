@@ -35,7 +35,7 @@ public:
   auto input() -> sdk::InputPort<void>& { return input_; }
   auto output() -> sdk::OutputPort<void>& { return output_; }
 
-  class Output : public sdk::Reaction<RandomDelay> {
+  class Send : public sdk::Reaction<RandomDelay> {
     using sdk::Reaction<RandomDelay>::Reaction;
     Trigger<void> delay_trigger{self().delay_, context()};
     PortEffect<void> output_effect{self().output_, context()};
@@ -50,7 +50,7 @@ public:
   };
 
   void assemble() final {
-    add_reaction<Output>("output");
+    add_reaction<Send>("send");
     add_reaction<Schedule>("schedule");
   }
 };
@@ -72,7 +72,7 @@ public:
   auto enter() -> sdk::OutputPort<void>& { return enter_; }
 
   // Startup reaction (spawns input thread)
-  class Startup : public sdk::Reaction<KeyboardInput> {
+  class OnStartup : public sdk::Reaction<KeyboardInput> {
     using sdk::Reaction<KeyboardInput>::Reaction;
     Trigger<void> startup_trigger{self().startup(), context()};
     void handler() final {
@@ -87,7 +87,7 @@ public:
   };
 
   // Input handling reaction
-  class Input : public sdk::Reaction<KeyboardInput> {
+  class OnInput : public sdk::Reaction<KeyboardInput> {
     using sdk::Reaction<KeyboardInput>::Reaction;
     Trigger<int> input_trigger{self().keyboard_input_, context()};
     PortEffect<void> enter_effect{self().enter_, context()};
@@ -104,7 +104,7 @@ public:
   };
 
   // Shutdown reaction (cleans up thread)
-  class Shutdown : public sdk::Reaction<KeyboardInput> {
+  class OnShutdown : public sdk::Reaction<KeyboardInput> {
     using sdk::Reaction<KeyboardInput>::Reaction;
     Trigger<void> shutdown_trigger{self().shutdown(), context()};
     void handler() final {
@@ -116,9 +116,9 @@ public:
   };
 
   void assemble() final {
-    add_reaction<Startup>("startup");
-    add_reaction<Input>("input");
-    add_reaction<Shutdown>("shutdown");
+    add_reaction<OnStartup>("on_startup");
+    add_reaction<OnInput>("on_input");
+    add_reaction<OnShutdown>("on_shutdown");
   }
 };
 
@@ -143,7 +143,7 @@ public:
   auto enter() -> sdk::InputPort<void>& { return enter_; }
   auto quit() -> sdk::InputPort<void>& { return quit_; }
 
-  class Startup : public sdk::Reaction<GameLogic> {
+  class OnStartup : public sdk::Reaction<GameLogic> {
     using sdk::Reaction<GameLogic>::Reaction;
     PortEffect<void> request_effect{self().request_prompt(), context()};
     Trigger<void> startup_trigger{self().startup(), context()};
@@ -156,7 +156,7 @@ public:
     }
   };
 
-  class Prompt : public sdk::Reaction<GameLogic> {
+  class OnPrompt : public sdk::Reaction<GameLogic> {
     using sdk::Reaction<GameLogic>::Reaction;
     Trigger<void> prompt_trigger{self().prompt(), context()};
     void handler() final {
@@ -165,7 +165,7 @@ public:
     }
   };
 
-  class Response : public sdk::Reaction<GameLogic> {
+  class OnEnter : public sdk::Reaction<GameLogic> {
     using sdk::Reaction<GameLogic>::Reaction;
     Trigger<void> enter_trigger{self().enter(), context()};
     PortEffect<void> request_effect{self().request_prompt(), context()};
@@ -186,7 +186,7 @@ public:
     }
   };
 
-  class Quit : public sdk::Reaction<GameLogic> {
+  class OnQuit : public sdk::Reaction<GameLogic> {
     using sdk::Reaction<GameLogic>::Reaction;
     Trigger<void> quit_trigger{self().quit_, context()};
     ShutdownEffect shutdown_effect{self().shutdown(), context()};
@@ -194,10 +194,10 @@ public:
   };
 
   void assemble() final {
-    add_reaction<Startup>("startup");
-    add_reaction<Prompt>("prompt");
-    add_reaction<Response>("response");
-    add_reaction<Quit>("quit");
+    add_reaction<OnStartup>("on_startup");
+    add_reaction<OnPrompt>("on_prompt");
+    add_reaction<OnEnter>("on_enter");
+    add_reaction<OnQuit>("on_quit");
   }
 };
 
