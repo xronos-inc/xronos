@@ -33,12 +33,7 @@ $ xronos-dashboard start
 ```
 
 Open [`http://localhost:3000`](http://localhost:3000) in your browser. This will
-open the Grafana-based dashboard. On first usage, you need to log in using the
-username `admin` and password `xronos`.
-
-![dashboard login](./_img/dashboard_login.png)
-
-After logging in, the trace view opens. Initially, it will be empty.
+open the Grafana-based dashboard. Initially, it will be empty.
 
 ![empty dashboard](./_img/dashboard_empty.png)
 
