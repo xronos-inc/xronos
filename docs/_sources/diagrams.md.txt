@@ -7,10 +7,6 @@ interactive diagram using our VS Code extension.
 ## System Requirements
 
 - A Linux-based operating system. We recommend [Ubuntu](https://ubuntu.com/download/desktop) 22.04 or newer.
-- `node.js` needs to be installed. We recommend version `23.1.0`, and versions
-  older than `16.0.0` will not work. We recommend using `nvm` to manage your
-  `node` version, as described
-  [here](https://github.com/nvm-sh/nvm/blob/master/README.md).
 - VS Code needs to be installed. On Ubuntu, download the package matching your
   architecture ([x86_64](https://code.visualstudio.com/docs/?dv=linux64_deb),
   [aarch64](https://code.visualstudio.com/docs/?dv=linuxarm64_deb)) and install
@@ -26,7 +22,7 @@ Extensions`. Type "Xronos" into the search field and then click the
 ## Rendering Diagrams
 
 Open VS Code and bring up the Command Palette using
-{kbd}`Ctrl`+{kbd}`Shift`+{kbd}`P`. Type `Xronos: Diagram` and select the
+{kbd}`Ctrl`+{kbd}`Shift`+{kbd}`P`. Type `Xronos: Open Diagram View` and select the
 corresponding entry using {kbd}`⏎`. This will open the Xronos Diagram view as
 shown below.
 

@@ -4,8 +4,7 @@ find_package(Doxygen 1.13.2 REQUIRED)
 include(FetchContent)
 FetchContent_Declare(
     doxygen-awesome-css
-    URL https://github.com/jothepro/doxygen-awesome-css/archive/refs/heads/main.zip
-    GIT_TAG v2.4.1
+    URL https://github.com/jothepro/doxygen-awesome-css/archive/refs/tags/v2.4.2.zip
 )
 FetchContent_MakeAvailable(doxygen-awesome-css)
 FetchContent_GetProperties(doxygen-awesome-css SOURCE_DIR AWESOME_CSS_DIR)
