@@ -18,7 +18,7 @@ RUN . /venv/bin/activate && pip wheel . --no-deps
 RUN . /venv/bin/activate && auditwheel repair xronos-*.whl --strip
 
 FROM scratch AS wheel
-COPY --from=build-wheel /xronos/python-sdk/wheelhouse/xronos-*.whl /dist/
+COPY --from=build-wheel /xronos/python-sdk/wheelhouse/xronos-*.whl /
 
 
 FROM py-venv AS build-sdist
@@ -31,7 +31,7 @@ COPY exported_symbols.txt .
 RUN . /venv/bin/activate && python -m build . --sdist
 
 FROM scratch AS sdist
-COPY --from=build-sdist /xronos/python-sdk/dist /dist
+COPY --from=build-sdist /xronos/python-sdk/dist /
 
 
 FROM scratch AS test-src
@@ -41,7 +41,7 @@ COPY --parents test /
 FROM py-venv AS test
 COPY --parents src test .
 COPY pyproject.toml .
-COPY --from=wheel /dist/xronos-*.whl .
+COPY --from=wheel /xronos-*.whl .
 RUN . /venv/bin/activate && pip install xronos-*.whl
 RUN . /venv/bin/activate && pytest
 
@@ -51,7 +51,7 @@ COPY --parents src test .
 COPY pyproject.toml .
 RUN . /venv/bin/activate && ruff format --diff
 RUN . /venv/bin/activate && ruff check
-COPY --from=wheel /dist/xronos-*.whl .
+COPY --from=wheel /xronos-*.whl .
 RUN . /venv/bin/activate && pip install xronos-*.whl
 RUN . /venv/bin/activate && pyright
 RUN . /venv/bin/activate && mypy .

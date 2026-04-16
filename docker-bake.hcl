@@ -1,11 +1,18 @@
 variable "CONTEXT_PREFIX" { default = "." }
 
-variable "XRONOS_VERSION" { default = "0.11.0" }
+variable "XRONOS_VERSION" { default = "0.11.1" }
+
+variable "ALL_PLATFORMS" { default = 0 }
+
+variable "_platform_list" {
+  default = ALL_PLATFORMS > 0 ? ["linux/arm64", "linux/amd64"] : []
+}
 
 target "base" {
-  target  = "base"
-  context = CONTEXT_PREFIX
-  output  = [{ type = "cacheonly" }]
+  target    = "base"
+  context   = CONTEXT_PREFIX
+  output    = [{ type = "cacheonly" }]
+  platforms = _platform_list
 }
 
 target "py-venv" {
@@ -16,20 +23,23 @@ target "py-venv" {
   args = {
     python_version = version
   }
-  target  = "py-venv"
-  context = CONTEXT_PREFIX
-  output  = [{ type = "cacheonly" }]
+  target    = "py-venv"
+  context   = CONTEXT_PREFIX
+  output    = [{ type = "cacheonly" }]
+  platforms = _platform_list
 }
 
 target "configs" {
-  target  = "configs"
-  context = CONTEXT_PREFIX
-  output  = [{ type = "cacheonly" }]
+  target    = "configs"
+  context   = CONTEXT_PREFIX
+  output    = [{ type = "cacheonly" }]
+  platforms = _platform_list
 }
 
 target "third-party-cmake-files" {
-  context = "${CONTEXT_PREFIX}/third-party"
-  output  = [{ type = "cacheonly" }]
+  context   = "${CONTEXT_PREFIX}/third-party"
+  output    = [{ type = "cacheonly" }]
+  platforms = _platform_list
 }
 
 target "_third-party-common" {
@@ -37,7 +47,8 @@ target "_third-party-common" {
   contexts = {
     base = "target:base"
   }
-  output = [{ type = "cacheonly" }]
+  output    = [{ type = "cacheonly" }]
+  platforms = _platform_list
 }
 
 target "third-party-absl" {
@@ -83,9 +94,10 @@ target "third-party-doxygen" {
 }
 
 target "xronos-lib-src" {
-  target  = "src"
-  context = "${CONTEXT_PREFIX}/lib"
-  output  = [{ type = "cacheonly" }]
+  target    = "src"
+  context   = "${CONTEXT_PREFIX}/lib"
+  output    = [{ type = "cacheonly" }]
+  platforms = _platform_list
 }
 
 target "xronos-lib-lint" {
@@ -118,15 +130,17 @@ target "xronos-lib-test" {
 }
 
 target "xronos-lib-graph-messages-rust-src" {
-  target  = "rust-src"
-  context = "${CONTEXT_PREFIX}/lib/graph-messages"
-  output  = [{ type = "cacheonly" }]
+  target    = "rust-src"
+  context   = "${CONTEXT_PREFIX}/lib/graph-messages"
+  output    = [{ type = "cacheonly" }]
+  platforms = _platform_list
 }
 
 target "xronos-cpp-sdk-src" {
-  target  = "src"
-  context = "${CONTEXT_PREFIX}/cpp-sdk"
-  output  = [{ type = "cacheonly" }]
+  target    = "src"
+  context   = "${CONTEXT_PREFIX}/cpp-sdk"
+  output    = [{ type = "cacheonly" }]
+  platforms = _platform_list
 }
 
 target "xronos-cpp-sdk-install" {
@@ -156,7 +170,7 @@ target "xronos-cpp-sdk-lint" {
 target "xronos-cpp-sdk-pkgs" {
   inherits = ["xronos-cpp-sdk-install"]
   target   = "pkgs"
-  output   = ["${CONTEXT_PREFIX}/cpp-sdk"]
+  output   = ["${CONTEXT_PREFIX}/cpp-sdk/pkgs"]
 }
 
 target "xronos-cpp-sdk-docs" {
@@ -165,7 +179,8 @@ target "xronos-cpp-sdk-docs" {
   contexts = {
     doxygen = "target:third-party-doxygen"
   }
-  output = ["${CONTEXT_PREFIX}/cpp-sdk"]
+  output    = ["${CONTEXT_PREFIX}/cpp-sdk"]
+  platforms = []
 }
 
 target "xronos-py-wheel" {
@@ -179,7 +194,8 @@ target "xronos-py-wheel" {
     py-venv = "target:py-venv-${replace(version, ".", "")}"
     cpp-sdk = "target:xronos-cpp-sdk-install"
   }
-  output = ["${CONTEXT_PREFIX}/python-sdk"]
+  output    = ["${CONTEXT_PREFIX}/python-sdk/dist"]
+  platforms = _platform_list
 }
 
 target "xronos-py-sdist" {
@@ -191,13 +207,15 @@ target "xronos-py-sdist" {
     lib-src         = "target:xronos-lib-src"
     third-party-src = "target:third-party-cmake-files"
   }
-  output = ["${CONTEXT_PREFIX}/python-sdk"]
+  output    = ["${CONTEXT_PREFIX}/python-sdk/dist"]
+  platforms = []
 }
 
 target "xronos-py-test-src" {
-  target  = "test-src"
-  context = "${CONTEXT_PREFIX}/python-sdk"
-  output  = [{ type = "cacheonly" }]
+  target    = "test-src"
+  context   = "${CONTEXT_PREFIX}/python-sdk"
+  output    = [{ type = "cacheonly" }]
+  platforms = _platform_list
 }
 
 target "xronos-py-test" {
@@ -209,6 +227,7 @@ target "xronos-py-test" {
   target = "test"
   output = [{ type = "cacheonly" }]
 }
+
 
 target "xronos-py-lint-py" {
   inherits = ["xronos-py-test-312"]
@@ -224,9 +243,10 @@ target "xronos-py-lint-cpp" {
 }
 
 target "xronos-examples-common-files" {
-  target  = "common-files"
-  context = "${CONTEXT_PREFIX}/examples"
-  output  = [{ type = "cacheonly" }]
+  target    = "common-files"
+  context   = "${CONTEXT_PREFIX}/examples"
+  output    = [{ type = "cacheonly" }]
+  platforms = _platform_list
 }
 
 target "_xronos-examples-common" {
@@ -239,7 +259,8 @@ target "_xronos-examples-common" {
     py-venv      = "target:py-venv-${replace(version, ".", "")}"
     xronos-wheel = "target:xronos-py-wheel-${replace(version, ".", "")}"
   }
-  output = [{ type = "cacheonly" }]
+  output    = [{ type = "cacheonly" }]
+  platforms = _platform_list
 }
 
 target "xronos-examples-hello-ros2-comparison-lint" {
@@ -358,26 +379,18 @@ target "xronos-examples-yolo-lint" {
   context = "${CONTEXT_PREFIX}/examples/YOLO/"
 }
 
-target "xronos-examples-yolo-lint" {
-  name     = "xronos-examples-yolo-lint-${replace(version, ".", "")}"
-  inherits = ["_xronos-examples-common-${replace(version, ".", "")}"]
-  matrix = {
-    version = ["3.12"]
-  }
-  target  = "lint"
-  context = "${CONTEXT_PREFIX}/examples/YOLO/"
-}
-
 target "xronos-examples-src" {
-  target  = "src"
-  context = "${CONTEXT_PREFIX}/examples"
-  output  = [{ type = "cacheonly" }]
+  target    = "src"
+  context   = "${CONTEXT_PREFIX}/examples"
+  output    = [{ type = "cacheonly" }]
+  platforms = _platform_list
 }
 
 target "bake-check-format" {
-  context = CONTEXT_PREFIX
-  target  = "check-format"
-  output  = [{ type = "cacheonly" }]
+  context   = CONTEXT_PREFIX
+  target    = "check-format"
+  output    = [{ type = "cacheonly" }]
+  platforms = []
 }
 
 variable "LINT_TARGETS" {

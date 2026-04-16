@@ -6,7 +6,7 @@ COPY requirements.txt ./
 RUN sed -i /^xronos/d requirements.txt
 RUN . /venv/bin/activate && pip install --no-cache-dir -r requirements.txt
 COPY --from=common-files /xronos/examples/* ./
-RUN --mount=from=xronos-wheel,source=/dist,target=/dist . /venv/bin/activate && pip install --no-cache-dir /dist/xronos-*.whl
+RUN --mount=from=xronos-wheel,target=/dist . /venv/bin/activate && pip install --no-cache-dir /dist/xronos-*.whl
 
 WORKDIR /xronos/examples/robot-arm
 COPY *.py .

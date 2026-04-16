@@ -36,7 +36,7 @@ WORKDIR /xronos/cpp-sdk/build
 RUN cpack
 
 FROM scratch AS pkgs
-COPY --from=pkgs-builder /xronos/cpp-sdk/pkgs /pkgs
+COPY --from=pkgs-builder /xronos/cpp-sdk/pkgs /
 
 FROM cmake-init AS test
 COPY --from=third-party-files /third-party/googletest ../third-party/googletest
