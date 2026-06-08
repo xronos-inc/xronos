@@ -6,6 +6,9 @@
 #include <vector>
 
 #include "xronos/sdk.hh"
+#include "xronos/sdk/programmable_timer.hh"
+#include "xronos/sdk/reaction.hh"
+#include "xronos/sdk/reactor.hh"
 #include "gtest/gtest.h"
 
 using namespace std::literals::chrono_literals;
@@ -205,6 +208,60 @@ private:
   }
 };
 
+class ProgrammableTimerLoopVoid : public Reactor {
+public:
+  using Reactor::Reactor;
+
+  [[nodiscard]] auto output() const noexcept -> const auto& { return output_; }
+  [[nodiscard]] auto input() const noexcept -> const auto& { return input_; }
+
+  void chek_post_conditions(int expected) const { EXPECT_EQ(messages_received_, expected); }
+
+private:
+  ProgrammableTimer<void> timer_{"timer", context()};
+  OutputPort<void> output_{"output", context()};
+  InputPort<void> input_{"input", context()};
+
+  bool continue_{true};
+  unsigned messages_received_{0};
+
+  class SendReaction : public Reaction<ProgrammableTimerLoopVoid> {
+    using Reaction<ProgrammableTimerLoopVoid>::Reaction;
+    Trigger<void> trigger_{self().timer_, context()};
+    PortEffect<void> output_{self().output_, context()};
+    void handler() final { output_.set(); }
+  };
+
+  class NextReaction : public Reaction<ProgrammableTimerLoopVoid> {
+    using Reaction<ProgrammableTimerLoopVoid>::Reaction;
+    Trigger<void> trigger_{self().input_, context()};
+    ProgrammableTimerEffect<void> effect_{self().timer_, context()};
+    ShutdownEffect shutdown_{self().shutdown(), context()};
+    void handler() final {
+      self().messages_received_++;
+      if (self().continue_) {
+        effect_.schedule(Duration::zero());
+        self().continue_ = false;
+      } else {
+        shutdown_.trigger_shutdown();
+      }
+    }
+  };
+
+  class StartupReaction : public Reaction<ProgrammableTimerLoopVoid> {
+    using Reaction<ProgrammableTimerLoopVoid>::Reaction;
+    Trigger<void> trigger_{self().startup(), context()};
+    ProgrammableTimerEffect<void> effect_{self().timer_, context()};
+    void handler() final { effect_.schedule(Duration::zero()); }
+  };
+
+  void assemble() final {
+    add_reaction<SendReaction>("send");
+    add_reaction<NextReaction>("next");
+    add_reaction<StartupReaction>("on_startup");
+  }
+};
+
 TEST(loops, DirectFeedbackLoopVoidNoDelay) {
   TestEnvironment env{5s};
   FeedbackVoid loop{"loop", env.context()};
@@ -339,6 +396,14 @@ TEST(loops, DirectFeedbackSelfTriggered) {
   env.connect(loop.output(), loop.input(), 1s);
   env.execute();
   loop.chek_post_conditions(-1);
+}
+
+TEST(loops, ProgrammableTimerLoopVoid) {
+  TestEnvironment env{5s};
+  ProgrammableTimerLoopVoid loop{"loop", env.context()};
+  env.connect(loop.output(), loop.input());
+  env.execute();
+  loop.chek_post_conditions(2);
 }
 
 } // namespace xronos::sdk::test::loops
