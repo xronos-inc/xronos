@@ -1,6 +1,6 @@
 variable "CONTEXT_PREFIX" { default = "." }
 
-variable "XRONOS_VERSION" { default = "0.11.1" }
+variable "XRONOS_VERSION" { default = "0.11.2" }
 
 variable "ALL_PLATFORMS" { default = 0 }
 
@@ -88,7 +88,7 @@ target "third-party-catch2" {
 target "third-party-doxygen" {
   inherits = ["_third-party-common"]
   contexts = {
-    doxygen-src = "https://github.com/doxygen/doxygen.git#Release_1_16_1",
+    doxygen-src = "https://github.com/doxygen/doxygen.git#Release_1_17_0",
   }
   context = "${CONTEXT_PREFIX}/third-party/doxygen"
 }

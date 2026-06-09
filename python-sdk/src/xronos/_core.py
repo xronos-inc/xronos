@@ -34,6 +34,7 @@ else:
 
 T = TypeVar("T")
 R = TypeVar("R", bound="Reactor")
+R_co = TypeVar("R_co", bound="Reactor", covariant=True)
 P = ParamSpec("P")
 
 SdkElem = TypeVar("SdkElem", bound=sdk.Element)
@@ -280,7 +281,7 @@ class PeriodicTimerDeclaration(ElementDescriptor[PeriodicTimer]):
         period: The delay in between two events emitted by the timer (optional).
         offset: The delay between the :attr:`~Reactor.startup` event
             and the first event emitted by the timer (optional).
-        attributes(optional): A dict of attributes characterizing the timer.
+        attributes: A dict of attributes characterizing the timer (optional).
     """
 
     def __init__(
@@ -327,7 +328,7 @@ class InputPortDeclaration(ElementDescriptor[InputPort[T]]):
     """A declaration for an :class:`InputPort[T]<InputPort>`.
 
     Args:
-        attributes(optional): A dict of attributes characterizing the input port.
+        attributes: A dict of attributes characterizing the input port (optional).
 
     Type Parameters:
         T: The value type associated with messages.
@@ -370,7 +371,7 @@ class OutputPortDeclaration(ElementDescriptor[OutputPort[T]]):
     """A declaration for an :class:`OutputPort[T]<OutputPort>`.
 
     Args:
-        attributes(optional): A dict of attributes characterizing the output port.
+        attributes: A dict of attributes characterizing the output port (optional).
 
     Type Parameters:
         T: The type of values carried by the port.
@@ -405,8 +406,8 @@ class ProgrammableTimerDeclaration(ElementDescriptor[ProgrammableTimer[T]]):
     """A declaration for a :class:`ProgrammableTimer[T]<ProgrammableTimer>`.
 
     Args:
-        attributes(optional): A dict of attributes characterizing the
-        programmable timer.
+        attributes: A dict of attributes characterizing the
+            programmable timer (optional).
 
     Type Parameters:
         T: The value type associated with events emitted by the programmable
@@ -453,7 +454,7 @@ class PhysicalEventDeclaration(ElementDescriptor[PhysicalEvent[T]]):
     """A declaration for a :class:`PhysicalEvent[T]<PhysicalEvent>`.
 
     Args:
-        attributes(optional): A dict of attributes characterizing the physical event.
+        attributes: A dict of attributes characterizing the physical event (optional).
 
     Type Parameters:
         T: The type of values carried by emitted events.
@@ -677,7 +678,8 @@ class Environment:
 
         Returns when the reactor program terminates. The reactor program
         terminates when there are no more events, or after calling
-        :func:`request_shutdown()`.
+        :func:`~xronos.ShutdownEffect.trigger_shutdown()` on a
+        :class:`ShutdownEffect`.
 
         Raises:
             ValidationError: When the program is invalid or reaches an invalid state.
@@ -726,10 +728,14 @@ class Reactor(Element):
 
         #: Dictionary of contained reactor elements
         self.__elements: dict[str, Element] = {}
+        # Create a dict of uniquely named element descriptors. This allows
+        # classes to override descriptors in the base class.
+        unique_element_descriptors = {
+            desc._name: desc for desc in type(self).__element_descriptors
+        }
         # Initialize all contained elements
-        for desc in type(self).__element_descriptors:
-            assert desc._name not in self.__elements
-            self.__elements[desc._name] = desc._create_instance(self)
+        for name, desc in unique_element_descriptors.items():
+            self.__elements[name] = desc._create_instance(self)
 
         #: List of contained reactors.
         #:
@@ -1170,11 +1176,11 @@ class ReactionInterface:
 
     This class is not intended to be instantiated directly. An instance of this
     class is passed automatically to any method decorated with
-    {attr}`~xronos.reaction`.
+    :attr:`~xronos.reaction`.
     """
 
-    def __init__(self, context: sdk.ReactionContext) -> None:
-        self.__context = context
+    def __init__(self, sdk_context: sdk.ReactionContext) -> None:
+        self.__context = sdk_context
 
     def add_trigger(self, event_source: EventSource[T]) -> Trigger[T]:
         """Declare a reaction trigger.
@@ -1330,7 +1336,7 @@ class Reaction(Element):
         raise RuntimeError("Reactions may not be called directly")
 
 
-class ReactionDescriptor(ElementDescriptor[Reaction], Generic[R]):
+class ReactionDescriptor(ElementDescriptor[Reaction], Generic[R_co]):
     """A descriptor for reactions.
 
     This is an implementation of the Python descriptor protocol. It is used
@@ -1338,7 +1344,7 @@ class ReactionDescriptor(ElementDescriptor[Reaction], Generic[R]):
     protocol is split between this class and the `Reactor` base class.
 
     Reaction descriptors are instantiated when the `@reaction` decorator is
-    used (see :func:`reaction`). The annotated function is expected to
+    used (see :deco:`reaction`). The annotated function is expected to
     accept a reactor instance and a reaction interface as arguments and to
     return a reaction handler. The function is expected to use the given
     reactor interface to declare the reaction's dependencies.

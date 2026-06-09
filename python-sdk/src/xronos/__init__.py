@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 from xronos._core import (
+    AbsentError,
     Element,
     Environment,
     EventSource,
@@ -35,6 +36,7 @@ from xronos._cpp_sdk import (  # type: ignore reportMissingModuleSource
 )
 
 __all__ = [
+    "AbsentError",
     "DuplicateNameError",
     "Element",
     "Environment",

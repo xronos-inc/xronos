@@ -17,7 +17,7 @@ class ExternalInput(xronos.Reactor, Generic[T]):
     sources such as files, network sockets, stdin, etc. The external inputs are
     scheduled on a :class:`xronos.PhysicalEvent` and forwarded to the output port.
 
-    The reactor reads inputs using the provided :func:`read_input` generator. This
+    The reactor reads inputs using the provided `read_input` generator. This
     generator should perform the necessary setup and teardown operations and yield
     the input values read from the external source.
 

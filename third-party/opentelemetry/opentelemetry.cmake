@@ -1,4 +1,4 @@
-set(XRONOS_OPENTELEMETRY_VERSION "1.26.0" CACHE STRING "Opentelemetry version")
+set(XRONOS_OPENTELEMETRY_VERSION "v1.27.0" CACHE STRING "Opentelemetry version")
 set(XRONOS_OPENTELEMETRY_PROVIDER "module" CACHE STRING "opentelemetry provider (module|package|none)")
 
 function(add_opentelemetry)
@@ -21,7 +21,7 @@ function(add_opentelemetry)
   FetchContent_Declare(
     opentelemetry-cpp
     GIT_REPOSITORY https://github.com/open-telemetry/opentelemetry-cpp.git
-    GIT_TAG "v${XRONOS_OPENTELEMETRY_VERSION}"
+    GIT_TAG "${XRONOS_OPENTELEMETRY_VERSION}"
     GIT_SHALLOW TRUE
     GIT_SUBMODULES ""
   )

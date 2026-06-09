@@ -1,4 +1,4 @@
-set(GOOGLETEST_VERSION "1.17.0" CACHE STRING "GooglesTest version")
+set(GOOGLETEST_VERSION "v1.17.0" CACHE STRING "GoogleTest version")
 
 include(FetchContent)
 
@@ -8,7 +8,7 @@ function(add_googletest)
 
   FetchContent_Declare(
     googletest
-    URL "https://github.com/google/googletest/archive/refs/tags/v${GOOGLETEST_VERSION}.tar.gz"
+    URL "https://github.com/google/googletest/archive/refs/tags/${GOOGLETEST_VERSION}.tar.gz"
   )
   FetchContent_MakeAvailable(googletest)
 endfunction()

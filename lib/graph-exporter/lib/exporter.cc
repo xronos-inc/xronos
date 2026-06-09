@@ -3,6 +3,7 @@
 
 #include "xronos/graph_exporter/exporter.hh"
 
+#include <chrono>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
@@ -249,6 +250,8 @@ auto send_reactor_graph_to_diagram_server(const core::ReactorModel& model,
                                           const telemetry::AttributeManager& attribute_manager,
                                           const source_location::SourceLocationRegistry& source_location_registry,
                                           const std::string& host) -> ::grpc::Status {
+  constexpr auto timeout = std::chrono::milliseconds(200);
+
   auto channel = ::grpc::CreateChannel(host, ::grpc::InsecureChannelCredentials());
   auto stub = services::diagram_generator::DiagramGenerator::NewStub(channel);
   ::grpc::ClientContext context;
@@ -258,6 +261,8 @@ auto send_reactor_graph_to_diagram_server(const core::ReactorModel& model,
   serialize_source_locations(model.element_registry, source_location_registry, *gwm.mutable_source_info());
 
   serialize_reactor_model(model, attribute_manager, *gwm.mutable_graph());
+
+  context.set_deadline(std::chrono::system_clock::now() + timeout);
 
   ::google::protobuf::Empty response;
   auto status = stub->receive_graph(&context, gwm, &response);
@@ -288,7 +293,9 @@ void send_reactor_graph_to_diagram_server(const core::ReactorModel& model,
   auto status = detail::send_reactor_graph_to_diagram_server(model, attribute_manager, source_location_registry, host);
 
   constexpr int ERROR_CODE_FAILED_TO_CONNECT = 14;
-  if (!status.ok() && status.error_code() != ERROR_CODE_FAILED_TO_CONNECT) {
+  constexpr int ERROR_CODE_DEADLINE_EXCEEDED = 4;
+  if (!status.ok() && status.error_code() != ERROR_CODE_FAILED_TO_CONNECT &&
+      status.error_code() != ERROR_CODE_DEADLINE_EXCEEDED) {
     util::log::warn() << "Sending the reactor graph for rendering failed with message: " << status.error_message();
     return;
   }
