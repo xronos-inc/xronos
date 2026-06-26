@@ -1,5 +1,0 @@
-<map id="xronos::sdk::Startup" name="xronos::sdk::Startup">
-<area shape="rect" id="Node000001" title="A reactor element that emits an event when the program starts up." alt="" coords="9,79,161,104"/>
-<area shape="rect" id="Node000002" href="$classxronos_1_1sdk_1_1Element.html" title="Base class for all reactor elements." alt="" coords="5,5,164,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="87,44,87,79,82,79,82,44"/>
-</map>

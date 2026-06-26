@@ -123,6 +123,8 @@ void Environment::enable_telemetry(std::string_view application_name, std::strin
 #ifdef XRONOS_SDK_ENABLE_TELEMETRY
 
 #include <array>
+#include <cerrno>
+#include <cstring>
 #include <unistd.h>
 
 #include "xronos/telemetry/otel/otel_telemetry_backend.hh"
@@ -134,10 +136,19 @@ auto create_telemetry_backend(const telemetry::AttributeManager& attribute_manag
                               std::string_view endpoint) -> std::unique_ptr<telemetry::TelemetryBackend> {
   constexpr std::size_t hostname_buffer_size = 128;
   std::array<char, hostname_buffer_size> hostname_buffer{};
-  gethostname(hostname_buffer.data(), hostname_buffer_size);
+  // Pass hostname_buffer_size - 1: POSIX does not guarantee null-termination on
+  // truncation, so this keeps a terminator for the std::string conversion below.
+  std::string hostname{"unknown"};
+  if (gethostname(hostname_buffer.data(), hostname_buffer_size - 1) != 0) {
+    // On failure the buffer contents are unspecified; fall back to a clear
+    // sentinel rather than emitting an empty (or garbage) hostname in telemetry.
+    util::log::warn() << "Failed to query hostname (" << std::strerror(errno) << "). Using \"unknown\" for telemetry.";
+  } else {
+    hostname = hostname_buffer.data();
+  }
 
-  return std::make_unique<telemetry::otel::OtelTelemetryBackend>(
-      attribute_manager, element_registry, application_name, endpoint, std::string{hostname_buffer.data()}, getpid());
+  return std::make_unique<telemetry::otel::OtelTelemetryBackend>(attribute_manager, element_registry, application_name,
+                                                                 endpoint, hostname, getpid());
 }
 
 } // namespace xronos::sdk::detail

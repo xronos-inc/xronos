@@ -81,9 +81,9 @@ class ConstSource(abstract_source.AbstractTriggeredSource[TOutput]):
 
     @final
     @xronos.reaction
-    def _on_value(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
+    def _on_value(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
         """Specify the reaction to the new value port."""
-        trigger = interface.add_trigger(self.set_value_port)
+        trigger = ctx.add_trigger(self.set_value_port)
 
         def handler() -> None:
             self.__value = copy.deepcopy(trigger.get())
@@ -140,8 +140,8 @@ class SuccessorSource(abstract_source.AbstractTriggeredSource[TOutput]):
 
     @final
     @xronos.reaction
-    def _on_reset(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        interface.add_trigger(self.reset)
+    def _on_reset(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        ctx.add_trigger(self.reset)
 
         def handler() -> None:
             self.__value = self.__initial_value

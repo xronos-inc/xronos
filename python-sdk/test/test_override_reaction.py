@@ -12,8 +12,8 @@ class Base(xronos.Reactor):
     log: list[str]
 
     @xronos.reaction
-    def on_startup(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        interface.add_trigger(self.startup)
+    def on_startup(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        ctx.add_trigger(self.startup)
 
         def handler() -> None:
             self.log.append("base")
@@ -25,8 +25,8 @@ class Override(Base):
     """A child reactor that overrides the parent's on_startup reaction."""
 
     @xronos.reaction
-    def on_startup(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        interface.add_trigger(self.startup)
+    def on_startup(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        ctx.add_trigger(self.startup)
 
         def handler() -> None:
             self.log.append("override")

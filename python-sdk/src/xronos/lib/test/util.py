@@ -25,9 +25,9 @@ class AssertList(xronos.Reactor, Generic[T]):
         self.debug = debug
 
     @xronos.reaction
-    def on_input(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        input_trigger = interface.add_trigger(self.input_)
-        shutdown_effect = interface.add_effect(self.shutdown)
+    def on_input(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        input_trigger = ctx.add_trigger(self.input_)
+        shutdown_effect = ctx.add_effect(self.shutdown)
 
         def handler() -> None:
             if self.debug:
@@ -42,8 +42,8 @@ class AssertList(xronos.Reactor, Generic[T]):
         return handler
 
     @xronos.reaction
-    def on_shutdown(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        interface.add_trigger(self.shutdown)
+    def on_shutdown(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        ctx.add_trigger(self.shutdown)
 
         def handler() -> None:
             assert self.count == len(self.expected)

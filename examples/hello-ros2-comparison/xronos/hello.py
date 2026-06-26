@@ -10,9 +10,9 @@ class Hello(xronos.Reactor):
     hello = xronos.OutputPortDeclaration[str]()
 
     @xronos.reaction
-    def on_startup(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        _ = interface.add_trigger(self.startup)
-        hello_effect = interface.add_effect(self.hello)
+    def on_startup(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        _ = ctx.add_trigger(self.startup)
+        hello_effect = ctx.add_effect(self.hello)
 
         return lambda: hello_effect.set("Hello, World!")
 
@@ -21,8 +21,8 @@ class Printer(xronos.Reactor):
     hello = xronos.InputPortDeclaration[str]()
 
     @xronos.reaction
-    def on_hello(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        hello_trigger = interface.add_trigger(self.hello)
+    def on_hello(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        hello_trigger = ctx.add_trigger(self.hello)
 
         return lambda: print(hello_trigger.get())
 

@@ -20,8 +20,8 @@ class Timed(xronos.Reactor):
         self.count = 0
 
     @xronos.reaction
-    def on_timer(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        interface.add_trigger(self._timer)
+    def on_timer(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        ctx.add_trigger(self._timer)
 
         def handler() -> None:
             print(f"{self._timer.fqn} triggered")

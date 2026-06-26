@@ -1,3 +1,3 @@
-numpy==2.4.6
-ultralytics==8.4.60
-xronos==0.11.2
+numpy==2.5.0
+ultralytics==8.4.78
+xronos==0.12.0

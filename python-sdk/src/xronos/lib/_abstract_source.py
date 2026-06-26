@@ -111,7 +111,7 @@ class AbstractSource(xronos.Reactor, Generic[TOutput]):
     @final
     def _create_reaction(
         self,
-        interface: xronos.ReactionInterface,
+        ctx: xronos.ReactionContext,
         trigger: xronos.EventSource[TEventSource],
         handler_base_class: Type["AbstractSource[TOutput]"],
         handler: Callable[..., TOutput],
@@ -125,7 +125,7 @@ class AbstractSource(xronos.Reactor, Generic[TOutput]):
         If `handler` is abstract, the reaction has no body, triggers or effects.
 
         Args:
-            interface: Reaction interface to add trigger and effect.
+            ctx: Reaction context to add trigger and effect.
             trigger: The trigger for the reaction.
             handler_base_class: The base class for the abstract handler.
             handler: The handler to call in the reaction body. Must be bound method.
@@ -141,8 +141,8 @@ class AbstractSource(xronos.Reactor, Generic[TOutput]):
         if not self.__is_method_overridden(handler_base_class, handler):
             return lambda: None
 
-        interface.add_trigger(trigger)
-        output_effect = interface.add_effect(self.output)
+        ctx.add_trigger(trigger)
+        output_effect = ctx.add_effect(self.output)
 
         def body() -> None:
             value = handler()
@@ -156,7 +156,7 @@ class AbstractSource(xronos.Reactor, Generic[TOutput]):
                         message="Simultaneous writes to an output port occurred.",
                         fqn=self.output.fqn,
                         value=output_effect.get(),
-                        timestamp=self.get_time(),
+                        timestamp=ctx.current_time,
                     )
                 )
             output_effect.set(value)
@@ -165,7 +165,7 @@ class AbstractSource(xronos.Reactor, Generic[TOutput]):
 
     @final
     @xronos.reaction
-    def _on_inhibit(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
+    def _on_inhibit(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
         """Specify the reaction to the inhibit port.
 
         Sets the inhibit state of this reactor.
@@ -173,7 +173,7 @@ class AbstractSource(xronos.Reactor, Generic[TOutput]):
         Returns:
             Inhibit reaction handler.
         """
-        inhibit_trigger = interface.add_trigger(self.inhibit)
+        inhibit_trigger = ctx.add_trigger(self.inhibit)
 
         def handler() -> None:
             self.__inhibit = inhibit_trigger.get()
@@ -182,14 +182,14 @@ class AbstractSource(xronos.Reactor, Generic[TOutput]):
 
     @final
     @xronos.reaction
-    def _on_startup(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
+    def _on_startup(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
         """Specify the startup reaction to invoke the `_startup_handler` method.
 
         Returns:
             Startup reaction handler.
         """
         return self._create_reaction(
-            interface,
+            ctx,
             self.startup,
             AbstractSource[TOutput],  # type: ignore[type-abstract]
             self._startup_handler,
@@ -197,14 +197,14 @@ class AbstractSource(xronos.Reactor, Generic[TOutput]):
 
     @final
     @xronos.reaction
-    def _on_shutdown(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
+    def _on_shutdown(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
         """Specify the Shutdown reaction to invoke the `_shutdown_handler` method.
 
         Returns:
             Shutdown reaction handler.
         """
         return self._create_reaction(
-            interface,
+            ctx,
             self.shutdown,
             AbstractSource[TOutput],  # type: ignore[type-abstract]
             self._shutdown_handler,
@@ -275,14 +275,14 @@ class AbstractTriggeredSource(AbstractSource[TOutput]):
 
     @final
     @xronos.reaction
-    def _on_trigger(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
+    def _on_trigger(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
         """Specify the triggered reaction to invoke the `_trigger_handler` method.
 
         Returns:
             Input trigger reaction handler.
         """
         return self._create_reaction(
-            interface,
+            ctx,
             self.trigger,
             AbstractTriggeredSource[TOutput],  # type: ignore[type-abstract]
             self._trigger_handler,
@@ -336,14 +336,14 @@ class AbstractTimerSource(AbstractSource[TOutput]):
 
     @final
     @xronos.reaction
-    def _on_timer(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
+    def _on_timer(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
         """Specify the timer reaction to invoke the `_timer_handler` method.
 
         Returns:
             Timer reaction handler.
         """
         return self._create_reaction(
-            interface,
+            ctx,
             self.timer,
             AbstractTimerSource[TOutput],  # type: ignore[type-abstract]
             self._timer_handler,

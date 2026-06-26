@@ -87,7 +87,7 @@ ENV MYPY_CACHE_DIR=/dev/null
 FROM scratch AS configs
 COPY .clang-tidy .clang-format dev-requirements.txt /
 
-FROM hashicorp/terraform:1.15.5@sha256:15bf5a08b1fb9c9747c8ff01098aeeefb4aec9a6c24eb13e7661bdf9447e4aee AS check-format
+FROM hashicorp/terraform:1.15.7@sha256:40e61a86763083ea987ded0ffa15f6d75e0df48ed16275811f949b3ecbcd8aae AS check-format
 WORKDIR /xronos
 # Need to rename the file because terraform fmt errors out for .hcl (without tftest)
 COPY docker-bake.hcl docker-bake.tftest.hcl

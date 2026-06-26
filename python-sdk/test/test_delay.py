@@ -13,11 +13,11 @@ class Printer(xronos.Reactor):
     input_ = xronos.InputPortDeclaration[int]()
 
     @xronos.reaction
-    def on_input(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        input_ = interface.add_trigger(self.input_)
+    def on_input(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        input_ = ctx.add_trigger(self.input_)
 
         def handler() -> None:
-            time = self.get_time_since_startup()
+            time = ctx.elapsed_time
             print(f"{self.fqn} received {input_.get()} at {time}")
             if time < datetime.timedelta(milliseconds=100):
                 raise Exception(

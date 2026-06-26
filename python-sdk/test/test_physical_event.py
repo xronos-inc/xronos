@@ -19,8 +19,8 @@ class Sensor(xronos.Reactor):
         self.__count = 0
 
     @xronos.reaction
-    def on_event(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        event_trigger = interface.add_trigger(self.event)
+    def on_event(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        event_trigger = ctx.add_trigger(self.event)
 
         def handler() -> None:
             print(f"received {event_trigger.get()}")
@@ -30,8 +30,8 @@ class Sensor(xronos.Reactor):
         return handler
 
     @xronos.reaction
-    def on_shutdown(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        _ = interface.add_trigger(self.shutdown)
+    def on_shutdown(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        _ = ctx.add_trigger(self.shutdown)
 
         def handler() -> None:
             assert self.__count == NUM_ITERATIONS

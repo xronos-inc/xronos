@@ -11,16 +11,16 @@ from .test_hello import Hello
 class Nested(xronos.Reactor):
     def __init__(self) -> None:
         super().__init__()
-        self._hello = self.create_reactor("hello_chind", Hello)
+        self._hello = self.create_reactor("hello_child", Hello)
 
     @xronos.reaction
-    def hello(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        interface.add_trigger(self.startup)
+    def hello(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        ctx.add_trigger(self.startup)
         return lambda: print(f"{self.fqn} says hello!")
 
     @xronos.reaction
-    def goodbye(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        interface.add_trigger(self.shutdown)
+    def goodbye(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        ctx.add_trigger(self.shutdown)
         return lambda: print(f"{self.fqn} says goodbye!")
 
 

@@ -35,11 +35,11 @@ class ActionSender(xronos.Reactor):
         self.messages_sent_in_current_batch = 0
 
     @xronos.reaction
-    def schedule_next(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        interface.add_trigger(self.startup)
-        interface.add_trigger(self.internal_event)
-        new_action = interface.add_effect(self.internal_event)
-        output_ = interface.add_effect(self.output_)
+    def schedule_next(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        ctx.add_trigger(self.startup)
+        ctx.add_trigger(self.internal_event)
+        new_action = ctx.add_effect(self.internal_event)
+        output_ = ctx.add_effect(self.output_)
 
         def body() -> None:
             print(f"Reaction in {self.fqn} triggered")
@@ -69,8 +69,8 @@ class ActionReceiver(xronos.Reactor):
         self.messages_until_break = messages_until_break
 
     @xronos.reaction
-    def on_input(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        input_ = interface.add_trigger(self.input_)
+    def on_input(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        input_ = ctx.add_trigger(self.input_)
 
         def body() -> None:
             print(f"Reaction in {self.fqn} triggered")
@@ -79,8 +79,7 @@ class ActionReceiver(xronos.Reactor):
             # equal to the length of break * number of breaks taken.
 
             assert (
-                self.get_time_since_startup().microseconds
-                / self.length_of_break.microseconds
+                ctx.elapsed_time.microseconds / self.length_of_break.microseconds
             ) == self.delays_recorded
 
             if input_.get() == self.messages_until_break - 1:

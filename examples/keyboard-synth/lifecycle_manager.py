@@ -41,14 +41,12 @@ class LifecycleManager(xronos.Reactor):
         self.__webserver_stopped = False
 
     @xronos.reaction
-    def __on_stop_requested(
-        self, interface: xronos.ReactionInterface
-    ) -> Callable[[], None]:
+    def __on_stop_requested(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
         """Signal all services to stop. Start timeout for service shutdown."""
-        interface.add_trigger(self.user_interrupt)
-        interface.add_trigger(self.stop)
-        stop_requested = interface.add_effect(self.stop_requested)
-        stop_timer_effect = interface.add_effect(self.__stop_timer)
+        ctx.add_trigger(self.user_interrupt)
+        ctx.add_trigger(self.stop)
+        stop_requested = ctx.add_effect(self.stop_requested)
+        stop_timer_effect = ctx.add_effect(self.__stop_timer)
 
         def handler() -> None:
             log(self, "stop requested")
@@ -58,17 +56,17 @@ class LifecycleManager(xronos.Reactor):
         return handler
 
     @xronos.reaction
-    def __on_stopped(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
+    def __on_stopped(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
         """Handle inputs from upstream services that they have stopped.
 
         Upon receipt of shutdown signals from all services, initiate shutdown.
         """
-        audio_stopped_trigger = interface.add_trigger(self.audio_stopped)
-        websocket_server_stopped_trigger = interface.add_trigger(
+        audio_stopped_trigger = ctx.add_trigger(self.audio_stopped)
+        websocket_server_stopped_trigger = ctx.add_trigger(
             self.websocket_server_stopped
         )
-        webserver_stopped_trigger = interface.add_trigger(self.webserver_stopped)
-        shutdown_effect = interface.add_effect(self.shutdown)
+        webserver_stopped_trigger = ctx.add_trigger(self.webserver_stopped)
+        shutdown_effect = ctx.add_effect(self.shutdown)
 
         def handler() -> None:
             if audio_stopped_trigger.is_present():
@@ -89,11 +87,9 @@ class LifecycleManager(xronos.Reactor):
         return handler
 
     @xronos.reaction
-    def __on_stop_timeout(
-        self, interface: xronos.ReactionInterface
-    ) -> Callable[[], None]:
-        interface.add_trigger(self.__stop_timer)
-        shutdown_effect = interface.add_effect(self.shutdown)
+    def __on_stop_timeout(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        ctx.add_trigger(self.__stop_timer)
+        shutdown_effect = ctx.add_effect(self.shutdown)
 
         def handler() -> None:
             if not self.stopped_gracefully:
@@ -105,6 +101,6 @@ class LifecycleManager(xronos.Reactor):
         return handler
 
     @xronos.reaction
-    def __on_shutdown(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        interface.add_trigger(self.shutdown)
+    def __on_shutdown(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        ctx.add_trigger(self.shutdown)
         return lambda: log(self, "stopped")

@@ -61,22 +61,22 @@ class RobotArmController(xronos.Reactor):
         return pickup_sequence[self._sequence_step % len(pickup_sequence)]
 
     @xronos.reaction
-    def control_step(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
+    def control_step(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
         """Reaction implementing the main control algorithm.
 
         The controller computes a sequence of steps. When both the arm and the
         gripper reached their target position, the controller proceeds to the
         next step in the sequence and sends new commands to the robot.
         """
-        startup_trigger = interface.add_trigger(self.startup)
-        pose_reached_trigger = interface.add_trigger(self.pose_reached)
-        gripper_reached_trigger = interface.add_trigger(self.gripper_reached)
+        startup_trigger = ctx.add_trigger(self.startup)
+        pose_reached_trigger = ctx.add_trigger(self.pose_reached)
+        gripper_reached_trigger = ctx.add_trigger(self.gripper_reached)
 
-        target_arm_pose_effect = interface.add_effect(self.target_arm_pose)
-        open_gripper_effect = interface.add_effect(self.open_gripper)
-        close_gripper_effect = interface.add_effect(self.close_gripper)
-        cube_placed_effect = interface.add_effect(self.cube_placed)
-        cubes_delivered_metric = interface.add_effect(self._cubes_delivered)
+        target_arm_pose_effect = ctx.add_effect(self.target_arm_pose)
+        open_gripper_effect = ctx.add_effect(self.open_gripper)
+        close_gripper_effect = ctx.add_effect(self.close_gripper)
+        cube_placed_effect = ctx.add_effect(self.cube_placed)
+        cubes_delivered_metric = ctx.add_effect(self._cubes_delivered)
 
         # Produces the next control output.
         def handler() -> None:
@@ -133,9 +133,9 @@ class CubeGeneratorController(xronos.Reactor):
         self._num_cubes_placed = 0
 
     @xronos.reaction
-    def on_startup(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        interface.add_trigger(self.startup)
-        spawn_new_cube_effect = interface.add_effect(self.spawn_new_cube)
+    def on_startup(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        ctx.add_trigger(self.startup)
+        spawn_new_cube_effect = ctx.add_effect(self.spawn_new_cube)
 
         def handler() -> None:
             spawn_new_cube_effect.set(self.CUBE_COLORS[0])
@@ -143,9 +143,9 @@ class CubeGeneratorController(xronos.Reactor):
         return handler
 
     @xronos.reaction
-    def on_cube_placed(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        interface.add_trigger(self.cube_placed)
-        spawn_new_cube_effect = interface.add_effect(self.spawn_new_cube)
+    def on_cube_placed(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        ctx.add_trigger(self.cube_placed)
+        spawn_new_cube_effect = ctx.add_effect(self.spawn_new_cube)
 
         def handler() -> None:
             self._num_cubes_placed += 1

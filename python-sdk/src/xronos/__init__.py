@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: Copyright (c) Xronos Inc.
 # SPDX-License-Identifier: BSD-3-Clause
 
+from xronos import experimental
 from xronos._core import (
     AbsentError,
     Element,
@@ -22,13 +23,15 @@ from xronos._core import (
     ProgrammableTimer,
     ProgrammableTimerDeclaration,
     ProgrammableTimerEffect,
-    ReactionInterface,
+    ReactionContext,
+    ReactionInterface,  # pyright: ignore[reportDeprecated]
     Reactor,
     Shutdown,
     ShutdownEffect,
     Startup,
     Trigger,
     reaction,
+    reaction_with_deadline,
 )
 from xronos._cpp_sdk import (  # type: ignore reportMissingModuleSource
     DuplicateNameError,
@@ -57,6 +60,7 @@ __all__ = [
     "ProgrammableTimer",
     "ProgrammableTimerDeclaration",
     "ProgrammableTimerEffect",
+    "ReactionContext",
     "ReactionInterface",
     "Reactor",
     "Shutdown",
@@ -64,5 +68,7 @@ __all__ = [
     "Startup",
     "Trigger",
     "ValidationError",
+    "experimental",
     "reaction",
+    "reaction_with_deadline",
 ]

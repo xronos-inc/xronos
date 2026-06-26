@@ -24,6 +24,8 @@ from typing import (
     overload,
 )
 
+from typing_extensions import deprecated
+
 import xronos._cpp_sdk as sdk
 
 # Self is only available for Python>=3.11
@@ -308,7 +310,7 @@ class InputPort(EventSource[T]):
     reactors.
 
     Input ports may be connected to other ports so that messages are forwarded
-    automatically (see :func:`Environment.connect` and :func:`Reactor.connect`).
+    automatically (see :meth:`Environment.connect` and :meth:`Reactor.connect`).
 
     Reactions of other reactors may also use input ports as a
     :class:`PortEffect` allowing an external reaction handler to send messages
@@ -351,7 +353,7 @@ class OutputPort(EventSource[T]):
     for reactors to send messages to other reactors.
 
     Output ports may be connected to other ports so that messages are forwarded
-    automatically (see :func:`Environment.connect` and :func:`Reactor.connect`).
+    automatically (see :meth:`Environment.connect` and :meth:`Reactor.connect`).
 
     Other reactors may also use output ports as a reaction :class:`Trigger`
     allowing an external reaction handler to receive messages directly from the
@@ -678,7 +680,7 @@ class Environment:
 
         Returns when the reactor program terminates. The reactor program
         terminates when there are no more events, or after calling
-        :func:`~xronos.ShutdownEffect.trigger_shutdown()` on a
+        :meth:`~xronos.ShutdownEffect.trigger_shutdown()` on a
         :class:`ShutdownEffect`.
 
         Raises:
@@ -825,6 +827,27 @@ class Reactor(Element):
 
         return self.__elements[name]
 
+    def _register_dynamic_element(self, name: str, element: Element) -> None:
+        """Register a dynamically created element with this reactor.
+
+        Keeps a reference to the element (so the Python wrapper outlives the
+        call that created it) and guards against name collisions on the Python
+        side. The underlying C++ runtime additionally rejects duplicate names
+        with a :class:`DuplicateNameError` while the element is constructed,
+        before this method runs.
+
+        This is an implementation detail of the experimental dynamic element
+        creation API (see :mod:`xronos.experimental`).
+        """
+        if not hasattr(self, "_Reactor__initialized"):
+            raise TypeError(
+                "When overriding __init__ of Reactor, super().__init__() "
+                "must be called before any elements are created."
+            )
+        if name in self.__elements:
+            raise KeyError(f"An element named '{name}' already exists.")
+        self.__elements[name] = element
+
     @classmethod
     def __get_base_reactor(cls) -> Type["Reactor"] | None:
         """Check bases for other reactor classes.
@@ -863,37 +886,69 @@ class Reactor(Element):
         """
         return Shutdown(self.__sdk_instance.shutdown)
 
+    @deprecated(
+        "The reactor-level timing API is deprecated and will be removed in an "
+        "upcoming release; use the reaction-scoped ReactionContext.current_time "
+        "instead."
+    )
     def get_time(self) -> datetime.datetime:
-        """Get the current timestamp.
+        """Get the current time.
+
+        .. deprecated:: v0.12.0
+            The current time is only well-defined while a reaction handler
+            executes. This method will be removed in an upcoming release; use
+            the reaction-scoped :attr:`ReactionContext.current_time` instead.
 
         .. note:: This does not read wall-clock time. The Xronos runtime uses
                   an internal clock to control how a program advances.
 
         Returns:
-            The current timestamp as provided by the internal clock.
+            The current time as provided by the internal clock.
         """
         return self.__sdk_instance.get_time()
 
+    @deprecated(
+        "The reactor-level timing API is deprecated and will be removed in an "
+        "upcoming release; use the reaction-scoped ReactionContext.lag "
+        "instead."
+    )
     def get_lag(self) -> datetime.timedelta:
         """Get the current lag.
 
-        Since in the Xronos SDK time does not advance while reactions execute,
-        the internal clock may advance slower than a wall clock would. The lag
-        denotes the difference between the wall clock and the internal clock.
-        It is a measure of how far the execution of reactions lags behind
-        events in the physical world.
+        .. deprecated:: v0.12.0
+            The current time is only well-defined while a reaction handler
+            executes. This method will be removed in an upcoming release; use
+            the reaction-scoped :attr:`ReactionContext.lag` instead.
+
+        The lag is the difference between wall-clock time and the current time
+        (wall-clock now minus the current time). While a reaction handler
+        executes, the current time does not advance, but the wall clock does;
+        the lag therefore measures how far the wall clock has run ahead of the
+        internal clock -- that is, how far the execution of reactions lags
+        behind the events it processes.
 
         Returns:
-            The current lag.
+            The current lag as a wall-clock duration.
         """
         return self.__sdk_instance.get_lag()
 
+    @deprecated(
+        "The reactor-level timing API is deprecated and will be removed in an "
+        "upcoming release; use the reaction-scoped "
+        "ReactionContext.elapsed_time instead."
+    )
     def get_time_since_startup(self) -> datetime.timedelta:
-        """Get the time that passed since the :attr:`startup` event.
+        """Get how far the internal clock has advanced since :attr:`startup`.
+
+        .. deprecated:: v0.12.0
+            The current time is only well-defined while a reaction handler
+            executes. This method will be removed in an upcoming release; use
+            the reaction-scoped :attr:`ReactionContext.elapsed_time`
+            instead.
 
         Returns:
-            The difference between the current time point given by
-            :func:`get_time` and the time at which the program started.
+            The difference between the current time given by :meth:`get_time`
+            and the time at which the program started.
         """
         return self.__sdk_instance.get_time_since_startup()
 
@@ -908,12 +963,13 @@ class Reactor(Element):
     def _add_reaction(
         self,
         name: str,
-        declaration: "Callable[[sdk.ReactionContext], Callable[[], None]]",
+        declaration: "Callable[[sdk.Reaction], Callable[[], None]]",
         source_location: sdk.SourceLocation,
+        deadline: datetime.timedelta | None = None,
     ) -> "Reaction":
-        sdk_reaction = self.__sdk_instance.add_reaction(name, source_location)
+        sdk_reaction = self.__sdk_instance.add_reaction(name, deadline, source_location)
         return Reaction(
-            sdk_reaction, lambda: declaration(sdk_reaction.context()), source_location
+            sdk_reaction, lambda: declaration(sdk_reaction), source_location
         )
 
     @overload
@@ -989,7 +1045,7 @@ class Reactor(Element):
         """Create a nested reactor.
 
         A factory method for instantiating and registering a new nested reactor.
-        In contrast to :func:`Environment.create_reactor`, the newly created reactor
+        In contrast to :meth:`Environment.create_reactor`, the newly created reactor
         is contained by ``self``.
 
         Args:
@@ -1023,7 +1079,7 @@ class Reactor(Element):
 class AbsentError(Exception):
     """Indicates an attempt to read a value that is absent.
 
-    See :func:`Trigger.get`.
+    See :meth:`Trigger.get`.
     """
 
     pass
@@ -1033,7 +1089,7 @@ class Trigger(Generic[T]):
     """Provides read access to an event source that a reaction is triggered by.
 
     This class is not intended to be instantiated directly. Use
-    :func:`~xronos.ReactionInterface.add_trigger` instead.
+    :meth:`~xronos.ReactionInterface.add_trigger` instead.
     """
 
     def __init__(self, sdk_trigger: sdk.Trigger | sdk.VoidTrigger) -> None:
@@ -1047,7 +1103,7 @@ class Trigger(Generic[T]):
         """Get the value of a currently present event.
 
         Raises:
-            AbsentError: If called and :func:`is_present` returns ``False``.
+            AbsentError: If called and :meth:`is_present` returns ``False``.
         """
         if not self.is_present():
             raise AbsentError(
@@ -1065,7 +1121,7 @@ class PortEffect(Generic[T]):
     :class:`OutputPort`.
 
     This class is not intended to be instantiated directly. Use
-    :func:`~xronos.ReactionInterface.add_effect` instead.
+    :meth:`~xronos.ReactionInterface.add_effect` instead.
 
     Type Args:
         T: The value type associated with the port.
@@ -1097,7 +1153,7 @@ class PortEffect(Generic[T]):
             The current value if an event is present.
 
         Raises:
-            AbsentError: If called and :func:`is_present` returns ``False``.
+            AbsentError: If called and :meth:`is_present` returns ``False``.
         """
         if not self.is_present():
             raise AbsentError(
@@ -1111,7 +1167,7 @@ class ProgrammableTimerEffect(Generic[T]):
     """Allows a reaction to schedule future events using a :class:`ProgrammableTimer`.
 
     This class is not intended to be instantiated directly. Use
-    :func:`~xronos.ReactionInterface.add_effect` instead.
+    :meth:`~xronos.ReactionInterface.add_effect` instead.
 
     Type Args:
         T: The value type associated with the programmable timer.
@@ -1136,7 +1192,7 @@ class MetricEffect:
     """Allows a reaction to record telemetry data using a given :class:`Metric`.
 
     This class is not intended to be instantiated directly. Use
-    :func:`~xronos.ReactionInterface.add_effect` instead.
+    :meth:`~xronos.ReactionInterface.add_effect` instead.
     """
 
     def __init__(self, sdk_metric: sdk.MetricEffect) -> None:
@@ -1155,7 +1211,7 @@ class ShutdownEffect:
     """Allows a reaction to terminate the program.
 
     This class is not intended to be instantiated directly. Use
-    :func:`~xronos.ReactionInterface.add_effect` instead.
+    :meth:`~xronos.ReactionInterface.add_effect` instead.
     """
 
     def __init__(self, sdk_shutdown: sdk.ShutdownEffect) -> None:
@@ -1171,12 +1227,23 @@ class ShutdownEffect:
         self.__sdk_shutdown.trigger_shutdown()
 
 
+@deprecated(
+    "ReactionInterface is deprecated and will be removed in an upcoming "
+    "release; use ReactionContext instead.",
+    category=None,
+)
 class ReactionInterface:
     """Helper class for defining the interfaces of a reaction.
 
     This class is not intended to be instantiated directly. An instance of this
     class is passed automatically to any method decorated with
-    :attr:`~xronos.reaction`.
+    :deco:`reaction` or :deco:`reaction_with_deadline`.
+
+    .. deprecated:: v0.12.0
+        ``ReactionInterface`` will be removed in an upcoming release. Use
+        :class:`ReactionContext` instead, which additionally provides the
+        reaction-scoped timing API. ``ReactionInterface`` remains the base class
+        of :class:`ReactionContext`, so existing annotations keep working.
     """
 
     def __init__(self, sdk_context: sdk.ReactionContext) -> None:
@@ -1257,6 +1324,142 @@ class ReactionInterface:
             return ShutdownEffect(sdk.ShutdownEffect(sdk_shutdown, self.__context))
         else:
             raise ValueError(f"{type(target)} is not a valid target for an effect.")
+
+
+class ReactionContext(ReactionInterface):  # pyright: ignore[reportDeprecated]
+    """The context passed to a reaction declaration.
+
+    An instance is passed automatically to any method decorated with
+    :deco:`reaction` or :deco:`reaction_with_deadline`. Use it to declare the
+    reaction's triggers and effects, and to read the reaction-scoped timing API.
+    The reaction handler may capture the context object in its closure to access
+    the timing API during execution.
+
+    .. note::
+        The timing attributes are only meaningful while the reaction handler
+        executes. They remain accessible during the reaction declaration, but
+        there they return defined placeholders that must not be relied upon.
+    """
+
+    def __init__(self, sdk_reaction: sdk.Reaction) -> None:
+        super().__init__(sdk_reaction.context())
+        self.__sdk_reaction = sdk_reaction
+
+    @property
+    def current_time(self) -> datetime.datetime:
+        """The current time as provided by the internal clock (read-only).
+
+        This does not read wall-clock time. The Xronos runtime uses an internal
+        clock to control how a program advances. The internal clock does not
+        advance while a reaction handler executes, so this value does not change
+        while the handler runs: any two reads within the same handler return the
+        same value.
+
+        This is a reaction-scoped accessor and is only meaningful while the
+        reaction handler executes; values read outside a handler must not be
+        relied upon.
+
+        If the program is not yet executing (for example, when accessed during
+        reaction declaration), this returns a default value: the epoch.
+        """
+        return self.__sdk_reaction.current_time()
+
+    @property
+    def lag(self) -> datetime.timedelta:
+        """The current lag (read-only).
+
+        The lag is the difference between wall-clock time and the current time
+        (wall-clock now minus :attr:`current_time`). It relates the internal
+        clock to the advancing wall clock and therefore changes while the
+        handler runs: the current time does not advance, but the wall clock
+        does, so the lag measures how far the wall clock has run ahead of the
+        internal clock -- that is, how far the execution of reactions lags
+        behind the events it processes.
+
+        This is a reaction-scoped accessor and is only meaningful while the
+        reaction handler executes; values read outside a handler must not be
+        relied upon.
+
+        If the program is not yet executing (for example, when accessed during
+        reaction declaration), this returns a default value: zero.
+        """
+        return self.__sdk_reaction.lag()
+
+    @property
+    def elapsed_time(self) -> datetime.timedelta:
+        """How far the internal clock has advanced since startup (read-only).
+
+        This is the difference between :attr:`current_time` and the time at
+        which the program started. It is measured on the internal clock and
+        does not depend on wall-clock time. Like :attr:`current_time`, it does
+        not change while the handler runs.
+
+        This is a reaction-scoped accessor and is only meaningful while the
+        reaction handler executes; values read outside a handler must not be
+        relied upon.
+
+        If the program is not yet executing (for example, when accessed during
+        reaction declaration), this returns a default value: zero.
+        """
+        return self.__sdk_reaction.elapsed_time()
+
+    @property
+    def deadline(self) -> datetime.datetime | None:
+        """The deadline for the current handler invocation (read-only).
+
+        If the reaction was declared with a deadline duration ``D`` (see
+        :deco:`reaction_with_deadline`), this returns the wall-clock instant by
+        which the handler must complete, equal to :attr:`current_time` + ``D``.
+        It is therefore anchored to :attr:`current_time` and stays fixed for the
+        duration of the handler. The handler meets its deadline if it completes
+        before the wall clock reaches this instant.
+
+        This is a reaction-scoped accessor and is only meaningful while the
+        reaction handler executes; values read outside a handler must not be
+        relied upon.
+
+        If no deadline was declared, or if the program is not yet executing
+        (for example, when accessed during reaction declaration), this is
+        ``None``.
+        """
+        return self.__sdk_reaction.deadline()
+
+    @property
+    def slack(self) -> datetime.timedelta:
+        """The remaining slack before the deadline (read-only).
+
+        This is the remaining wall-clock duration before the deadline (the
+        :attr:`deadline` minus wall-clock now). Equivalently, for a declared
+        deadline duration ``D`` it is ``D`` minus :attr:`lag`: the lag and the
+        slack always sum to ``D``, so as the lag grows during the handler the
+        slack shrinks by the same amount. The slack denotes how much further the
+        :attr:`lag` may grow before the deadline is violated. A negative value
+        means the deadline has been missed: the wall clock has passed the
+        deadline.
+
+        This is a reaction-scoped accessor and is only meaningful while the
+        reaction handler executes; values read outside a handler must not be
+        relied upon.
+
+        If no deadline was declared, or if the program is not executing (for
+        example, when accessed during reaction declaration),
+        :attr:`datetime.timedelta.max` is returned.
+        """
+        return self.__sdk_reaction.slack()
+
+    @property
+    def is_before_deadline(self) -> bool:
+        """Whether the handler is still within its deadline (read-only).
+
+        This is a reaction-scoped accessor and is only meaningful while the
+        reaction handler executes; values read outside a handler must not be
+        relied upon.
+
+        Returns ``True`` while the wall clock has not yet reached the deadline
+        (the :attr:`slack` is positive), and ``False`` once the deadline has
+        been missed. If no deadline was declared, this is always ``True``.
+        """
+        return self.__sdk_reaction.is_before_deadline()
 
 
 class Reaction(Element):
@@ -1355,20 +1558,24 @@ class ReactionDescriptor(ElementDescriptor[Reaction], Generic[R_co]):
             callable responsible for declaring reaction dependencies using
             the provide reaction interface.
         source_location: source location to be associated with the reaction
+        deadline: An optional relative deadline for the reaction (see
+            :deco:`reaction`).
     """
 
     def __init__(
         self,
-        declaration: Callable[[R, ReactionInterface], Callable[[], None]],
+        declaration: Callable[[R, ReactionContext], Callable[[], None]],
         source_location: sdk.SourceLocation,
+        deadline: datetime.timedelta | None = None,
     ):
         def initialize(name: str, reactor: Reactor) -> Reaction:
             return reactor._add_reaction(
                 name,
-                lambda context: declaration(
-                    cast(R, reactor), ReactionInterface(context)
+                lambda sdk_reaction: declaration(
+                    cast(R, reactor), ReactionContext(sdk_reaction)
                 ),
                 source_location,
+                deadline,
             )
 
         super().__init__(initialize, None)
@@ -1377,15 +1584,60 @@ class ReactionDescriptor(ElementDescriptor[Reaction], Generic[R_co]):
         raise RuntimeError("Reactions may not be called directly")
 
 
+def _make_reaction_descriptor(
+    declaration: Callable[[R, ReactionContext], Callable[[], None]],
+    source_location: sdk.SourceLocation,
+    deadline: datetime.timedelta | None,
+) -> ReactionDescriptor[R]:
+    return ReactionDescriptor[R](declaration, source_location, deadline)
+
+
 def reaction(
-    declaration: Callable[[R, ReactionInterface], Callable[[], None]],
+    declaration: Callable[[R, ReactionContext], Callable[[], None]],
 ) -> ReactionDescriptor[R]:
     """Decorator that is used to declare reactions.
 
     Args:
-        declaration: The decorated method. Must accept an
-            :class:`~xronos.ReactionInterface` as its first argument and return
+        declaration: The decorated method. Must accept a
+            :class:`~xronos.ReactionContext` as its first argument and return
             a reaction handler. Failing to return a handler will result in an
             exception when the reactor containing the reaction is initialized.
+            Annotating the argument as the deprecated
+            :class:`~xronos.ReactionInterface` is still accepted.
+
+    To declare a reaction with a deadline, use :deco:`reaction_with_deadline`
+    instead.
     """
-    return ReactionDescriptor[R](declaration, get_source_location())
+    return _make_reaction_descriptor(declaration, get_source_location(), None)
+
+
+def reaction_with_deadline(
+    *,
+    deadline: datetime.timedelta,
+) -> Callable[
+    [Callable[[R, ReactionContext], Callable[[], None]]], ReactionDescriptor[R]
+]:
+    """Decorator that is used to declare reactions with a deadline.
+
+    Args:
+        deadline: A deadline relative to the current time of the triggering
+            event. The deadline is violated if the handler does not complete
+            within this duration.
+
+    Raises:
+        ValueError: If ``deadline`` is negative.
+
+    To declare a reaction without a deadline, use :deco:`reaction` instead. The
+    decorated method has the same requirements as for :deco:`reaction`.
+    """
+    if deadline < datetime.timedelta(0):
+        raise ValueError("A reaction deadline may not be negative.")
+
+    source_location = get_source_location()
+
+    def decorator(
+        declaration: Callable[[R, ReactionContext], Callable[[], None]],
+    ) -> ReactionDescriptor[R]:
+        return _make_reaction_descriptor(declaration, source_location, deadline)
+
+    return decorator

@@ -15,16 +15,16 @@ class Clock(xronos.Reactor):
         self._period = period
 
     @xronos.reaction
-    def on_startup(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        _ = interface.add_trigger(self.startup)
-        action = interface.add_effect(self._programmable_timer)
+    def on_startup(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        _ = ctx.add_trigger(self.startup)
+        action = ctx.add_effect(self._programmable_timer)
 
         return lambda: action.schedule(value=None, delay=self._period)
 
     @xronos.reaction
-    def on_action(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        _ = interface.add_trigger(self._programmable_timer)
-        internal_event_effect = interface.add_effect(self._programmable_timer)
+    def on_action(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        _ = ctx.add_trigger(self._programmable_timer)
+        internal_event_effect = ctx.add_effect(self._programmable_timer)
 
         def handler() -> None:
             print(f"{self._programmable_timer.fqn} triggered")

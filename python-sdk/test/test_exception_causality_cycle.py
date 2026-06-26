@@ -13,9 +13,9 @@ class ZeroDelayInOut(xronos.Reactor):
     output = xronos.OutputPortDeclaration[int]()
 
     @xronos.reaction
-    def passthrough(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        interface.add_trigger(self.input)
-        interface.add_effect(self.output)
+    def passthrough(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        ctx.add_trigger(self.input)
+        ctx.add_effect(self.output)
 
         def ret() -> None:
             raise Exception("This should be unreachable")

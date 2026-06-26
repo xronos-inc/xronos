@@ -40,9 +40,9 @@ class UserInterface(xronos.Reactor, Generic[T]):
         self.semaphore = threading.Semaphore(value=0)
 
     @xronos.reaction
-    def on_startup(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
+    def on_startup(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
         """Start the thread listening for console input."""
-        interface.add_trigger(self.startup)
+        ctx.add_trigger(self.startup)
 
         def handler() -> None:
             # Print out the help message on startup.
@@ -52,12 +52,12 @@ class UserInterface(xronos.Reactor, Generic[T]):
         return handler
 
     @xronos.reaction
-    def on_user_input(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
+    def on_user_input(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
         """Parse the user input and output any parsed command on the output port."""
-        user_input_trigger = interface.add_trigger(self._user_input)
-        output_effect = interface.add_effect(self.output)
-        unblock_effect = interface.add_effect(self._unblock)
-        shutdown_effect = interface.add_effect(self.shutdown)
+        user_input_trigger = ctx.add_trigger(self._user_input)
+        output_effect = ctx.add_effect(self.output)
+        unblock_effect = ctx.add_effect(self._unblock)
+        shutdown_effect = ctx.add_effect(self.shutdown)
 
         def handler() -> None:
             cmd = self.parser(user_input_trigger.get())
@@ -73,13 +73,13 @@ class UserInterface(xronos.Reactor, Generic[T]):
         return handler
 
     @xronos.reaction
-    def on_unblock(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
+    def on_unblock(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
         """Release the semaphore to unblock the user interface.
 
-        Allows accepting new inputs from the conslole.
+        Allows accepting new inputs from the console.
         """
-        interface.add_trigger(self._unblock)
-        interface.add_trigger(self.unblock)
+        ctx.add_trigger(self._unblock)
+        ctx.add_trigger(self.unblock)
 
         def handler() -> None:
             self.semaphore.release()
@@ -87,9 +87,9 @@ class UserInterface(xronos.Reactor, Generic[T]):
         return handler
 
     @xronos.reaction
-    def on_shutdown(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
+    def on_shutdown(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
         """Stop the running thread."""
-        interface.add_trigger(self.shutdown)
+        ctx.add_trigger(self.shutdown)
 
         def handler() -> None:
             self.stop_thread_event.set()

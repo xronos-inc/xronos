@@ -49,7 +49,14 @@ auto Reactor::get_time() const noexcept -> TimePoint {
   return program_context()->runtime_program_handle->get_time_access(uid())->get_timestamp();
 }
 
-auto Reactor::get_lag() const noexcept -> Duration { return std::chrono::system_clock::now() - get_time(); }
+auto Reactor::get_lag() const noexcept -> Duration {
+  // get_time() is deprecated, but this deprecated accessor is intentionally
+  // implemented in terms of it. Silence the self-referential deprecation warning.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+  return std::chrono::system_clock::now() - get_time();
+#pragma GCC diagnostic pop
+}
 
 auto Reactor::get_time_since_startup() const noexcept -> Duration {
   if (program_context()->runtime_program_handle == nullptr) {

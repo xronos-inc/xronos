@@ -20,9 +20,9 @@ class HelloNested(xronos.Reactor):
         self.add_attributes({"nested_attr": "nested_value"})
 
     @xronos.reaction
-    def hello(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        interface.add_trigger(self.startup)
-        hello_metric_writable = interface.add_effect(self.hello_metric)
+    def hello(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        ctx.add_trigger(self.startup)
+        hello_metric_writable = ctx.add_effect(self.hello_metric)
 
         def handler() -> None:
             self.add_attribute("dynamic_attr", "dynamic_value")
@@ -53,9 +53,9 @@ class Hello(xronos.Reactor):
         self.nested = self.create_reactor("nested", HelloNested)
 
     @xronos.reaction
-    def hello(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        interface.add_trigger(self.startup)
-        hello_metric_writable = interface.add_effect(self.hello_metric)
+    def hello(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        ctx.add_trigger(self.startup)
+        hello_metric_writable = ctx.add_effect(self.hello_metric)
 
         def handler() -> None:
             hello_metric_writable.record(42.93)

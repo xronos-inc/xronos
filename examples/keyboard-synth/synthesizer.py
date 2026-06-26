@@ -65,9 +65,9 @@ class Synthesizer(xronos.Reactor):
         return " ".join(sorted(notes)) if notes else "nothing"
 
     @xronos.reaction
-    def __on_keypress(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
+    def __on_keypress(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
         """Update active client keys in response to a keypress event."""
-        trigger = interface.add_trigger(self.keypress)
+        trigger = ctx.add_trigger(self.keypress)
 
         def handler() -> None:
             # update client active keys
@@ -82,10 +82,8 @@ class Synthesizer(xronos.Reactor):
         return handler
 
     @xronos.reaction
-    def __on_remove_client(
-        self, interface: xronos.ReactionInterface
-    ) -> Callable[[], None]:
-        trigger = interface.add_trigger(self.remove_client)
+    def __on_remove_client(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        trigger = ctx.add_trigger(self.remove_client)
 
         def handler() -> None:
             self._clients.pop(trigger.get(), None)
@@ -93,20 +91,18 @@ class Synthesizer(xronos.Reactor):
         return handler
 
     @xronos.reaction
-    def __on_update_timer(
-        self, interface: xronos.ReactionInterface
-    ) -> Callable[[], None]:
+    def __on_update_timer(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
         """Generate the next block of audio frames.
 
         Tones are generated using reactor time, and consequently
-        are guarnteed to be phase aligned between blocks. This
-        demonstates a deterministic generation of a time-based signal.
+        are guaranteed to be phase aligned between blocks. This
+        demonstrates a deterministic generation of a time-based signal.
         """
-        interface.add_trigger(self.__update_timer)
-        effect = interface.add_effect(self.frames)
+        ctx.add_trigger(self.__update_timer)
+        effect = ctx.add_effect(self.frames)
 
         def handler() -> None:
-            t0 = self.get_time_since_startup().total_seconds()
+            t0 = ctx.elapsed_time.total_seconds()
             dt = 1.0 / self._samplerate
             t = np.arange(self._blocksize, dtype=np.float32) * dt + t0
             frequencies = self.get_frequencies()
@@ -152,6 +148,6 @@ class Synthesizer(xronos.Reactor):
     __async_log = xronos.PhysicalEventDeclaration[str]()
 
     @xronos.reaction
-    def __on_async_log(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        async_log = interface.add_trigger(self.__async_log)
+    def __on_async_log(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        async_log = ctx.add_trigger(self.__async_log)
         return lambda: log(self, async_log.get())

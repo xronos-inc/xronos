@@ -32,8 +32,8 @@ TEST(deadlines, TestDeadlineGetters) {
       void handler() final {
         EXPECT_FALSE(self().on_startup_executed_);
         EXPECT_TRUE(deadline().has_value());
-        EXPECT_EQ(deadline().value() - self().get_time(), 100ms);
-        EXPECT_GT(remaining_slack(), 0s);
+        EXPECT_EQ(deadline().value() - current_time(), 100ms);
+        EXPECT_GT(slack(), 0s);
         EXPECT_TRUE(is_before_deadline());
         self().on_startup_executed_ = true;
       }
@@ -45,8 +45,8 @@ TEST(deadlines, TestDeadlineGetters) {
       void handler() final {
         EXPECT_FALSE(self().on_shutdown_executed_);
         EXPECT_TRUE(deadline().has_value());
-        EXPECT_EQ(deadline().value() - self().get_time(), 200ms);
-        EXPECT_GT(remaining_slack(), 0s);
+        EXPECT_EQ(deadline().value() - current_time(), 200ms);
+        EXPECT_GT(slack(), 0s);
         EXPECT_TRUE(is_before_deadline());
         self().on_shutdown_executed_ = true;
       }
@@ -57,8 +57,8 @@ TEST(deadlines, TestDeadlineGetters) {
       Trigger<void> timer_trigger{self().timer_, context()};
       void handler() final {
         EXPECT_TRUE(deadline().has_value());
-        EXPECT_EQ(deadline().value() - self().get_time(), 50ms);
-        EXPECT_GT(remaining_slack(), std::chrono::seconds{self().timer_count_});
+        EXPECT_EQ(deadline().value() - current_time(), 50ms);
+        EXPECT_GT(slack(), std::chrono::seconds{self().timer_count_});
         EXPECT_TRUE(is_before_deadline());
         self().timer_count_++;
       }
@@ -103,7 +103,7 @@ TEST(deadlines, TestDeadlineGettersNoDeadlines) {
       void handler() final {
         EXPECT_FALSE(self().on_startup_executed_);
         EXPECT_FALSE(deadline().has_value());
-        EXPECT_EQ(remaining_slack(), Duration::max());
+        EXPECT_EQ(slack(), Duration::max());
         EXPECT_TRUE(is_before_deadline());
         self().on_startup_executed_ = true;
       }
@@ -115,7 +115,7 @@ TEST(deadlines, TestDeadlineGettersNoDeadlines) {
       void handler() final {
         EXPECT_FALSE(self().on_shutdown_executed_);
         EXPECT_FALSE(deadline().has_value());
-        EXPECT_EQ(remaining_slack(), Duration::max());
+        EXPECT_EQ(slack(), Duration::max());
         EXPECT_TRUE(is_before_deadline());
         self().on_shutdown_executed_ = true;
       }
@@ -126,7 +126,7 @@ TEST(deadlines, TestDeadlineGettersNoDeadlines) {
       Trigger<void> timer_trigger{self().timer_, context()};
       void handler() final {
         EXPECT_FALSE(deadline().has_value());
-        EXPECT_EQ(remaining_slack(), Duration::max());
+        EXPECT_EQ(slack(), Duration::max());
         EXPECT_TRUE(is_before_deadline());
         self().timer_count_++;
       }
@@ -172,8 +172,8 @@ TEST(deadlines, TestViolatedDeadline) {
       void handler() final {
         EXPECT_FALSE(self().on_startup_executed_);
         EXPECT_TRUE(deadline().has_value());
-        EXPECT_EQ(deadline().value(), self().get_time());
-        EXPECT_LT(remaining_slack(), 0s);
+        EXPECT_EQ(deadline().value(), current_time());
+        EXPECT_LT(slack(), 0s);
         EXPECT_FALSE(is_before_deadline());
         self().on_startup_executed_ = true;
 
@@ -187,8 +187,8 @@ TEST(deadlines, TestViolatedDeadline) {
       void handler() final {
         EXPECT_FALSE(self().on_shutdown_executed_);
         EXPECT_TRUE(deadline().has_value());
-        EXPECT_EQ(deadline().value() - self().get_time(), 200ms);
-        EXPECT_GT(remaining_slack(), 0s);
+        EXPECT_EQ(deadline().value() - current_time(), 200ms);
+        EXPECT_GT(slack(), 0s);
         EXPECT_TRUE(is_before_deadline());
         self().on_shutdown_executed_ = true;
       }
@@ -203,11 +203,11 @@ TEST(deadlines, TestViolatedDeadline) {
         EXPECT_TRUE(deadline().has_value());
         EXPECT_FALSE(is_before_deadline());
 
-        auto slack = remaining_slack();
-        EXPECT_EQ(deadline().value() - self().get_time(), 5ms);
-        EXPECT_LT(slack, 0s);
-        EXPECT_LT(previous_slack, slack);
-        previous_slack = slack;
+        auto current_slack = slack();
+        EXPECT_EQ(deadline().value() - current_time(), 5ms);
+        EXPECT_LT(current_slack, 0s);
+        EXPECT_LT(previous_slack, current_slack);
+        previous_slack = current_slack;
 
         self().timer_count_++;
       }
@@ -231,6 +231,26 @@ TEST(deadlines, TestViolatedDeadline) {
   DeadlineViolatedTest deadline_test{"deadline_test", env.context()};
   env.execute();
   deadline_test.check_post_conditions();
+}
+
+TEST(deadlines, TestNegativeDeadlineRejected) {
+
+  class NegativeDeadlineTest : public Reactor {
+  private:
+    using Reactor::Reactor;
+
+    class OnStartup : public Reaction<NegativeDeadlineTest> {
+      using Reaction<NegativeDeadlineTest>::Reaction;
+      Trigger<void> startup_trigger{self().startup(), context()};
+      void handler() final {}
+    };
+
+    void assemble() final { add_reaction_with_deadline<OnStartup>("on_startup", -1ms); }
+  };
+
+  TestEnvironment env{1ms};
+  NegativeDeadlineTest deadline_test{"deadline_test", env.context()};
+  EXPECT_THROW(env.execute(), ValidationError);
 }
 
 } // namespace xronos::sdk::test

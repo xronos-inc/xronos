@@ -41,13 +41,13 @@ protected:
       Trigger<void> void_trigger{self().programmable_timer_void_, context()};
       Trigger<int> int_trigger{self().programmable_timer_int_, context()};
       void handler() final {
-        if (self().get_time_since_startup() == 0s && reference_trigger.is_present()) {
+        if (elapsed_time() == 0s && reference_trigger.is_present()) {
           // The first iteration does not align with the first timer triggering
           EXPECT_FALSE(void_trigger.is_present());
           EXPECT_FALSE(int_trigger.is_present());
           EXPECT_EQ(int_trigger.get(), nullptr);
         } else {
-          if (self().get_time_since_startup() > 0s) {
+          if (elapsed_time() > 0s) {
             EXPECT_TRUE(reference_trigger.is_present());
           }
           EXPECT_TRUE(void_trigger.is_present());
@@ -66,13 +66,13 @@ protected:
       ProgrammableTimerEffect<void> void_effect{self().programmable_timer_void_, context()};
       ProgrammableTimerEffect<int> int_effect{self().programmable_timer_int_, context()};
       void handler() final {
-        if (self().get_time_since_startup() == 0s && reference_trigger.is_present()) {
+        if (elapsed_time() == 0s && reference_trigger.is_present()) {
           // The first iteration does not align with the first timer triggering
           EXPECT_FALSE(void_trigger.is_present());
           EXPECT_FALSE(int_trigger.is_present());
           EXPECT_EQ(int_trigger.get(), nullptr);
         } else {
-          if (self().get_time_since_startup() > 0s) {
+          if (elapsed_time() > 0s) {
             EXPECT_TRUE(reference_trigger.is_present());
           }
           EXPECT_TRUE(void_trigger.is_present());
@@ -206,7 +206,7 @@ protected:
       Trigger<void> void_trigger{self().input_void_, context()};
       Trigger<int> int_trigger{self().input_int_, context()};
       void handler() final {
-        if (self().get_time_since_startup() == 0s) {
+        if (elapsed_time() == 0s) {
           // The first iteration does not align with the first timer triggering
           EXPECT_TRUE(reference_trigger.is_present());
           EXPECT_FALSE(void_trigger.is_present());

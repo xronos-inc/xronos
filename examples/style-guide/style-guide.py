@@ -73,9 +73,9 @@ class MyReactor(xronos.Reactor):
 
     # reaction specifications begin with the event and have prefix `on`
     @xronos.reaction
-    def on_startup(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
+    def on_startup(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
         """Specify the reaction to the startup event."""
-        interface.add_trigger(self.startup)
+        ctx.add_trigger(self.startup)
 
         # use the name `handler()` for the reaction body
         def handler() -> None:
@@ -85,9 +85,9 @@ class MyReactor(xronos.Reactor):
         return handler
 
     @xronos.reaction
-    def on_shutdown(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
+    def on_shutdown(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
         """Specify the reaction to the shutdown event."""
-        interface.add_trigger(self.shutdown)
+        ctx.add_trigger(self.shutdown)
 
         # use the name `handler()` for the reaction body
         def handler() -> None:
@@ -99,9 +99,9 @@ class MyReactor(xronos.Reactor):
         return handler
 
     @xronos.reaction
-    def on_input(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        input_trigger = interface.add_trigger(self.input_)
-        output_effect = interface.add_effect(self.output)
+    def on_input(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        input_trigger = ctx.add_trigger(self.input_)
+        output_effect = ctx.add_effect(self.output)
 
         def handler() -> None:
             output_effect.set(input_trigger.get())
@@ -109,22 +109,22 @@ class MyReactor(xronos.Reactor):
         return handler
 
     @xronos.reaction
-    def on_sensor(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
+    def on_sensor(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
         """Specify the reaction to the sensor action."""
-        sensor_trigger = interface.add_trigger(self._sensor)
-        shutown_effect = interface.add_effect(self.shutdown)
+        sensor_trigger = ctx.add_trigger(self._sensor)
+        shutdown_effect = ctx.add_effect(self.shutdown)
 
         def handler() -> None:
             print(f"Sensor read: {sensor_trigger.get()}")
             self._sensor_reads += 1
             if self._sensor_reads == self.MAX_SENSOR_READS:
-                shutown_effect.trigger_shutdown()
+                shutdown_effect.trigger_shutdown()
 
         return handler
 
     @xronos.reaction
-    def on_actuate(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        actuate_trigger = interface.add_trigger(self._actuate)
+    def on_actuate(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        actuate_trigger = ctx.add_trigger(self._actuate)
 
         def handler() -> None:
             print(f"Actuating with value {actuate_trigger.get()}")
@@ -132,13 +132,11 @@ class MyReactor(xronos.Reactor):
         return handler
 
     @xronos.reaction
-    def on_periodic_timer(
-        self, interface: xronos.ReactionInterface
-    ) -> Callable[[], None]:
-        interface.add_trigger(self._periodic_timer)
+    def on_periodic_timer(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        ctx.add_trigger(self._periodic_timer)
 
         # prefix effects with the port or action name and suffix with `effect`
-        actuate_effect = interface.add_effect(self._actuate)
+        actuate_effect = ctx.add_effect(self._actuate)
 
         def handler() -> None:
             actuate_effect.schedule(1.0)

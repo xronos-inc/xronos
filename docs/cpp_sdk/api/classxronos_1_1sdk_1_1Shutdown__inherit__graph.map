@@ -1,5 +1,0 @@
-<map id="xronos::sdk::Shutdown" name="xronos::sdk::Shutdown">
-<area shape="rect" id="Node000001" title="A reactor element that emits an event right before the program shuts down." alt="" coords="5,79,175,104"/>
-<area shape="rect" id="Node000002" href="$classxronos_1_1sdk_1_1Element.html" title="Base class for all reactor elements." alt="" coords="11,5,169,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="93,44,93,79,87,79,87,44"/>
-</map>

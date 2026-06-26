@@ -24,9 +24,9 @@ class Counter(xronos.Reactor):
         self._timer.period = period
 
     @xronos.reaction
-    def on_timer(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        _ = interface.add_trigger(self._timer)
-        output = interface.add_effect(self.output)
+    def on_timer(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        _ = ctx.add_trigger(self._timer)
+        output = ctx.add_effect(self.output)
 
         def handler() -> None:
             self._count += self._increment
@@ -40,8 +40,8 @@ class Printer(xronos.Reactor):
     input_ = xronos.InputPortDeclaration[int]()
 
     @xronos.reaction
-    def on_input(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        input_ = interface.add_trigger(self.input_)
+    def on_input(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        input_ = ctx.add_trigger(self.input_)
         return lambda: print(f"{self.fqn} received {input_.get()}")
 
 

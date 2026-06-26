@@ -71,10 +71,10 @@ class AudioBridge(xronos.Reactor):
     )
 
     @xronos.reaction
-    def __on_input(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        trigger = interface.add_trigger(self.input)
-        buffer_size_metric = interface.add_effect(self.__buffer_size_metric)
-        buffer_underruns_metric = interface.add_effect(self.__buffer_underruns_metric)
+    def __on_input(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        trigger = ctx.add_trigger(self.input)
+        buffer_size_metric = ctx.add_effect(self.__buffer_size_metric)
+        buffer_underruns_metric = ctx.add_effect(self.__buffer_underruns_metric)
 
         def handler() -> None:
             buffer_len = 0
@@ -144,8 +144,8 @@ class AudioBridge(xronos.Reactor):
     __stopped_callback = xronos.PhysicalEventDeclaration[None]()
 
     @xronos.reaction
-    def __on_startup(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        interface.add_trigger(self.startup)
+    def __on_startup(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        ctx.add_trigger(self.startup)
 
         def handler() -> None:
             log(self, "starting")
@@ -157,10 +157,10 @@ class AudioBridge(xronos.Reactor):
 
     @xronos.reaction
     def __on_request_service_stop(
-        self, interface: xronos.ReactionInterface
+        self, ctx: xronos.ReactionContext
     ) -> Callable[[], None]:
-        interface.add_trigger(self.request_service_stop)
-        stopped_effect = interface.add_effect(self.service_stopped)
+        ctx.add_trigger(self.request_service_stop)
+        stopped_effect = ctx.add_effect(self.service_stopped)
 
         def handler() -> None:
             if self.__stream.active:
@@ -172,11 +172,9 @@ class AudioBridge(xronos.Reactor):
         return handler
 
     @xronos.reaction
-    def __on_stopped_callback(
-        self, interface: xronos.ReactionInterface
-    ) -> Callable[[], None]:
-        interface.add_trigger(self.__stopped_callback)
-        stopped_effect = interface.add_effect(self.service_stopped)
+    def __on_stopped_callback(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        ctx.add_trigger(self.__stopped_callback)
+        stopped_effect = ctx.add_effect(self.service_stopped)
 
         def handler() -> None:
             log(self, "stopped")
@@ -186,8 +184,8 @@ class AudioBridge(xronos.Reactor):
         return handler
 
     @xronos.reaction
-    def __on_shutdown(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        interface.add_trigger(self.shutdown)
+    def __on_shutdown(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        ctx.add_trigger(self.shutdown)
 
         def handler() -> None:
             if self.__stream.active:
@@ -206,6 +204,6 @@ class AudioBridge(xronos.Reactor):
     __async_log = xronos.PhysicalEventDeclaration[str]()
 
     @xronos.reaction
-    def __on_async_log(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        async_log = interface.add_trigger(self.__async_log)
+    def __on_async_log(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        async_log = ctx.add_trigger(self.__async_log)
         return lambda: log(self, async_log.get())

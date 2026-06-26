@@ -101,12 +101,12 @@ TEST(startup_and_shutdown, TestStartupAndShutdown) {
         EXPECT_TRUE(startup_trigger_.is_present() || shutdown_trigger_.is_present());
         EXPECT_FALSE(startup_trigger_.is_present() && shutdown_trigger_.is_present());
         if (startup_trigger_.is_present()) {
-          self().startup_time_ = self().get_time();
+          self().startup_time_ = current_time();
           EXPECT_EQ(self().reaction_executed_, 0);
         }
         if (shutdown_trigger_.is_present()) {
           EXPECT_EQ(self().reaction_executed_, 1);
-          EXPECT_EQ(self().startup_time_, self().get_time()); // no time passes between startup and shutdown
+          EXPECT_EQ(self().startup_time_, current_time()); // no time passes between startup and shutdown
         }
         self().reaction_executed_++;
       }
@@ -190,7 +190,7 @@ TEST(startup_and_shutdown, TestStarvation) {
       Trigger<void> shutdown_trigger_{self().shutdown(), context()};
       void handler() final {
         EXPECT_TRUE(shutdown_trigger_.is_present());
-        EXPECT_EQ(self().get_time_since_startup(), 1s);
+        EXPECT_EQ(elapsed_time(), 1s);
         EXPECT_FALSE(self().shutdown_reaction_executed_);
         self().shutdown_reaction_executed_ = true;
       }
@@ -279,7 +279,7 @@ TEST_P(TestTriggerShutdown, run) {
         EXPECT_TRUE(shutdown_trigger_.is_present());
         EXPECT_FALSE(self().shutdown_reaction_executed_);
         self().shutdown_reaction_executed_ = true;
-        self().shutdown_time_ = self().get_time_since_startup();
+        self().shutdown_time_ = elapsed_time();
       }
     };
 

@@ -34,9 +34,9 @@ class DNN(xronos.Reactor):
         self.model: ultralytics.YOLO = ultralytics.YOLO(model_path, verbose=False)  # type: ignore
 
     @xronos.reaction
-    def on_frame(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        frame_trigger = interface.add_trigger(self.frame)
-        result_effect = interface.add_effect(self.result)
+    def on_frame(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        frame_trigger = ctx.add_trigger(self.frame)
+        result_effect = ctx.add_effect(self.result)
 
         def handler() -> None:
             # Run the model on the frame

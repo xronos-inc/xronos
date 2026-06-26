@@ -31,9 +31,9 @@ class Test(xronos.Reactor):
         self._reactions_executed = 0
 
     @xronos.reaction
-    def on_startup(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        _ = interface.add_trigger(self.startup)
-        out = interface.add_effect(self.out)
+    def on_startup(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        _ = ctx.add_trigger(self.startup)
+        out = ctx.add_effect(self.out)
 
         def handler() -> None:
             out.set(None)
@@ -42,40 +42,38 @@ class Test(xronos.Reactor):
         return handler
 
     @xronos.reaction
-    def on_delay0(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        _ = interface.add_trigger(self.delay0)
+    def on_delay0(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        _ = ctx.add_trigger(self.delay0)
 
         def handler() -> None:
-            assert_times_equal(self.get_time_since_startup(), DELAY0)
+            assert_times_equal(ctx.elapsed_time, DELAY0)
             self._reactions_executed += 1
 
         return handler
 
     @xronos.reaction
-    def on_nodelay(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        _ = interface.add_trigger(self.nodelay)
+    def on_nodelay(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        _ = ctx.add_trigger(self.nodelay)
 
         def handler() -> None:
-            assert_times_equal(
-                self.get_time_since_startup(), datetime.timedelta(milliseconds=0)
-            )
+            assert_times_equal(ctx.elapsed_time, datetime.timedelta(milliseconds=0))
             self._reactions_executed += 1
 
         return handler
 
     @xronos.reaction
-    def on_delay1(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        _ = interface.add_trigger(self.delay1)
+    def on_delay1(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        _ = ctx.add_trigger(self.delay1)
 
         def handler() -> None:
-            assert_times_equal(self.get_time_since_startup(), DELAY1)
+            assert_times_equal(ctx.elapsed_time, DELAY1)
             self._reactions_executed += 1
 
         return handler
 
     @xronos.reaction
-    def on_shutdown(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        _ = interface.add_trigger(self.shutdown)
+    def on_shutdown(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        _ = ctx.add_trigger(self.shutdown)
 
         def handler() -> None:
             assert self._reactions_executed == self.NUM_REACTIONS_BEFORE_SHUTDOWN

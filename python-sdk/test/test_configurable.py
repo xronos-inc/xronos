@@ -12,12 +12,12 @@ class Configurable(xronos.Reactor):
         self._at_startup = at_startup
 
     @xronos.reaction
-    def hello(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
+    def hello(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
         if self._at_startup:
-            interface.add_trigger(self.startup)
+            ctx.add_trigger(self.startup)
             name = self.startup.name
         else:
-            interface.add_trigger(self.shutdown)
+            ctx.add_trigger(self.shutdown)
             name = self.shutdown.name
 
         return lambda: print(f"{self.fqn} says 'Hello!' triggered by {name}")

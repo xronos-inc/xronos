@@ -10,9 +10,9 @@ from .test_hello import Hello
 
 class Inherited(Hello):
     @xronos.reaction
-    def extra(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        startup = interface.add_trigger(self.startup)
-        shutdown = interface.add_trigger(self.shutdown)
+    def extra(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        startup = ctx.add_trigger(self.startup)
+        shutdown = ctx.add_trigger(self.shutdown)
 
         def handler() -> None:
             if startup.is_present():

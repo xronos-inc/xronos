@@ -95,13 +95,13 @@ class IsaacFranka(xronos.Reactor):
         isaac_world.reset()
 
     @xronos.reaction
-    def on_do_step_arm(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
+    def on_do_step_arm(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
         """Update the `arm_done` output for each control step."""
 
-        interface.add_trigger(self.do_step)
-        done_arm_effect = interface.add_effect(self.done_arm)
-        distance_metric = interface.add_effect(self._arm_distance)
-        position_reached_metric = interface.add_effect(self._arm_position_reached)
+        ctx.add_trigger(self.do_step)
+        done_arm_effect = ctx.add_effect(self.done_arm)
+        distance_metric = ctx.add_effect(self._arm_distance)
+        position_reached_metric = ctx.add_effect(self._arm_position_reached)
 
         def handler() -> None:
             position, orientation = self._franka.end_effector.get_world_pose()
@@ -129,15 +129,13 @@ class IsaacFranka(xronos.Reactor):
         return handler
 
     @xronos.reaction
-    def on_do_step_gripper(
-        self, interface: xronos.ReactionInterface
-    ) -> Callable[[], None]:
+    def on_do_step_gripper(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
         """Update the `gripper_done` output for each control step."""
 
-        interface.add_trigger(self.do_step)
-        done_gripper_effect = interface.add_effect(self.done_gripper)
-        distance_metric = interface.add_effect(self._gripper_distance)
-        position_reached_metric = interface.add_effect(self._gripper_position_reached)
+        ctx.add_trigger(self.do_step)
+        done_gripper_effect = ctx.add_effect(self.done_gripper)
+        distance_metric = ctx.add_effect(self._gripper_distance)
+        position_reached_metric = ctx.add_effect(self._gripper_position_reached)
 
         def handler() -> None:
             current_gripper_position = self._franka.gripper.get_joint_positions()
@@ -154,13 +152,11 @@ class IsaacFranka(xronos.Reactor):
         return handler
 
     @xronos.reaction
-    def on_gripper_command(
-        self, interface: xronos.ReactionInterface
-    ) -> Callable[[], None]:
+    def on_gripper_command(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
         """Receive a new gripper command."""
 
-        open_gripper_trigger = interface.add_trigger(self.open_gripper)
-        close_gripper_trigger = interface.add_trigger(self.close_gripper)
+        open_gripper_trigger = ctx.add_trigger(self.open_gripper)
+        close_gripper_trigger = ctx.add_trigger(self.close_gripper)
 
         def handler() -> None:
             if open_gripper_trigger.is_present():
@@ -173,11 +169,11 @@ class IsaacFranka(xronos.Reactor):
         return handler
 
     @xronos.reaction
-    def do_arm_control(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
+    def do_arm_control(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
         """Handle the arm control for every step and receive target pose (if set)."""
 
-        _ = interface.add_trigger(self.do_step)
-        target_arm_pose_trigger = interface.add_trigger(self.target_arm_pose)
+        _ = ctx.add_trigger(self.do_step)
+        target_arm_pose_trigger = ctx.add_trigger(self.target_arm_pose)
 
         def handler() -> None:
             if target_arm_pose_trigger.is_present():
@@ -204,10 +200,8 @@ class IsaacCubeGenerator(xronos.Reactor):
         self._num_cubes = 0
 
     @xronos.reaction
-    def on_spawn_new_cube(
-        self, interface: xronos.ReactionInterface
-    ) -> Callable[[], None]:
-        spawn_new_cube_trigger = interface.add_trigger(self.spawn_new_cube)
+    def on_spawn_new_cube(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        spawn_new_cube_trigger = ctx.add_trigger(self.spawn_new_cube)
 
         # Places the next cube on the table.
         def handler() -> None:
@@ -266,13 +260,11 @@ class IsaacSim(xronos.Reactor):
         isaac_world.reset()
 
     @xronos.reaction
-    def advance_simulation(
-        self, interface: xronos.ReactionInterface
-    ) -> Callable[[], None]:
+    def advance_simulation(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
         """Calls `isaac_world.step()` and triggers the `do_step` output port."""
-        interface.add_trigger(self._timer)
-        do_step = interface.add_effect(self.do_step)
-        trigger_shutdown = interface.add_effect(self.shutdown)
+        ctx.add_trigger(self._timer)
+        do_step = ctx.add_effect(self.do_step)
+        trigger_shutdown = ctx.add_effect(self.shutdown)
 
         # Advances the simulation and produces the do_step output, which is used
         # by the other isaac reactors, to provide new control input into the simulator.

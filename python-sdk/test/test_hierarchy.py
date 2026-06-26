@@ -10,8 +10,8 @@ class Receiver(xronos.Reactor):
     input = xronos.InputPortDeclaration[int]()
 
     @xronos.reaction
-    def on_input(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        input_ = interface.add_trigger(self.input)
+    def on_input(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        input_ = ctx.add_trigger(self.input)
 
         def handler() -> None:
             assert input_.get() == Gain.SCALE
@@ -23,9 +23,9 @@ class Source(xronos.Reactor):
     output = xronos.OutputPortDeclaration[int]()
 
     @xronos.reaction
-    def on_start(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        interface.add_trigger(self.startup)
-        output_ = interface.add_effect(self.output)
+    def on_start(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        ctx.add_trigger(self.startup)
+        output_ = ctx.add_effect(self.output)
 
         def handler() -> None:
             output_.set(1)
@@ -40,9 +40,9 @@ class Gain(xronos.Reactor):
     output = xronos.OutputPortDeclaration[int]()
 
     @xronos.reaction
-    def on_input(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        input_ = interface.add_trigger(self.input)
-        output_ = interface.add_effect(self.output)
+    def on_input(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        input_ = ctx.add_trigger(self.input)
+        output_ = ctx.add_effect(self.output)
 
         def handler() -> None:
             output_.set(input_.get() * Gain.SCALE)

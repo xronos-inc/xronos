@@ -22,9 +22,9 @@ class Source(xronos.Reactor):
         self.count = 0
 
     @xronos.reaction
-    def emit_count(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        interface.add_trigger(self.timer)
-        output_ = interface.add_effect(self.output_)
+    def emit_count(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        ctx.add_trigger(self.timer)
+        output_ = ctx.add_effect(self.output_)
 
         def handler() -> None:
             self.count += 1
@@ -41,10 +41,8 @@ class Receiver(xronos.Reactor):
         self.count = 0
 
     @xronos.reaction
-    def check_expected_count(
-        self, interface: xronos.ReactionInterface
-    ) -> Callable[[], None]:
-        input_ = interface.add_trigger(self.input_)
+    def check_expected_count(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        input_ = ctx.add_trigger(self.input_)
 
         def handler() -> None:
             self.count += 1

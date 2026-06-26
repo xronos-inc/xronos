@@ -20,10 +20,10 @@ class DoubleEmittingSource(xronos.Reactor):
     internal_event = xronos.ProgrammableTimerDeclaration[None]()
 
     @xronos.reaction
-    def emit_on_start(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        interface.add_trigger(self.startup)
-        output_x = interface.add_effect(self.output_x)
-        internal_event = interface.add_effect(self.internal_event)
+    def emit_on_start(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        ctx.add_trigger(self.startup)
+        output_x = ctx.add_effect(self.output_x)
+        internal_event = ctx.add_effect(self.internal_event)
 
         def body() -> None:
             print(f"Reaction in {self.fqn} triggered")
@@ -34,10 +34,10 @@ class DoubleEmittingSource(xronos.Reactor):
 
     @xronos.reaction
     def react_to_logical_action(
-        self, interface: xronos.ReactionInterface
+        self, ctx: xronos.ReactionContext
     ) -> Callable[[], None]:
-        interface.add_trigger(self.internal_event)
-        output_y = interface.add_effect(self.output_y)
+        ctx.add_trigger(self.internal_event)
+        output_y = ctx.add_effect(self.output_y)
 
         def body() -> None:
             print(f"Reaction in {self.fqn} triggered")
@@ -51,9 +51,9 @@ class Receiver(xronos.Reactor):
     input_y = xronos.InputPortDeclaration[int]()
 
     @xronos.reaction
-    def react_to_input(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        input_x = interface.add_trigger(self.input_x)
-        input_y = interface.add_trigger(self.input_y)
+    def react_to_input(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        input_x = ctx.add_trigger(self.input_x)
+        input_y = ctx.add_trigger(self.input_y)
 
         def body() -> None:
             print(f"Reaction in {self.fqn} triggered")

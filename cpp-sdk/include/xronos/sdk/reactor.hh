@@ -19,6 +19,7 @@
 #include "xronos/sdk/detail/connect.hh"
 #include "xronos/sdk/detail/source_location.hh"
 #include "xronos/sdk/element.hh"
+#include "xronos/sdk/environment.hh"
 #include "xronos/sdk/fwd.hh"
 #include "xronos/sdk/port.hh"
 #include "xronos/sdk/shutdown.hh"
@@ -77,35 +78,50 @@ protected:
   [[nodiscard]] auto context(detail::SourceLocationView source_location) noexcept -> ReactorContext;
 
   /**
-   * Get the current timestamp.
+   * Get the current time.
    *
    * This does not read wall-clock time. The Xronos runtime uses an
    * internal clock to control how a program advances.
    *
-   * @returns The current timestamp as provided by the internal clock.
+   * @deprecated The current time is only well-defined while a reaction handler
+   * executes. This reactor-level accessor will be removed in an upcoming
+   * release; use the reaction-scoped BaseReaction::current_time() instead.
+   *
+   * @returns The current time as provided by the internal clock.
    */
-  [[nodiscard]] auto get_time() const noexcept -> TimePoint;
+  [[deprecated("Use BaseReaction::current_time() instead.")]] [[nodiscard]] auto get_time() const noexcept -> TimePoint;
 
   /**
    * Get the current lag.
    *
-   * Since in the Xronos SDK time does not advance while reactions execute, the
-   * internal clock may advance slower than a wall clock would. The lag denotes
-   * the difference between the wall clock and the internal clock. It is a
-   * measure of how far the execution of reactions lags behind events in the
-   * physical world.
+   * The lag is the difference between wall-clock time and the current time,
+   * computed as the current wall-clock reading minus get_time(). While a
+   * reaction handler executes, the current time does not advance, but the wall
+   * clock does; the lag therefore measures how far the wall clock has run ahead
+   * of the internal clock -- that is, how far the execution of reactions lags
+   * behind the events it processes.
    *
-   * @returns The current lag.
+   * @deprecated The current time is only well-defined while a reaction handler
+   * executes. This reactor-level accessor will be removed in an upcoming
+   * release; use the reaction-scoped BaseReaction::lag() instead.
+   *
+   * @returns The current lag as a wall-clock duration.
    */
-  [[nodiscard]] auto get_lag() const noexcept -> Duration;
+  [[deprecated("Use BaseReaction::lag() instead.")]] [[nodiscard]] auto get_lag() const noexcept -> Duration;
 
   /**
-   * Get the time that passed since the @ref startup event.
+   * Get how far the internal clock has advanced since the @ref startup event.
    *
-   * @returns The difference between the current timestamp given by
-   * get_time() and the timestamp at which the program started.
+   * @deprecated The current time is only well-defined while a reaction handler
+   * executes. This reactor-level accessor will be removed in an upcoming
+   * release; use the reaction-scoped BaseReaction::elapsed_time()
+   * instead.
+   *
+   * @returns The difference between the current time given by get_time() and
+   * the time at which the program started.
    */
-  [[nodiscard]] auto get_time_since_startup() const noexcept -> Duration;
+  [[deprecated("Use BaseReaction::elapsed_time() instead.")]] [[nodiscard]] auto get_time_since_startup() const noexcept
+      -> Duration;
 
   /**
    * Get the startup event source.
@@ -306,6 +322,9 @@ template <class ReactionClass>
   requires(std::is_base_of_v<BaseReaction, ReactionClass>)
 auto add_reaction(Reactor& reactor, std::string_view name, std::optional<Duration> deadline,
                   detail::SourceLocationView source_location) -> ReactionClass& {
+  if (deadline.has_value() && *deadline < Duration::zero()) {
+    throw ValidationError{"A reaction deadline may not be negative."};
+  }
   auto reaction =
       std::make_unique<ReactionClass>(ReactionProperties{name, static_cast<std::uint32_t>(reactor.reactions_.size()),
                                                          deadline, reactor, reactor.context(source_location)});

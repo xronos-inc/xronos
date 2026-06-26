@@ -61,11 +61,9 @@ class PointGenerator(xronos.Reactor):
     generation_result = xronos.OutputPortDeclaration[List[SimulationPoint]]()
 
     @xronos.reaction
-    def on_generation_request(
-        self, interface: xronos.ReactionInterface
-    ) -> Callable[[], None]:
-        simulation_count_trigger = interface.add_trigger(self.simulation_count)
-        result_effect = interface.add_effect(self.generation_result)
+    def on_generation_request(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        simulation_count_trigger = ctx.add_trigger(self.simulation_count)
+        result_effect = ctx.add_effect(self.generation_result)
 
         def handler() -> None:
             res: List[SimulationPoint] = []
@@ -117,9 +115,9 @@ class SimulationAggregator(xronos.Reactor):
         self.total_generated = 0
 
     @xronos.reaction
-    def on_batch_timer(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        interface.add_trigger(self._batch_timer)
-        batch_request_effect = interface.add_effect(self.batch_request)
+    def on_batch_timer(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        ctx.add_trigger(self._batch_timer)
+        batch_request_effect = ctx.add_effect(self.batch_request)
 
         def handler() -> None:
             batch_request_effect.set(self._simulation_request["batch_size"])
@@ -127,18 +125,16 @@ class SimulationAggregator(xronos.Reactor):
         return handler
 
     @xronos.reaction
-    def on_batch_completion(
-        self, interface: xronos.ReactionInterface
-    ) -> Callable[[], None]:
-        batch_completion_trigger = interface.add_trigger(self.batch_completion)
-        points_generated_in_batch_effect = interface.add_effect(
+    def on_batch_completion(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        batch_completion_trigger = ctx.add_trigger(self.batch_completion)
+        points_generated_in_batch_effect = ctx.add_effect(
             self.points_generated_in_batch
         )
-        estimate_effect = interface.add_effect(self.estimate)
-        current_estimate_effect = interface.add_effect(self._current_estimate)
-        estimation_error_effect = interface.add_effect(self._estimation_error)
-        number_of_points_effect = interface.add_effect(self._number_of_points)
-        shutdown_effect = interface.add_effect(self.shutdown)
+        estimate_effect = ctx.add_effect(self.estimate)
+        current_estimate_effect = ctx.add_effect(self._current_estimate)
+        estimation_error_effect = ctx.add_effect(self._estimation_error)
+        number_of_points_effect = ctx.add_effect(self._number_of_points)
+        shutdown_effect = ctx.add_effect(self.shutdown)
 
         def handler() -> None:
             points_generated = [*batch_completion_trigger.get()]
@@ -162,8 +158,8 @@ class SimulationAggregator(xronos.Reactor):
         return handler
 
     @xronos.reaction
-    def on_shutdown(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        interface.add_trigger(self.shutdown)
+    def on_shutdown(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        ctx.add_trigger(self.shutdown)
 
         def handler() -> None:
             pi_estimate = 4 * self.total_inside / self.total_generated
@@ -182,11 +178,9 @@ class WebSocketDispatcher(xronos.Reactor):
         self._current_estimate = 0.0
 
     @xronos.reaction
-    def on_batch_or_estimate(
-        self, interface: xronos.ReactionInterface
-    ) -> Callable[[], None]:
-        points_generated_trigger = interface.add_trigger(self.points_generated_in_batch)
-        estimate_trigger = interface.add_trigger(self.estimate)
+    def on_batch_or_estimate(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        points_generated_trigger = ctx.add_trigger(self.points_generated_in_batch)
+        estimate_trigger = ctx.add_trigger(self.estimate)
 
         def handler() -> None:
             if points_generated_trigger.is_present():
@@ -202,8 +196,8 @@ class WebSocketDispatcher(xronos.Reactor):
         return handler
 
     @xronos.reaction
-    def on_shutdown(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        interface.add_trigger(self.shutdown)
+    def on_shutdown(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        ctx.add_trigger(self.shutdown)
 
         def handler() -> None:
             self.queue.request_shutdown()

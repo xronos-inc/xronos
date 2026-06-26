@@ -201,10 +201,10 @@ class WebsocketServer(xronos.Reactor):
 
     @xronos.reaction
     def __on_keypress_event(  # pyright: ignore[reportUnusedFunction]
-        self, interface: xronos.ReactionInterface
+        self, ctx: xronos.ReactionContext
     ) -> Callable[[], None]:
-        trigger = interface.add_trigger(self.__keypress_trigger)
-        effect = interface.add_effect(self.keypress)
+        trigger = ctx.add_trigger(self.__keypress_trigger)
+        effect = ctx.add_effect(self.keypress)
         return lambda: effect.set(trigger.get())
 
     command_exit = xronos.OutputPortDeclaration[None]()
@@ -212,10 +212,10 @@ class WebsocketServer(xronos.Reactor):
 
     @xronos.reaction
     def __on_command_exit(  # pyright: ignore[reportUnusedFunction]
-        self, interface: xronos.ReactionInterface
+        self, ctx: xronos.ReactionContext
     ) -> Callable[[], None]:
-        interface.add_trigger(self.__command_exit_trigger)
-        effect = interface.add_effect(self.command_exit)
+        ctx.add_trigger(self.__command_exit_trigger)
+        effect = ctx.add_effect(self.command_exit)
 
         def handler() -> None:
             log(self, "command: exit")
@@ -234,10 +234,10 @@ class WebsocketServer(xronos.Reactor):
 
     @xronos.reaction
     def __startup(  # pyright: ignore[reportUnusedFunction]
-        self, interface: xronos.ReactionInterface
+        self, ctx: xronos.ReactionContext
     ) -> Callable[[], None]:
-        interface.add_trigger(self.startup)
-        stopped_effect = interface.add_effect(self.service_stopped)
+        ctx.add_trigger(self.startup)
+        stopped_effect = ctx.add_effect(self.service_stopped)
 
         def handler() -> None:
             try:
@@ -253,9 +253,9 @@ class WebsocketServer(xronos.Reactor):
 
     @xronos.reaction
     def __on_request_service_stop(  # pyright: ignore[reportUnusedFunction]
-        self, interface: xronos.ReactionInterface
+        self, ctx: xronos.ReactionContext
     ) -> Callable[[], None]:
-        interface.add_trigger(self.request_service_stop)
+        ctx.add_trigger(self.request_service_stop)
 
         def handler() -> None:
             self.__server.shutdown()
@@ -264,10 +264,10 @@ class WebsocketServer(xronos.Reactor):
 
     @xronos.reaction
     def __on_stopped_callback(  # pyright: ignore[reportUnusedFunction]
-        self, interface: xronos.ReactionInterface
+        self, ctx: xronos.ReactionContext
     ) -> Callable[[], None]:
-        interface.add_trigger(self.__stopped_callback)
-        stopped_effect = interface.add_effect(self.service_stopped)
+        ctx.add_trigger(self.__stopped_callback)
+        stopped_effect = ctx.add_effect(self.service_stopped)
 
         def handler() -> None:
             log(self, "stopped")
@@ -277,9 +277,9 @@ class WebsocketServer(xronos.Reactor):
 
     @xronos.reaction
     def __on_shutdown(  # pyright: ignore[reportUnusedFunction]
-        self, interface: xronos.ReactionInterface
+        self, ctx: xronos.ReactionContext
     ) -> Callable[[], None]:
-        interface.add_trigger(self.shutdown)
+        ctx.add_trigger(self.shutdown)
 
         def handler() -> None:
             # stop server
@@ -313,7 +313,7 @@ class WebsocketServer(xronos.Reactor):
 
     @xronos.reaction
     def __on_async_log(  # pyright: ignore[reportUnusedFunction]
-        self, interface: xronos.ReactionInterface
+        self, ctx: xronos.ReactionContext
     ) -> Callable[[], None]:
-        async_log = interface.add_trigger(self.__async_log)
+        async_log = ctx.add_trigger(self.__async_log)
         return lambda: log(self, async_log.get())

@@ -31,10 +31,10 @@ class Display(xronos.Reactor):
         self.no_display = no_display
 
     @xronos.reaction
-    def on_frame(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        frame_trigger = interface.add_trigger(self.frame)
-        dnn_result_trigger = interface.add_trigger(self.dnn_result)
-        shutdown_effect = interface.add_effect(self.shutdown)
+    def on_frame(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        frame_trigger = ctx.add_trigger(self.frame)
+        dnn_result_trigger = ctx.add_trigger(self.dnn_result)
+        shutdown_effect = ctx.add_effect(self.shutdown)
 
         def handler() -> None:
             if not frame_trigger.is_present() or not dnn_result_trigger.is_present():
@@ -84,8 +84,8 @@ class Display(xronos.Reactor):
         return handler
 
     @xronos.reaction
-    def on_shutdown(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        interface.add_trigger(self.shutdown)
+    def on_shutdown(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        ctx.add_trigger(self.shutdown)
 
         def handler() -> None:
             print("Cleaning up Display")

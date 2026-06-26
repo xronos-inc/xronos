@@ -82,39 +82,115 @@ protected:
   /**
    * Get the deadline associated with the current handler invocation.
    *
-   * If the reaction was created using Reactor::add_reaction_with_deadline(),
-   * this returns the absolute deadline (time point) until which the handler
-   * needs to complete.
+   * If the reaction was created using Reactor::add_reaction_with_deadline() with
+   * a deadline duration D, this returns the wall-clock instant by which the
+   * handler must complete, equal to current_time() + D. It is therefore anchored
+   * to current_time() and stays fixed for the duration of the handler. The
+   * handler meets its deadline if it completes before the wall clock reaches
+   * this instant.
    *
-   * This should only be called from the reaction handler.
+   * This should only be called from the reaction handler. If called outside of
+   * program execution (e.g. during reaction declaration), this returns
+   * std::nullopt.
    *
-   * @returns The deadline for the current handler invocation or std::nullopt if no
-   * deadline is set.
+   * @returns The wall-clock instant by which the handler must complete (equal to
+   * current_time() + D), or std::nullopt if no deadline is set or the program is
+   * not executing.
    */
   [[nodiscard]] auto deadline() const noexcept -> std::optional<TimePoint>;
 
   /**
-   * Get the time remaining until the deadline.
+   * Get the remaining slack before the deadline.
    *
-   * Calculates the remaining time for completing the handler within the
-   * deadline. A negative slack indicates that the deadline was violated.
+   * This is the remaining wall-clock duration before the deadline, computed as
+   * deadline() minus the current wall-clock reading. Equivalently, for a
+   * declared deadline duration D it is D - lag(): the lag and the slack always
+   * sum to D, so as the lag grows during the handler the slack shrinks by the
+   * same amount. The slack denotes how much further the lag may grow before the
+   * deadline is violated. A negative value means the deadline has been missed:
+   * the wall clock has passed the deadline.
    *
    * This should only be called from the reaction handler.
    *
-   * @returns The time left for completing the handler without violating the
-   * deadline. If there is no deadline, Duration::max() is returned.
+   * @returns The remaining wall-clock duration before the deadline. If there is
+   * no deadline, or if the program is not executing (e.g. during reaction
+   * declaration), Duration::max() is returned.
    */
-  [[nodiscard]] auto remaining_slack() const noexcept -> Duration;
+  [[nodiscard]] auto slack() const noexcept -> Duration;
 
   /**
-   * Check if the currently executing handler is before the deadline.
+   * @deprecated Use slack() instead.
+   */
+  [[deprecated("Use slack() instead.")]] [[nodiscard]] auto remaining_slack() const noexcept -> Duration;
+
+  /**
+   * Check whether the currently executing handler is still within its deadline.
    *
    * This should only be called from the reaction handler.
    *
-   * @returns true if the execution is before the deadline and false
-   * if the deadline was missed.
+   * @returns true while the wall clock has not yet reached the deadline (the
+   * slack is positive), and false once the deadline has been missed.
    */
   [[nodiscard]] auto is_before_deadline() const noexcept -> bool;
+
+  /**
+   * Get the current time.
+   *
+   * This does not read wall-clock time. The Xronos runtime uses an internal
+   * clock to control how a program advances, and this returns the current
+   * reading of that clock. The internal clock does not advance while a reaction
+   * handler executes, so this value does not change while the handler runs: any
+   * two reads within the same handler return the same value.
+   *
+   * This is a reaction-scoped accessor and is only meaningful while the
+   * reaction handler executes; values read outside a handler must not be
+   * relied upon. If the program is not yet executing (for example, when called
+   * during the reaction's construction or member initialization), this returns
+   * a default value: the epoch (a default-constructed TimePoint).
+   *
+   * @returns The current time as provided by the internal clock.
+   */
+  [[nodiscard]] auto current_time() const noexcept -> TimePoint;
+
+  /**
+   * Get the current lag.
+   *
+   * The lag is the difference between wall-clock time and the current time,
+   * computed as the current wall-clock reading minus current_time(). It relates
+   * the internal clock to the advancing wall clock and therefore changes while
+   * the handler runs: the current time does not advance, but the wall clock
+   * does, so the lag measures how far the wall clock has run ahead of the
+   * internal clock -- that is, how far the execution of reactions lags behind
+   * the events it processes.
+   *
+   * This is a reaction-scoped accessor and is only meaningful while the
+   * reaction handler executes; values read outside a handler must not be
+   * relied upon. If the program is not yet executing (for example, when called
+   * during the reaction's construction or member initialization), this returns
+   * a default value: zero.
+   *
+   * @returns The current lag as a wall-clock duration.
+   */
+  [[nodiscard]] auto lag() const noexcept -> Duration;
+
+  /**
+   * Get how far the internal clock has advanced since the startup event.
+   *
+   * This is the difference between the current time and the time at which the
+   * program started. It is measured on the internal clock and does not depend
+   * on wall-clock time. Like current_time(), it does not change while a
+   * reaction handler executes.
+   *
+   * This is a reaction-scoped accessor and is only meaningful while the
+   * reaction handler executes; values read outside a handler must not be
+   * relied upon. If the program is not yet executing (for example, when called
+   * during the reaction's construction or member initialization), this returns
+   * a default value: zero.
+   *
+   * @returns The difference between the current time given by current_time()
+   * and the time at which the program started.
+   */
+  [[nodiscard]] auto elapsed_time() const noexcept -> Duration;
 
 private:
   class TriggerImpl {

@@ -8,9 +8,9 @@ import xronos
 
 class Variants(xronos.Reactor):
     @xronos.reaction
-    def variant_t(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        startup = interface.add_trigger(self.startup)
-        shutdown = interface.add_trigger(self.shutdown)
+    def variant_t(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        startup = ctx.add_trigger(self.startup)
+        shutdown = ctx.add_trigger(self.shutdown)
 
         def handler() -> None:
             if startup.is_present():
@@ -22,23 +22,21 @@ class Variants(xronos.Reactor):
 
     @xronos.reaction
     class variant_2:
-        def __init__(
-            self, ctx: "Variants", interface: xronos.ReactionInterface
-        ) -> None:
-            self._startup = interface.add_trigger(ctx.startup)
-            self._shutdown = interface.add_trigger(ctx.shutdown)
-            self._ctx = ctx
+        def __init__(self, reactor: "Variants", ctx: xronos.ReactionContext) -> None:
+            self._startup = ctx.add_trigger(reactor.startup)
+            self._shutdown = ctx.add_trigger(reactor.shutdown)
+            self._reactor = reactor
 
         def __call__(self) -> None:
             if self._startup.is_present():
-                print(f"{self._ctx.fqn}: variant_2 triggered at startup")
+                print(f"{self._reactor.fqn}: variant_2 triggered at startup")
             elif self._shutdown.is_present():
-                print(f"{self._ctx.fqn}: variant_2 triggered at shutdown")
+                print(f"{self._reactor.fqn}: variant_2 triggered at shutdown")
 
     @xronos.reaction
-    def variant_3(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        startup = interface.add_trigger(self.startup)
-        shutdown = interface.add_trigger(self.shutdown)
+    def variant_3(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        startup = ctx.add_trigger(self.startup)
+        shutdown = ctx.add_trigger(self.shutdown)
 
         return lambda: type(self)._variant_3_handler(self, startup, shutdown)
 

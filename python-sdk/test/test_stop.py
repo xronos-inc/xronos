@@ -13,10 +13,10 @@ class MainReactor(xronos.Reactor):
     _after_shutdown = xronos.ProgrammableTimerDeclaration[None]()
 
     @xronos.reaction
-    def on_startup(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        _ = interface.add_trigger(self.startup)
-        request_shutdown_effect = interface.add_effect(self._request_shutdown)
-        after_shutdown_effect = interface.add_effect(self._after_shutdown)
+    def on_startup(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        _ = ctx.add_trigger(self.startup)
+        request_shutdown_effect = ctx.add_effect(self._request_shutdown)
+        after_shutdown_effect = ctx.add_effect(self._after_shutdown)
 
         def handler() -> None:
             request_shutdown_effect.schedule(None, datetime.timedelta(seconds=1))
@@ -25,12 +25,10 @@ class MainReactor(xronos.Reactor):
         return handler
 
     @xronos.reaction
-    def on_request_shutdown(
-        self, interface: xronos.ReactionInterface
-    ) -> Callable[[], None]:
-        _ = interface.add_trigger(self._request_shutdown)
-        check_shutdown = interface.add_effect(self.check_shutdown)
-        shutdown_effect = interface.add_effect(self.shutdown)
+    def on_request_shutdown(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        _ = ctx.add_trigger(self._request_shutdown)
+        check_shutdown = ctx.add_effect(self.check_shutdown)
+        shutdown_effect = ctx.add_effect(self.shutdown)
 
         def handler() -> None:
             shutdown_effect.trigger_shutdown()
@@ -40,10 +38,10 @@ class MainReactor(xronos.Reactor):
 
     @xronos.reaction
     def on_shutdown_or_check_shutdown(
-        self, interface: xronos.ReactionInterface
+        self, ctx: xronos.ReactionContext
     ) -> Callable[[], None]:
-        shutdown = interface.add_trigger(self.shutdown)
-        check_shutdown = interface.add_trigger(self.check_shutdown)
+        shutdown = ctx.add_trigger(self.shutdown)
+        check_shutdown = ctx.add_trigger(self.check_shutdown)
 
         def handler() -> None:
             if (not shutdown.is_present()) and check_shutdown.is_present():
@@ -53,7 +51,7 @@ class MainReactor(xronos.Reactor):
                     "Shutdown occurred but check_shutdown was not triggered"
                 )
             else:
-                print(f"Success: stopping at {self.get_time()}")
+                print(f"Success: stopping at {ctx.current_time}")
 
         return handler
 

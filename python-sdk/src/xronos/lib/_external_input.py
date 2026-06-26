@@ -71,9 +71,9 @@ class ExternalInput(xronos.Reactor, Generic[T]):
 
     @final
     @xronos.reaction
-    def on_startup(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
+    def on_startup(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
         """Start the user input thread."""
-        interface.add_trigger(self.startup)
+        ctx.add_trigger(self.startup)
 
         def handler() -> None:
             self.__thread.start()
@@ -83,11 +83,11 @@ class ExternalInput(xronos.Reactor, Generic[T]):
     @final
     @xronos.reaction
     def on_external_input_event(
-        self, interface: xronos.ReactionInterface
+        self, ctx: xronos.ReactionContext
     ) -> Callable[[], None]:
         """Forward the external event to the output port."""
-        external_input = interface.add_trigger(self.__external_input_event)
-        output_effect = interface.add_effect(self.output)
+        external_input = ctx.add_trigger(self.__external_input_event)
+        output_effect = ctx.add_effect(self.output)
 
         def handler() -> None:
             output_effect.set(external_input.get())
@@ -97,12 +97,10 @@ class ExternalInput(xronos.Reactor, Generic[T]):
     @final
     @xronos.reaction
     def on_external_exception_event(
-        self, interface: xronos.ReactionInterface
+        self, ctx: xronos.ReactionContext
     ) -> Callable[[], None]:
         """Raise the exception within the runtime."""
-        external_exception_trigger = interface.add_trigger(
-            self.__external_exception_event
-        )
+        external_exception_trigger = ctx.add_trigger(self.__external_exception_event)
 
         def handler() -> None:
             raise external_exception_trigger.get()
@@ -111,9 +109,9 @@ class ExternalInput(xronos.Reactor, Generic[T]):
 
     @final
     @xronos.reaction
-    def on_shutdown(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
+    def on_shutdown(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
         """Stop the user input thread."""
-        interface.add_trigger(self.shutdown)
+        ctx.add_trigger(self.shutdown)
 
         def handler() -> None:
             self.__stop_thread_event.set()

@@ -115,10 +115,10 @@ class TrainingController(xronos.Reactor):
         return False
 
     @xronos.reaction
-    def on_timer(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        interface.add_trigger(self._training_timer)
-        data_effect = interface.add_effect(self.output_data)
-        shutdown_effect = interface.add_effect(self.shutdown)
+    def on_timer(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        ctx.add_trigger(self._training_timer)
+        data_effect = ctx.add_effect(self.output_data)
+        shutdown_effect = ctx.add_effect(self.shutdown)
 
         def handler() -> None:
             if self.epoch >= self.max_epochs:
@@ -130,10 +130,10 @@ class TrainingController(xronos.Reactor):
         return handler
 
     @xronos.reaction
-    def on_prediction(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        pred_trigger = interface.add_trigger(self.input_pred)
-        gradient_effect = interface.add_effect(self.output_gradient)
-        shutdown_effect = interface.add_effect(self.shutdown)
+    def on_prediction(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        pred_trigger = ctx.add_trigger(self.input_pred)
+        gradient_effect = ctx.add_effect(self.output_gradient)
+        shutdown_effect = ctx.add_effect(self.shutdown)
 
         def handler() -> None:
             pred = pred_trigger.get()
@@ -216,9 +216,9 @@ class DenseLayer(xronos.Reactor):
         return s * (1 - s)
 
     @xronos.reaction
-    def on_forward(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        input_trigger = interface.add_trigger(self.input_data)
-        output_effect = interface.add_effect(self.output_data)
+    def on_forward(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        input_trigger = ctx.add_trigger(self.input_data)
+        output_effect = ctx.add_effect(self.output_data)
 
         def handler() -> None:
             input_data: np.ndarray = np.array(input_trigger.get()).reshape(1, -1)
@@ -235,9 +235,9 @@ class DenseLayer(xronos.Reactor):
         return handler
 
     @xronos.reaction
-    def on_backward(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        gradient_trigger = interface.add_trigger(self.input_gradient)
-        gradient_effect = interface.add_effect(self.output_gradient)
+    def on_backward(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        gradient_trigger = ctx.add_trigger(self.input_gradient)
+        gradient_effect = ctx.add_effect(self.output_gradient)
 
         def handler() -> None:
             if self.last_input is None or self.last_z is None:

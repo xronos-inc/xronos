@@ -26,16 +26,16 @@ class Simulator(xronos.Reactor):
         self.__robot = robot
 
     @xronos.reaction
-    def on_startup(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        _ = interface.add_trigger(self.startup)
-        step_effect = interface.add_effect(self.__step_timer)
+    def on_startup(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        _ = ctx.add_trigger(self.startup)
+        step_effect = ctx.add_effect(self.__step_timer)
 
         return lambda: step_effect.schedule(None, datetime.timedelta(0))
 
     @xronos.reaction
-    def on_step(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        _ = interface.add_trigger(self.__step_timer)
-        shutdown_effect = interface.add_effect(self.shutdown)
+    def on_step(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        _ = ctx.add_trigger(self.__step_timer)
+        shutdown_effect = ctx.add_effect(self.shutdown)
 
         def handler() -> None:
             if self.__robot.step(TIME_STEP) != -1:
@@ -46,10 +46,10 @@ class Simulator(xronos.Reactor):
         return handler
 
     @xronos.reaction
-    def on_done_step(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        _ = interface.add_trigger(self.__done_step_event)
-        step_effect = interface.add_effect(self.__step_timer)
-        done_step_effect = interface.add_effect(self.done_step)
+    def on_done_step(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        _ = ctx.add_trigger(self.__done_step_event)
+        step_effect = ctx.add_effect(self.__step_timer)
+        done_step_effect = ctx.add_effect(self.done_step)
 
         def handler() -> None:
             step_effect.schedule(None)
@@ -78,10 +78,10 @@ class Motor(xronos.Reactor):
         self.__sensor.enable(TIME_STEP)
 
     @xronos.reaction
-    def on_step(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        _ = interface.add_trigger(self.step)
-        position_effect = interface.add_effect(self.current_position)
-        metric_effect = interface.add_effect(self._current_position)
+    def on_step(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        _ = ctx.add_trigger(self.step)
+        position_effect = ctx.add_effect(self.current_position)
+        metric_effect = ctx.add_effect(self._current_position)
 
         def handler() -> None:
             position: float = self.__sensor.getValue()
@@ -91,11 +91,9 @@ class Motor(xronos.Reactor):
         return handler
 
     @xronos.reaction
-    def on_target_position(
-        self, interface: xronos.ReactionInterface
-    ) -> Callable[[], None]:
-        position_trigger = interface.add_trigger(self.target_position)
-        metric_effect = interface.add_effect(self._target_position)
+    def on_target_position(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        position_trigger = ctx.add_trigger(self.target_position)
+        metric_effect = ctx.add_effect(self._target_position)
 
         def handler() -> None:
             position = position_trigger.get()
@@ -117,10 +115,10 @@ class DistanceSensor(xronos.Reactor):
         self.add_attribute("device_type", "distance sensor")
 
     @xronos.reaction
-    def on_step(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        _ = interface.add_trigger(self.step)
-        distance_effect = interface.add_effect(self.out_current_distance)
-        metric_effect = interface.add_effect(self._current_distance)
+    def on_step(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        _ = ctx.add_trigger(self.step)
+        distance_effect = ctx.add_effect(self.out_current_distance)
+        metric_effect = ctx.add_effect(self._current_distance)
 
         def handler() -> None:
             distance: float = self.__sensor.getValue()
@@ -150,9 +148,9 @@ class Controller(xronos.Reactor):
         self.__waiting = True
 
     @xronos.reaction
-    def on_distance(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        distance_trigger = interface.add_trigger(self.distance)
-        grasp_effect = interface.add_effect(self.hand_grasp)
+    def on_distance(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        distance_trigger = ctx.add_trigger(self.distance)
+        grasp_effect = ctx.add_effect(self.hand_grasp)
 
         def handler() -> None:
             if self.__waiting and distance_trigger.get() < self.DISTANCE_THRESHOLD:
@@ -163,11 +161,9 @@ class Controller(xronos.Reactor):
         return handler
 
     @xronos.reaction
-    def on_hand_is_grasped(
-        self, interface: xronos.ReactionInterface
-    ) -> Callable[[], None]:
-        _ = interface.add_trigger(self.hand_is_grasped)
-        rotate_effect = interface.add_effect(self.arm_rotate)
+    def on_hand_is_grasped(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        _ = ctx.add_trigger(self.hand_is_grasped)
+        rotate_effect = ctx.add_effect(self.arm_rotate)
 
         def handler() -> None:
             print("Rotating arm")
@@ -176,11 +172,9 @@ class Controller(xronos.Reactor):
         return handler
 
     @xronos.reaction
-    def on_arm_is_rotated(
-        self, interface: xronos.ReactionInterface
-    ) -> Callable[[], None]:
-        _ = interface.add_trigger(self.arm_is_rotated)
-        release_effect = interface.add_effect(self.hand_release)
+    def on_arm_is_rotated(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        _ = ctx.add_trigger(self.arm_is_rotated)
+        release_effect = ctx.add_effect(self.hand_release)
 
         def handler() -> None:
             print("Releasing can")
@@ -189,11 +183,9 @@ class Controller(xronos.Reactor):
         return handler
 
     @xronos.reaction
-    def on_hand_is_released(
-        self, interface: xronos.ReactionInterface
-    ) -> Callable[[], None]:
-        _ = interface.add_trigger(self.hand_is_released)
-        rotate_back_effect = interface.add_effect(self.arm_rotate_back)
+    def on_hand_is_released(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        _ = ctx.add_trigger(self.hand_is_released)
+        rotate_back_effect = ctx.add_effect(self.arm_rotate_back)
 
         def handler() -> None:
             print("Rotating arm back")
@@ -202,8 +194,8 @@ class Controller(xronos.Reactor):
         return handler
 
     @xronos.reaction
-    def on_arm_is_back(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        _ = interface.add_trigger(self.arm_is_back)
+    def on_arm_is_back(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        _ = ctx.add_trigger(self.arm_is_back)
 
         def handler() -> None:
             print("Waiting for can")
@@ -235,12 +227,12 @@ class Hand(xronos.Reactor):
         self.__is_moving = False
 
     @xronos.reaction
-    def on_position(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
+    def on_position(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
         finger_position_triggers = [
-            interface.add_trigger(finger.current_position) for finger in self.__fingers
+            ctx.add_trigger(finger.current_position) for finger in self.__fingers
         ]
-        is_grasped_effect = interface.add_effect(self.is_grasped)
-        is_released_effect = interface.add_effect(self.is_released)
+        is_grasped_effect = ctx.add_effect(self.is_grasped)
+        is_released_effect = ctx.add_effect(self.is_released)
 
         def handler() -> None:
             if self.__is_moving and all(
@@ -265,10 +257,10 @@ class Hand(xronos.Reactor):
         return handler
 
     @xronos.reaction
-    def on_grasp(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        _ = interface.add_trigger(self.grasp)
+    def on_grasp(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        _ = ctx.add_trigger(self.grasp)
         finger_effects = [
-            interface.add_effect(finger.target_position) for finger in self.__fingers
+            ctx.add_effect(finger.target_position) for finger in self.__fingers
         ]
 
         def handler() -> None:
@@ -279,10 +271,10 @@ class Hand(xronos.Reactor):
         return handler
 
     @xronos.reaction
-    def on_release(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        _ = interface.add_trigger(self.release)
+    def on_release(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        _ = ctx.add_trigger(self.release)
         finger_effects = [
-            interface.add_effect(finger.target_position) for finger in self.__fingers
+            ctx.add_effect(finger.target_position) for finger in self.__fingers
         ]
 
         def handler() -> None:
@@ -318,12 +310,12 @@ class Arm(xronos.Reactor):
         self.__is_moving = False
 
     @xronos.reaction
-    def on_position(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
+    def on_position(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
         joint_position_triggers = [
-            interface.add_trigger(joint.current_position) for joint in self.__joints
+            ctx.add_trigger(joint.current_position) for joint in self.__joints
         ]
-        is_rotated_effect = interface.add_effect(self.is_rotated)
-        is_back_effect = interface.add_effect(self.is_back)
+        is_rotated_effect = ctx.add_effect(self.is_rotated)
+        is_back_effect = ctx.add_effect(self.is_back)
 
         def handler() -> None:
             if self.__is_moving and all(
@@ -350,10 +342,10 @@ class Arm(xronos.Reactor):
         return handler
 
     @xronos.reaction
-    def on_rotate(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        _ = interface.add_trigger(self.rotate)
+    def on_rotate(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        _ = ctx.add_trigger(self.rotate)
         joint_effects = [
-            interface.add_effect(joint.target_position) for joint in self.__joints
+            ctx.add_effect(joint.target_position) for joint in self.__joints
         ]
 
         def handler() -> None:
@@ -364,10 +356,10 @@ class Arm(xronos.Reactor):
         return handler
 
     @xronos.reaction
-    def on_rotate_back(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        _ = interface.add_trigger(self.rotate_back)
+    def on_rotate_back(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        _ = ctx.add_trigger(self.rotate_back)
         joint_effects = [
-            interface.add_effect(joint.target_position) for joint in self.__joints
+            ctx.add_effect(joint.target_position) for joint in self.__joints
         ]
 
         def handler() -> None:

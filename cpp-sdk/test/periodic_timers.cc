@@ -46,7 +46,7 @@ private:
     Trigger<void> timer_trigger{self().timer_, context()};
     void handler() final {
       EXPECT_TRUE(timer_trigger.is_present());
-      EXPECT_EQ(self().get_time_since_startup(), self().offset_ + self().period_ * self().counter_);
+      EXPECT_EQ(elapsed_time(), self().offset_ + self().period_ * self().counter_);
       self().counter_++;
     }
   };

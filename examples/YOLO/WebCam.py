@@ -37,31 +37,29 @@ class WebCam(xronos.Reactor):
         self.stream.set(cv2.CAP_PROP_FPS, frames_per_second)
 
     def reschedule_sample_webcam(
-        self, action: xronos.ProgrammableTimerEffect[None]
+        self, ctx: xronos.ReactionContext, action: xronos.ProgrammableTimerEffect[None]
     ) -> None:
         next_sample_time = self.sample_period + self.sample_period * math.floor(
-            self.get_lag() / self.sample_period
+            ctx.lag / self.sample_period
         )
         action.schedule(value=None, delay=next_sample_time)
 
     @xronos.reaction
-    def on_startup(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        interface.add_trigger(self.startup)
-        sample_webcam_effect = interface.add_effect(self._sample_webcam)
+    def on_startup(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        ctx.add_trigger(self.startup)
+        sample_webcam_effect = ctx.add_effect(self._sample_webcam)
 
         def handler() -> None:
-            self.reschedule_sample_webcam(sample_webcam_effect)
+            self.reschedule_sample_webcam(ctx, sample_webcam_effect)
 
         return handler
 
     @xronos.reaction
-    def on_sample_webcam(
-        self, interface: xronos.ReactionInterface
-    ) -> Callable[[], None]:
-        interface.add_trigger(self._sample_webcam)
-        sample_webcam_effect = interface.add_effect(self._sample_webcam)
-        frame_effect = interface.add_effect(self.frame)
-        shutdown_effect = interface.add_effect(self.shutdown)
+    def on_sample_webcam(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        ctx.add_trigger(self._sample_webcam)
+        sample_webcam_effect = ctx.add_effect(self._sample_webcam)
+        frame_effect = ctx.add_effect(self.frame)
+        shutdown_effect = ctx.add_effect(self.shutdown)
 
         def handler() -> None:
             ret, _frame = self.stream.read()
@@ -70,13 +68,13 @@ class WebCam(xronos.Reactor):
             else:
                 print("WARNING: Failed to read frames from videostream. Shutting down.")
                 shutdown_effect.trigger_shutdown()
-            self.reschedule_sample_webcam(sample_webcam_effect)
+            self.reschedule_sample_webcam(ctx, sample_webcam_effect)
 
         return handler
 
     @xronos.reaction
-    def on_shutdown(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        interface.add_trigger(self.shutdown)
+    def on_shutdown(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        ctx.add_trigger(self.shutdown)
 
         def handler() -> None:
             print("Cleaning up WebCam")

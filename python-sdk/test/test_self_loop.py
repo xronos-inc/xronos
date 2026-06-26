@@ -20,11 +20,9 @@ class SelfLoop(xronos.Reactor):
     kill_at_count: int = start_at_count + 10
 
     @xronos.reaction
-    def on_internal_event(
-        self, interface: xronos.ReactionInterface
-    ) -> Callable[[], None]:
-        i_event = interface.add_trigger(self.internal_event)
-        output_ = interface.add_effect(self.output_)
+    def on_internal_event(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        i_event = ctx.add_trigger(self.internal_event)
+        output_ = ctx.add_effect(self.output_)
 
         def handler() -> None:
             print(f"Reaction in {self.fqn} triggered")
@@ -33,10 +31,10 @@ class SelfLoop(xronos.Reactor):
         return handler
 
     @xronos.reaction
-    def on_input(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        input_ = interface.add_trigger(self.input_)
-        i_event = interface.add_effect(self.internal_event)
-        shutdown_effect = interface.add_effect(self.shutdown)
+    def on_input(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        input_ = ctx.add_trigger(self.input_)
+        i_event = ctx.add_effect(self.internal_event)
+        shutdown_effect = ctx.add_effect(self.shutdown)
 
         def handler() -> None:
             print(f"Reaction in {self.fqn} triggered")
@@ -52,9 +50,9 @@ class SelfLoop(xronos.Reactor):
         return handler
 
     @xronos.reaction
-    def on_startup(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        interface.add_trigger(self.startup)
-        i_event = interface.add_effect(self.internal_event)
+    def on_startup(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        ctx.add_trigger(self.startup)
+        i_event = ctx.add_effect(self.internal_event)
 
         def handler() -> None:
             print(f"Reaction in {self.fqn} triggered")
@@ -63,8 +61,8 @@ class SelfLoop(xronos.Reactor):
         return handler
 
     @xronos.reaction
-    def on_shutdown(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        interface.add_trigger(self.shutdown)
+    def on_shutdown(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        ctx.add_trigger(self.shutdown)
 
         def handler() -> None:
             print(f"Reaction in {self.fqn} triggered")

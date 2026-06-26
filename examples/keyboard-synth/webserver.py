@@ -56,9 +56,9 @@ class Webserver(xronos.Reactor):
     __stopped_callback = xronos.PhysicalEventDeclaration[None]()
 
     @xronos.reaction
-    def __startup(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        interface.add_trigger(self.startup)
-        stopped_effect = interface.add_effect(self.service_stopped)
+    def __startup(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        ctx.add_trigger(self.startup)
+        stopped_effect = ctx.add_effect(self.service_stopped)
 
         def handler() -> None:
             try:
@@ -73,19 +73,17 @@ class Webserver(xronos.Reactor):
 
     @xronos.reaction
     def __on_request_service_stop(
-        self, interface: xronos.ReactionInterface
+        self, ctx: xronos.ReactionContext
     ) -> Callable[[], None]:
         """Signal shutdown of the websocket server."""
-        interface.add_trigger(self.request_service_stop)
+        ctx.add_trigger(self.request_service_stop)
         return self.__server_stop_thread.start
 
     @xronos.reaction
-    def __on_stopped_callback(
-        self, interface: xronos.ReactionInterface
-    ) -> Callable[[], None]:
+    def __on_stopped_callback(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
         """Callback issued when websocket server has stopped."""
-        interface.add_trigger(self.__stopped_callback)
-        stopped_effect = interface.add_effect(self.service_stopped)
+        ctx.add_trigger(self.__stopped_callback)
+        stopped_effect = ctx.add_effect(self.service_stopped)
 
         def handler() -> None:
             log(self, "stopped")
@@ -94,9 +92,9 @@ class Webserver(xronos.Reactor):
         return handler
 
     @xronos.reaction
-    def __on_shutdown(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
+    def __on_shutdown(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
         """Stop server and join all threads on shutdown."""
-        interface.add_trigger(self.shutdown)
+        ctx.add_trigger(self.shutdown)
 
         def handler() -> None:
             if self.__server_thread.is_alive():
@@ -124,6 +122,6 @@ class Webserver(xronos.Reactor):
     __async_log = xronos.PhysicalEventDeclaration[str]()
 
     @xronos.reaction
-    def __on_async_log(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        async_log = interface.add_trigger(self.__async_log)
+    def __on_async_log(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        async_log = ctx.add_trigger(self.__async_log)
         return lambda: log(self, async_log.get())

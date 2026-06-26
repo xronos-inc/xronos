@@ -42,8 +42,8 @@ class PrintAndAssert(xronos.Reactor, Generic[T]):
         self._assert_count: int = 0
 
     @xronos.reaction
-    def _on_print(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        input_trigger = interface.add_trigger(self.result)
+    def _on_print(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        input_trigger = ctx.add_trigger(self.result)
 
         def body() -> None:
             check_value = self._assert_value()

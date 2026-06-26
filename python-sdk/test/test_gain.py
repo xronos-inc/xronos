@@ -27,10 +27,10 @@ class Scale(xronos.Reactor):
         super().__init__()
 
     @xronos.reaction
-    def scale(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        input_ = interface.add_trigger(self.input_)
-        output_ = interface.add_effect(self.output_)
-        output_dangling = interface.add_effect(self.output_dangling)
+    def scale(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        input_ = ctx.add_trigger(self.input_)
+        output_ = ctx.add_effect(self.output_)
+        output_dangling = ctx.add_effect(self.output_dangling)
 
         def handler() -> None:
             print(f"Reaction in {self.fqn} triggered")
@@ -44,9 +44,9 @@ class Source(xronos.Reactor):
     output_ = xronos.OutputPortDeclaration[int]()
 
     @xronos.reaction
-    def emit(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        interface.add_trigger(self.startup)
-        output_ = interface.add_effect(self.output_)
+    def emit(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        ctx.add_trigger(self.startup)
+        output_ = ctx.add_effect(self.output_)
 
         def handler() -> None:
             print(f"Reaction in {self.fqn} triggered")
@@ -60,9 +60,9 @@ class Receiver(xronos.Reactor):
     output_dangling = xronos.OutputPortDeclaration[int]()
 
     @xronos.reaction
-    def receive(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        input_ = interface.add_trigger(self.input_)
-        output_dangling = interface.add_effect(self.output_dangling)
+    def receive(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        input_ = ctx.add_trigger(self.input_)
+        output_dangling = ctx.add_effect(self.output_dangling)
 
         def body() -> None:
             print(f"Reaction in {self.fqn} triggered")

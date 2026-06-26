@@ -56,7 +56,7 @@ private:
     void handler() final {
       EXPECT_TRUE(input_trigger.is_present());
       EXPECT_FALSE(self().reaction_executed_);
-      self().reaction_executed_at_ = self().get_time_since_startup();
+      self().reaction_executed_at_ = elapsed_time();
       self().reaction_executed_ = true;
     }
   };
@@ -167,7 +167,7 @@ private:
       EXPECT_FALSE(self().reaction_executed_);
       EXPECT_NE(input_trigger.get(), nullptr);
       EXPECT_EQ(*input_trigger.get(), value);
-      self().reaction_executed_at_ = self().get_time_since_startup();
+      self().reaction_executed_at_ = elapsed_time();
       self().reaction_executed_ = true;
     }
   };

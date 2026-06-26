@@ -63,10 +63,16 @@ class PyReaction : public BaseReaction {
 public:
   using BaseReaction::BaseReaction;
   using BaseReaction::context;
+  using BaseReaction::current_time;
+  using BaseReaction::deadline;
+  using BaseReaction::elapsed_time;
+  using BaseReaction::is_before_deadline;
+  using BaseReaction::lag;
   using BaseReaction::MetricEffect;
   using BaseReaction::PortEffect;
   using BaseReaction::ProgrammableTimerEffect;
   using BaseReaction::ShutdownEffect;
+  using BaseReaction::slack;
   using BaseReaction::Trigger;
 
   void set_handler(std::function<void()> handler) noexcept {
@@ -123,15 +129,21 @@ public:
       , assemble_callback_{std::move(assemble_callback)} {}
 
   using Reactor::context;
+  // The reactor-level timing API is deprecated in favor of the reaction-scoped
+  // API (ADR 0049). The Python SDK still exposes the reactor-level methods for
+  // backward compatibility, so we keep exposing them and silence the deprecation warning locally.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
   using Reactor::get_lag;
   using Reactor::get_time;
   using Reactor::get_time_since_startup;
+#pragma GCC diagnostic pop
   using Reactor::shutdown;
   using Reactor::startup;
 
-  static auto add_reaction(Reactor& reactor, std::string_view name, detail::SourceLocationView location)
-      -> const PyReaction& {
-    return detail::add_reaction<PyReaction>(reactor, name, std::nullopt, location);
+  static auto add_reaction(Reactor& reactor, std::string_view name, std::optional<Duration> deadline,
+                           detail::SourceLocationView location) -> const PyReaction& {
+    return detail::add_reaction<PyReaction>(reactor, name, deadline, location);
   }
 
   void connect(const InputPort<GilWrapper>& from, const InputPort<GilWrapper>& to) { Reactor::connect(from, to); }
@@ -224,18 +236,27 @@ PYBIND11_MODULE(_cpp_sdk, mod, py::mod_gil_not_used()) {
 
   py::class_<Reactor, Element>(mod, "BaseReactor");
 
-  py::class_<PyReactor, Reactor>(mod, "Reactor")
-      .def(py::init<std::string_view, EnvironmentContext, std::function<void()>>(), py::arg("name"), py::arg("context"),
-           py::arg("assemble_callback"))
-      .def(py::init<std::string_view, ReactorContext, std::function<void()>>(), py::arg("name"), py::arg("context"),
-           py::arg("assemble_callback"))
-      .def("get_lag", &PyReactor::get_lag)
+  auto reactor_class = py::class_<PyReactor, Reactor>(mod, "Reactor")
+                           .def(py::init<std::string_view, EnvironmentContext, std::function<void()>>(),
+                                py::arg("name"), py::arg("context"), py::arg("assemble_callback"))
+                           .def(py::init<std::string_view, ReactorContext, std::function<void()>>(), py::arg("name"),
+                                py::arg("context"), py::arg("assemble_callback"));
+
+  // The reactor-level timing API is deprecated (ADR 0049); the Python API still
+  // exposes it until it is migrated. Register these in a separate statement so
+  // the deprecation warning can be silenced locally (a #pragma is not allowed
+  // inside the chained .def(...) expression above).
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+  reactor_class.def("get_lag", &PyReactor::get_lag)
       .def("get_time", &PyReactor::get_time)
-      .def("get_time_since_startup", &PyReactor::get_time_since_startup)
-      .def_property_readonly("startup", &PyReactor::startup)
+      .def("get_time_since_startup", &PyReactor::get_time_since_startup);
+#pragma GCC diagnostic pop
+
+  reactor_class.def_property_readonly("startup", &PyReactor::startup)
       .def_property_readonly("shutdown", &PyReactor::shutdown)
       .def("add_reaction", &PyReactor::add_reaction, py::return_value_policy::reference, py::arg("name"),
-           py::arg("source_location"))
+           py::arg("deadline"), py::arg("source_location"))
       .def("connect",
            py::overload_cast<const InputPort<GilWrapper>&, const InputPort<GilWrapper>&>(&PyReactor::connect),
            py::arg("from_"), py::arg("to"))
@@ -298,7 +319,24 @@ PYBIND11_MODULE(_cpp_sdk, mod, py::mod_gil_not_used()) {
 
   py::class_<PyReaction, BaseReaction>(mod, "Reaction")
       .def("set_handler", &PyReaction::set_handler, py::arg("handler"))
-      .def("context", &PyReaction::context);
+      .def("context", &PyReaction::context)
+      .def("lag", &PyReaction::lag)
+      .def("current_time", &PyReaction::current_time)
+      .def("elapsed_time", &PyReaction::elapsed_time)
+      .def("deadline", &PyReaction::deadline)
+      .def("slack",
+           [](const PyReaction& reaction) -> py::object {
+             auto slack = reaction.slack();
+             // When there is no deadline, the SDK reports Duration::max() as a
+             // sentinel for "unbounded". Translate this to the idiomatic Python
+             // sentinel datetime.timedelta.max. The comparison is exact since
+             // this is the only case that yields Duration::max().
+             if (slack == Duration::max()) {
+               return py::module_::import("datetime").attr("timedelta").attr("max");
+             }
+             return py::cast(slack);
+           })
+      .def("is_before_deadline", &PyReaction::is_before_deadline);
 
   py::class_<PyReaction::Trigger<void>>(mod, "VoidTrigger")
       .def(py::init<const PeriodicTimer&, ReactionContext>(), py::arg("trigger"), py::arg("context"))

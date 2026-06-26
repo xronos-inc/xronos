@@ -160,7 +160,7 @@ public:
     using sdk::Reaction<GameLogic>::Reaction;
     Trigger<void> prompt_trigger{self().prompt(), context()};
     void handler() final {
-      self().prompt_time_ = self().get_time() + self().get_lag();
+      self().prompt_time_ = current_time() + lag();
       std::cout << "\nHit Return or Enter!\n";
     }
   };
@@ -175,7 +175,7 @@ public:
         std::cout << "YOU CHEATED!\n";
         shutdown_effect.trigger_shutdown();
       } else {
-        auto elapsed = self().get_time() - self().prompt_time_;
+        auto elapsed = current_time() - self().prompt_time_;
         auto time_in_ms = std::chrono::duration_cast<std::chrono::milliseconds>(elapsed);
         std::cout << "Response time: " << time_in_ms.count() << "ms\n";
         self().count_++;

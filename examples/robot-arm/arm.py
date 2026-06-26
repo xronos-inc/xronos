@@ -34,8 +34,8 @@ class ArmControl(xronos.Reactor):
         self.verbose = verbose
 
     @xronos.reaction
-    def on_shutdown(self, interface: xronos.ReactionInterface) -> Callable[[], None]:
-        interface.add_trigger(self.shutdown)
+    def on_shutdown(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        ctx.add_trigger(self.shutdown)
 
         def handler() -> None:
             if not self.in_position():
@@ -44,10 +44,8 @@ class ArmControl(xronos.Reactor):
         return handler
 
     @xronos.reaction
-    def on_new_trajectory(
-        self, interface: xronos.ReactionInterface
-    ) -> Callable[[], None]:
-        new_trajectory_trigger = interface.add_trigger(self.new_trajectory)
+    def on_new_trajectory(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        new_trajectory_trigger = ctx.add_trigger(self.new_trajectory)
 
         def handler() -> None:
             self.trajectory = new_trajectory_trigger.get()
@@ -60,11 +58,9 @@ class ArmControl(xronos.Reactor):
         return handler
 
     @xronos.reaction
-    def on_sample_timer(
-        self, interface: xronos.ReactionInterface
-    ) -> Callable[[], None]:
-        interface.add_trigger(self._sample_timer)
-        in_position_effect = interface.add_effect(self._in_position)
+    def on_sample_timer(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        ctx.add_trigger(self._sample_timer)
+        in_position_effect = ctx.add_effect(self._in_position)
 
         # update position and schedule action if state of in_position changes
         def handler() -> None:
@@ -81,11 +77,9 @@ class ArmControl(xronos.Reactor):
         return handler
 
     @xronos.reaction
-    def on_in_position_change(
-        self, interface: xronos.ReactionInterface
-    ) -> Callable[[], None]:
-        in_position_trigger = interface.add_trigger(self._in_position)
-        trajectory_completed_effect = interface.add_effect(self.trajectory_completed)
+    def on_in_position_change(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        in_position_trigger = ctx.add_trigger(self._in_position)
+        trajectory_completed_effect = ctx.add_effect(self.trajectory_completed)
 
         def handler() -> None:
             if not in_position_trigger.get():

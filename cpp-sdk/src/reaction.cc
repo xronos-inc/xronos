@@ -52,6 +52,13 @@ auto BaseReaction::deadline() const noexcept -> std::optional<TimePoint> {
     return std::nullopt;
   }
 
+  // The deadline can only be computed relative to a running program's logical
+  // time. When called outside of execution (e.g. during reaction declaration),
+  // there is no valid time access, so we report that no deadline is available.
+  if (program_context()->runtime_program_handle == nullptr) {
+    return std::nullopt;
+  }
+
   auto now =
       program_context()->runtime_program_handle->get_time_access(core_element().parent_uid.value())->get_timestamp();
 
@@ -63,7 +70,7 @@ auto BaseReaction::deadline() const noexcept -> std::optional<TimePoint> {
   return now + *relative_deadline;
 }
 
-auto BaseReaction::remaining_slack() const noexcept -> Duration {
+auto BaseReaction::slack() const noexcept -> Duration {
   auto deadline_ = deadline();
 
   if (!deadline_.has_value()) {
@@ -73,7 +80,32 @@ auto BaseReaction::remaining_slack() const noexcept -> Duration {
   return *deadline_ - std::chrono::system_clock::now();
 }
 
-auto BaseReaction::is_before_deadline() const noexcept -> bool { return remaining_slack() > Duration::zero(); }
+auto BaseReaction::is_before_deadline() const noexcept -> bool { return slack() > Duration::zero(); }
+
+auto BaseReaction::remaining_slack() const noexcept -> Duration { return slack(); }
+
+auto BaseReaction::current_time() const noexcept -> TimePoint {
+  if (program_context()->runtime_program_handle == nullptr) {
+    return TimePoint{};
+  }
+  return program_context()->runtime_program_handle->get_time_access(core_element().parent_uid.value())->get_timestamp();
+}
+
+auto BaseReaction::lag() const noexcept -> Duration {
+  if (program_context()->runtime_program_handle == nullptr) {
+    return Duration::zero();
+  }
+  return std::chrono::system_clock::now() - current_time();
+}
+
+auto BaseReaction::elapsed_time() const noexcept -> Duration {
+  if (program_context()->runtime_program_handle == nullptr) {
+    return Duration::zero();
+  }
+  const auto* time_access =
+      program_context()->runtime_program_handle->get_time_access(core_element().parent_uid.value());
+  return time_access->get_timestamp() - time_access->get_start_timestamp();
+}
 
 BaseReaction::TriggerImpl::TriggerImpl(std::uint64_t trigger_uid, const ReactionContext& context)
     : trigger_uid_{trigger_uid}
