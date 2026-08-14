@@ -9,22 +9,18 @@
 
 import datetime
 import inspect
-import os
 import sys
+from collections.abc import Callable
 from typing import (
     Any,
-    Callable,
     Generic,
     ParamSpec,
-    Type,
     TypeAlias,
     TypeVar,
     cast,
     get_origin,
     overload,
 )
-
-from typing_extensions import deprecated
 
 import xronos._cpp_sdk as sdk
 
@@ -49,8 +45,6 @@ AttributeMap: TypeAlias = dict[str, AttributeValue]
 
 class InvalidReactionHandler(TypeError):
     """Exception that is thrown when a reaction returns an invalid handler."""
-
-    pass
 
 
 def get_source_location() -> sdk.SourceLocation:
@@ -95,7 +89,7 @@ class Element:
     def __init__(self, sdk_instance: sdk.Element) -> None:
         self.__sdk_instance = sdk_instance
 
-    def _get_sdk_instance(self, cls: Type[SdkElem]) -> SdkElem:
+    def _get_sdk_instance(self, cls: type[SdkElem]) -> SdkElem:
         assert isinstance(self.__sdk_instance, cls)
         return self.__sdk_instance
 
@@ -170,7 +164,7 @@ class ElementDescriptor(Generic[Elem]):
         self.__initializer = initializer
         self.__attributes = attributes
 
-    def __set_name__(self, reactor_cls: Type["Reactor"], name: str) -> None:
+    def __set_name__(self, reactor_cls: type["Reactor"], name: str) -> None:
         """Record the element name and register the descriptor with the reactor class.
 
         This is called implicitly when assigning an instance of
@@ -215,8 +209,6 @@ class ElementDescriptor(Generic[Elem]):
 class EventSource(Element, Generic[T]):
     """An element that may emit events and act as reaction trigger."""
 
-    pass
-
 
 class Startup(EventSource[None]):
     """A reactor element that emits an event program starts executing.
@@ -224,16 +216,12 @@ class Startup(EventSource[None]):
     Can be used as a reaction :class:`Trigger`.
     """
 
-    pass
-
 
 class Shutdown(EventSource[None]):
     """A reactor element that emits an event right before the program shuts down.
 
     Can be used as a reaction :class:`Trigger`.
     """
-
-    pass
 
 
 class PeriodicTimer(EventSource[None]):
@@ -323,8 +311,6 @@ class InputPort(EventSource[T]):
         T: The value type associated with messages.
     """
 
-    pass
-
 
 class InputPortDeclaration(ElementDescriptor[InputPort[T]]):
     """A declaration for an :class:`InputPort[T]<InputPort>`.
@@ -366,8 +352,6 @@ class OutputPort(EventSource[T]):
         T: The value type associated with messages.
     """
 
-    pass
-
 
 class OutputPortDeclaration(ElementDescriptor[OutputPort[T]]):
     """A declaration for an :class:`OutputPort[T]<OutputPort>`.
@@ -400,8 +384,6 @@ class ProgrammableTimer(EventSource[T]):
         T: The value type associated with events emitted by the programmable
            timer.
     """
-
-    pass
 
 
 class ProgrammableTimerDeclaration(ElementDescriptor[ProgrammableTimer[T]]):
@@ -544,25 +526,12 @@ class Environment:
     def __init__(
         self, fast: bool = False, timeout: datetime.timedelta | None = None
     ) -> None:
-        workers = 1
-
-        try:
-            # This is currently the official way to check whether the GIL is
-            # enabled or not. The function is only available in Python>=3.13.
-            # For older versions, we simply catch the AttributeError and
-            # continue.
-            # see https://docs.python.org/3/library/sys.html#sys._is_gil_enabled
-            if not sys._is_gil_enabled():  # type: ignore
-                workers = cast(int, os.cpu_count())
-        except AttributeError:
-            pass
-
         if timeout:
             self.__sdk_env = sdk.Environment(
-                workers, fast, render_reactor_graph=True, timeout=timeout
+                fast, render_reactor_graph=True, timeout=timeout
             )
         else:
-            self.__sdk_env = sdk.Environment(workers, fast, render_reactor_graph=True)
+            self.__sdk_env = sdk.Environment(fast, render_reactor_graph=True)
 
         #: List of contained reactors.
         #:
@@ -769,7 +738,7 @@ class Reactor(Element):
         return reactor
 
     @staticmethod
-    def _checked_cast_to_subclass(obj: Callable[..., R]) -> Type[R]:
+    def _checked_cast_to_subclass(obj: Callable[..., R]) -> type[R]:
         """Enforce that the given callable is also a subclass of `Reactor`."""
         # `obj` might be a generic type. We try to get the origin type. If this
         # succeeds its a generic type and we continue with origin, otherwise we
@@ -778,7 +747,7 @@ class Reactor(Element):
         cls = origin if origin else obj
 
         if isinstance(cls, type) and issubclass(cls, Reactor):
-            return cast(Type[R], obj)
+            return cast(type[R], obj)
 
         raise TypeError("The provided class is not a subclass of xronos.Reactor.")
 
@@ -833,7 +802,7 @@ class Reactor(Element):
         Keeps a reference to the element (so the Python wrapper outlives the
         call that created it) and guards against name collisions on the Python
         side. The underlying C++ runtime additionally rejects duplicate names
-        with a :class:`DuplicateNameError` while the element is constructed,
+        with an :class:`InvalidNameError` while the element is constructed,
         before this method runs.
 
         This is an implementation detail of the experimental dynamic element
@@ -849,7 +818,7 @@ class Reactor(Element):
         self.__elements[name] = element
 
     @classmethod
-    def __get_base_reactor(cls) -> Type["Reactor"] | None:
+    def __get_base_reactor(cls) -> type["Reactor"] | None:
         """Check bases for other reactor classes.
 
         Returns:
@@ -885,72 +854,6 @@ class Reactor(Element):
         Triggers once right before the program execution ends.
         """
         return Shutdown(self.__sdk_instance.shutdown)
-
-    @deprecated(
-        "The reactor-level timing API is deprecated and will be removed in an "
-        "upcoming release; use the reaction-scoped ReactionContext.current_time "
-        "instead."
-    )
-    def get_time(self) -> datetime.datetime:
-        """Get the current time.
-
-        .. deprecated:: v0.12.0
-            The current time is only well-defined while a reaction handler
-            executes. This method will be removed in an upcoming release; use
-            the reaction-scoped :attr:`ReactionContext.current_time` instead.
-
-        .. note:: This does not read wall-clock time. The Xronos runtime uses
-                  an internal clock to control how a program advances.
-
-        Returns:
-            The current time as provided by the internal clock.
-        """
-        return self.__sdk_instance.get_time()
-
-    @deprecated(
-        "The reactor-level timing API is deprecated and will be removed in an "
-        "upcoming release; use the reaction-scoped ReactionContext.lag "
-        "instead."
-    )
-    def get_lag(self) -> datetime.timedelta:
-        """Get the current lag.
-
-        .. deprecated:: v0.12.0
-            The current time is only well-defined while a reaction handler
-            executes. This method will be removed in an upcoming release; use
-            the reaction-scoped :attr:`ReactionContext.lag` instead.
-
-        The lag is the difference between wall-clock time and the current time
-        (wall-clock now minus the current time). While a reaction handler
-        executes, the current time does not advance, but the wall clock does;
-        the lag therefore measures how far the wall clock has run ahead of the
-        internal clock -- that is, how far the execution of reactions lags
-        behind the events it processes.
-
-        Returns:
-            The current lag as a wall-clock duration.
-        """
-        return self.__sdk_instance.get_lag()
-
-    @deprecated(
-        "The reactor-level timing API is deprecated and will be removed in an "
-        "upcoming release; use the reaction-scoped "
-        "ReactionContext.elapsed_time instead."
-    )
-    def get_time_since_startup(self) -> datetime.timedelta:
-        """Get how far the internal clock has advanced since :attr:`startup`.
-
-        .. deprecated:: v0.12.0
-            The current time is only well-defined while a reaction handler
-            executes. This method will be removed in an upcoming release; use
-            the reaction-scoped :attr:`ReactionContext.elapsed_time`
-            instead.
-
-        Returns:
-            The difference between the current time given by :meth:`get_time`
-            and the time at which the program started.
-        """
-        return self.__sdk_instance.get_time_since_startup()
 
     def _assemble(self) -> None:
         for _, elem in self.__elements.items():
@@ -1082,14 +985,12 @@ class AbsentError(Exception):
     See :meth:`Trigger.get`.
     """
 
-    pass
-
 
 class Trigger(Generic[T]):
     """Provides read access to an event source that a reaction is triggered by.
 
     This class is not intended to be instantiated directly. Use
-    :meth:`~xronos.ReactionInterface.add_trigger` instead.
+    :meth:`~xronos.ReactionContext.add_trigger` instead.
     """
 
     def __init__(self, sdk_trigger: sdk.Trigger | sdk.VoidTrigger) -> None:
@@ -1112,8 +1013,7 @@ class Trigger(Generic[T]):
 
         if isinstance(self.__sdk_trigger, sdk.Trigger):
             return cast(T, self.__sdk_trigger.get())
-        else:
-            return cast(T, None)
+        return cast(T, None)
 
 
 class PortEffect(Generic[T]):
@@ -1121,7 +1021,7 @@ class PortEffect(Generic[T]):
     :class:`OutputPort`.
 
     This class is not intended to be instantiated directly. Use
-    :meth:`~xronos.ReactionInterface.add_effect` instead.
+    :meth:`~xronos.ReactionContext.add_effect` instead.
 
     Type Args:
         T: The value type associated with the port.
@@ -1167,7 +1067,7 @@ class ProgrammableTimerEffect(Generic[T]):
     """Allows a reaction to schedule future events using a :class:`ProgrammableTimer`.
 
     This class is not intended to be instantiated directly. Use
-    :meth:`~xronos.ReactionInterface.add_effect` instead.
+    :meth:`~xronos.ReactionContext.add_effect` instead.
 
     Type Args:
         T: The value type associated with the programmable timer.
@@ -1192,7 +1092,7 @@ class MetricEffect:
     """Allows a reaction to record telemetry data using a given :class:`Metric`.
 
     This class is not intended to be instantiated directly. Use
-    :meth:`~xronos.ReactionInterface.add_effect` instead.
+    :meth:`~xronos.ReactionContext.add_effect` instead.
     """
 
     def __init__(self, sdk_metric: sdk.MetricEffect) -> None:
@@ -1211,7 +1111,7 @@ class ShutdownEffect:
     """Allows a reaction to terminate the program.
 
     This class is not intended to be instantiated directly. Use
-    :meth:`~xronos.ReactionInterface.add_effect` instead.
+    :meth:`~xronos.ReactionContext.add_effect` instead.
     """
 
     def __init__(self, sdk_shutdown: sdk.ShutdownEffect) -> None:
@@ -1227,27 +1127,24 @@ class ShutdownEffect:
         self.__sdk_shutdown.trigger_shutdown()
 
 
-@deprecated(
-    "ReactionInterface is deprecated and will be removed in an upcoming "
-    "release; use ReactionContext instead.",
-    category=None,
-)
-class ReactionInterface:
-    """Helper class for defining the interfaces of a reaction.
+class ReactionContext:
+    """The context passed to a reaction declaration.
 
-    This class is not intended to be instantiated directly. An instance of this
-    class is passed automatically to any method decorated with
-    :deco:`reaction` or :deco:`reaction_with_deadline`.
+    An instance is passed automatically to any method decorated with
+    :deco:`reaction` or :deco:`reaction_with_deadline`. Use it to declare the
+    reaction's triggers and effects, and to read the reaction-scoped timing API.
+    The reaction handler may capture the context object in its closure to access
+    the timing API during execution.
 
-    .. deprecated:: v0.12.0
-        ``ReactionInterface`` will be removed in an upcoming release. Use
-        :class:`ReactionContext` instead, which additionally provides the
-        reaction-scoped timing API. ``ReactionInterface`` remains the base class
-        of :class:`ReactionContext`, so existing annotations keep working.
+    .. note::
+        The timing attributes are only meaningful while the reaction handler
+        executes. They remain accessible during the reaction declaration, but
+        there they return defined placeholders that must not be relied upon.
     """
 
-    def __init__(self, sdk_context: sdk.ReactionContext) -> None:
-        self.__context = sdk_context
+    def __init__(self, sdk_reaction: sdk.Reaction) -> None:
+        self.__context = sdk_reaction.context()
+        self.__sdk_reaction = sdk_reaction
 
     def add_trigger(self, event_source: EventSource[T]) -> Trigger[T]:
         """Declare a reaction trigger.
@@ -1311,39 +1208,18 @@ class ReactionInterface:
             sdk_port = target._get_sdk_instance(sdk.Element)
             assert isinstance(sdk_port, sdk.InputPort | sdk.OutputPort)
             return PortEffect(sdk.PortEffect(sdk_port, self.__context))
-        elif isinstance(target, ProgrammableTimer):
+        if isinstance(target, ProgrammableTimer):
             sdk_timer = target._get_sdk_instance(sdk.ProgrammableTimer)
             return ProgrammableTimerEffect(
                 sdk.ProgrammableTimerEffect(sdk_timer, self.__context)
             )
-        elif isinstance(target, Metric):
+        if isinstance(target, Metric):
             sdk_metric = target._get_sdk_instance(sdk.Metric)
             return MetricEffect(sdk.MetricEffect(sdk_metric, self.__context))
-        elif isinstance(target, Shutdown):  # type: ignore [reportUnnecessaryIsInstance]
+        if isinstance(target, Shutdown):  # type: ignore [reportUnnecessaryIsInstance]
             sdk_shutdown = target._get_sdk_instance(sdk.Shutdown)
             return ShutdownEffect(sdk.ShutdownEffect(sdk_shutdown, self.__context))
-        else:
-            raise ValueError(f"{type(target)} is not a valid target for an effect.")
-
-
-class ReactionContext(ReactionInterface):  # pyright: ignore[reportDeprecated]
-    """The context passed to a reaction declaration.
-
-    An instance is passed automatically to any method decorated with
-    :deco:`reaction` or :deco:`reaction_with_deadline`. Use it to declare the
-    reaction's triggers and effects, and to read the reaction-scoped timing API.
-    The reaction handler may capture the context object in its closure to access
-    the timing API during execution.
-
-    .. note::
-        The timing attributes are only meaningful while the reaction handler
-        executes. They remain accessible during the reaction declaration, but
-        there they return defined placeholders that must not be relied upon.
-    """
-
-    def __init__(self, sdk_reaction: sdk.Reaction) -> None:
-        super().__init__(sdk_reaction.context())
-        self.__sdk_reaction = sdk_reaction
+        raise ValueError(f"{type(target)} is not a valid target for an effect.")
 
     @property
     def current_time(self) -> datetime.datetime:
@@ -1488,7 +1364,7 @@ class Reaction(Element):
     @staticmethod
     def __check_handler_signature(
         sdk_reaction: sdk.Reaction, handler: object
-    ) -> None | str:
+    ) -> str | None:
         if handler is None:
             return (
                 f"Reaction {sdk_reaction.fqn} has no reaction handler. "
@@ -1602,8 +1478,6 @@ def reaction(
             :class:`~xronos.ReactionContext` as its first argument and return
             a reaction handler. Failing to return a handler will result in an
             exception when the reactor containing the reaction is initialized.
-            Annotating the argument as the deprecated
-            :class:`~xronos.ReactionInterface` is still accepted.
 
     To declare a reaction with a deadline, use :deco:`reaction_with_deadline`
     instead.

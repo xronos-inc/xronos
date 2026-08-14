@@ -8,7 +8,7 @@
 import datetime
 import math
 import sys
-from typing import Callable
+from collections.abc import Callable
 
 import controller as webots  # type: ignore [import-not-found]
 import xronos
@@ -236,20 +236,16 @@ class Hand(xronos.Reactor):
 
         def handler() -> None:
             if self.__is_moving and all(
-                [
-                    pos.is_present()
-                    and math.isclose(pos.get(), self.GRASP_POS, abs_tol=0.02)
-                    for pos in finger_position_triggers
-                ]
+                pos.is_present()
+                and math.isclose(pos.get(), self.GRASP_POS, abs_tol=0.02)
+                for pos in finger_position_triggers
             ):
                 self.__is_moving = False
                 is_grasped_effect.set(None)
             elif self.__is_moving and all(
-                [
-                    pos.is_present()
-                    and math.isclose(pos.get(), self.RELEASE_POS, abs_tol=0.02)
-                    for pos in finger_position_triggers
-                ]
+                pos.is_present()
+                and math.isclose(pos.get(), self.RELEASE_POS, abs_tol=0.02)
+                for pos in finger_position_triggers
             ):
                 self.__is_moving = False
                 is_released_effect.set(None)
@@ -319,22 +315,18 @@ class Arm(xronos.Reactor):
 
         def handler() -> None:
             if self.__is_moving and all(
-                [
-                    pos.is_present() and math.isclose(pos.get(), target, abs_tol=0.1)
-                    for pos, target in zip(
-                        joint_position_triggers, self.ROTATED_POSITIONS
-                    )
-                ]
+                pos.is_present() and math.isclose(pos.get(), target, abs_tol=0.1)
+                for pos, target in zip(
+                    joint_position_triggers, self.ROTATED_POSITIONS, strict=False
+                )
             ):
                 self.__is_moving = False
                 is_rotated_effect.set(None)
             elif self.__is_moving and all(
-                [
-                    pos.is_present() and math.isclose(pos.get(), target, abs_tol=0.02)
-                    for pos, target in zip(
-                        joint_position_triggers, self.NEUTRAL_POSITIONS
-                    )
-                ]
+                pos.is_present() and math.isclose(pos.get(), target, abs_tol=0.02)
+                for pos, target in zip(
+                    joint_position_triggers, self.NEUTRAL_POSITIONS, strict=False
+                )
             ):
                 self.__is_moving = False
                 is_back_effect.set(None)
@@ -350,7 +342,7 @@ class Arm(xronos.Reactor):
 
         def handler() -> None:
             self.__is_moving = True
-            for joint, pos in zip(joint_effects, self.ROTATED_POSITIONS):
+            for joint, pos in zip(joint_effects, self.ROTATED_POSITIONS, strict=False):
                 joint.set(pos)
 
         return handler
@@ -364,7 +356,7 @@ class Arm(xronos.Reactor):
 
         def handler() -> None:
             self.__is_moving = True
-            for joint, pos in zip(joint_effects, self.NEUTRAL_POSITIONS):
+            for joint, pos in zip(joint_effects, self.NEUTRAL_POSITIONS, strict=False):
                 joint.set(pos)
 
         return handler

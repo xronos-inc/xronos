@@ -3,7 +3,6 @@
 
 #include <iostream>
 #include <memory>
-#include <sstream>
 #include <string>
 #include <vector>
 
@@ -15,7 +14,6 @@
 #include "xronos/sdk/programmable_timer.hh"
 #include "xronos/sdk/reactor.hh"
 #include "xronos/sdk/time.hh"
-#include "xronos/util/logging.hh"
 #include "gtest/gtest.h"
 
 using namespace std::literals::chrono_literals;
@@ -149,14 +147,13 @@ TEST(startup_and_shutdown, TestShutdownWithEffect) {
   TestEnvironment env{};
   StartupAndShutdownTest shutdown_test{"startup_and_shutdown_test", env.context()};
 
-  std::stringstream capture{};
-  util::log::detail::Logger::set_ostream(capture);
+  testing::internal::CaptureStderr();
 
   EXPECT_THROW(env.execute(), ValidationError);
 
   EXPECT_EQ(shutdown_test.reaction_executed(), 0);
 
-  std::string captured_output = capture.str();
+  std::string captured_output = testing::internal::GetCapturedStderr();
   EXPECT_FALSE(captured_output.empty());
   EXPECT_NE(captured_output.find("Reactions triggered by shutdown may not have any effects"), std::string::npos);
 }

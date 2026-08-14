@@ -1,7 +1,6 @@
 # SPDX-FileCopyrightText: Copyright (c) Xronos Inc.
 # SPDX-License-Identifier: BSD-3-Clause
 
-from typing import Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -21,7 +20,7 @@ class MonteCarloPiAnimation:
         self._init_plot()
         self.scatter, self.pi_estimate_text = self._init_scatter_and_text()
 
-    def _init_scatter_and_text(self) -> Tuple[plt.Line2D, plt.Text]:
+    def _init_scatter_and_text(self) -> tuple[plt.Line2D, plt.Text]:
         """Initialize scatter plot and text for displaying PI estimate."""
         (scatter,) = self.ax.plot([], [], "b.", markersize=3)
         pi_estimate_text = self.ax.text(-0.95, 1.05, "", fontsize=18)
@@ -35,13 +34,13 @@ class MonteCarloPiAnimation:
         circle = plt.Circle((0, 0), 1, edgecolor="r", facecolor="none")
         self.ax.add_artist(circle)
 
-    def _init_animation(self) -> Tuple[plt.Line2D, plt.Text]:
+    def _init_animation(self) -> tuple[plt.Line2D, plt.Text]:
         """Initialization function for the animation."""
         self.scatter.set_data([], [])
         self.pi_estimate_text.set_text("")
         return self.scatter, self.pi_estimate_text
 
-    def _update_animation(self, frame: int) -> Tuple[plt.Line2D, plt.Text]:
+    def _update_animation(self, frame: int) -> tuple[plt.Line2D, plt.Text]:
         """Update function for the animation."""
         for _ in range(self._points_per_frame):
             # Generate a random point

@@ -4,7 +4,8 @@
 import argparse
 import datetime
 import time
-from typing import Callable, Optional, cast
+from collections.abc import Callable
+from typing import cast
 
 import xronos
 from parse import Result, parse  # type: ignore
@@ -131,7 +132,7 @@ class ArmControl(xronos.Reactor):
         return self.position
 
 
-def user_input_parser(cmd: str) -> Trajectory | None | KeyboardInterrupt:
+def user_input_parser(cmd: str) -> Trajectory | KeyboardInterrupt | None:
     if cmd == "help":
         print(
             "CLI to robot arm controller."
@@ -139,7 +140,7 @@ def user_input_parser(cmd: str) -> Trajectory | None | KeyboardInterrupt:
             + " Exit with `exit` or Ctrl+C"
         )
         return None
-    elif cmd == "exit":
+    if cmd == "exit":
         return KeyboardInterrupt()
 
     r = parse("moveto {}", cmd)
@@ -155,12 +156,11 @@ def user_input_parser(cmd: str) -> Trajectory | None | KeyboardInterrupt:
             trajectory.append(pose)
     if len(trajectory) > 0:
         return Trajectory(trajectory)
-    else:
-        return None
+    return None
 
 
 def goal_to_pose(goal: str) -> Pose | None:
-    pose: Optional[Pose] = None
+    pose: Pose | None = None
     if goal == "green":
         pose = pose_constants.P_GREEN
     elif goal == "red":

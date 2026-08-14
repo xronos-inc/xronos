@@ -64,7 +64,9 @@ def test_invalid_reaction_handler():
         FunctionHandlerWithPositionalArg,
         FunctorWithArgs,
     ]:
-        with pytest.raises(xronos.InvalidReactionHandler):
+        # Depending on the reactor class, the handler is rejected either at
+        # create_reactor() or at execute(), so the block deliberately spans both.
+        with pytest.raises(xronos.InvalidReactionHandler):  # noqa: PT012
             env = xronos.Environment()
             env.create_reactor("test", reactor_class)
             env.execute()

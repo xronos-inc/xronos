@@ -4,10 +4,10 @@
 # pyright: standard
 
 import threading
+from collections.abc import Callable
 from concurrent.futures import Future
 from functools import partial
 from http.server import HTTPServer, SimpleHTTPRequestHandler
-from typing import Callable
 
 import xronos
 
@@ -66,7 +66,7 @@ class Webserver(xronos.Reactor):
                 self.__server.server_activate()
                 self.__server_thread.start()
             except Exception as e:
-                log(self, f"failed to start: {e}")
+                log(self.name, ctx, f"failed to start: {e}")
                 stopped_effect.set(None)
 
         return handler
@@ -86,7 +86,7 @@ class Webserver(xronos.Reactor):
         stopped_effect = ctx.add_effect(self.service_stopped)
 
         def handler() -> None:
-            log(self, "stopped")
+            log(self.name, ctx, "stopped")
             stopped_effect.set(None)
 
         return handler
@@ -98,7 +98,7 @@ class Webserver(xronos.Reactor):
 
         def handler() -> None:
             if self.__server_thread.is_alive():
-                log(self, "warning: service was not stopped before shutdown")
+                log(self.name, ctx, "warning: service was not stopped before shutdown")
                 if (
                     not self.__server_stop_thread.is_alive()
                     and not self.__server_stop_thread_started.done()
@@ -124,4 +124,4 @@ class Webserver(xronos.Reactor):
     @xronos.reaction
     def __on_async_log(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
         async_log = ctx.add_trigger(self.__async_log)
-        return lambda: log(self, async_log.get())
+        return lambda: log(self.name, ctx, async_log.get())

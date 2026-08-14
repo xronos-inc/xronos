@@ -20,6 +20,7 @@
 #include "grpcpp/server_builder.h"
 #include "grpcpp/server_context.h"
 #include "grpcpp/support/status.h"
+#include "xronos/abi/backend.hh"
 #include "xronos/core/connection_graph.hh"
 #include "xronos/core/element.hh"
 #include "xronos/core/reactor_model.hh"
@@ -36,6 +37,13 @@ using namespace xronos::messages;
 using namespace xronos::services;
 using namespace xronos::graph_exporter;
 using namespace xronos;
+
+namespace {
+class NoopReactionHandler final : public abi::ReactionHandler {
+public:
+  void invoke() final {}
+};
+} // namespace
 
 auto lookup_element(const reactor_graph::Graph& graph, std::uint64_t uid) -> const reactor_graph::ReactorElement& {
   for (const auto& elem : graph.elements()) {
@@ -192,13 +200,17 @@ TEST_CASE("Serialization of various reactor elements", "[exporter]") {
       model.element_registry.add_new_element("output", core::OutputPortTag{}, elements.uid).value();
   const core::Element& reaction1 =
       model.element_registry
-          .add_new_element("reaction1", core::ReactionTag{std::make_unique<core::ReactionProperties>([]() {}, 0)},
-                           elements.uid)
+          .add_new_element(
+              "reaction1",
+              core::ReactionTag{std::make_unique<core::ReactionProperties>(std::make_unique<NoopReactionHandler>(), 0)},
+              elements.uid)
           .value();
   const core::Element& reaction3 =
       model.element_registry
-          .add_new_element("reaction3", core::ReactionTag{std::make_unique<core::ReactionProperties>([]() {}, 2)},
-                           elements.uid)
+          .add_new_element(
+              "reaction3",
+              core::ReactionTag{std::make_unique<core::ReactionProperties>(std::make_unique<NoopReactionHandler>(), 2)},
+              elements.uid)
           .value();
   const core::Element& empty =
       model.element_registry.add_new_element("empty", core::ReactorTag{}, elements.uid).value();
@@ -564,6 +576,29 @@ public:
   TestServer() = default;
   ~TestServer() override { REQUIRE(called); }
 };
+
+// The value of `serialize_reactor_graph` is that the bytes it hands a caller are the message the
+// diagram server would have received, so that both draw the same picture. That only holds while
+// the two share a builder; a second serialization path that drifted would look correct in
+// isolation.
+TEST_CASE("Serialized graph bytes decode to the message the exporter builds", "[exporter]") {
+  core::ReactorModel model{};
+  telemetry::AttributeManager attribute_manager{};
+  source_location::SourceLocationRegistry source_location_registry{};
+
+  const core::Element& reactor =
+      model.element_registry.add_new_element("reactor", core::ReactorTag{}, std::nullopt).value();
+  model.element_registry.add_new_element("port", core::InputPortTag{}, reactor.uid).value();
+
+  const auto expected =
+      graph_exporter::detail::build_graph_with_metadata(model, attribute_manager, source_location_registry);
+  const std::string bytes = graph_exporter::serialize_reactor_graph(model, attribute_manager, source_location_registry);
+
+  diagram_generator::GraphWithMetadata decoded{};
+  REQUIRE(decoded.ParseFromString(bytes));
+  REQUIRE(decoded.SerializeAsString() == expected.SerializeAsString());
+  REQUIRE(decoded.graph().elements_size() == 2);
+}
 
 TEST_CASE("Check exporter grpc call", "[exporter]") {
   core::ReactorModel model{};

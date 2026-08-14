@@ -58,7 +58,7 @@ class SocketInput(ExternalInput[bytes]):
         TCP_CLIENT = "tcp_client"
         UDP_LISTENER = "udp_listener"
 
-    def __init__(  # noqa: PLR0913
+    def __init__(  # noqa: PLR0913, PLR0917
         self,
         host: str,
         port: int,
@@ -102,7 +102,6 @@ class SocketInput(ExternalInput[bytes]):
         # closed properly. To avoid getting "Address already in use" errors we
         # explicitly allow the reuse of the address.
         allow_reuse_address = True
-        pass
 
     class __RequestHandler(socketserver.BaseRequestHandler):
         def handle(self) -> None:
@@ -183,7 +182,6 @@ class SocketInput(ExternalInput[bytes]):
                         # If reconnect is enabled, wait for a while and try to
                         # reconnect.
                         time.sleep(self.__reconnect_interval)
-                        pass
                     else:
                         raise
 

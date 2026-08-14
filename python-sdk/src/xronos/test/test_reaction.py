@@ -3,7 +3,7 @@
 
 # type: ignore
 
-from typing import Callable
+from collections.abc import Callable
 
 import pytest
 
@@ -28,15 +28,15 @@ class TestReactionDecorator:
         class Reactor(core.Reactor):
             pass
 
-        desc_foo = core.ReactionDescriptor(object(), list())
+        desc_foo = core.ReactionDescriptor(object(), [])
 
         with pytest.raises(AssertionError):
-            desc_foo._name
+            _ = desc_foo._name
 
         desc_foo.__set_name__(Reactor, "foo")
         assert desc_foo._name == "foo"
 
-        desc_bar = core.ReactionDescriptor(object(), list())
+        desc_bar = core.ReactionDescriptor(object(), [])
         desc_bar.__set_name__(Reactor, "bar")
         assert desc_bar._name == "bar"
 

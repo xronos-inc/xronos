@@ -112,8 +112,8 @@ public:
     void (*python_sigint_handler)(int){nullptr};
   };
 
-  PyEnvironment(unsigned workers, bool fast, bool render_reactor_graph, Duration timeout = Duration::max())
-      : Environment(workers, fast, timeout, render_reactor_graph) {}
+  PyEnvironment(bool fast, bool render_reactor_graph, Duration timeout = Duration::max())
+      : Environment(fast, timeout, render_reactor_graph) {}
 
   void execute() {
     py::gil_scoped_release release;
@@ -129,15 +129,6 @@ public:
       , assemble_callback_{std::move(assemble_callback)} {}
 
   using Reactor::context;
-  // The reactor-level timing API is deprecated in favor of the reaction-scoped
-  // API (ADR 0049). The Python SDK still exposes the reactor-level methods for
-  // backward compatibility, so we keep exposing them and silence the deprecation warning locally.
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-  using Reactor::get_lag;
-  using Reactor::get_time;
-  using Reactor::get_time_since_startup;
-#pragma GCC diagnostic pop
   using Reactor::shutdown;
   using Reactor::startup;
 
@@ -175,9 +166,14 @@ PYBIND11_MODULE(_cpp_sdk, mod, py::mod_gil_not_used()) {
   // the exception is thrown.
   validation_error.attr("__module__") = "xronos";
 
-  auto duplicate_name_error = py::register_exception<DuplicateNameError>(mod, "DuplicateNameError");
-  duplicate_name_error.doc() = "Exception that is thrown when creating an element with a name that is already in use.";
-  duplicate_name_error.attr("__module__") = "xronos";
+  auto invalid_name_error = py::register_exception<InvalidNameError>(mod, "InvalidNameError");
+  // The character list is an RST inline literal (double backticks). Sphinx
+  // renders this docstring, and a bare `*` would open inline emphasis that
+  // never closes, which fails the docs build.
+  invalid_name_error.doc() = "Exception that is thrown when creating an element with an invalid name: one that is "
+                             "empty, contains whitespace or any of ``.,/*$?#@``, or is already in use within the same "
+                             "parent.";
+  invalid_name_error.attr("__module__") = "xronos";
 
   py::class_<detail::SourceLocationView>(mod, "SourceLocation")
       .def(py::init<std::string_view, std::string_view, std::uint32_t, std::uint32_t, std::uint32_t, std::uint32_t>(),
@@ -196,9 +192,8 @@ PYBIND11_MODULE(_cpp_sdk, mod, py::mod_gil_not_used()) {
   py::class_<Environment>(mod, "BaseEnvironment");
 
   py::class_<PyEnvironment, Environment>(mod, "Environment")
-      .def(py::init<unsigned, bool, bool>(), py::arg("workers"), py::arg("fast"), py::arg("render_reactor_graph"))
-      .def(py::init<unsigned, bool, bool, Duration>(), py::arg("workers"), py::arg("fast"),
-           py::arg("render_reactor_graph"), py::arg("timeout"))
+      .def(py::init<bool, bool>(), py::arg("fast"), py::arg("render_reactor_graph"))
+      .def(py::init<bool, bool, Duration>(), py::arg("fast"), py::arg("render_reactor_graph"), py::arg("timeout"))
       .def("execute", &PyEnvironment::execute)
       .def("enable_telemetry", &PyEnvironment::enable_telemetry, py::arg("application_name"), py::arg("endpoint"))
       .def("connect",
@@ -241,17 +236,6 @@ PYBIND11_MODULE(_cpp_sdk, mod, py::mod_gil_not_used()) {
                                 py::arg("name"), py::arg("context"), py::arg("assemble_callback"))
                            .def(py::init<std::string_view, ReactorContext, std::function<void()>>(), py::arg("name"),
                                 py::arg("context"), py::arg("assemble_callback"));
-
-  // The reactor-level timing API is deprecated (ADR 0049); the Python API still
-  // exposes it until it is migrated. Register these in a separate statement so
-  // the deprecation warning can be silenced locally (a #pragma is not allowed
-  // inside the chained .def(...) expression above).
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-  reactor_class.def("get_lag", &PyReactor::get_lag)
-      .def("get_time", &PyReactor::get_time)
-      .def("get_time_since_startup", &PyReactor::get_time_since_startup);
-#pragma GCC diagnostic pop
 
   reactor_class.def_property_readonly("startup", &PyReactor::startup)
       .def_property_readonly("shutdown", &PyReactor::shutdown)

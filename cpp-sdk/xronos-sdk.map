@@ -1,0 +1,56 @@
+# Linker version script controlling which symbols libxronos-sdk.so exports.
+# This is an allowlist: `local: *` hides everything -- the statically linked
+# xronos-core / util / validator / runtime-default archives, and this library's
+# own inline vague-linkage spill (the runtime implementation, the context and
+# provider vtables/typeinfos) -- so only the symbols matched under `global:`
+# remain visible.
+#
+# Keeping it an allowlist is deliberate: any internal library or template
+# instantiation added in the future is hidden automatically rather than
+# silently leaking as a duplicated symbol.
+{
+  global:
+    extern "C++" {
+      # The compiled SDK API: what the header-inline Environment constructors,
+      # execute/enable_telemetry, and the `xronos run` host bind against.
+      "xronos::sdk::Environment::execute()";
+      "xronos::sdk::Environment::execute(xronos::sdk::RuntimeProvider const&)";
+      "xronos::sdk::Environment::enable_telemetry(std::basic_string_view<char, std::char_traits<char> >, std::basic_string_view<char, std::char_traits<char> >)";
+      "xronos::sdk::detail::create_default_program_context()";
+      # The low-level Environment constructor is compiled here (it mints the
+      # concrete program context); the inline public constructors call it.
+      "xronos::sdk::Environment::Environment(bool, std::chrono::duration<long, std::ratio<1l, 1000000000l> >, bool)";
+      "xronos::sdk::DefaultRuntimeProvider::get_runtime() const";
+      "xronos::sdk::DefaultRuntimeProvider::version() const";
+
+      # DefaultRuntimeProvider is constructed in consumer code (the `xronos run`
+      # version probe does DefaultRuntimeProvider{}.version()), but its key
+      # functions are defined out-of-line here, so its vtable/typeinfo live only
+      # in this library and must stay visible for that construction to link.
+      "vtable for xronos::sdk::DefaultRuntimeProvider";
+      "typeinfo for xronos::sdk::DefaultRuntimeProvider";
+      "typeinfo name for xronos::sdk::DefaultRuntimeProvider";
+
+      # RTTI of the exception types thrown inside this library and caught by
+      # type across the SDK/implementation boundary -- in user code and in the
+      # header-inline SDK glue (detail/element.hh catches InvalidNameError).
+      #
+      # The abi types sit in `inline namespace v1`, so the demangled name MUST
+      # carry the v1: a wrong spelling exports nothing, and cross-DSO catch then
+      # silently degrades to libstdc++ name comparison here (and breaks outright
+      # on macOS/libc++, which matches type_info by address). check-exported-
+      # symbols.sh asserts these are present so the failure is loud, not silent.
+      "typeinfo for xronos::sdk::VersionMismatchError";
+      "typeinfo name for xronos::sdk::VersionMismatchError";
+      "vtable for xronos::sdk::VersionMismatchError";
+      "typeinfo for xronos::abi::v1::ValidationError";
+      "typeinfo name for xronos::abi::v1::ValidationError";
+      "vtable for xronos::abi::v1::ValidationError";
+      "typeinfo for xronos::abi::v1::InvalidNameError";
+      "typeinfo name for xronos::abi::v1::InvalidNameError";
+      "vtable for xronos::abi::v1::InvalidNameError";
+    };
+
+  local:
+    *;
+};

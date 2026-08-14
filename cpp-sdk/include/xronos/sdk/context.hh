@@ -35,8 +35,8 @@ private:
                      detail::SourceLocationView source_location)
       : program_context_{program_context}
       , source_location_{source_location} {}
-  // using a reference wrapper here to allow passing around context objects more
-  // easily (without requiring std::move)
+  // A reference wrapper keeps the context trivially copyable; it refers to the
+  // stable program_context_ the Environment owns.
   std::reference_wrapper<const std::shared_ptr<detail::ProgramContext>> program_context_;
   detail::SourceLocationView source_location_;
 
@@ -56,8 +56,6 @@ private:
       , parent_uid_{reactor_uid}
       , source_location_{source_location} {}
 
-  // using a reference wrapper here to allow passing around context objects more
-  // easily (without requiring std::move)
   std::reference_wrapper<const std::shared_ptr<detail::ProgramContext>> program_context_;
   std::uint64_t parent_uid_;
   detail::SourceLocationView source_location_;

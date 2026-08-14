@@ -4,7 +4,6 @@
 #ifndef XRONOS_RUNTIME_DEFAULT_DETAIL_SCHEDULER_HH
 #define XRONOS_RUNTIME_DEFAULT_DETAIL_SCHEDULER_HH
 
-#include <any>
 #include <condition_variable>
 #include <cstdint>
 #include <deque>
@@ -13,8 +12,11 @@
 #include <map>
 #include <mutex>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
+#include "xronos/abi/backend.hh"
+#include "xronos/abi/value.hh"
 #include "xronos/core/reactor_model.hh"
 #include "xronos/core/time.hh"
 #include "xronos/logical_time/tag.hh"
@@ -24,14 +26,14 @@
 namespace xronos::runtime::default_::detail {
 
 struct Event {
-  std::any value;
+  abi::AnyValue value;
   std::uint64_t element_uid;
 };
 
 struct Reaction {
   std::uint64_t index;
   std::uint64_t uid;
-  std::reference_wrapper<std::function<void()>> handler;
+  std::reference_wrapper<abi::ReactionHandler> handler;
 
   auto operator<=>(const Reaction& other) const noexcept { return index <=> other.index; }
   auto operator==(const Reaction& other) const noexcept { return index == other.index; }
@@ -39,14 +41,15 @@ struct Reaction {
 
 class EventSource {
 public:
-  [[nodiscard]] auto get() const noexcept -> std::any { return value_; }
-  [[nodiscard]] auto is_present() const noexcept -> bool { return value_.has_value(); }
+  // The empty value means that no event is present; valueless events carry a
+  // boxed `abi::Void`.
+  [[nodiscard]] auto get() const noexcept -> const abi::AnyValue& { return value_; }
 
-  void activate(const std::any& value) { value_ = value; }
+  void activate(abi::AnyValue&& value) { value_ = std::move(value); }
   void reset() { value_.reset(); }
 
 private:
-  std::any value_;
+  abi::AnyValue value_;
 };
 
 class EventQueue {
@@ -54,8 +57,8 @@ public:
   EventQueue(const ExecutionProperties& properties)
       : fast_mode_(properties.fast_mode) {}
 
-  void schedule_event(std::uint64_t element_uid, const std::any& value, const logical_time::Tag& tag);
-  void trigger_external_event(std::uint64_t element_uid, const std::any& value);
+  void schedule_event(std::uint64_t element_uid, abi::AnyValue&& value, const logical_time::Tag& tag);
+  void trigger_external_event(std::uint64_t element_uid, abi::AnyValue&& value);
   auto wait_until_next_event(const logical_time::Tag& max_tag)
       -> std::map<logical_time::Tag, std::vector<Event>>::node_type;
   auto check_has_events_at_tag(const logical_time::Tag& tag) const noexcept -> bool;
@@ -81,12 +84,12 @@ public:
 
   auto get_event_source(std::uint64_t element_uid) const -> const EventSource& { return event_sources_[element_uid]; }
 
-  void schedule_event(std::uint64_t element_uid, const std::any& value, core::Duration delay);
-  void schedule_event(std::uint64_t element_uid, const std::any& value, const logical_time::Tag& tag);
-  void trigger_external_event(std::uint64_t element_uid, const std::any& value) {
-    event_queue_.trigger_external_event(element_uid, value);
+  void schedule_event(std::uint64_t element_uid, abi::AnyValue&& value, core::Duration delay);
+  void schedule_event(std::uint64_t element_uid, abi::AnyValue&& value, const logical_time::Tag& tag);
+  void trigger_external_event(std::uint64_t element_uid, abi::AnyValue&& value) {
+    event_queue_.trigger_external_event(element_uid, std::move(value));
   }
-  void set_port(std::uint64_t port_uid, const std::any& value);
+  void set_port(std::uint64_t port_uid, abi::AnyValue&& value);
   void trigger_shutdown() { shutdown_tag_ = current_tag_ + core::Duration::zero(); }
 
   void execute();
@@ -111,12 +114,21 @@ private:
   bool has_external_triggers_{false};
   std::exception_ptr active_exception_{nullptr};
 
-  void trigger_event(std::uint64_t element_uid, const std::any& value);
+  void trigger_event(std::uint64_t element_uid, abi::AnyValue&& value);
+
+  // Delivers `value` to every leaf and boundary crossing of the subtree:
+  // leaves first, then one serialization per boundary node and one
+  // deserialization per branch, recursing with the decoded box. Returns
+  // false when a serializer or deserializer threw. A failure aborts the
+  // entire remaining walk: it is logged, stored for the rethrow from
+  // execute, and triggers shutdown.
+  auto deliver_subtree(const ResolvedDeliverySubtree& subtree, abi::AnyValue&& value) noexcept -> bool;
+  void handle_boundary_error(std::uint64_t serialize_uid, std::uint64_t deserialize_uid, bool serializing) noexcept;
 
   auto process_next_tag(const logical_time::Tag& max_tag) -> bool;
   void execute_all_ready_reactions();
   void reset_all_active_events();
-  void execute_reaction(const std::function<void()>& handler);
+  void execute_reaction(abi::ReactionHandler& handler);
 };
 
 } // namespace xronos::runtime::default_::detail

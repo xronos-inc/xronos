@@ -4,7 +4,7 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "xronos"
-version = "0.12.0"
+version = "0.13.0"
 description = "Reactors for Python"
 authors = [
   { name = "Christian Menard", email = "christian@xronos.com" },
@@ -43,7 +43,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dashboard = [
-  'xronos-dashboard==0.12.0',
+  'xronos-dashboard==0.13.0',
 ]
 
 [project.urls]
@@ -91,9 +91,13 @@ exclude = [
 strict = ["*"]
 
 [tool.ruff.lint]
-select = ['E', 'F', 'W', 'A', 'PL', 'I', 'RUF', 'D']
+select = ['E', 'F', 'W', 'A', 'B', 'C4', 'PL', 'I', 'RUF', 'D', 'UP', 'PIE', 'RET', 'PT']
 ignore = ['D1']
 fixable = ["ALL"]
+
+[tool.ruff.lint.flake8-bugbear]
+# `typing.cast` is a runtime no-op, so calling it in an argument default is safe.
+extend-immutable-calls = ["typing.cast"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"

@@ -10,6 +10,7 @@
 #include "xronos/util/logging.hh"
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <ranges>
@@ -102,13 +103,49 @@ void DependencyGraph::add_port_dependencies(const core::ReactorModel& model) {
           if (connection->delay.has_value()) {
             add_weak_dependency(downstream_reaction, upstream_reaction, *connection->delay);
           } else {
-            add_strong_dependency(downstream_reaction, upstream_reaction);
+            add_strong_dependency(downstream_reaction, upstream_reaction,
+                                  DependencyConnection{.from_uid = connection->from_uid, .to_uid = trigger_uid});
           }
         }
       }
     }
   }
 }
+
+namespace {
+
+// Describes a dependency cycle: the reactions on it, followed by the
+// connections its edges ride on.
+auto describe_cycle(const std::vector<std::uint64_t>& cycle, const core::ElementRegistry& elements,
+                    const std::unordered_map<std::uint64_t, std::vector<StrongDependency>>& strong_dependencies)
+    -> std::string {
+  std::stringstream sstream;
+  sstream << "There is a dependency cycle involving the following reactions:\n";
+  for (auto uid : cycle) {
+    sstream << "  - " << elements.get(uid).fqn << '\n';
+  }
+  std::vector<DependencyConnection> cycle_connections;
+  for (std::size_t i = 0; i < cycle.size(); i++) {
+    const auto& dependencies = strong_dependencies.at(cycle[i]);
+    auto dependency_uid = cycle[(i + 1) % cycle.size()];
+    auto edge = std::ranges::find_if(dependencies, [dependency_uid](const StrongDependency& dep) {
+      return dep.reaction_uid == dependency_uid && dep.via_connection.has_value();
+    });
+    if (edge != dependencies.end()) {
+      cycle_connections.push_back(*edge->via_connection);
+    }
+  }
+  if (!cycle_connections.empty()) {
+    sstream << "The cycle runs through the following connections:\n";
+    for (const auto& connection : cycle_connections) {
+      sstream << "  - " << elements.get(connection.from_uid).fqn << " -> " << elements.get(connection.to_uid).fqn
+              << '\n';
+    }
+  }
+  return sstream.str();
+}
+
+} // namespace
 
 auto DependencyGraph::total_order(const core::ElementRegistry& elements) const
     -> nonstd::expected<std::vector<std::uint64_t>, std::string> {
@@ -153,12 +190,7 @@ auto DependencyGraph::total_order(const core::ElementRegistry& elements) const
   }
 
   if (!cycle.empty()) {
-    std::stringstream sstream;
-    sstream << "There is a dependency cycle involving the following reactions:\n";
-    for (auto uid : cycle) {
-      sstream << "  - " << elements.get(uid).fqn << '\n';
-    }
-    return nonstd::unexpected(sstream.str());
+    return nonstd::unexpected(describe_cycle(cycle, elements, strong_dependencies_));
   }
 
   return order;

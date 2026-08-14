@@ -4,7 +4,7 @@
 # pyright: standard
 
 import datetime
-from typing import Callable, Dict, Set
+from collections.abc import Callable
 
 import numpy as np
 import xronos
@@ -54,13 +54,13 @@ class Synthesizer(xronos.Reactor):
         super().__init__()
         self._samplerate = samplerate
         self._blocksize = blocksize
-        self._clients: Dict[int, Set[str]] = {}
+        self._clients: dict[int, set[str]] = {}
         self.__update_timer.period = datetime.timedelta(
             seconds=self._blocksize / float(samplerate)
         )
 
     @staticmethod
-    def format_notes(notes: Set[str]) -> str:
+    def format_notes(notes: set[str]) -> str:
         """Create a human-readable list of active notes."""
         return " ".join(sorted(notes)) if notes else "nothing"
 
@@ -77,7 +77,7 @@ class Synthesizer(xronos.Reactor):
                 notes.add(kp.note)
             else:
                 notes.discard(kp.note)
-            log(self, f"playing {Synthesizer.format_notes(notes)}")
+            log(self.name, ctx, f"playing {Synthesizer.format_notes(notes)}")
 
         return handler
 
@@ -118,8 +118,8 @@ class Synthesizer(xronos.Reactor):
 
         return handler
 
-    def get_frequencies(self) -> Set[float]:
-        note_to_freq: Dict[str, float] = {
+    def get_frequencies(self) -> set[float]:
+        note_to_freq: dict[str, float] = {
             "C4": 261.63,
             "C#4": 277.18,
             "D4": 293.66,
@@ -134,7 +134,7 @@ class Synthesizer(xronos.Reactor):
             "B4": 493.88,
             "C5": 523.25,
         }
-        frequencies: Set[float] = set()
+        frequencies: set[float] = set()
         for client_notes in self._clients.values():
             for note in client_notes:
                 frequencies.add(note_to_freq[note])
@@ -150,4 +150,4 @@ class Synthesizer(xronos.Reactor):
     @xronos.reaction
     def __on_async_log(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
         async_log = ctx.add_trigger(self.__async_log)
-        return lambda: log(self, async_log.get())
+        return lambda: log(self.name, ctx, async_log.get())

@@ -5,7 +5,8 @@
 # pyright: standard
 
 import datetime
-from typing import Any, Callable, List, Literal, TypedDict, cast
+from collections.abc import Callable
+from typing import Any, Literal, TypedDict, cast
 
 import numpy as np
 import numpy.typing as npt
@@ -19,7 +20,7 @@ class TrainedLayerDefinition(TypedDict):
 
 
 class NeuralPredictor:
-    def __init__(self, architecture: List[TrainedLayerDefinition]):
+    def __init__(self, architecture: list[TrainedLayerDefinition]):
         """Initialize predictor with trained weights for any number of layers.
 
         This is produced in the save_architecture function
@@ -52,18 +53,18 @@ class TrainingController(xronos.Reactor):
     output_gradient = xronos.OutputPortDeclaration[float]()
     _training_timer = xronos.PeriodicTimerDeclaration()
 
-    def __init__(
+    def __init__(  # noqa: PLR0917
         self,
-        X: np.ndarray = np.array([]),
-        y: np.ndarray = np.array([]),
+        X: np.ndarray | None = None,
+        y: np.ndarray | None = None,
         convergence_threshold: float = 0.01,
         patience: int = 50,
         min_epochs: int = 100,
         max_epochs: int = 1000,
     ):
         super().__init__()
-        self.X = X
-        self.y = y
+        self.X = X if X is not None else np.array([])
+        self.y = y if y is not None else np.array([])
         self.current_idx = 0
         self.epoch = 0
         self.max_epochs = max_epochs
@@ -78,7 +79,7 @@ class TrainingController(xronos.Reactor):
             1000
         )  # loss should never really be more than one in worst case scenario
         self.epochs_without_improvement = 0
-        self.running_loss: List[float] = []
+        self.running_loss: list[float] = []
         self.window_size = 5  # we're going to calculate loss based on a moving average
 
     def check_convergence(self, current_loss: float) -> bool:
@@ -269,7 +270,7 @@ predictions.
 
 
 def save_architecture(
-    layers: List[DenseLayer], filename: str = "network_weights.npz"
+    layers: list[DenseLayer], filename: str = "network_weights.npz"
 ) -> None:
     save_dict = {}
     for i, layer in enumerate(layers):
@@ -283,7 +284,7 @@ def save_architecture(
 
 def load_architecture(
     filename: str = "network_weights.npz",
-) -> List[TrainedLayerDefinition]:
+) -> list[TrainedLayerDefinition]:
     with np.load(filename, allow_pickle=True) as data:
         # Count number of layers by looking at number of weight matrices
         num_layers = sum(1 for k in data.keys() if k.startswith("weights"))
@@ -307,16 +308,23 @@ could pass arbitrary data.
 """
 
 
-def train(
-    layer_dims: List[int] = [2, 6, 1],
+def train(  # noqa: PLR0917
+    layer_dims: list[int] | None = None,
     epochs: int = 500,
     learning_rate: float = 0.06,
-    X: np.ndarray = np.array([[0, 0], [0, 1], [1, 0], [1, 1]]),
-    y: np.ndarray = np.array([[0], [1], [1], [0]]),
+    X: np.ndarray | None = None,
+    y: np.ndarray | None = None,
     convergence_threshold: float = 0.01,
     patience: int = 70,
     min_epochs: int = 100,
 ) -> NeuralPredictor:
+    if layer_dims is None:
+        layer_dims = [2, 6, 1]
+    if X is None:
+        X = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
+    if y is None:
+        y = np.array([[0], [1], [1], [0]])
+
     env = xronos.Environment()
     controller = env.create_reactor(
         "controller",
@@ -329,7 +337,7 @@ def train(
         min_epochs=min_epochs,
     )
 
-    layers: List[DenseLayer] = []
+    layers: list[DenseLayer] = []
 
     for i in range(len(layer_dims) - 1):
         is_output = i == len(layer_dims) - 2
@@ -366,7 +374,7 @@ def train(
 if __name__ == "__main__":
     predictor = train(layer_dims=[2, 6, 1])
 
-    test_inputs: List[List[int]] = [[0, 0], [0, 1], [1, 0], [1, 1]]
+    test_inputs: list[list[int]] = [[0, 0], [0, 1], [1, 0], [1, 1]]
     print("Testing trained network:")
     for x in test_inputs:
         pred = predictor.predict(np.array(x))

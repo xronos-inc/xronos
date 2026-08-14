@@ -6,7 +6,7 @@
 # pyright: standard
 
 import datetime
-from typing import Callable
+from collections.abc import Callable
 
 import xronos
 
@@ -49,7 +49,7 @@ class LifecycleManager(xronos.Reactor):
         stop_timer_effect = ctx.add_effect(self.__stop_timer)
 
         def handler() -> None:
-            log(self, "stop requested")
+            log(self.name, ctx, "stop requested")
             stop_requested.set(None)
             stop_timer_effect.schedule(None, self.stop_timeout)
 
@@ -81,7 +81,7 @@ class LifecycleManager(xronos.Reactor):
                 and self.__webserver_stopped
             ):
                 self.stopped_gracefully = True
-                log(self, "requesting shutdown")
+                log(self.name, ctx, "requesting shutdown")
                 shutdown_effect.trigger_shutdown()
 
         return handler
@@ -94,8 +94,12 @@ class LifecycleManager(xronos.Reactor):
         def handler() -> None:
             if not self.stopped_gracefully:
                 timeout_s = self.stop_timeout.seconds
-                log(self, f"warning: services timed out after {timeout_s} seconds")
-                log(self, "requesting shutdown")
+                log(
+                    self.name,
+                    ctx,
+                    f"warning: services timed out after {timeout_s} seconds",
+                )
+                log(self.name, ctx, "requesting shutdown")
                 shutdown_effect.trigger_shutdown()
 
         return handler
@@ -103,4 +107,4 @@ class LifecycleManager(xronos.Reactor):
     @xronos.reaction
     def __on_shutdown(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
         ctx.add_trigger(self.shutdown)
-        return lambda: log(self, "stopped")
+        return lambda: log(self.name, ctx, "stopped")

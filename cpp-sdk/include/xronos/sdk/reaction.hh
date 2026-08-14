@@ -6,14 +6,20 @@
 #ifndef XRONOS_SDK_REACTION_HH
 #define XRONOS_SDK_REACTION_HH
 
-#include <any>
+#include <cassert>
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <optional>
+#include <string>
 #include <type_traits>
-#include <variant>
+#include <utility>
 
+#include "xronos/abi/backend.hh"
+#include "xronos/abi/value.hh"
+#include "xronos/sdk/context.hh"
+#include "xronos/sdk/detail/element.hh"
 #include "xronos/sdk/element.hh"
 #include "xronos/sdk/fwd.hh"
 #include "xronos/sdk/metric.hh"
@@ -25,7 +31,8 @@
 #include "xronos/sdk/shutdown.hh"
 #include "xronos/sdk/startup.hh"
 #include "xronos/sdk/time.hh"
-#include "xronos/sdk/value_ptr.hh"
+#include "xronos/sdk/value.hh"
+#include "xronos/value/boxing.hh"
 
 /**
  * @defgroup effects effects Reaction effect classes.
@@ -48,6 +55,16 @@ private:
 
   friend BaseReaction;
 };
+
+namespace detail {
+
+[[nodiscard]] inline auto get_reaction_time_access(const detail::ProgramContext& program_context,
+                                                   std::uint64_t reactor_uid) noexcept -> const abi::TimeAccess* {
+  // Null until the run is prepared (see abi::RuntimeBackend).
+  return program_context.runtime_backend().get_time_access(reactor_uid);
+}
+
+} // namespace detail
 
 /**
  * Base class for implementing reactions.
@@ -76,7 +93,10 @@ public:
    * be invoked directly. Use the Reactor::add_reaction() factory method
    * instead.
    */
-  BaseReaction(const ReactionProperties& properties);
+  BaseReaction(const ReactionProperties& properties)
+      : Element{register_reaction(properties, this), properties.name_, properties.context_}
+      , parent_uid_{detail::ContextAccess::get_parent_uid(properties.context_)}
+      , deadline_{properties.deadline_} {}
 
 protected:
   /**
@@ -116,12 +136,13 @@ protected:
    * no deadline, or if the program is not executing (e.g. during reaction
    * declaration), Duration::max() is returned.
    */
-  [[nodiscard]] auto slack() const noexcept -> Duration;
-
-  /**
-   * @deprecated Use slack() instead.
-   */
-  [[deprecated("Use slack() instead.")]] [[nodiscard]] auto remaining_slack() const noexcept -> Duration;
+  [[nodiscard]] auto slack() const noexcept -> Duration {
+    auto deadline_value = deadline();
+    if (!deadline_value.has_value()) {
+      return Duration::max();
+    }
+    return *deadline_value - std::chrono::system_clock::now();
+  }
 
   /**
    * Check whether the currently executing handler is still within its deadline.
@@ -131,7 +152,7 @@ protected:
    * @returns true while the wall clock has not yet reached the deadline (the
    * slack is positive), and false once the deadline has been missed.
    */
-  [[nodiscard]] auto is_before_deadline() const noexcept -> bool;
+  [[nodiscard]] auto is_before_deadline() const noexcept -> bool { return slack() > Duration::zero(); }
 
   /**
    * Get the current time.
@@ -150,7 +171,13 @@ protected:
    *
    * @returns The current time as provided by the internal clock.
    */
-  [[nodiscard]] auto current_time() const noexcept -> TimePoint;
+  [[nodiscard]] auto current_time() const noexcept -> TimePoint {
+    const auto* time_access = detail::get_reaction_time_access(*program_context(), parent_uid_);
+    if (time_access == nullptr) {
+      return TimePoint{};
+    }
+    return time_access->get_timestamp();
+  }
 
   /**
    * Get the current lag.
@@ -171,7 +198,13 @@ protected:
    *
    * @returns The current lag as a wall-clock duration.
    */
-  [[nodiscard]] auto lag() const noexcept -> Duration;
+  [[nodiscard]] auto lag() const noexcept -> Duration {
+    const auto* time_access = detail::get_reaction_time_access(*program_context(), parent_uid_);
+    if (time_access == nullptr) {
+      return Duration::zero();
+    }
+    return std::chrono::system_clock::now() - time_access->get_timestamp();
+  }
 
   /**
    * Get how far the internal clock has advanced since the startup event.
@@ -190,56 +223,144 @@ protected:
    * @returns The difference between the current time given by current_time()
    * and the time at which the program started.
    */
-  [[nodiscard]] auto elapsed_time() const noexcept -> Duration;
+  [[nodiscard]] auto elapsed_time() const noexcept -> Duration {
+    const auto* time_access = detail::get_reaction_time_access(*program_context(), parent_uid_);
+    if (time_access == nullptr) {
+      return Duration::zero();
+    }
+    return time_access->get_timestamp() - time_access->get_start_timestamp();
+  }
 
 private:
-  class TriggerImpl {
-  protected:
-    TriggerImpl(std::uint64_t trigger_uid, const ReactionContext& context);
+  // Invokes the user's reaction body through the ABI's reaction-handler
+  // interface. The reaction must outlive the handler, which the backend owns.
+  class HandlerImpl final : public abi::ReactionHandler {
+  public:
+    explicit HandlerImpl(BaseReaction& reaction)
+        : reaction_{reaction} {}
 
-    [[nodiscard]] auto get() const noexcept -> std::any;
-    [[nodiscard]] auto is_present() const noexcept -> bool;
+    void invoke() final { reaction_.get().handler(); }
+
+  private:
+    std::reference_wrapper<BaseReaction> reaction_;
+  };
+
+  class UntypedTrigger {
+  protected:
+    UntypedTrigger(std::uint64_t trigger_uid, const ReactionContext& context)
+        : trigger_uid_{trigger_uid}
+        , reaction_uid_{context.reaction_instance().uid()}
+        , program_context_{*context.reaction_instance().program_context()} {
+      context.reaction_instance().program_context()->backend().register_reaction_trigger(reaction_uid_, trigger_uid_);
+    }
+
+    [[nodiscard]] auto get() const noexcept -> const abi::AnyValue& {
+      if (const auto* impl = get_impl(); impl != nullptr) {
+        return impl->get();
+      }
+      static const abi::AnyValue empty{};
+      return empty;
+    }
+
+    [[nodiscard]] auto is_present() const noexcept -> bool {
+      if (const auto* impl = get_impl(); impl != nullptr) {
+        return impl->get().has_value();
+      }
+      return false;
+    }
 
   private:
     std::uint64_t trigger_uid_;
     std::uint64_t reaction_uid_;
     std::reference_wrapper<const detail::ProgramContext> program_context_;
 
-    mutable const runtime::GettableTrigger* impl_{nullptr};
-    [[nodiscard]] auto get_impl() const noexcept -> const runtime::GettableTrigger*;
+    mutable const abi::GettableTrigger* impl_{nullptr};
+    [[nodiscard]] auto get_impl() const noexcept -> const abi::GettableTrigger* {
+      if (impl_ == nullptr) {
+        impl_ = program_context_.get().runtime_backend().get_trigger(reaction_uid_, trigger_uid_);
+        assert(impl_ != nullptr);
+      }
+      return impl_;
+    }
   };
 
-  class PortEffectImpl {
+  class UntypedPortEffect {
   protected:
-    PortEffectImpl(std::uint64_t effect_uid, const ReactionContext& context);
+    UntypedPortEffect(std::uint64_t effect_uid, const ReactionContext& context)
+        : effect_uid_{effect_uid}
+        , reaction_uid_{context.reaction_instance().uid()}
+        , program_context_{*context.reaction_instance().program_context()} {
+      context.reaction_instance().program_context()->backend().register_reaction_effect(reaction_uid_, effect_uid_);
+    }
 
-    void set(const std::any& value) noexcept;
-    [[nodiscard]] auto get() const noexcept -> std::any;
-    [[nodiscard]] auto is_present() const noexcept -> bool;
+    void set(abi::AnyValue&& value) noexcept {
+      if (auto* impl = get_impl(); impl != nullptr) {
+        impl->set(std::move(value));
+      }
+    }
+
+    [[nodiscard]] auto get() const noexcept -> const abi::AnyValue& {
+      if (const auto* impl = get_impl(); impl != nullptr) {
+        return impl->get();
+      }
+      static const abi::AnyValue empty{};
+      return empty;
+    }
+
+    [[nodiscard]] auto is_present() const noexcept -> bool {
+      if (const auto* impl = get_impl(); impl != nullptr) {
+        return impl->get().has_value();
+      }
+      return false;
+    }
 
   private:
     std::uint64_t effect_uid_;
     std::uint64_t reaction_uid_;
     std::reference_wrapper<const detail::ProgramContext> program_context_;
 
-    mutable runtime::SettableEffect* impl_{nullptr};
-    [[nodiscard]] auto get_impl() noexcept -> runtime::SettableEffect*;
-    [[nodiscard]] auto get_impl() const noexcept -> const runtime::SettableEffect*;
+    mutable abi::SettableEffect* impl_{nullptr};
+    [[nodiscard]] auto get_impl() noexcept -> abi::SettableEffect* {
+      // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
+      return const_cast<abi::SettableEffect*>(std::as_const(*this).get_impl());
+    }
+    [[nodiscard]] auto get_impl() const noexcept -> const abi::SettableEffect* {
+      if (impl_ == nullptr) {
+        impl_ = program_context_.get().runtime_backend().get_settable_effect(reaction_uid_, effect_uid_);
+        assert(impl_ != nullptr);
+      }
+      return impl_;
+    }
   };
 
-  class ProgrammableTimerEffectImpl {
+  class UntypedProgrammableTimerEffect {
   protected:
-    ProgrammableTimerEffectImpl(std::uint64_t effect_uid, const ReactionContext& context);
+    UntypedProgrammableTimerEffect(std::uint64_t effect_uid, const ReactionContext& context)
+        : effect_uid_{effect_uid}
+        , reaction_uid_{context.reaction_instance().uid()}
+        , program_context_{*context.reaction_instance().program_context()} {
+      context.reaction_instance().program_context()->backend().register_reaction_effect(reaction_uid_, effect_uid_);
+    }
 
-    void schedule(const std::any& value, Duration delay) noexcept;
+    void schedule(abi::AnyValue&& value, Duration delay) noexcept {
+      if (auto* impl = get_impl(); impl != nullptr) {
+        impl->schedule(std::move(value), delay);
+      }
+    }
 
   private:
     std::uint64_t effect_uid_;
     std::uint64_t reaction_uid_;
     std::reference_wrapper<const detail::ProgramContext> program_context_;
 
-    runtime::SchedulableEffect* impl_{nullptr};
-    [[nodiscard]] auto get_impl() noexcept -> runtime::SchedulableEffect*;
+    abi::SchedulableEffect* impl_{nullptr};
+    [[nodiscard]] auto get_impl() noexcept -> abi::SchedulableEffect* {
+      if (impl_ == nullptr) {
+        impl_ = program_context_.get().runtime_backend().get_schedulable_effect(reaction_uid_, effect_uid_);
+        assert(impl_ != nullptr);
+      }
+      return impl_;
+    }
   };
 
 protected:
@@ -258,7 +379,7 @@ protected:
    * @tparam T The value type associated with events received on the triggering
    * event source.
    */
-  template <class T> class Trigger : public TriggerImpl {
+  template <class T> class Trigger : public UntypedTrigger {
   public:
     /**
      * Constructor.
@@ -273,49 +394,48 @@ protected:
      */
     template <template <class> class Serializer>
     Trigger(const InputPort<T, Serializer>& trigger, const ReactionContext& context)
-        : TriggerImpl{trigger.uid(), context} {}
+        : UntypedTrigger{trigger.uid(), context} {}
 
     /** @overload */
     template <template <class> class Serializer>
     Trigger(const OutputPort<T, Serializer>& trigger, const ReactionContext& context)
-        : TriggerImpl{trigger.uid(), context} {}
+        : UntypedTrigger{trigger.uid(), context} {}
 
     /** @overload */
     Trigger(const PhysicalEvent<T>& trigger, const ReactionContext& context)
-        : TriggerImpl{trigger.uid(), context} {}
+        : UntypedTrigger{trigger.uid(), context} {}
 
     /** @overload */
     Trigger(const ProgrammableTimer<T>& trigger, const ReactionContext& context)
-        : TriggerImpl{trigger.uid(), context} {}
+        : UntypedTrigger{trigger.uid(), context} {}
 
     /** @overload */
     Trigger(const PeriodicTimer& trigger, const ReactionContext& context)
       requires(std::is_same_v<T, void>)
-        : TriggerImpl{trigger.uid(), context} {}
+        : UntypedTrigger{trigger.uid(), context} {}
 
     /** @overload */
     Trigger(const Startup& trigger, const ReactionContext& context)
       requires(std::is_same_v<T, void>)
-        : TriggerImpl{trigger.uid(), context} {}
+        : UntypedTrigger{trigger.uid(), context} {}
 
     /** @overload */
     Trigger(const Shutdown& trigger, const ReactionContext& context)
       requires(std::is_same_v<T, void>)
-        : TriggerImpl{trigger.uid(), context} {}
+        : UntypedTrigger{trigger.uid(), context} {}
 
     /**
-     * Get the value of a currently present event.
+     * Get a view of the current event's value.
      *
-     * @returns A pointer to the value of the current event, or `nullptr` if there
-     * is no current event (is_present() is false).
+     * @returns A ValueView of the current event's value. The view is absent
+     * (evaluates to `false`) if no event is present at the current time.
+     * The view is only valid for the duration of the current reaction
+     * handler; copy it into a Value to keep it alive beyond that.
      */
-    [[nodiscard]] auto get() const noexcept -> ImmutableValuePtr<T>
+    [[nodiscard]] auto get() const noexcept -> ValueView<T>
       requires(!std::is_same_v<T, void>)
     {
-      if (!is_present()) {
-        return ImmutableValuePtr<T>{nullptr};
-      }
-      return std::any_cast<ImmutableValuePtr<T>>(TriggerImpl::get());
+      return detail::ValueAccess::view<T>(UntypedTrigger::get());
     }
 
     /**
@@ -323,7 +443,7 @@ protected:
      *
      * @returns `true` if an event is present, `false` otherwise.
      */
-    [[nodiscard]] auto is_present() const noexcept -> bool { return TriggerImpl::is_present(); }
+    [[nodiscard]] auto is_present() const noexcept -> bool { return UntypedTrigger::is_present(); }
   };
 
   /**
@@ -332,7 +452,7 @@ protected:
    * @tparam T The value type associated with the port.
    * @ingroup effects
    */
-  template <class T> class PortEffect : public PortEffectImpl {
+  template <class T> class PortEffect : public UntypedPortEffect {
   public:
     /**
      * Constructor.
@@ -343,46 +463,28 @@ protected:
      */
     template <template <class> class Serializer>
     PortEffect(InputPort<T, Serializer>& port, const ReactionContext& context)
-        : PortEffectImpl{port.uid(), context} {}
+        : UntypedPortEffect{port.uid(), context} {}
 
     /** @overload */
     template <template <class> class Serializer>
     PortEffect(OutputPort<T, Serializer>& port, const ReactionContext& context)
-        : PortEffectImpl{port.uid(), context} {}
+        : UntypedPortEffect{port.uid(), context} {}
 
     /**
-     * Write a value to the port sending a message to connected ports.
+     * Write a value to the port, sending a message to connected ports.
      *
-     * May be called multiple times, but at most one value is sent to connected
-     * ports. When called repeatedly at a given timestamp, the previous value is
-     * overwritten.
+     * May be called multiple times, but at most one message is sent to
+     * connected ports at any given time timestamp: when called repeatedly,
+     *  the previously written value is replaced.
      *
-     * @param value_ptr A pointer to the value to be written to the referenced
-     * port.
-     */
-    void set(const ImmutableValuePtr<T>& value_ptr)
-      requires(!std::is_same_v<T, void>)
-    {
-      PortEffectImpl::set(value_ptr);
-    }
-    /**
-     * @overload
-     */
-    void set(MutableValuePtr<T>&& value_ptr)
-      requires(!std::is_same_v<T, void>)
-    {
-      set(ImmutableValuePtr<T>{std::move(value_ptr)});
-    }
-    /**
-     * @overload
-     *
-     * @details Copy constructs the value using the given lvalue reference.
+     * @param value The value to be written to the referenced port. Copy
+     * constructs the value from the given lvalue reference.
      */
     template <class U>
     void set(const U& value)
       requires(!std::is_same_v<U, void> && std::is_same_v<T, U>)
     {
-      set(make_immutable_value<T>(value));
+      UntypedPortEffect::set(xronos::value::make<T>(value));
     }
     /**
      * @overload
@@ -393,7 +495,39 @@ protected:
     void set(U&& value)
       requires(!std::is_same_v<U, void> && std::is_same_v<T, U>)
     {
-      set(make_immutable_value<T>(std::forward<U>(value)));
+      UntypedPortEffect::set(xronos::value::make<T>(std::forward<U>(value)));
+    }
+    /**
+     * @overload
+     *
+     * @details Sends the given value without copying it. The value must not
+     * be empty (asserted in debug builds); nothing is sent otherwise.
+     */
+    void set(const Value<T>& value)
+      requires(!std::is_same_v<T, void>)
+    {
+      assert(value != nullptr && "an empty Value must not be sent");
+      if (value != nullptr) {
+        UntypedPortEffect::set(abi::AnyValue{detail::ValueAccess::unwrap(value)});
+      }
+    }
+    /**
+     * @overload
+     *
+     * @details Sends the viewed value without copying it. Use this to relay
+     * a value received on a trigger. The view must not be absent (asserted
+     * in debug builds); nothing is sent otherwise.
+     */
+    void set(const ValueView<T>& view)
+      requires(!std::is_same_v<T, void>)
+    {
+      assert(view != nullptr && "an absent ValueView must not be sent");
+      // Guard on the view's presence, not on the unwrapped pointer: a view
+      // obtained from an absent trigger refers to an *empty* value, so the
+      // pointer is non-null but nothing must be sent.
+      if (view != nullptr) {
+        UntypedPortEffect::set(abi::AnyValue{*detail::ValueAccess::unwrap(view)});
+      }
     }
 
     /**
@@ -405,7 +539,7 @@ protected:
     void set()
       requires(std::is_same_v<T, void>)
     {
-      PortEffectImpl::set(std::monostate{});
+      UntypedPortEffect::set(xronos::value::make<abi::Void>());
     }
 
     // Disambiguate set(0) by explicitly deleting set(nullptr_t)
@@ -415,18 +549,17 @@ protected:
     = delete;
 
     /**
-     * Get a previously set value.
+     * Get a view of a previously set value.
      *
-     * @returns A pointer to the current value of the port
-     * or `nullptr` if no value was set at the current timestamp.
+     * @returns A ValueView of the port's current value. The view is absent
+     * (evaluates to `false`) if no value was set at the current timestamp.
+     * The view is only valid for the duration of the current reaction
+     * handler; copy it into a Value to keep it alive beyond that.
      */
-    [[nodiscard]] auto get() const noexcept -> ImmutableValuePtr<T>
+    [[nodiscard]] auto get() const noexcept -> ValueView<T>
       requires(!std::is_same_v<T, void>)
     {
-      if (!is_present()) {
-        return ImmutableValuePtr<T>{nullptr};
-      }
-      return std::any_cast<ImmutableValuePtr<T>>(PortEffectImpl::get());
+      return detail::ValueAccess::view<T>(UntypedPortEffect::get());
     }
 
     /**
@@ -434,7 +567,7 @@ protected:
      *
      * @returns `true` if an event is present, `false` otherwise.
      */
-    [[nodiscard]] auto is_present() const noexcept -> bool { return PortEffectImpl::is_present(); }
+    [[nodiscard]] auto is_present() const noexcept -> bool { return UntypedPortEffect::is_present(); }
   };
 
   /**
@@ -443,7 +576,7 @@ protected:
    * @tparam T The value type associated with the programmable timer.
    * @ingroup effects
    */
-  template <class T> class ProgrammableTimerEffect : public ProgrammableTimerEffectImpl {
+  template <class T> class ProgrammableTimerEffect : public UntypedProgrammableTimerEffect {
   public:
     /**
      * Constructor.
@@ -454,37 +587,20 @@ protected:
      * Can be obtained using context().
      */
     ProgrammableTimerEffect(ProgrammableTimer<T>& timer, const ReactionContext& context)
-        : ProgrammableTimerEffectImpl{timer.uid(), context} {}
+        : UntypedProgrammableTimerEffect{timer.uid(), context} {}
 
     /**
      * Schedule a future event.
      *
-     * @param value_ptr The value to be associated with the future event occurrence.
+     * @param value The value to be associated with the future event
+     * occurrence. Copy constructs the value from the given lvalue reference.
      * @param delay The time to wait until the new event is processed.
-     */
-    void schedule(const ImmutableValuePtr<T>& value_ptr, Duration delay = Duration::zero())
-      requires(!std::is_same_v<T, void>)
-    {
-      ProgrammableTimerEffectImpl::schedule(value_ptr, delay);
-    }
-    /**
-     * @overload
-     */
-    void schedule(MutableValuePtr<T>&& value_ptr, Duration delay = Duration::zero())
-      requires(!std::is_same_v<T, void>)
-    {
-      schedule(ImmutableValuePtr<T>{std::move(value_ptr)}, delay);
-    }
-    /**
-     * @overload
-     *
-     * @details Copy constructs the value using the given lvalue reference.
      */
     template <class U>
     void schedule(const U& value, Duration delay = Duration::zero())
       requires(!std::is_same_v<U, void> && std::is_same_v<T, U>)
     {
-      schedule(make_immutable_value<T>(value), delay);
+      UntypedProgrammableTimerEffect::schedule(xronos::value::make<T>(value), delay);
     }
     /**
      * @overload
@@ -495,7 +611,40 @@ protected:
     void schedule(U&& value, Duration delay = Duration::zero())
       requires(!std::is_same_v<U, void> && std::is_same_v<T, U>)
     {
-      schedule(make_immutable_value<T>(std::forward<U>(value)), delay);
+      UntypedProgrammableTimerEffect::schedule(xronos::value::make<T>(std::forward<U>(value)), delay);
+    }
+    /**
+     * @overload
+     *
+     * @details Schedules the given value without copying it. The value must
+     * not be empty (asserted in debug builds); nothing is scheduled
+     * otherwise.
+     */
+    void schedule(const Value<T>& value, Duration delay = Duration::zero())
+      requires(!std::is_same_v<T, void>)
+    {
+      assert(value != nullptr && "an empty Value must not be scheduled");
+      if (value != nullptr) {
+        UntypedProgrammableTimerEffect::schedule(abi::AnyValue{detail::ValueAccess::unwrap(value)}, delay);
+      }
+    }
+    /**
+     * @overload
+     *
+     * @details Schedules the viewed value without copying it. The view must
+     * not be absent (asserted in debug builds); nothing is scheduled
+     * otherwise.
+     */
+    void schedule(const ValueView<T>& view, Duration delay = Duration::zero())
+      requires(!std::is_same_v<T, void>)
+    {
+      assert(view != nullptr && "an absent ValueView must not be scheduled");
+      // Guard on the view's presence, not on the unwrapped pointer: a view
+      // obtained from an absent trigger refers to an *empty* value, so the
+      // pointer is non-null but nothing must be scheduled.
+      if (view != nullptr) {
+        UntypedProgrammableTimerEffect::schedule(abi::AnyValue{*detail::ValueAccess::unwrap(view)}, delay);
+      }
     }
 
     /**
@@ -507,7 +656,7 @@ protected:
     void schedule(Duration delay = Duration::zero())
       requires(std::is_same_v<T, void>)
     {
-      ProgrammableTimerEffectImpl::schedule(std::monostate{}, delay);
+      UntypedProgrammableTimerEffect::schedule(xronos::value::make<abi::Void>(), delay);
     }
 
     // Disambiguate schedule(0) by explicitly deleting schedule(nullptr_t)
@@ -562,7 +711,12 @@ protected:
      * @param context The context of the reaction the effect is declared for.
      * Can be obtained using context().
      */
-    ShutdownEffect(Shutdown& shutdown, const ReactionContext& context);
+    ShutdownEffect(Shutdown& shutdown, const ReactionContext& context)
+        : effect_uid_{shutdown.uid()}
+        , reaction_uid_{context.reaction_instance().uid()}
+        , program_context_{*context.reaction_instance().program_context()} {
+      context.reaction_instance().program_context()->backend().register_reaction_effect(reaction_uid_, effect_uid_);
+    }
 
     /**
      * Terminate the currently running reactor program.
@@ -571,14 +725,24 @@ protected:
      * currently active reactions, this triggers the Shutdown event sources. Once
      * all reactions triggered by Shutdown are processed, the program terminates.
      */
-    void trigger_shutdown() noexcept;
+    void trigger_shutdown() noexcept {
+      if (auto* impl = get_impl(); impl != nullptr) {
+        impl->trigger_shutdown();
+      }
+    }
 
   private:
     std::uint64_t effect_uid_;
     std::uint64_t reaction_uid_;
     std::reference_wrapper<const detail::ProgramContext> program_context_;
-    runtime::ShutdownEffect* impl_{nullptr};
-    [[nodiscard]] auto get_impl() noexcept -> runtime::ShutdownEffect*;
+    abi::ShutdownEffect* impl_{nullptr};
+    [[nodiscard]] auto get_impl() noexcept -> abi::ShutdownEffect* {
+      if (impl_ == nullptr) {
+        impl_ = program_context_.get().runtime_backend().get_shutdown_effect(reaction_uid_, effect_uid_);
+        assert(impl_ != nullptr);
+      }
+      return impl_;
+    }
   };
 
 private:
@@ -590,7 +754,12 @@ private:
    */
   virtual void handler() = 0;
 
-  using Element::core_element;
+  [[nodiscard]] static auto register_reaction(const ReactionProperties& properties, BaseReaction* self)
+      -> std::uint64_t;
+
+  std::uint64_t parent_uid_;
+  std::optional<Duration> deadline_;
+
   using Element::program_context;
 };
 
@@ -627,6 +796,47 @@ protected:
 private:
   std::reference_wrapper<R> self_;
 };
+
+inline auto BaseReaction::register_reaction(const ReactionProperties& properties, BaseReaction* self) -> std::uint64_t {
+  const Context context{properties.context_};
+  return detail::register_with_location(context, [&]() -> std::uint64_t {
+    auto& backend = detail::get_backend(context);
+    auto parent = detail::ContextAccess::get_parent_uid(properties.context_);
+    // Ownership of the handler transfers to the implementation on the
+    // register call (including when it throws).
+    // NOLINTNEXTLINE(cppcoreguidelines-owning-memory)
+    auto* handler = new HandlerImpl{*self};
+    const std::string name{properties.name_};
+    if (properties.deadline_.has_value()) {
+      return backend.register_reaction_with_deadline(name, parent, handler, properties.position_,
+                                                     *properties.deadline_);
+    }
+    return backend.register_reaction(name, parent, handler, properties.position_);
+  });
+}
+
+inline auto BaseReaction::deadline() const noexcept -> std::optional<TimePoint> {
+  if (!deadline_.has_value()) {
+    return std::nullopt;
+  }
+
+  // The deadline can only be computed relative to a running program's logical
+  // time. When called outside of execution (e.g. during reaction declaration),
+  // there is no valid time access, so we report that no deadline is available.
+  const auto* time_access = detail::get_reaction_time_access(*program_context(), parent_uid_);
+  if (time_access == nullptr) {
+    return std::nullopt;
+  }
+
+  auto now = time_access->get_timestamp();
+
+  // guard against overflow
+  if (TimePoint::max() - now < *deadline_) {
+    return TimePoint::max();
+  }
+
+  return now + *deadline_;
+}
 
 } // namespace xronos::sdk
 

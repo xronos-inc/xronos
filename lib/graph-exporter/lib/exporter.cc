@@ -246,6 +246,15 @@ void serialize_source_locations(const core::ElementRegistry& element_registry,
   }
 }
 
+auto build_graph_with_metadata(const core::ReactorModel& model, const telemetry::AttributeManager& attribute_manager,
+                               const source_location::SourceLocationRegistry& source_location_registry)
+    -> services::diagram_generator::GraphWithMetadata {
+  services::diagram_generator::GraphWithMetadata gwm{};
+  serialize_source_locations(model.element_registry, source_location_registry, *gwm.mutable_source_info());
+  serialize_reactor_model(model, attribute_manager, *gwm.mutable_graph());
+  return gwm;
+}
+
 auto send_reactor_graph_to_diagram_server(const core::ReactorModel& model,
                                           const telemetry::AttributeManager& attribute_manager,
                                           const source_location::SourceLocationRegistry& source_location_registry,
@@ -256,11 +265,7 @@ auto send_reactor_graph_to_diagram_server(const core::ReactorModel& model,
   auto stub = services::diagram_generator::DiagramGenerator::NewStub(channel);
   ::grpc::ClientContext context;
 
-  services::diagram_generator::GraphWithMetadata gwm{};
-
-  serialize_source_locations(model.element_registry, source_location_registry, *gwm.mutable_source_info());
-
-  serialize_reactor_model(model, attribute_manager, *gwm.mutable_graph());
+  auto gwm = build_graph_with_metadata(model, attribute_manager, source_location_registry);
 
   context.set_deadline(std::chrono::system_clock::now() + timeout);
 
@@ -299,6 +304,11 @@ void send_reactor_graph_to_diagram_server(const core::ReactorModel& model,
     util::log::warn() << "Sending the reactor graph for rendering failed with message: " << status.error_message();
     return;
   }
+}
+
+auto serialize_reactor_graph(const core::ReactorModel& model, const telemetry::AttributeManager& attribute_manager,
+                             const source_location::SourceLocationRegistry& source_location_registry) -> std::string {
+  return detail::build_graph_with_metadata(model, attribute_manager, source_location_registry).SerializeAsString();
 }
 
 } // namespace xronos::graph_exporter

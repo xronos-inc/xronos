@@ -4,7 +4,8 @@
 import datetime
 import os
 import threading
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 import numpy as np
 import sounddevice  # type: ignore
@@ -148,7 +149,7 @@ class AudioBridge(xronos.Reactor):
         ctx.add_trigger(self.startup)
 
         def handler() -> None:
-            log(self, "starting")
+            log(self.name, ctx, "starting")
             self.__mask_stderr_thread.start()
             self.__stream.start()
             self.__stream_dac_t0 = datetime.datetime.fromtimestamp(self.__stream.time)
@@ -164,7 +165,7 @@ class AudioBridge(xronos.Reactor):
 
         def handler() -> None:
             if self.__stream.active:
-                log(self, "stopping")
+                log(self.name, ctx, "stopping")
                 self.__stream.stop()  # issues callback when stopped
             else:
                 stopped_effect.set(None)
@@ -177,7 +178,7 @@ class AudioBridge(xronos.Reactor):
         stopped_effect = ctx.add_effect(self.service_stopped)
 
         def handler() -> None:
-            log(self, "stopped")
+            log(self.name, ctx, "stopped")
             self.__unmask_stderr.set()
             stopped_effect.set(None)
 
@@ -189,7 +190,7 @@ class AudioBridge(xronos.Reactor):
 
         def handler() -> None:
             if self.__stream.active:
-                log(self, "warning: service was not stopped before shutdown")
+                log(self.name, ctx, "warning: service was not stopped before shutdown")
                 self.__stream.abort()
             self.__unmask_stderr.set()
             self.__mask_stderr_thread.join()
@@ -206,4 +207,4 @@ class AudioBridge(xronos.Reactor):
     @xronos.reaction
     def __on_async_log(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
         async_log = ctx.add_trigger(self.__async_log)
-        return lambda: log(self, async_log.get())
+        return lambda: log(self.name, ctx, async_log.get())

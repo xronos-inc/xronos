@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import datetime
-from typing import Callable
+from collections.abc import Callable
 
 import xronos
 
@@ -46,12 +46,11 @@ class MainReactor(xronos.Reactor):
         def handler() -> None:
             if (not shutdown.is_present()) and check_shutdown.is_present():
                 raise Exception("Shutdown was not triggered at the expected tag")
-            elif shutdown.is_present() and not check_shutdown.is_present():
+            if shutdown.is_present() and not check_shutdown.is_present():
                 raise Exception(
                     "Shutdown occurred but check_shutdown was not triggered"
                 )
-            else:
-                print(f"Success: stopping at {ctx.current_time}")
+            print(f"Success: stopping at {ctx.current_time}")
 
         return handler
 

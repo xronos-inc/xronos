@@ -4,12 +4,13 @@
 #ifndef XRONOS_RUNTIME_DEFAULT_DETAIL_DEFAULT_RUNTIME_IMPL_HH
 #define XRONOS_RUNTIME_DEFAULT_DETAIL_DEFAULT_RUNTIME_IMPL_HH
 
-#include <any>
 #include <cstdint>
 #include <functional>
 #include <memory>
 #include <unordered_map>
+#include <utility>
 
+#include "xronos/abi/value.hh"
 #include "xronos/core/reactor_model.hh"
 #include "xronos/core/time.hh"
 #include "xronos/runtime/default/detail/runtime_model.hh"
@@ -23,8 +24,7 @@ public:
   DefaultTrigger(std::uint64_t uid, const Scheduler& scheduler)
       : event_source_{scheduler.get_event_source(uid)} {}
 
-  [[nodiscard]] auto get() const noexcept -> std::any final { return event_source_.get().get(); }
-  [[nodiscard]] auto is_present() const noexcept -> bool final { return event_source_.get().is_present(); }
+  [[nodiscard]] auto get() const noexcept -> const abi::AnyValue& final { return event_source_.get().get(); }
 
 private:
   std::reference_wrapper<const EventSource> event_source_;
@@ -37,9 +37,8 @@ public:
       , scheduler_{scheduler}
       , uid_{uid} {}
 
-  void set(const std::any& value) noexcept final { scheduler_.get().set_port(uid_, value); }
-  [[nodiscard]] auto get() const noexcept -> std::any final { return event_source_.get().get(); }
-  [[nodiscard]] auto is_present() const noexcept -> bool final { return event_source_.get().is_present(); }
+  void set(abi::AnyValue&& value) noexcept final { scheduler_.get().set_port(uid_, std::move(value)); }
+  [[nodiscard]] auto get() const noexcept -> const abi::AnyValue& final { return event_source_.get().get(); }
 
 private:
   std::reference_wrapper<const EventSource> event_source_;
@@ -53,8 +52,8 @@ public:
       : scheduler_{scheduler}
       , uid_{uid} {}
 
-  void schedule(const std::any& value, core::Duration delay) noexcept final {
-    scheduler_.get().schedule_event(uid_, value, delay);
+  void schedule(abi::AnyValue&& value, core::Duration delay) noexcept final {
+    scheduler_.get().schedule_event(uid_, std::move(value), delay);
   }
 
 private:
@@ -68,7 +67,9 @@ public:
       : uid_{uid}
       , scheduler_{scheduler} {}
 
-  void trigger(const std::any& value) noexcept final { scheduler_.get().trigger_external_event(uid_, value); }
+  void trigger(abi::AnyValue&& value) noexcept final {
+    scheduler_.get().trigger_external_event(uid_, std::move(value));
+  }
 
 private:
   std::uint64_t uid_;

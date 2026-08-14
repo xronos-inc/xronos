@@ -4,12 +4,10 @@
 import datetime
 import warnings
 from abc import abstractmethod
+from collections.abc import Callable
 from typing import (
     Any,
-    Callable,
     Generic,
-    Optional,
-    Type,
     TypeVar,
     final,
 )
@@ -31,10 +29,10 @@ class OutputDiscardedWarning(UserWarning):
 
     def __init__(
         self,
-        message: Optional[str],
-        fqn: Optional[str],
-        value: Optional[Any],
-        timestamp: Optional[datetime.datetime],
+        message: str | None,
+        fqn: str | None,
+        value: Any | None,
+        timestamp: datetime.datetime | None,
     ) -> None:
         self.custom_message = message
         self.fqn = fqn
@@ -113,7 +111,7 @@ class AbstractSource(xronos.Reactor, Generic[TOutput]):
         self,
         ctx: xronos.ReactionContext,
         trigger: xronos.EventSource[TEventSource],
-        handler_base_class: Type["AbstractSource[TOutput]"],
+        handler_base_class: type["AbstractSource[TOutput]"],
         handler: Callable[..., TOutput],
     ) -> Callable[[], None]:
         """Conditionally specify a reaction with a single trigger and output.
@@ -157,7 +155,8 @@ class AbstractSource(xronos.Reactor, Generic[TOutput]):
                         fqn=self.output.fqn,
                         value=output_effect.get(),
                         timestamp=ctx.current_time,
-                    )
+                    ),
+                    stacklevel=2,
                 )
             output_effect.set(value)
 
@@ -212,7 +211,7 @@ class AbstractSource(xronos.Reactor, Generic[TOutput]):
 
     def __is_method_overridden(
         self,
-        base_class: Type["AbstractSource[TOutput]"],
+        base_class: type["AbstractSource[TOutput]"],
         method: Callable[..., TOutput],
     ) -> bool:
         """Determine if a given method is overridden in a subclass of a parent class.
@@ -315,7 +314,7 @@ class AbstractTimerSource(AbstractSource[TOutput]):
     def __init__(
         self,
         period: datetime.timedelta,
-        offset: Optional[datetime.timedelta] = None,
+        offset: datetime.timedelta | None = None,
         inhibit: bool = False,
     ) -> None:
         super().__init__(inhibit)

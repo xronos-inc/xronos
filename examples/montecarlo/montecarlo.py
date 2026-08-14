@@ -7,8 +7,9 @@ import random
 import time
 import uuid
 from collections import deque
+from collections.abc import Callable
 from threading import Lock
-from typing import Callable, List, Optional, TypedDict
+from typing import TypedDict
 
 import xronos
 from typing_extensions import NotRequired
@@ -19,7 +20,7 @@ class SimulationPoint(TypedDict):
     y: float
     is_inside_circle: bool
     id: str  # used in the visualizer
-    estimate_as_of_point: NotRequired[Optional[float]]
+    estimate_as_of_point: NotRequired[float | None]
 
 
 class SimulationRequest(TypedDict):
@@ -42,7 +43,7 @@ class PointQueue:
             with self._lock:
                 self._queue.append(point)
 
-    def get_point(self) -> Optional[SimulationPoint]:
+    def get_point(self) -> SimulationPoint | None:
         with self._lock:
             return self._queue.popleft() if self._queue else None
 
@@ -58,7 +59,7 @@ class PointQueue:
 
 class PointGenerator(xronos.Reactor):
     simulation_count = xronos.InputPortDeclaration[int]()
-    generation_result = xronos.OutputPortDeclaration[List[SimulationPoint]]()
+    generation_result = xronos.OutputPortDeclaration[list[SimulationPoint]]()
 
     @xronos.reaction
     def on_generation_request(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
@@ -66,7 +67,7 @@ class PointGenerator(xronos.Reactor):
         result_effect = ctx.add_effect(self.generation_result)
 
         def handler() -> None:
-            res: List[SimulationPoint] = []
+            res: list[SimulationPoint] = []
             simulation_count = simulation_count_trigger.get()
             for _ in range(simulation_count):
                 x = random.uniform(-1, 1)
@@ -86,9 +87,9 @@ class PointGenerator(xronos.Reactor):
 
 class SimulationAggregator(xronos.Reactor):
     batch_request = xronos.OutputPortDeclaration[int]()
-    batch_completion = xronos.InputPortDeclaration[List[SimulationPoint]]()
+    batch_completion = xronos.InputPortDeclaration[list[SimulationPoint]]()
 
-    points_generated_in_batch = xronos.OutputPortDeclaration[List[SimulationPoint]]()
+    points_generated_in_batch = xronos.OutputPortDeclaration[list[SimulationPoint]]()
     estimate = xronos.OutputPortDeclaration[float]()
 
     _current_estimate = xronos.MetricDeclaration("The current estimate of Pi")
@@ -169,7 +170,7 @@ class SimulationAggregator(xronos.Reactor):
 
 
 class WebSocketDispatcher(xronos.Reactor):
-    points_generated_in_batch = xronos.InputPortDeclaration[List[SimulationPoint]]()
+    points_generated_in_batch = xronos.InputPortDeclaration[list[SimulationPoint]]()
     estimate = xronos.InputPortDeclaration[float]()
 
     def __init__(self, queue: PointQueue) -> None:

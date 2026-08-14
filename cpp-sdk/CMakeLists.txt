@@ -2,11 +2,11 @@ cmake_minimum_required(VERSION 3.28)
 
 project(xronos-sdk
   LANGUAGES CXX
-  VERSION "0.12.0"
+  VERSION "0.13.0"
   HOMEPAGE_URL "https://docs.xronos.com"
   DESCRIPTION "The Xronos C++ SDK for writing reactor programs."
 )
-set(PROJECT_VERSION "0.12.0")
+set(PROJECT_VERSION "0.13.0")
 
 # require C++ 20
 set(CMAKE_CXX_STANDARD 20 CACHE STRING "The C++ standard." FORCE)
@@ -66,15 +66,10 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 configure_file(cmake/config.hh.in include/xronos/sdk/gen/config.hh @ONLY)
 
-file(GLOB_RECURSE SDK_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cc")
 file(GLOB_RECURSE SDK_HEADERS CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/include/*.hh" "${CMAKE_CURRENT_BINARY_DIR}/include/*.hh")
-file(GLOB_RECURSE SDK_PRIVATE_HEADERS CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/include/*.hh")
 
-add_library(xronos-sdk ${XRONOS_SDK_LIB_TYPE} ${SDK_SOURCES})
-
-# We define a header only library for the public headers here. We do this
-# instead of defining a header file set for xronos-sdk so that we have a referable target
-# that we can use as a dependency for xronos-sdk-private-headers
+# xronos-sdk-public-headers carries the header file set; xronos-sdk (below)
+# is the library consumers link.
 add_library(xronos-sdk-public-headers INTERFACE)
 target_sources(
   xronos-sdk-public-headers
@@ -83,49 +78,60 @@ target_sources(
   BASE_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include> $<INSTALL_INTERFACE:include>
   FILES ${SDK_HEADERS}
 )
+# The public SDK headers include the ABI headers (xronos/abi/...) and the
+# value-boxing headers (xronos/value/...). Both components are header-only
+# and ship as part of the SDK header package rather than as separate
+# artifacts, so resolve their include directories here (they differ
+# depending on whether xronos-lib was built from source or found as an
+# installed package) and install their headers below. Plain paths are used
+# instead of linking the xronos:: targets so that the exported
+# xronos-sdkTargets do not depend on targets outside the SDK's export set.
+if(xronos-lib_SOURCE_DIR)
+  set(XRONOS_ABI_INCLUDE_DIR "${xronos-lib_SOURCE_DIR}/abi/include")
+  set(XRONOS_VALUE_INCLUDE_DIR "${xronos-lib_SOURCE_DIR}/value/include")
+else()
+  get_target_property(XRONOS_ABI_INCLUDE_DIR xronos::xronos-abi INTERFACE_INCLUDE_DIRECTORIES)
+  get_target_property(XRONOS_VALUE_INCLUDE_DIR xronos::xronos-value INTERFACE_INCLUDE_DIRECTORIES)
+endif()
+target_include_directories(xronos-sdk-public-headers
+  INTERFACE $<BUILD_INTERFACE:${XRONOS_ABI_INCLUDE_DIR}> $<BUILD_INTERFACE:${XRONOS_VALUE_INCLUDE_DIR}>)
 set_target_properties(xronos-sdk-public-headers PROPERTIES VERIFY_INTERFACE_HEADER_SETS ON)
 
-# As cmake currently does not support verification for non interface headers, we
-# take the extra step of defining a header only library containing the private
-# headers. This allows us to generate entries in compile_commands.json and
-# subsequently use clang-tidy on the private headers.
-add_library(xronos-sdk-private-headers INTERFACE)
-target_sources(
-  xronos-sdk-private-headers
-  INTERFACE FILE_SET HEADERS
-  TYPE HEADERS
-  BASE_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/include>
-  FILES ${SDK_PRIVATE_HEADERS}
-)
-target_link_libraries(xronos-sdk-private-headers INTERFACE
-  xronos-sdk-public-headers
-  xronos::xronos-core
-  xronos::xronos-runtime-interfaces
-  xronos::xronos-source-location
-  xronos::xronos-telemetry
-  xronos::xronos-validator
-)
-set_target_properties(xronos-sdk-private-headers PROPERTIES VERIFY_INTERFACE_HEADER_SETS ON)
+# The SDK borrows the ABI include path without linking xronos-abi, so the opt-out
+# defined on that target does not reach SDK consumers (pybind, user apps); define
+# it here too. See contract.hh.
+if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+  target_compile_definitions(xronos-sdk-public-headers INTERFACE XRONOS_ABI_UNCHECKED_SINGLE_COMPILATION)
+endif()
+
+# The SDK library: the (largely header-only) SDK glue plus the complete
+# default implementation -- the shared backend, the default runtime, and the
+# runtime-provider support -- in one artifact, shipped like the
+# pre-ABI libxronos-sdk.so. It exports the SDK's public symbols plus the
+# program-context factory (src/environment.cc) that the inline Environment
+# constructors call.
+add_library(xronos-sdk ${XRONOS_SDK_LIB_TYPE} src/environment.cc src/runtime_provider.cc)
 
 target_link_libraries(
   xronos-sdk
   PUBLIC xronos-sdk-public-headers
-  PRIVATE xronos-sdk-private-headers xronos::xronos-runtime-default fmt::fmt-header-only
+  PRIVATE xronos::xronos-backend xronos::xronos-runtime-default xronos::xronos-util
 )
 
-# Make sure that only the SDK symbols are exported. All symbols from internal
-# libs and third-party libs are hidden.
-if(${CMAKE_HOST_SYSTEM_NAME} MATCHES "Linux")
-  target_link_options(xronos-sdk PRIVATE -Wl,--exclude-libs,ALL)
-elseif(${CMAKE_HOST_SYSTEM_NAME} MATCHES "Darwin")
-  target_link_options(xronos-sdk PRIVATE -Wl,-exported_symbols_list,${CMAKE_CURRENT_LIST_DIR}/exported_symbols.txt)
-endif()
-
-if(XRONOS_SDK_ENABLE_DIAGRAMS)
-  target_link_libraries(xronos-sdk PRIVATE xronos::xronos-graph-exporter xronos::xronos-graph-messages)
-endif()
-if(XRONOS_SDK_ENABLE_TELEMETRY)
-  target_link_libraries(xronos-sdk PRIVATE xronos::xronos-telemetry-otel)
+# On Linux, restrict the exported symbols to the SDK's real public surface via
+# a version script (an allowlist; `local: *` hides everything else). This is
+# stronger than -Wl,--exclude-libs,ALL: it hides not only the statically linked
+# internal archives but also the SDK's own inline vague-linkage spill (the
+# runtime implementation, context/provider vtables and typeinfos). See
+# xronos-sdk.map, and check-exported-symbols.sh for the enforced surface.
+# Version scripts are a GNU ld feature; macOS expresses the SAME surface with
+# -exported_symbols_list (exported_symbols.txt).
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  target_link_options(xronos-sdk PRIVATE -Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/xronos-sdk.map)
+  set_target_properties(xronos-sdk PROPERTIES LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/xronos-sdk.map)
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+  target_link_options(xronos-sdk PRIVATE -Wl,-exported_symbols_list,${CMAKE_CURRENT_SOURCE_DIR}/exported_symbols.txt)
+  set_target_properties(xronos-sdk PROPERTIES LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/exported_symbols.txt)
 endif()
 
 target_compile_features(xronos-sdk PUBLIC cxx_std_20)
@@ -141,6 +147,7 @@ if(XRONOS_SDK_BUILD_TESTS)
   enable_testing()
 endif()
 add_subdirectory(test)
+add_subdirectory(link-test)
 
 if(XRONOS_SDK_BUILD_DOCS)
   add_subdirectory(docs)
@@ -148,6 +155,24 @@ endif()
 
 if(XRONOS_SDK_INSTALL)
   include(GNUInstallDirs)
+
+  # The public SDK headers include the xronos ABI headers (xronos/abi/value.hh)
+  # and the value-boxing headers (xronos/value/boxing.hh). Bundle those headers
+  # into the SDK's install tree so that the installed SDK package remains
+  # self-contained and consumers do not need the xronos-lib package. Both
+  # components are header-only, so headers are all we need.
+  foreach(_xronos_header_lib IN ITEMS abi value)
+    get_target_property(_xronos_lib_is_imported xronos::xronos-${_xronos_header_lib} IMPORTED)
+    if(_xronos_lib_is_imported)
+      get_target_property(_xronos_lib_include_dir xronos::xronos-${_xronos_header_lib} INTERFACE_INCLUDE_DIRECTORIES)
+      list(GET _xronos_lib_include_dir 0 _xronos_lib_include_dir)
+    else()
+      set(_xronos_lib_include_dir "${xronos-lib_SOURCE_DIR}/${_xronos_header_lib}/include")
+    endif()
+    install(
+      DIRECTORY "${_xronos_lib_include_dir}/xronos/${_xronos_header_lib}"
+      DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/xronos")
+  endforeach()
 
   install(
     TARGETS xronos-sdk xronos-sdk-public-headers
@@ -221,13 +246,13 @@ if(XRONOS_SDK_INSTALL)
 endif()
 
 set(LINT_FILES
-  $<TARGET_PROPERTY:xronos-sdk,SOURCES>
   $<TARGET_PROPERTY:xronos-sdk-public-headers,HEADER_SET>
-  $<TARGET_PROPERTY:xronos-sdk-private-headers,HEADER_SET>
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/environment.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/runtime_provider.cc
   ${EXAMPLE_SOURCES}
 )
 
-set(FORMAT_FILES ${LINT_FILES} ${TEST_SOURCES})
+set(FORMAT_FILES ${LINT_FILES} ${TEST_SOURCES} ${LINK_TEST_SOURCES})
 
 add_custom_target(xronos-sdk-format
   COMMAND clang-format -i -style=file ${FORMAT_FILES}

@@ -20,6 +20,12 @@ namespace xronos::validator {
     -> nonstd::expected<void, std::vector<std::string>>;
 [[nodiscard]] auto check_dependency_cycles(const core::ReactorModel& model)
     -> nonstd::expected<void, std::vector<std::string>>;
+[[nodiscard]] auto check_reaction_handlers(const core::ReactorModel& model)
+    -> nonstd::expected<void, std::vector<std::string>>;
+[[nodiscard]] auto check_cross_boundary_serializers(const core::ReactorModel& model)
+    -> nonstd::expected<void, std::vector<std::string>>;
+[[nodiscard]] auto check_boundary_crossing_structure(const core::ReactorModel& model)
+    -> nonstd::expected<void, std::vector<std::string>>;
 
 } // namespace xronos::validator
 

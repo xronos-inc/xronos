@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.28)
 
-project(xronos-lib LANGUAGES CXX VERSION "0.12.0")
-set(PROJECT_VERSION "0.12.0")
+project(xronos-lib LANGUAGES CXX VERSION "0.13.0")
+set(PROJECT_VERSION "0.13.0")
 
 # require C++ 20
 set(CMAKE_CXX_STANDARD 20 CACHE STRING "The C++ standard." FORCE)
@@ -47,6 +47,8 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 include(../third-party/expected-lite/expected-lite.cmake)
 include(../third-party/fmt/fmt.cmake)
 
+add_subdirectory(abi)
+add_subdirectory(backend)
 add_subdirectory(core)
 add_subdirectory(dependency-graph)
 add_subdirectory(logical-time)
@@ -56,8 +58,11 @@ add_subdirectory(source-location)
 add_subdirectory(telemetry)
 add_subdirectory(util)
 add_subdirectory(validator)
+add_subdirectory(value)
 
 set(TARGETS
+  xronos-abi
+  xronos-backend
   xronos-core
   xronos-dependency-graph
   xronos-logical-time
@@ -67,6 +72,7 @@ set(TARGETS
   xronos-telemetry
   xronos-util
   xronos-validator
+  xronos-value
 )
 
 if(XRONOS_LIB_WITH_GRAPH_EXPORTER)
@@ -125,6 +131,9 @@ if(XRONOS_LIB_INSTALL)
 endif()
 
 set(LINT_FILES
+  $<TARGET_PROPERTY:xronos-abi,HEADER_SET>
+  $<TARGET_PROPERTY:xronos-backend,SOURCES>
+  $<TARGET_PROPERTY:xronos-backend,HEADER_SET>
   $<TARGET_PROPERTY:xronos-core,SOURCES>
   $<TARGET_PROPERTY:xronos-core,HEADER_SET>
   $<TARGET_PROPERTY:xronos-dependency-graph,SOURCES>
@@ -142,6 +151,7 @@ set(LINT_FILES
   $<TARGET_PROPERTY:xronos-util,HEADER_SET>
   $<TARGET_PROPERTY:xronos-validator,SOURCES>
   $<TARGET_PROPERTY:xronos-validator,HEADER_SET>
+  $<TARGET_PROPERTY:xronos-value,HEADER_SET>
 )
 
 if(XRONOS_LIB_WITH_GRAPH_EXPORTER)
@@ -158,7 +168,7 @@ if(XRONOS_LIB_WITH_OTEL)
   )
 endif()
 
-set(FORMAT_FILES ${LINT_FILES})
+set(FORMAT_FILES ${LINT_FILES} ${VALUE_TEST_SOURCES})
 if(XRONOS_LIB_WITH_GRAPH_EXPORTER)
   set(FORMAT_FILES ${FORMAT_FILES} ${GRAPH_EXPORTER_TEST_SOURCES})
 endif()

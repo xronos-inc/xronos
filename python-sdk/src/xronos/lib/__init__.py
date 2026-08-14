@@ -14,9 +14,7 @@ from xronos.lib._socket_input import SocketInput
 
 __all__ = [
     "ConsoleInput",
-    "ConsoleInput",
     "ConstSource",
-    "ExternalInput",
     "ExternalInput",
     "OutputDiscardedWarning",
     "RampSource",

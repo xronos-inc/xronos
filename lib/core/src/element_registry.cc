@@ -19,6 +19,17 @@ namespace xronos::core {
 auto ElementRegistry::add_new_element(std::string_view name, ElementType type,
                                       const std::optional<ElementID>& parent_uid) noexcept
     -> nonstd::expected<std::reference_wrapper<const Element>, std::string> {
+  // The dot joins names into fully qualified names, so a name containing one
+  // would make those paths ambiguous. The other rejected characters carry
+  // syntax where fully qualified names serve as addresses: selection lists
+  // join them with commas, and network key expressions reserve the rest.
+  if (name.empty() || name.find_first_of(". \t\n\v\f\r,/*$?#@") != std::string_view::npos) {
+    return nonstd::make_unexpected(
+        fmt::format("Cannot create the {} \"{}\": element names must be non-empty and must not contain "
+                    "whitespace or any of \".,/*$?#@\".",
+                    core::element_type_as_string(type), name));
+  }
+
   ElementID uid = elements_.size();
   std::string fqn = compute_fqn(name, parent_uid);
 

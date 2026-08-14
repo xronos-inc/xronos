@@ -5,7 +5,7 @@
 # This file contains portions from the Lingua Franca Coordination Language
 # under BSD-2-Clause and modifications Xronos Inc. under BSD-3-Clause.
 
-from typing import Callable
+from collections.abc import Callable
 
 import cv2
 import numpy as np
@@ -48,7 +48,7 @@ class Display(xronos.Reactor):
 
             x_shape, y_shape = current_frame.shape[1], current_frame.shape[0]
             # Draw all the object detection triangles and dnn_result
-            for name, confidence, coordinate in zip(*current_dnn_result):
+            for name, confidence, coordinate in zip(*current_dnn_result, strict=False):
                 if confidence > self.confidence_threshold:
                     x1, y1 = int(coordinate[0] * x_shape), int(coordinate[1] * y_shape)  # type: ignore[index]
                     x2, y2 = int(coordinate[2] * x_shape), int(coordinate[3] * y_shape)  # type: ignore[index]

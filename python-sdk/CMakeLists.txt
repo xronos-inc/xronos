@@ -50,9 +50,9 @@ python_add_library(_cpp_sdk MODULE "${CMAKE_CURRENT_SOURCE_DIR}/cpp/cpp_sdk.cc" 
 target_link_libraries(_cpp_sdk PRIVATE xronos::xronos-sdk pybind11::headers)
 target_compile_options(_cpp_sdk PRIVATE -Wall -Wextra -pedantic -Werror)
 
-if(${CMAKE_HOST_SYSTEM_NAME} MATCHES "Linux")
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
   target_link_options(_cpp_sdk PRIVATE -Wl,--exclude-libs,ALL)
-elseif(${CMAKE_HOST_SYSTEM_NAME} MATCHES "Darwin")
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
   target_link_options(_cpp_sdk PRIVATE -Wl,-exported_symbols_list,${CMAKE_CURRENT_LIST_DIR}/exported_symbols.txt)
 endif()
 

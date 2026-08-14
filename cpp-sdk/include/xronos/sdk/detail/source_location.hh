@@ -6,7 +6,10 @@
 
 #include <cstdint>
 #include <source_location>
+#include <string>
 #include <string_view>
+
+#include "xronos/abi/types.hh"
 
 namespace xronos::sdk::detail {
 
@@ -23,6 +26,15 @@ struct SourceLocationView {
             .function = location.function_name(),
             .start_line = location.line(),
             .end_line = location.line()};
+  }
+
+  [[nodiscard]] auto to_abi() const -> abi::SourceLocation {
+    return {.file = std::string{file},
+            .function = std::string{function},
+            .start_line = start_line,
+            .end_line = end_line,
+            .start_column = start_column,
+            .end_column = end_column};
   }
 };
 

@@ -9,6 +9,7 @@
 #include "grpcpp/support/status.h"
 #include "xronos/core/reactor_model.hh"
 #include "xronos/messages/reactor_graph.pb.h"
+#include "xronos/services/diagram_generator.pb.h"
 #include "xronos/source_location/source_location.hh"
 #include "xronos/telemetry/attribute_manager.hh"
 
@@ -18,10 +19,19 @@ void send_reactor_graph_to_diagram_server(const core::ReactorModel& model,
                                           const telemetry::AttributeManager& attribute_manager,
                                           const source_location::SourceLocationRegistry& source_location_registry);
 
+/// Encodes the model's reactor graph as a serialized
+/// `xronos.services.diagram_generator.GraphWithMetadata`.
+auto serialize_reactor_graph(const core::ReactorModel& model, const telemetry::AttributeManager& attribute_manager,
+                             const source_location::SourceLocationRegistry& source_location_registry) -> std::string;
+
 namespace detail {
 
 void serialize_reactor_model(const core::ReactorModel& model, const telemetry::AttributeManager& attribute_manager,
                              messages::reactor_graph::Graph& graph);
+
+auto build_graph_with_metadata(const core::ReactorModel& model, const telemetry::AttributeManager& attribute_manager,
+                               const source_location::SourceLocationRegistry& source_location_registry)
+    -> services::diagram_generator::GraphWithMetadata;
 
 auto send_reactor_graph_to_diagram_server(const core::ReactorModel& model,
                                           const telemetry::AttributeManager& attribute_manager,

@@ -36,7 +36,8 @@ Elements are typically created inside a reactor's ``__init__`` (after calling
 
 The created element is automatically registered with ``parent`` (keeping the
 Python wrapper alive), exactly like a declared element. Names must be unique
-within the parent; a duplicate raises :class:`~xronos.DuplicateNameError`.
+within the parent and must not be empty or contain whitespace or any of
+``.,/*$?#@``. A violation raises :class:`~xronos.InvalidNameError`.
 """
 
 import datetime

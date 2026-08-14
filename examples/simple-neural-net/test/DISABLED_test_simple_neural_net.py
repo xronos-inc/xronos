@@ -67,7 +67,9 @@ def test_xor_predictions(predictor: typing.Any) -> None:
             f"expected {expected}, but got {prediction}"
         )
 
-    with pytest.raises(ValueError):
+    # The ValueError originates from NumPy's shape check, whose message is
+    # version-dependent, so we don't pin it with `match`.
+    with pytest.raises(ValueError):  # noqa: PT011
         predictor.predict([0, 0, 0])
 
 

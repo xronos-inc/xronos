@@ -6,7 +6,7 @@
 import datetime
 import gc
 import weakref
-from typing import Callable
+from collections.abc import Callable
 
 import pytest
 from typing_extensions import assert_type
@@ -173,7 +173,7 @@ def test_duplicate_dynamic_name() -> None:
             _ = xronos.experimental.InputPort[int]("dup", self)
 
     env = xronos.Environment()
-    with pytest.raises(xronos.DuplicateNameError):
+    with pytest.raises(xronos.InvalidNameError):
         env.create_reactor("two", TwoSamePorts)
 
 
@@ -187,7 +187,7 @@ def test_duplicate_with_declared_element() -> None:
             _ = xronos.experimental.OutputPort[int]("existing", self)
 
     env = xronos.Environment()
-    with pytest.raises(xronos.DuplicateNameError):
+    with pytest.raises(xronos.InvalidNameError):
         env.create_reactor("clash", Clashing)
 
 
@@ -199,7 +199,7 @@ def test_duplicate_with_builtin_name() -> None:
             _ = xronos.experimental.PeriodicTimer("startup", self)
 
     env = xronos.Environment()
-    with pytest.raises(xronos.DuplicateNameError):
+    with pytest.raises(xronos.InvalidNameError):
         env.create_reactor("clash_startup", ClashStartup)
 
 

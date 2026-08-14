@@ -5,7 +5,6 @@ import io
 from collections.abc import Generator
 
 import pytest
-from pytest import MonkeyPatch
 
 import xronos
 from xronos.lib import ConsoleInput, ExternalInput
@@ -87,22 +86,22 @@ def test_external_input_teardown() -> None:
 
 def test_external_input_exception() -> None:
     """Test that when an exception is raised, it is propagated to the runtime."""
-    with pytest.raises(ValueError):
 
-        def read_input() -> Generator[int]:
-            yield 1
-            raise ValueError("Test exception")
+    def read_input() -> Generator[int]:
+        yield 1
+        raise ValueError("Test exception")
 
-        env = xronos.Environment()
-        env.create_reactor(
-            "ExternalInputList",
-            ExternalInput[int],
-            read_input=read_input(),
-        )
+    env = xronos.Environment()
+    env.create_reactor(
+        "ExternalInputList",
+        ExternalInput[int],
+        read_input=read_input(),
+    )
+    with pytest.raises(ValueError, match="Test exception"):
         env.execute()
 
 
-def test_stdin_external_input(monkeypatch: MonkeyPatch) -> None:
+def test_stdin_external_input(monkeypatch: pytest.MonkeyPatch) -> None:
     """Test the ConsoleInput reactor by monkeypatching sys.stdin."""
     testInput = list(range(100))
     monkeypatch.setattr("sys.stdin", io.StringIO("\n".join(map(str, testInput)) + "\n"))

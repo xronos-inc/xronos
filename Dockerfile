@@ -1,4 +1,4 @@
-FROM ubuntu:jammy-20260509@sha256:4f838adc7181d9039ac795a7d0aba05a9bd9ecd480d294483169c5def983b64d AS base
+FROM ubuntu:jammy-20260731.1@sha256:3b06811b2afd352be909dd088a004166d665dc76d38b13eada33522a9d915c6f AS base
 WORKDIR /xronos
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -78,7 +78,18 @@ FROM base AS py-venv
 ARG python_version
 COPY dev-requirements.txt ./
 RUN python$python_version -m venv /venv
-RUN . /venv/bin/activate && pip install --no-cache-dir -r dev-requirements.txt
+# mypy cannot be installed on free-threaded Python 3.13. Its ast-serialize
+# dependency ships no wheel for that interpreter, and building it from source
+# fails because PyO3 supports free-threaded builds only from Python 3.14 on.
+# Both packages need to be dropped, as installing mypy alone pulls in
+# ast-serialize again. Linting runs on Python 3.12, so this venv does not need
+# mypy.
+RUN if [ "$python_version" = "3.13t" ]; then \
+        grep -vE '^(mypy|ast-serialize)==' dev-requirements.txt > venv-requirements.txt; \
+    else \
+        cp dev-requirements.txt venv-requirements.txt; \
+    fi
+RUN . /venv/bin/activate && pip install --no-cache-dir -r venv-requirements.txt
 # Run pyright once to install its node dependencies
 RUN . /venv/bin/activate && pyright --version
 ENV MYPY_CACHE_DIR=/dev/null
@@ -87,7 +98,7 @@ ENV MYPY_CACHE_DIR=/dev/null
 FROM scratch AS configs
 COPY .clang-tidy .clang-format dev-requirements.txt /
 
-FROM hashicorp/terraform:1.15.7@sha256:40e61a86763083ea987ded0ffa15f6d75e0df48ed16275811f949b3ecbcd8aae AS check-format
+FROM hashicorp/terraform:1.15.8@sha256:7ae513256f7ce67879e218ae8593d6fbe216ec9e123abe6c94e4e10704857963 AS check-format
 WORKDIR /xronos
 # Need to rename the file because terraform fmt errors out for .hcl (without tftest)
 COPY docker-bake.hcl docker-bake.tftest.hcl

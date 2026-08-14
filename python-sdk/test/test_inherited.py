@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: Copyright (c) Xronos Inc.
 # SPDX-License-Identifier: BSD-3-Clause
 
-from typing import Callable
+from collections.abc import Callable
 
 import xronos
 

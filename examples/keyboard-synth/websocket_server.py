@@ -6,7 +6,8 @@
 import copy
 import json
 import threading
-from typing import Any, Callable, Set
+from collections.abc import Callable
+from typing import Any
 
 import websockets.exceptions as ws_exceptions
 import websockets.sync.server as ws_server
@@ -92,7 +93,7 @@ class WebsocketServer(xronos.Reactor):
         self.__port = port
         self.__server: ws_server.Server  # initiliazed at startup
         self.__server_thread = threading.Thread(target=self.__run_server)
-        self._clients: Set[ws_server.ServerConnection] = set()
+        self._clients: set[ws_server.ServerConnection] = set()
 
     ###################
     # websocket server
@@ -186,7 +187,7 @@ class WebsocketServer(xronos.Reactor):
             msg_type = data.get("type")
             if not isinstance(msg_type, str):
                 return
-            elif msg_type == "exit":
+            if msg_type == "exit":
                 self.__command_exit_trigger.trigger(None)
                 return
 
@@ -218,7 +219,7 @@ class WebsocketServer(xronos.Reactor):
         effect = ctx.add_effect(self.command_exit)
 
         def handler() -> None:
-            log(self, "command: exit")
+            log(self.name, ctx, "command: exit")
             effect.set(None)
 
         return handler
@@ -246,7 +247,7 @@ class WebsocketServer(xronos.Reactor):
                 )
                 self.__server_thread.start()
             except Exception as e:
-                log(self, f"failed to start: {e}")
+                log(self.name, ctx, f"failed to start: {e}")
                 stopped_effect.set(None)
 
         return handler
@@ -270,7 +271,7 @@ class WebsocketServer(xronos.Reactor):
         stopped_effect = ctx.add_effect(self.service_stopped)
 
         def handler() -> None:
-            log(self, "stopped")
+            log(self.name, ctx, "stopped")
             stopped_effect.set(None)
 
         return handler
@@ -284,7 +285,7 @@ class WebsocketServer(xronos.Reactor):
         def handler() -> None:
             # stop server
             if self.__server_thread.is_alive():
-                log(self, "warning: service was not stopped before shutdown")
+                log(self.name, ctx, "warning: service was not stopped before shutdown")
                 self.__server.shutdown()
 
             # drop clients
@@ -298,7 +299,7 @@ class WebsocketServer(xronos.Reactor):
                 except ws_exceptions.ConnectionClosed:
                     pass
                 except Exception as e:
-                    log(self, f"client dropped: {e}")
+                    log(self.name, ctx, f"client dropped: {e}")
 
             self.__server_thread.join()
 
@@ -316,4 +317,4 @@ class WebsocketServer(xronos.Reactor):
         self, ctx: xronos.ReactionContext
     ) -> Callable[[], None]:
         async_log = ctx.add_trigger(self.__async_log)
-        return lambda: log(self, async_log.get())
+        return lambda: log(self.name, ctx, async_log.get())

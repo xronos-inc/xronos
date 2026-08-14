@@ -9,6 +9,7 @@
 #include "xronos/core/reactor_model.hh"
 #include "xronos/core/time.hh"
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -20,8 +21,20 @@ struct WeakDependency {
   std::uint64_t reaction_uid;
 };
 
+// The connection a dependency rides on, as port uids: `from_uid` is the port
+// the upstream reaction writes and `to_uid` is the port the downstream
+// reaction triggers on.
+struct DependencyConnection {
+  std::uint64_t from_uid;
+  std::uint64_t to_uid;
+};
+
 struct StrongDependency {
   std::uint64_t reaction_uid;
+  // Set when the dependency stems from a connection between ports, so a
+  // reported cycle can name the connections it runs through. Dependencies
+  // from reaction ordering within one reactor carry none.
+  std::optional<DependencyConnection> via_connection;
 };
 
 class DependencyGraph {
@@ -38,8 +51,10 @@ public:
       -> nonstd::expected<std::vector<std::uint64_t>, std::string>;
 
 private:
-  void add_strong_dependency(std::uint64_t from_uid, std::uint64_t to_uid) {
-    strong_dependencies_[from_uid].emplace_back(StrongDependency{to_uid});
+  void add_strong_dependency(std::uint64_t from_uid, std::uint64_t to_uid,
+                             std::optional<DependencyConnection> via_connection = std::nullopt) {
+    strong_dependencies_[from_uid].emplace_back(
+        StrongDependency{.reaction_uid = to_uid, .via_connection = via_connection});
   }
 
   void add_weak_dependency(std::uint64_t from_uid, std::uint64_t to_uid, core::Duration delay) {

@@ -4,7 +4,7 @@
 # pyright: standard
 
 import math
-from typing import Callable, Tuple
+from collections.abc import Callable
 
 import numpy as np
 import numpy.typing as npt
@@ -19,7 +19,7 @@ class RobotArmController(xronos.Reactor):
 
     # Output port for sending a new target arm pose.
     target_arm_pose = xronos.OutputPortDeclaration[
-        Tuple[npt.NDArray[np.floating], npt.NDArray[np.floating]]
+        tuple[npt.NDArray[np.floating], npt.NDArray[np.floating]]
     ]()
     # Output port indicating that the gripper should close.
     close_gripper = xronos.OutputPortDeclaration[None]()
@@ -44,7 +44,7 @@ class RobotArmController(xronos.Reactor):
         self._sequence_step = 0
         self._cubes_delivered_value = 0
 
-    def __get_next_command(self) -> Tuple[npt.NDArray[np.floating], bool, bool]:
+    def __get_next_command(self) -> tuple[npt.NDArray[np.floating], bool, bool]:
         pos_x = math.floor(self._cubes_delivered_value / STACK_HEIGHT) * 0.20 - 0.08
         pos_z = (self._cubes_delivered_value % STACK_HEIGHT) * 0.04
 
@@ -118,7 +118,7 @@ class CubeGeneratorController(xronos.Reactor):
 
     cube_placed = xronos.InputPortDeclaration[None]()
 
-    spawn_new_cube = xronos.OutputPortDeclaration[Tuple[float, float, float]]()
+    spawn_new_cube = xronos.OutputPortDeclaration[tuple[float, float, float]]()
 
     CUBE_COLORS = (
         (0, 0.776, 0.957),

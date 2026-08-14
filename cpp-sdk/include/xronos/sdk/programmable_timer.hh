@@ -6,17 +6,24 @@
 #ifndef XRONOS_SDK_PROGRAMMABLE_TIMER_HH
 #define XRONOS_SDK_PROGRAMMABLE_TIMER_HH
 
+#include <cstdint>
+#include <string>
 #include <string_view>
 
 #include "xronos/sdk/context.hh"
+#include "xronos/sdk/detail/context_access.hh"
+#include "xronos/sdk/detail/element.hh"
 #include "xronos/sdk/element.hh"
-#include "xronos/sdk/fwd.hh"
 
 namespace xronos::sdk {
 
 namespace detail {
 
-auto register_programmable_timer(std::string_view name, const ReactorContext& context) -> const core::Element&;
+inline auto register_programmable_timer(std::string_view name, const ReactorContext& context) -> std::uint64_t {
+  return register_with_location(context, [&]() -> std::uint64_t {
+    return get_backend(context).register_programmable_timer(std::string{name}, ContextAccess::get_parent_uid(context));
+  });
+}
 
 } // namespace detail
 
@@ -39,7 +46,7 @@ public:
    * @param context The containing reactor's context.
    */
   ProgrammableTimer(std::string_view name, const ReactorContext& context)
-      : Element{detail::register_programmable_timer(name, context), context} {}
+      : Element{detail::register_programmable_timer(name, context), name, context} {}
 };
 
 } // namespace xronos::sdk

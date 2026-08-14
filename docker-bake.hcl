@@ -1,6 +1,6 @@
 variable "CONTEXT_PREFIX" { default = "." }
 
-variable "XRONOS_VERSION" { default = "0.12.0" }
+variable "XRONOS_VERSION" { default = "0.13.0" }
 
 variable "ALL_PLATFORMS" { default = 0 }
 

@@ -20,9 +20,9 @@ TEST(validation, ThrowOnDuplicateReactorNames) {
 
   auto foo = MockReactor("foo", env.context());
   auto bar = MockReactor("bar", env.context());
-  EXPECT_THROW(MockReactor("foo", env.context()), DuplicateNameError);
+  EXPECT_THROW(MockReactor("foo", env.context()), InvalidNameError);
   auto baz = MockReactor("baz", env.context());
-  EXPECT_THROW(MockReactor("bar", env.context()), DuplicateNameError);
+  EXPECT_THROW(MockReactor("bar", env.context()), InvalidNameError);
 }
 
 TEST(validation, ThrowOnDuplicateElementNames) {
@@ -38,7 +38,7 @@ TEST(validation, ThrowOnDuplicateElementNames) {
 
   TestEnvironment env{};
 
-  EXPECT_THROW(BadReactor("bad", env.context()), DuplicateNameError);
+  EXPECT_THROW(BadReactor("bad", env.context()), InvalidNameError);
 
   class TestReactor : public Reactor {
   public:
@@ -60,12 +60,12 @@ TEST(validation, ThrowOnDuplicateElementNames) {
   };
 
   TestReactor test{"test", env.context()};
-  EXPECT_THROW(PhysicalEvent<void>("timer", test.context()), DuplicateNameError);
-  EXPECT_THROW(Metric("input", test.context(), "mock", "mock"), DuplicateNameError);
-  EXPECT_THROW(Startup("timer", test.context()), DuplicateNameError);
-  EXPECT_THROW(PeriodicTimer("shutdown", test.context(), std::chrono::seconds{1}), DuplicateNameError);
+  EXPECT_THROW(PhysicalEvent<void>("timer", test.context()), InvalidNameError);
+  EXPECT_THROW(Metric("input", test.context(), "mock", "mock"), InvalidNameError);
+  EXPECT_THROW(Startup("timer", test.context()), InvalidNameError);
+  EXPECT_THROW(PeriodicTimer("shutdown", test.context(), std::chrono::seconds{1}), InvalidNameError);
 
-  EXPECT_THROW(env.execute(), DuplicateNameError);
+  EXPECT_THROW(env.execute(), InvalidNameError);
 }
 
 } // namespace xronos::sdk::test

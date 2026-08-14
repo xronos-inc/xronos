@@ -6,13 +6,23 @@
 
 #include <optional>
 
-#include "xronos/sdk/fwd.hh"
+#include "xronos/sdk/detail/program_context.hh"
+#include "xronos/sdk/element.hh"
 #include "xronos/sdk/time.hh"
 
 namespace xronos::sdk::detail {
 
-void connect_impl(detail::ProgramContext& context, const Element& from_port, const Element& to_port,
-                  const std::optional<Duration>& delay);
+inline void connect_impl(detail::ProgramContext& program_context, const Element& from_port, const Element& to_port,
+                         const std::optional<Duration>& delay) {
+  // Throws ValidationError if the downstream port already has a
+  // connection, or once a run has been prepared (the implementation seals
+  // the model).
+  if (delay.has_value()) {
+    program_context.backend().add_delayed_connection(from_port.uid(), to_port.uid(), *delay);
+  } else {
+    program_context.backend().add_connection(from_port.uid(), to_port.uid());
+  }
+}
 
 } // namespace xronos::sdk::detail
 

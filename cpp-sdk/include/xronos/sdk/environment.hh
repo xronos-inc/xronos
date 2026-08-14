@@ -11,12 +11,13 @@
 #include <source_location>
 #include <stdexcept>
 #include <string_view>
-#include <thread>
 
+#include "xronos/abi/exceptions.hh"
 #include "xronos/sdk/context.hh"
 #include "xronos/sdk/detail/connect.hh"
+#include "xronos/sdk/detail/context_access.hh"
+#include "xronos/sdk/detail/program_context.hh"
 #include "xronos/sdk/detail/source_location.hh"
-#include "xronos/sdk/fwd.hh"
 #include "xronos/sdk/port.hh"
 #include "xronos/sdk/runtime_provider.hh"
 #include "xronos/sdk/time.hh"
@@ -26,10 +27,34 @@ namespace xronos::sdk {
 /**
  * Exception that is thrown when a program reaches an invalid state.
  */
-class ValidationError : public std::runtime_error {
+using ValidationError = abi::ValidationError;
+
+/**
+ * Exception thrown by Environment::execute(const RuntimeProvider&) when the
+ * provided runtime was built from a different release than the SDK.
+ *
+ * The runtime may be built and linked separately from the SDK, so a program may
+ * inadvertently combine a runtime and an SDK from incompatible releases.
+ */
+class VersionMismatchError : public std::runtime_error {
 public:
   using std::runtime_error::runtime_error;
 };
+
+namespace detail {
+
+// The concrete program context, defined only inside the SDK library (it owns
+// the backend by value). Header-inline code may name it -- to hold a shared_ptr
+// to it -- but can only reach the ProgramContext interface through its virtuals;
+// the Environment constructor upcasts it to that interface for the inline glue.
+class DefaultProgramContext;
+
+// The factory for the SDK library's program context, compiled into the library.
+// Returns the concrete type so Environment can drive the backend directly,
+// without a downcast.
+auto create_default_program_context() -> std::shared_ptr<DefaultProgramContext>;
+
+} // namespace detail
 
 /**
  * The entry point for assembling and executing reactor programs.
@@ -42,17 +67,17 @@ public:
   /**
    * Constructor.
    */
-  Environment();
+  Environment()
+      : Environment{false, Duration::max(), true} {}
 
   /**
    * Destructor.
    */
-  ~Environment();
+  ~Environment() = default;
 
-  // The Environment may not be moved or copied. Copying is implicitly delete due to
-  // the unique_ptr to the runtime instance. We also need to delete
-  // the move constructor and assignment operator to avoid dangling references
-  // in the EnvironmentContext objects.
+  // The Environment may not be moved or copied: the transient context objects
+  // reference the program context it owns, so a move would dangle them, and
+  // there is no meaningful copy of a program's single execution.
   Environment(Environment&&) = delete;
   Environment(const Environment&) = delete;
   auto operator=(Environment&&) = delete;
@@ -68,10 +93,18 @@ public:
    * Returns when the reactor program terminates. The reactor program terminates
    * when there are no more events, or after calling request_shutdown().
    *
-   * @param runtime_provider Provider of the runtime that should be used for
-   * execution. When omitted, the default runtime is used.
+   * The program executes on the default runtime. To select a different
+   * runtime, use the overload that takes a RuntimeProvider.
    */
-  void execute(const RuntimeProvider& runtime_provider = DefaultRuntimeProvider{});
+  void execute();
+
+  /**
+   * @overload
+   *
+   * @param runtime_provider Provider of the runtime that should be used for
+   * execution.
+   */
+  void execute(const RuntimeProvider& runtime_provider);
 
   /**
    * Get a context object for constructing top-level reactors.
@@ -81,12 +114,16 @@ public:
    * @returns This environment's context.
    */
   [[nodiscard]] auto context(std::source_location source_location = std::source_location::current()) noexcept
-      -> EnvironmentContext;
+      -> EnvironmentContext {
+    return context(detail::SourceLocationView::from_std(source_location));
+  }
 
   /**
    * @internal
    */
-  [[nodiscard]] auto context(detail::SourceLocationView source_location) noexcept -> EnvironmentContext;
+  [[nodiscard]] auto context(detail::SourceLocationView source_location) noexcept -> EnvironmentContext {
+    return detail::ContextAccess::create_environment_context(program_context_, source_location);
+  }
 
   /**
    * Connect two ports.
@@ -184,21 +221,29 @@ protected:
    * @brief Low-level constructor for the environment that supports advanced configuration.
    *
    * @details This constructor usually should not be called directly.
-   * @param worker Number of worker threads to be used for execution.
    * @param fast_fwd_execution Use a special mode of execution that skips waiting between
    * executing events and instead processes events as fast as possible.
    * @param timeout The maximum amount of time to simulate before terminating.
    * @param render_reactor_graph Whether to export the reactor graph to a diagram server.
    */
-  Environment(unsigned workers, bool fast_fwd_execution, Duration timeout, bool render_reactor_graph);
+  // Defined in the SDK library, where DefaultProgramContext is complete: it
+  // obtains the concrete context from the factory and upcasts it to seed
+  // program_context_ (an ordinary, compiler-checked base conversion).
+  Environment(bool fast_fwd_execution, Duration timeout, bool render_reactor_graph);
 
 private:
+  // The program context is held twice, as the same object: default_program_context_
+  // is the concrete type the compiled Environment methods drive the backend
+  // through (no downcast); program_context_ is that pointer upcast to the
+  // ProgramContext interface, the stable handle the header-inline glue (context
+  // creation and connect) shares by reference with every Element.
+  std::shared_ptr<detail::DefaultProgramContext> default_program_context_;
   std::shared_ptr<detail::ProgramContext> program_context_;
 
-  unsigned num_workers_;
   Duration timeout_;
   bool fast_fwd_execution_;
-  bool render_reactor_graph_;
+  bool diagram_export_requested_;
+  bool executed_{false};
 };
 
 /**
@@ -215,7 +260,7 @@ public:
    * @param timeout The maximum amount of time to simulate before terminating.
    */
   TestEnvironment(Duration timeout = Duration::max())
-      : Environment{std::thread::hardware_concurrency(), true, timeout, false} {}
+      : Environment{true, timeout, false} {}
 };
 
 } // namespace xronos::sdk

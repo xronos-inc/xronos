@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: Copyright (c) Xronos Inc.
 // SPDX-License-Identifier: BSD-3-Clause
 
+#include <sstream>
+#include <string>
 #include <thread>
 
 #include "xronos/sdk.hh"
@@ -190,42 +192,23 @@ TEST(time, InitTimeDefaults) {
   test.check_post_conditions();
 }
 
-// The reactor-level timing API is deprecated but still functional. Verify that
-// it keeps working and agrees with the reaction-scoped API. The deprecation
-// warnings are silenced locally so the test compiles cleanly while still
-// exercising the old code path.
-TEST(time, DeprecatedReactorTimingApi) {
-  class DeprecatedApiTest : public Reactor {
-    using Reactor::Reactor;
+TEST(time, StreamTimePointFormatsDate) {
+  std::ostringstream out;
+  out << TimePoint{}; // epoch
+  // Formatted as "YYYY-MM-DD HH:MM:SS.nnnnnnnnn".
+  EXPECT_NE(out.str().find('-'), std::string::npos);
+  EXPECT_NE(out.str().find('.'), std::string::npos);
+}
 
-    bool on_startup_executed_{false};
-
-    class OnStartup : public Reaction<DeprecatedApiTest> {
-      using Reaction<DeprecatedApiTest>::Reaction;
-      Trigger<void> startup_trigger{self().startup(), context()};
-      void handler() final {
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-        EXPECT_EQ(self().get_time(), current_time());
-        EXPECT_EQ(self().get_time_since_startup(), elapsed_time());
-        EXPECT_EQ(self().get_time_since_startup(), 0s);
-#pragma GCC diagnostic pop
-
-        EXPECT_FALSE(self().on_startup_executed_);
-        self().on_startup_executed_ = true;
-      }
-    };
-
-    void assemble() final { add_reaction<OnStartup>("on_startup"); }
-
-  public:
-    void check_post_conditions() const { EXPECT_TRUE(on_startup_executed_); }
-  };
-
-  TestEnvironment env{};
-  DeprecatedApiTest test{"test", env.context()};
-  env.execute();
-  test.check_post_conditions();
+// Streaming the extreme TimePoint values must not crash. They stay within
+// std::localtime's range on a 64-bit time_t (years 1677-2262), so they format
+// normally; this guards the formatting/arithmetic and the localtime null-check
+// against regressions.
+TEST(time, StreamTimePointExtremesDoNotCrash) {
+  std::ostringstream out;
+  out << TimePoint::max();
+  out << TimePoint::min();
+  EXPECT_FALSE(out.str().empty());
 }
 
 } // namespace xronos::sdk::test

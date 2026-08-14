@@ -4,18 +4,14 @@
 #ifndef XRONOS_CORE_ELEMENT_HH
 #define XRONOS_CORE_ELEMENT_HH
 
-#include <any>
-#include <cstddef>
 #include <cstdint>
-#include <functional>
 #include <memory>
 #include <optional>
-#include <span>
 #include <string>
 #include <string_view>
 #include <variant>
-#include <vector>
 
+#include "xronos/abi/backend.hh"
 #include "xronos/core/time.hh"
 
 namespace xronos::core {
@@ -23,7 +19,7 @@ namespace xronos::core {
 using ElementID = std::uint64_t;
 
 struct ReactionProperties {
-  std::function<void()> handler;
+  std::unique_ptr<abi::ReactionHandler> handler;
   std::uint32_t position{};
   std::optional<Duration> deadline;
 };
@@ -38,9 +34,14 @@ struct PeriodicTimerProperties {
   Duration period;
 };
 
+struct ExportInfo {
+  std::string value_type;
+  std::string encoding;
+};
+
 struct PortProperties {
-  std::function<std::vector<std::byte>(const std::any&)> serializer{nullptr};
-  std::function<std::any(std::span<const std::byte>)> deserializer{nullptr};
+  std::unique_ptr<abi::PortSerializer> serializer{nullptr};
+  std::optional<ExportInfo> export_info{std::nullopt};
 };
 
 // These <name>Tag classes are used similarly to enum values. They identify the

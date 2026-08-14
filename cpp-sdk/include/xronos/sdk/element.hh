@@ -8,19 +8,21 @@
 
 #include <concepts>
 #include <cstdint>
-#include <functional>
 #include <initializer_list>
 #include <memory>
 #include <ranges>
 #include <span>
-#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <utility>
 #include <variant>
 
+#include "xronos/abi/backend.hh"
+#include "xronos/abi/exceptions.hh"
 #include "xronos/sdk/context.hh"
-#include "xronos/sdk/fwd.hh"
+#include "xronos/sdk/detail/context_access.hh"
+#include "xronos/sdk/detail/program_context.hh"
+#include "xronos/sdk/detail/source_location.hh"
 
 namespace xronos::sdk {
 
@@ -30,13 +32,12 @@ namespace xronos::sdk {
 using AttributeValue = std::variant<std::string, bool, std::int64_t, double>;
 
 /**
- * Exception that is thrown when creating an element with a name that is already
- * in use.
+ * Exception that is thrown when creating an element with an invalid name.
+ *
+ * A name is invalid if it is empty, if it contains whitespace or any of
+ * `. , / * $ ? # @`, or if it is already in use within the same parent.
  */
-class DuplicateNameError : public std::runtime_error {
-public:
-  using std::runtime_error::runtime_error;
-};
+using InvalidNameError = abi::InvalidNameError;
 
 /**
  * Base class for all reactor elements.
@@ -51,7 +52,7 @@ public:
    *
    * @returns The element's name.
    */
-  [[nodiscard]] auto name() const noexcept -> const std::string&;
+  [[nodiscard]] auto name() const noexcept -> const std::string& { return name_; }
 
   /**
    * Get the element's fully qualified name.
@@ -63,14 +64,14 @@ public:
    *
    * @returns The element's fully qualified name.
    */
-  [[nodiscard]] auto fqn() const noexcept -> const std::string&;
+  [[nodiscard]] auto fqn() const noexcept -> const std::string& { return fqn_; }
 
   /**
    * Get the element's unique ID.
    *
    * Returns an integer ID that is unique within an environment.
    */
-  [[nodiscard]] auto uid() const noexcept -> std::uint64_t;
+  [[nodiscard]] auto uid() const noexcept -> std::uint64_t { return uid_; }
 
   /**
    * Annotate an element with an attribute.
@@ -85,7 +86,12 @@ public:
    * @returns `true` if the attribute was successfully added.
    * @see add_attributes()
    */
-  auto add_attribute(std::string_view key, const AttributeValue& value) noexcept -> bool;
+  auto add_attribute(std::string_view key, const AttributeValue& value) noexcept -> bool {
+    auto& backend = program_context_->backend();
+    const std::string key_string{key};
+    return std::visit(
+        [&](const auto& alternative) -> bool { return backend.add_attribute(uid_, key_string, alternative); }, value);
+  }
 
   /**
    * Annotate an element with multiple attributes.
@@ -137,16 +143,22 @@ public:
 
 protected:
   /** @internal */
-  Element(const core::Element& core_element, const Context& context);
+  Element(std::uint64_t uid, std::string_view name, const Context& context)
+      : uid_{uid}
+      , name_{name}
+      , program_context_{detail::ContextAccess::get_program_context(context)} {
+    auto& backend = program_context_->backend();
+    fqn_ = backend.element_fqn(uid);
+    backend.register_source_location(uid, detail::ContextAccess::get_source_location(context).to_abi());
+  }
 
   /** @internal */
   [[nodiscard]] auto program_context() const noexcept -> const auto& { return program_context_; }
 
-  /** @internal */
-  [[nodiscard]] auto core_element() const noexcept -> const core::Element& { return core_element_; }
-
 private:
-  std::reference_wrapper<const core::Element> core_element_;
+  std::uint64_t uid_;
+  std::string name_;
+  std::string fqn_;
   std::shared_ptr<detail::ProgramContext> program_context_;
 };
 

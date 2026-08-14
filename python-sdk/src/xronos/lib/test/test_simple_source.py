@@ -4,7 +4,8 @@
 import datetime
 import math
 import sys
-from typing import Callable, Generic, TypeVar, cast
+from collections.abc import Callable
+from typing import Generic, TypeVar, cast
 
 import pytest
 
@@ -84,10 +85,10 @@ def test_startup_source() -> None:
     env = xronos.Environment()
     value = "hello"
     printer = env.create_reactor(
-        "Startup Printer", PrintAndAssert[str], assert_value=lambda: value
+        "StartupPrinter", PrintAndAssert[str], assert_value=lambda: value
     )
     env.connect(
-        env.create_reactor("Startup Source", StartupSource, value=value).output,
+        env.create_reactor("StartupSource", StartupSource, value=value).output,
         printer.result,
     )
     env.execute()
@@ -104,12 +105,12 @@ def test_simultaneous_events() -> None:
     values = ["startup", "timer"]
 
     printer = env.create_reactor(
-        "Simultaneous Printer",
+        "SimultaneousPrinter",
         PrintAndAssert[str],
         assert_value=lambda: values[-1],  # last value wins
     )
     source = env.create_reactor(
-        "Simultaneous Source",
+        "SimultaneousSource",
         SimultaneousSource,
         startup_value=values[0],
         timer_value=values[1],
@@ -121,10 +122,8 @@ def test_simultaneous_events() -> None:
 
     with pytest.warns(OutputDiscardedWarning) as warning_record:
         env.execute()
-        assert len(warning_record) == 1
-        assert (
-            cast(OutputDiscardedWarning, warning_record[0].message).value == values[0]
-        )
+    assert len(warning_record) == 1
+    assert cast(OutputDiscardedWarning, warning_record[0].message).value == values[0]
 
 
 def test_timed_source() -> None:
@@ -156,8 +155,7 @@ def test_successor_source() -> None:
     def fib(n: int) -> int:
         if n <= 1:
             return max(0, n)
-        else:
-            return fib(n - 1) + fib(n - 2)
+        return fib(n - 1) + fib(n - 2)
 
     printer = env.create_reactor(
         "PrintAndAssert",

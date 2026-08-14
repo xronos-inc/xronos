@@ -8,7 +8,7 @@
 import datetime
 import math
 import sys
-from typing import Callable
+from collections.abc import Callable
 
 import cv2
 import xronos

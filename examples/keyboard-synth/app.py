@@ -11,7 +11,6 @@ import xronos
 
 from audio_bridge import AudioBridge
 from lifecycle_manager import LifecycleManager
-from reactor_log import log
 from synthesizer import Synthesizer
 from webserver import Webserver
 from websocket_server import WebsocketServer
@@ -47,10 +46,10 @@ if __name__ == "__main__":
     if args.telemetry:
         env.enable_telemetry(args.telemetry)
 
-    audio_bridge = env.create_reactor("Audio Bridge", AudioBridge)
+    audio_bridge = env.create_reactor("AudioBridge", AudioBridge)
 
     websocket_server = env.create_reactor(
-        "Websocket Server",
+        "WebsocketServer",
         WebsocketServer,
         host=args.host,
         port=args.port + 1,
@@ -67,7 +66,7 @@ if __name__ == "__main__":
     )
 
     lifecycle = env.create_reactor(
-        "Lifecycle Manager",
+        "LifecycleManager",
         LifecycleManager,
     )
 
@@ -84,4 +83,4 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         pass
     finally:
-        log(lifecycle, "program complete")
+        print(f"({lifecycle.name}) program complete")

@@ -2,12 +2,12 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import datetime
-from typing import Callable
+from collections.abc import Callable
 
 class ValidationError(Exception):
     def __init__(self, message: str) -> None: ...
 
-class DuplicateNameError(Exception):
+class InvalidNameError(Exception):
     def __init__(self, message: str) -> None: ...
 
 class SourceLocation:
@@ -40,7 +40,6 @@ class BaseEnvironment:
 class Environment(BaseEnvironment):
     def __init__(
         self,
-        workers: int,
         fast: bool,
         render_reactor_graph: bool,
         timeout: datetime.timedelta = ...,
@@ -78,9 +77,6 @@ class Reactor(BaseReactor):
         context: ReactorContext | EnvironmentContext,
         assemble_callback: Callable[[], None],
     ) -> None: ...
-    def get_lag(self) -> datetime.timedelta: ...
-    def get_time(self) -> datetime.datetime: ...
-    def get_time_since_startup(self) -> datetime.timedelta: ...
     @property
     def startup(self) -> Startup: ...
     @property

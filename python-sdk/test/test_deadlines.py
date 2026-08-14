@@ -3,7 +3,7 @@
 
 import datetime
 import time
-from typing import Callable
+from collections.abc import Callable
 
 import pytest
 
@@ -216,7 +216,7 @@ def test_deadline_defaults_during_declaration() -> None:
 def test_negative_deadline_rejected() -> None:
     # The decorator validates eagerly, so the error is raised as soon as the
     # negative deadline is passed.
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="deadline may not be negative"):
         xronos.reaction_with_deadline(deadline=datetime.timedelta(milliseconds=-1))
 
 

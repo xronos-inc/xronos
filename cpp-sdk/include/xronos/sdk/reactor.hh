@@ -11,12 +11,15 @@
 #include <memory>
 #include <optional>
 #include <source_location>
+#include <string>
 #include <string_view>
 #include <utility>
 #include <vector>
 
+#include "xronos/abi/backend.hh"
 #include "xronos/sdk/context.hh"
 #include "xronos/sdk/detail/connect.hh"
+#include "xronos/sdk/detail/element.hh"
 #include "xronos/sdk/detail/source_location.hh"
 #include "xronos/sdk/element.hh"
 #include "xronos/sdk/environment.hh"
@@ -35,6 +38,16 @@ template <class ReactionClass>
 auto add_reaction(Reactor& reactor, std::string_view name, std::optional<Duration> deadline,
                   detail::SourceLocationView source_location) -> ReactionClass&;
 
+inline auto register_reactor(std::string_view name, const Context& parent_context) -> std::uint64_t {
+  return register_with_location(parent_context, [&]() -> std::uint64_t {
+    auto parent = ContextAccess::get_parent_uid(parent_context);
+    if (parent.has_value()) {
+      return get_backend(parent_context).register_reactor(std::string{name}, *parent);
+    }
+    return get_backend(parent_context).register_top_level_reactor(std::string{name});
+  });
+}
+
 } // namespace detail
 
 /**
@@ -48,17 +61,25 @@ public:
    * @param name The name of the reactor instance.
    * @param parent_context Either the environment's or the containing reactor's context.
    */
-  Reactor(std::string_view name, const Context& parent_context);
+  Reactor(std::string_view name, const Context& parent_context)
+      : Element{detail::register_reactor(name, parent_context), name, parent_context}
+      , startup_{"startup", this->context()}
+      , shutdown_{"shutdown", this->context()} {
+    // Ownership of the callback transfers to the implementation.
+    // NOLINTNEXTLINE(cppcoreguidelines-owning-memory)
+    program_context()->backend().register_assemble_callback(uid(), new AssembleCallbackImpl{*this});
+  }
 
-  // Reactors may not be moved or copied. Copying is implicitly deleted due to
-  // the unique_ptr to the runtime instance in Element. We also need to delete
-  // the move constructor and assignment operator to avoid dangling references
-  // in the ReactorContext objects.
+  // Reactors may not be moved or copied. Copying is already deleted through the
+  // Element base. Move is deleted too because the reactions and child elements
+  // assembled within a reactor hold references back to it (e.g.
+  // ReactionProperties::container_), so relocating the reactor would leave those
+  // dangling.
   Reactor(Reactor&&) = delete;
   Reactor(const Reactor&) = delete;
   auto operator=(Reactor&&) = delete;
   auto operator=(const Reactor&) = delete;
-  ~Reactor() override;
+  ~Reactor() override { program_context()->backend().unregister_assemble_callback(uid()); }
 
 protected:
   /**
@@ -70,58 +91,16 @@ protected:
    * @returns This reactors's context.
    */
   [[nodiscard]] auto context(std::source_location source_location = std::source_location::current()) noexcept
-      -> ReactorContext;
+      -> ReactorContext {
+    return context(detail::SourceLocationView::from_std(source_location));
+  }
 
   /**
    * @internal
    */
-  [[nodiscard]] auto context(detail::SourceLocationView source_location) noexcept -> ReactorContext;
-
-  /**
-   * Get the current time.
-   *
-   * This does not read wall-clock time. The Xronos runtime uses an
-   * internal clock to control how a program advances.
-   *
-   * @deprecated The current time is only well-defined while a reaction handler
-   * executes. This reactor-level accessor will be removed in an upcoming
-   * release; use the reaction-scoped BaseReaction::current_time() instead.
-   *
-   * @returns The current time as provided by the internal clock.
-   */
-  [[deprecated("Use BaseReaction::current_time() instead.")]] [[nodiscard]] auto get_time() const noexcept -> TimePoint;
-
-  /**
-   * Get the current lag.
-   *
-   * The lag is the difference between wall-clock time and the current time,
-   * computed as the current wall-clock reading minus get_time(). While a
-   * reaction handler executes, the current time does not advance, but the wall
-   * clock does; the lag therefore measures how far the wall clock has run ahead
-   * of the internal clock -- that is, how far the execution of reactions lags
-   * behind the events it processes.
-   *
-   * @deprecated The current time is only well-defined while a reaction handler
-   * executes. This reactor-level accessor will be removed in an upcoming
-   * release; use the reaction-scoped BaseReaction::lag() instead.
-   *
-   * @returns The current lag as a wall-clock duration.
-   */
-  [[deprecated("Use BaseReaction::lag() instead.")]] [[nodiscard]] auto get_lag() const noexcept -> Duration;
-
-  /**
-   * Get how far the internal clock has advanced since the @ref startup event.
-   *
-   * @deprecated The current time is only well-defined while a reaction handler
-   * executes. This reactor-level accessor will be removed in an upcoming
-   * release; use the reaction-scoped BaseReaction::elapsed_time()
-   * instead.
-   *
-   * @returns The difference between the current time given by get_time() and
-   * the time at which the program started.
-   */
-  [[deprecated("Use BaseReaction::elapsed_time() instead.")]] [[nodiscard]] auto get_time_since_startup() const noexcept
-      -> Duration;
+  [[nodiscard]] auto context(detail::SourceLocationView source_location) noexcept -> ReactorContext {
+    return detail::ContextAccess::create_reactor_context(program_context(), uid(), source_location);
+  }
 
   /**
    * Get the startup event source.
@@ -265,11 +244,23 @@ private:
    */
   virtual void assemble() = 0;
 
+  // Invokes assemble() through the ABI's assemble-callback interface; the
+  // backend owns the callback object.
+  class AssembleCallbackImpl final : public abi::AssembleCallback {
+  public:
+    explicit AssembleCallbackImpl(Reactor& reactor)
+        : reactor_{reactor} {}
+
+    void invoke() final { reactor_.get().assemble(); }
+
+  private:
+    std::reference_wrapper<Reactor> reactor_;
+  };
+
   Startup startup_;
   Shutdown shutdown_;
   std::vector<std::unique_ptr<BaseReaction>> reactions_{};
 
-  using Element::core_element;
   using Element::program_context;
 
   friend BaseReaction;

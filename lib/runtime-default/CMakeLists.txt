@@ -37,7 +37,8 @@ target_link_libraries(xronos-runtime-default
   PRIVATE
   xronos::xronos-dependency-graph
   xronos::xronos-logical-time
-  xronos::xronos-util)
+  xronos::xronos-util
+  xronos::xronos-value)
 target_include_directories(xronos-runtime-default PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/include>)
 target_compile_options(xronos-runtime-default PRIVATE -Wall -Wextra -pedantic -Werror)
 set_target_properties(xronos-runtime-default PROPERTIES VERIFY_INTERFACE_HEADER_SETS ON)

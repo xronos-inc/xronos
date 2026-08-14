@@ -4,14 +4,18 @@
 #include "xronos/sdk/runtime_provider.hh"
 
 #include <memory>
+#include <string_view>
 
 #include "xronos/runtime/default/default_runtime.hh"
 #include "xronos/runtime/interfaces.hh"
+#include "xronos/sdk/gen/config.hh"
 
 namespace xronos::sdk {
 
 auto DefaultRuntimeProvider::get_runtime() const noexcept -> std::unique_ptr<runtime::Runtime> {
   return std::make_unique<runtime::default_::DefaultRuntime>();
 }
+
+auto DefaultRuntimeProvider::version() const noexcept -> std::string_view { return config::VERSION; }
 
 } // namespace xronos::sdk

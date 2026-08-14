@@ -2,8 +2,8 @@
 
 FROM scratch AS src
 WORKDIR /xronos/cpp-sdk
-COPY --parents cmake src include examples test third-party-licenses .
-COPY CMakeLists.txt Config.cmake.in LICENSE THIRD_PARTY_NOTICE .
+COPY --parents cmake src include examples link-test test third-party-licenses .
+COPY CMakeLists.txt Config.cmake.in LICENSE THIRD_PARTY_NOTICE xronos-sdk.map .
 
 FROM base AS common
 WORKDIR /xronos

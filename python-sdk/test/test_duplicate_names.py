@@ -18,10 +18,10 @@ class ReactorWithOutput(xronos.Reactor):
 def test_duplicate_reactor_names() -> None:
     env = xronos.Environment()
     test = env.create_reactor("test", EmptyReactor)
-    with pytest.raises(xronos.DuplicateNameError):
+    with pytest.raises(xronos.InvalidNameError):
         env.create_reactor("test", EmptyReactor)
-    with pytest.raises(xronos.DuplicateNameError):
+    with pytest.raises(xronos.InvalidNameError):
         test.create_reactor("startup", EmptyReactor)
-    with pytest.raises(xronos.DuplicateNameError):
-        foo = env.create_reactor("foo", ReactorWithOutput)
+    foo = env.create_reactor("foo", ReactorWithOutput)
+    with pytest.raises(xronos.InvalidNameError):
         foo.create_reactor("output", EmptyReactor)

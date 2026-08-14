@@ -1,5 +1,5 @@
 [lint]
-select = ['E', 'F', 'W', 'A', 'PL', 'I', 'RUF', 'D']
+select = ['E', 'F', 'W', 'A', 'B', 'C4', 'PL', 'I', 'RUF', 'D', 'UP', 'PIE', 'RET', 'PT']
 ignore = ['D1']
 fixable = ["ALL"]
 

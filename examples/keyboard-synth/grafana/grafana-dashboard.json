@@ -187,7 +187,7 @@
             {
               "key": "event.name::tag",
               "operator": "=",
-              "value": "Audio Bridge._AudioBridge__buffer_underruns_metric"
+              "value": "AudioBridge._AudioBridge__buffer_underruns_metric"
             }
           ],
           "datasource": {
@@ -308,7 +308,7 @@
             {
               "key": "event.name::tag",
               "operator": "=",
-              "value": "Audio Bridge._AudioBridge__buffer_size_metric"
+              "value": "AudioBridge._AudioBridge__buffer_size_metric"
             }
           ],
           "datasource": {

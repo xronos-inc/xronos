@@ -6,7 +6,6 @@
 # under BSD-2-Clause and modifications Xronos Inc. under BSD-3-Clause.
 
 import argparse
-from typing import Optional
 
 import xronos
 
@@ -16,7 +15,7 @@ from WebCam import WebCam
 
 
 def main(
-    video_path: Optional[str] = None,
+    video_path: str | None = None,
     no_display: bool = False,
     telemetry: bool = False,
 ) -> None:

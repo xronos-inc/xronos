@@ -8,7 +8,7 @@ target_sources(
   BASE_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>
   FILES ${HEADERS}
 )
-target_link_libraries(xronos-runtime-interfaces INTERFACE xronos-core)
+target_link_libraries(xronos-runtime-interfaces INTERFACE xronos-abi xronos-core)
 
 set_target_properties(xronos-runtime-interfaces PROPERTIES VERIFY_INTERFACE_HEADER_SETS ON)
 

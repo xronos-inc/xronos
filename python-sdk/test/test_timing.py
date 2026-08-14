@@ -2,9 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import datetime
-from typing import Callable
-
-import pytest
+from collections.abc import Callable
 
 import xronos
 
@@ -100,19 +98,6 @@ def test_timing_defaults_during_declaration() -> None:
     assert reactor.declaration_time == datetime.datetime.fromtimestamp(0)
     assert reactor.declaration_lag == datetime.timedelta(0)
     assert reactor.declaration_time_since_startup == datetime.timedelta(0)
-
-
-def test_reactor_timing_is_deprecated() -> None:
-    """The reactor-level timing API is deprecated but still functional."""
-    env = xronos.Environment(fast=True, timeout=datetime.timedelta(milliseconds=1))
-    reactor = env.create_reactor("deprecated", GetTime)
-
-    with pytest.warns(DeprecationWarning):
-        reactor.get_time()  # pyright: ignore[reportDeprecated]
-    with pytest.warns(DeprecationWarning):
-        reactor.get_lag()  # pyright: ignore[reportDeprecated]
-    with pytest.warns(DeprecationWarning):
-        reactor.get_time_since_startup()  # pyright: ignore[reportDeprecated]
 
 
 if __name__ == "__main__":

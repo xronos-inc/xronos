@@ -4,64 +4,60 @@
 #ifndef XRONOS_RUNTIME_INTERFACES_HH
 #define XRONOS_RUNTIME_INTERFACES_HH
 
-#include <any>
 #include <cstdint>
 #include <memory>
-#include <stdexcept>
+#include <string>
 #include <string_view>
 
+#include "xronos/abi/backend.hh"
+#include "xronos/abi/exceptions.hh"
 #include "xronos/core/reactor_model.hh"
 #include "xronos/core/time.hh"
 
 namespace xronos::runtime {
 
-struct ValidationError : public std::runtime_error {
+struct ValidationError : public abi::ValidationError {
   explicit ValidationError(std::string_view msg)
-      : std::runtime_error{std::string{msg}} {}
+      : abi::ValidationError{std::string{msg}} {}
 };
 
-struct GettableTrigger {
-  [[nodiscard]] virtual auto get() const noexcept -> std::any = 0;
-  [[nodiscard]] virtual auto is_present() const noexcept -> bool = 0;
+// The hot-path interfaces a runtime hands out are the ABI's hot-path
+// interfaces (see xronos/abi/backend.hh): deriving without adding members
+// lets a `ProgramHandle`'s pointers upcast to the ABI types with no adapter
+// objects and no extra dispatch. The runtime-facing names remain so runtimes
+// and forward declarations (e.g. xronos/sdk/fwd.hh) are unaffected.
 
+struct GettableTrigger : abi::GettableTrigger {
 protected:
   ~GettableTrigger() = default;
 };
 
-struct SettableEffect {
-  virtual void set(const std::any& value) noexcept = 0;
-  [[nodiscard]] virtual auto get() const noexcept -> std::any = 0;
-  [[nodiscard]] virtual auto is_present() const noexcept -> bool = 0;
-
+struct SettableEffect : abi::SettableEffect {
 protected:
   ~SettableEffect() = default;
 };
 
-struct SchedulableEffect {
-  virtual void schedule(const std::any& value, core::Duration delay) noexcept = 0;
-
+struct SchedulableEffect : abi::SchedulableEffect {
 protected:
   ~SchedulableEffect() = default;
 };
 
-struct ShutdownEffect {
-  virtual void trigger_shutdown() noexcept = 0;
-
+struct ShutdownEffect : abi::ShutdownEffect {
 protected:
   ~ShutdownEffect() = default;
 };
 
-struct ExternalTrigger {
-  virtual void trigger(const std::any& value) noexcept = 0;
-
+struct ExternalTrigger : abi::ExternalTrigger {
 protected:
   ~ExternalTrigger() = default;
 };
 
-struct TimeAccess {
-  [[nodiscard]] virtual auto get_timestamp() const noexcept -> core::TimePoint = 0;
+// Extends the ABI's TimeAccess with accessors that only implementation-side
+// consumers need (e.g. the OTEL telemetry backend records the microstep).
+// The SDK never reads microsteps, so this stays off the ABI; should a public
+// microstep API ever ship, appending it to abi::TimeAccess is a minor bump.
+struct TimeAccess : abi::TimeAccess {
   [[nodiscard]] virtual auto get_microstep() const noexcept -> std::uint32_t = 0;
-  [[nodiscard]] virtual auto get_start_timestamp() const noexcept -> core::TimePoint = 0;
 
 protected:
   ~TimeAccess() = default;
@@ -86,7 +82,6 @@ struct ProgramHandle {
 
 struct ExecutionProperties {
   core::Duration timeout{core::Duration::max()};
-  uint32_t num_workers{0};
   bool fast_mode{false};
 };
 

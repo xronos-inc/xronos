@@ -1,12 +1,18 @@
 #ifndef XRONOS_SDK_GEN_CONFIG_HH
 #define XRONOS_SDK_GEN_CONFIG_HH
 
+#include <string_view>
+
 // NOLINTNEXTLINE
 #cmakedefine XRONOS_SDK_ENABLE_TELEMETRY
 // NOLINTNEXTLINE
 #cmakedefine XRONOS_SDK_ENABLE_DIAGRAMS
 
 namespace xronos::sdk::config {
+
+// The version of the SDK, baked in at build time. Used by Environment::execute()
+// to verify that an externally-linked runtime was built from the same release.
+inline constexpr std::string_view VERSION = "@PROJECT_VERSION@";
 
 #ifdef XRONOS_SDK_ENABLE_TELEMETRY
 inline constexpr bool TELEMETRY_ENABLED = true;

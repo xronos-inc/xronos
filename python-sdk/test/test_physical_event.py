@@ -3,8 +3,8 @@
 
 import datetime
 import threading
+from collections.abc import Callable
 from time import sleep
-from typing import Callable
 
 import xronos
 
@@ -47,7 +47,7 @@ def run(env: xronos.Environment) -> None:
     # started. Sleeping makes sure the program is started up before we trigger
     # for the first time.
     sleep(0.1)
-    for i in range(0, NUM_ITERATIONS):
+    for i in range(NUM_ITERATIONS):
         sensor.event.trigger(i)
     xronos_thread.join()
 

@@ -7,6 +7,7 @@
 #define XRONOS_SDK_RUNTIME_PROVIDER_HH
 
 #include <memory>
+#include <string_view>
 
 #include "xronos/sdk/fwd.hh"
 
@@ -24,6 +25,16 @@ struct RuntimeProvider {
    */
   [[nodiscard]] virtual auto get_runtime() const noexcept -> std::unique_ptr<runtime::Runtime> = 0;
 
+  /**
+   * Get the version of the runtime provided by this provider.
+   *
+   * The returned version is baked into the library that defines the provider.
+   * Environment::execute() compares it against the SDK's own version to detect a
+   * mismatched SDK/runtime pair (which can occur because the runtime is linked
+   * separately from the SDK).
+   */
+  [[nodiscard]] virtual auto version() const noexcept -> std::string_view = 0;
+
 protected:
   ~RuntimeProvider() = default;
 };
@@ -31,10 +42,13 @@ protected:
 /**
  * A runtime provider that provides the default runtime.
  *
- * This provider is used by Environment::execute() when no other provider is given.
+ * Passing this to the Environment::execute() overload is equivalent to
+ * calling the parameterless execute(), which uses the default runtime of the
+ * linked backend.
  */
 struct DefaultRuntimeProvider final : public RuntimeProvider {
   [[nodiscard]] auto get_runtime() const noexcept -> std::unique_ptr<runtime::Runtime> final;
+  [[nodiscard]] auto version() const noexcept -> std::string_view final;
 };
 
 } // namespace xronos::sdk

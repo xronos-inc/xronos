@@ -1,3 +1,16 @@
-# List of symbols exported on Mac OS
-*xronos*sdk*
-*xronos*util*log*
+# Symbols exported from libxronos-sdk.dylib on macOS (-exported_symbols_list).
+# The macOS counterpart of xronos-sdk.map -- the same public surface. macOS has
+# no demangled matching, so these are globs over the mangled names (which embed
+# the source identifiers); everything else is hidden, like the map's `local: *`.
+#
+# The compiled SDK API: the factory, the Environment constructor and members,
+# and DefaultRuntimeProvider (whose vtable/typeinfo live only here).
+_*create_default_program_context*
+_*Environment*
+_*DefaultRuntimeProvider*
+# Exception RTTI crossing the boundary (caught in user code and the inline glue,
+# detail/element.hh): libc++ matches type_info by ADDRESS, so this typeinfo must
+# stay visible or cross-dylib catch breaks.
+_*VersionMismatchError*
+_*ValidationError*
+_*InvalidNameError*

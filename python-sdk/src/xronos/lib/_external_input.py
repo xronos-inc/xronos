@@ -2,8 +2,8 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import threading
-from collections.abc import Generator
-from typing import Callable, Generic, TypeVar, final
+from collections.abc import Callable, Generator
+from typing import Generic, TypeVar, final
 
 import xronos
 

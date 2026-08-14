@@ -24,7 +24,6 @@ from xronos._core import (
     ProgrammableTimerDeclaration,
     ProgrammableTimerEffect,
     ReactionContext,
-    ReactionInterface,  # pyright: ignore[reportDeprecated]
     Reactor,
     Shutdown,
     ShutdownEffect,
@@ -34,18 +33,18 @@ from xronos._core import (
     reaction_with_deadline,
 )
 from xronos._cpp_sdk import (  # type: ignore reportMissingModuleSource
-    DuplicateNameError,
+    InvalidNameError,
     ValidationError,
 )
 
 __all__ = [
     "AbsentError",
-    "DuplicateNameError",
     "Element",
     "Environment",
     "EventSource",
     "InputPort",
     "InputPortDeclaration",
+    "InvalidNameError",
     "InvalidReactionHandler",
     "Metric",
     "MetricDeclaration",
@@ -61,7 +60,6 @@ __all__ = [
     "ProgrammableTimerDeclaration",
     "ProgrammableTimerEffect",
     "ReactionContext",
-    "ReactionInterface",
     "Reactor",
     "Shutdown",
     "ShutdownEffect",

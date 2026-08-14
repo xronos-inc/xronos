@@ -3,169 +3,127 @@
 
 #include "xronos/sdk/environment.hh"
 
-#include <cstddef>
 #include <memory>
-#include <ranges>
-#include <source_location>
 #include <stdexcept>
 #include <string>
 #include <string_view>
-#include <thread>
+#include <utility>
 
-#include "impl/xronos/sdk/detail/context_access.hh"
-#include "impl/xronos/sdk/detail/program_context.hh"
-#include "xronos/core/element_registry.hh"
-#include "xronos/core/reactor_model.hh"
+#include "xronos/abi/backend.hh"
+#include "xronos/backend/backend.hh"
+#include "xronos/runtime/default/default_runtime.hh"
 #include "xronos/runtime/interfaces.hh"
-#include "xronos/sdk/context.hh"
-#include "xronos/sdk/detail/source_location.hh"
-#include "xronos/sdk/fwd.hh"
+#include "xronos/sdk/detail/program_context.hh"
 #include "xronos/sdk/gen/config.hh"
 #include "xronos/sdk/runtime_provider.hh"
 #include "xronos/sdk/time.hh"
-#include "xronos/source_location/source_location.hh"
-#include "xronos/telemetry/attribute_manager.hh"
-#include "xronos/telemetry/metric.hh"
-#include "xronos/telemetry/telemetry.hh"
-#include "xronos/util/assert.hh"
 #include "xronos/util/logging.hh"
-#include "xronos/validator/checks.hh"
+
+namespace xronos::sdk::detail {
+
+// The concrete program context the SDK library hands out: owns the complete
+// default backend by value. It is defined only in this translation unit --
+// create_default_program_context is its only constructor, and the Environment
+// bodies below hold it by its concrete type to drive the backend directly (no
+// downcast). Header-inline code only ever sees it upcast to the ProgramContext
+// interface, through Environment::program_context().
+class DefaultProgramContext final : public ProgramContext {
+public:
+  explicit DefaultProgramContext(backend::RuntimeFactory runtime_factory)
+      : backend_{std::move(runtime_factory)} {}
+
+  [[nodiscard]] auto backend() const noexcept -> abi::Backend& final { return backend_.abi(); }
+
+  // The backend's full surface, for driving the lifecycle and environment-level
+  // configuration across the implementation-side seam.
+  [[nodiscard]] auto backend_impl() noexcept -> backend::Backend& { return backend_; }
+
+private:
+  backend::Backend backend_;
+};
+
+} // namespace xronos::sdk::detail
 
 namespace xronos::sdk {
 
-namespace detail {
+namespace {
 
-auto create_telemetry_backend(const telemetry::AttributeManager& attribute_manager,
-                              const core::ElementRegistry& element_registry, std::string_view application_name,
-                              std::string_view endpoint) -> std::unique_ptr<telemetry::TelemetryBackend>;
-void send_reactor_graph(const core::ReactorModel& model, const telemetry::AttributeManager& attribute_manager,
-                        const source_location::SourceLocationRegistry& source_location_registry);
+// Shared by both execute() overloads so the provider overload can reject a
+// repeat call before it mutates the backend.
+[[noreturn]] void throw_executed_twice() {
+  throw std::logic_error("Environment::execute cannot be called twice on the same environment. To correctly start a "
+                         "new instance of the program, create a new environment.");
+}
 
-} // namespace detail
+} // namespace
 
-Environment::Environment()
-    : Environment{std::thread::hardware_concurrency(), false, Duration::max(), true} {}
-
-Environment::Environment(unsigned num_workers, bool fast_fwd_execution, Duration timeout, bool render_reactor_graph)
-    : program_context_{std::make_shared<detail::ProgramContext>()}
-    , num_workers_{num_workers}
+Environment::Environment(bool fast_fwd_execution, Duration timeout, bool render_reactor_graph)
+    : default_program_context_{detail::create_default_program_context()}
+    , program_context_{default_program_context_} // implicit, compiler-checked upcast to the interface
     , timeout_{timeout}
     , fast_fwd_execution_{fast_fwd_execution}
-    , render_reactor_graph_{render_reactor_graph} {}
+    , diagram_export_requested_{render_reactor_graph} {}
 
-Environment::~Environment() = default;
-
-void Environment::execute(const RuntimeProvider& runtime_provider) {
-  if (program_context_->runtime_program_handle != nullptr) {
-    throw std::logic_error("Environment::execute cannot be called twice on the same environment. To correctly start a "
-                           "new instance of the program, create a new environment.");
-  }
-  if (program_context_->telemetry_backend != nullptr) {
-    program_context_->telemetry_backend->initialize();
+void Environment::execute() {
+  if (std::exchange(executed_, true)) {
+    throw_executed_twice();
   }
 
-  // invoke the assemble callbacks
-  for (auto& callback : program_context_->assemble_callbacks | std::views::values) {
-    (callback)();
-  }
-
-  // send the reactor graph
-  if constexpr (config::DIAGRAMS_ENABLED) {
-    if (render_reactor_graph_) {
-      detail::send_reactor_graph(program_context_->model, program_context_->attribute_manager,
-                                 program_context_->source_location_registry);
-    }
-  }
-
-  if (auto result = validator::run_all_checks(program_context_->model); !result.has_value()) {
-    for (const auto& msg : result.error()) {
-      util::log::error() << msg;
+  auto& backend = default_program_context_->backend_impl();
+  backend.assemble();
+  // A validation failure is a programming error in the reactor program, so
+  // it is fatal here: log every finding, then throw one summary exception.
+  if (const auto errors = backend.validate(); !errors.empty()) {
+    for (const auto& error : errors) {
+      util::log::error() << error;
     }
     throw ValidationError{"The reactor program is invalid and cannot be executed."};
   }
-
-  try {
-    auto runtime = runtime_provider.get_runtime();
-    program_context_->runtime_program_handle = runtime->initialize_reactor_program(
-        program_context_->model, runtime::ExecutionProperties{.timeout = timeout_,
-                                                              .num_workers = num_workers_,
-                                                              .fast_mode = fast_fwd_execution_});
-    // By assigning the handle first (above) and then calling execute, we make
-    // sure that any reactions invoked during execute() will see a valid handle.
-    // If we would call execute first (on a local variable) and then assign to
-    // the context, there would be a race between the assignment and the
-    // execution invoking first reactions.
-    program_context_->runtime_program_handle->execute();
-  } catch (const runtime::ValidationError& e) {
-    throw ValidationError(e.what());
+  if (diagram_export_requested_) {
+    backend.export_diagram();
   }
+  // Prepares the run, publishes it behind the runtime-backend facade, and
+  // blocks until the program finishes.
+  backend.run(runtime::ExecutionProperties{.timeout = timeout_, .fast_mode = fast_fwd_execution_});
 }
 
-auto Environment::context(std::source_location source_location) noexcept -> EnvironmentContext {
-  return context(detail::SourceLocationView::from_std(source_location));
-}
-
-auto Environment::context(detail::SourceLocationView source_location) noexcept -> EnvironmentContext {
-  return detail::ContextAccess::create_environment_context(program_context_, source_location);
+void Environment::execute(const RuntimeProvider& runtime_provider) {
+  // Bind the SDK version to this translation unit's compile-time value. config::VERSION is an
+  // inline constexpr in a public header; reading it through a local constexpr guarantees the
+  // comparison reflects the version baked into *this* SDK library and cannot be affected by
+  // symbol interposition of config::VERSION across shared objects on ELF platforms.
+  constexpr std::string_view sdk_version = config::VERSION;
+  if (runtime_provider.version() != sdk_version) {
+    throw VersionMismatchError("Xronos SDK/runtime version mismatch: the SDK is version " + std::string{sdk_version} +
+                               " but the runtime is version " + std::string{runtime_provider.version()} +
+                               ". The SDK and the runtime must be built from the same release.");
+  }
+  // Reject a repeat call before touching the backend: set_runtime_factory below
+  // would otherwise rebind the factory on a call that then throws from execute().
+  if (executed_) {
+    throw_executed_twice();
+  }
+  // Rebind the backend's runtime factory to the caller's provider, then run the
+  // standard lifecycle. Only the parameterless execute() drives assembly and the
+  // run; this overload just selects the runtime beforehand.
+  default_program_context_->backend_impl().set_runtime_factory(
+      [&runtime_provider]() { return runtime_provider.get_runtime(); });
+  execute();
 }
 
 void Environment::enable_telemetry(std::string_view application_name, std::string_view endpoint) {
-  util::assert_(dynamic_cast<telemetry::NoopTelemetryBackend*>(program_context_->telemetry_backend.get()) != nullptr);
-  if constexpr (config::TELEMETRY_ENABLED) {
-    program_context_->telemetry_backend = detail::create_telemetry_backend(
-        program_context_->attribute_manager, program_context_->model.element_registry, application_name, endpoint);
-    program_context_->metric_data_logger_provider.set_logger(program_context_->telemetry_backend->metric_data_logger());
-  }
+  default_program_context_->backend_impl().enable_telemetry(application_name, endpoint);
 }
+
+namespace detail {
+
+// Declared in environment.hh; the inline Environment constructors call it to
+// obtain a program context from the linked SDK library.
+auto create_default_program_context() -> std::shared_ptr<DefaultProgramContext> {
+  return std::make_shared<DefaultProgramContext>(
+      []() { return std::make_unique<runtime::default_::DefaultRuntime>(); });
+}
+
+} // namespace detail
 
 } // namespace xronos::sdk
-
-#ifdef XRONOS_SDK_ENABLE_TELEMETRY
-
-#include <array>
-#include <cerrno>
-#include <cstring>
-#include <unistd.h>
-
-#include "xronos/telemetry/otel/otel_telemetry_backend.hh"
-
-namespace xronos::sdk::detail {
-
-auto create_telemetry_backend(const telemetry::AttributeManager& attribute_manager,
-                              const core::ElementRegistry& element_registry, std::string_view application_name,
-                              std::string_view endpoint) -> std::unique_ptr<telemetry::TelemetryBackend> {
-  constexpr std::size_t hostname_buffer_size = 128;
-  std::array<char, hostname_buffer_size> hostname_buffer{};
-  // Pass hostname_buffer_size - 1: POSIX does not guarantee null-termination on
-  // truncation, so this keeps a terminator for the std::string conversion below.
-  std::string hostname{"unknown"};
-  if (gethostname(hostname_buffer.data(), hostname_buffer_size - 1) != 0) {
-    // On failure the buffer contents are unspecified; fall back to a clear
-    // sentinel rather than emitting an empty (or garbage) hostname in telemetry.
-    util::log::warn() << "Failed to query hostname (" << std::strerror(errno) << "). Using \"unknown\" for telemetry.";
-  } else {
-    hostname = hostname_buffer.data();
-  }
-
-  return std::make_unique<telemetry::otel::OtelTelemetryBackend>(attribute_manager, element_registry, application_name,
-                                                                 endpoint, hostname, getpid());
-}
-
-} // namespace xronos::sdk::detail
-
-#endif // XRONOS_SDK_ENABLE_TELEMETRY
-
-#ifdef XRONOS_SDK_ENABLE_DIAGRAMS
-
-#include "xronos/graph_exporter/exporter.hh"
-
-namespace xronos::sdk::detail {
-
-void send_reactor_graph(const core::ReactorModel& model, const telemetry::AttributeManager& attribute_manager,
-                        const source_location::SourceLocationRegistry& source_location_registry) {
-  graph_exporter::send_reactor_graph_to_diagram_server(model, attribute_manager, source_location_registry);
-}
-
-} // namespace xronos::sdk::detail
-
-#endif // XRONOS_SDK_ENABLE_DIAGRAMS

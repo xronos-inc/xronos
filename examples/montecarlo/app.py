@@ -6,7 +6,6 @@
 import asyncio
 import json
 from concurrent.futures import ThreadPoolExecutor
-from typing import Optional
 
 # errors
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
@@ -61,7 +60,7 @@ async def websocket_endpoint(
     queue = PointQueue()
     await websocket.accept()
 
-    sim_task: Optional[asyncio.Task] = None
+    sim_task: asyncio.Task | None = None
     try:
         # Start the simulation in a separate thread
         sim_task = asyncio.create_task(

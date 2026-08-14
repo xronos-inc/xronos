@@ -3,12 +3,10 @@
 
 import copy
 import datetime
+from collections.abc import Callable
 from typing import (
-    Callable,
-    Optional,
     TypeAlias,
     TypeVar,
-    Union,
     cast,
     final,
 )
@@ -150,7 +148,7 @@ class SuccessorSource(abstract_source.AbstractTriggeredSource[TOutput]):
         return handler
 
 
-TRealOutput = TypeVar("TRealOutput", bound=Union[int, float])
+TRealOutput = TypeVar("TRealOutput", bound=int | float)
 
 
 class RampSource(SuccessorSource[TRealOutput]):
@@ -172,7 +170,7 @@ class RampSource(SuccessorSource[TRealOutput]):
     def __init__(
         self,
         initial_value: TRealOutput = cast(TRealOutput, 0),
-        successor: Optional[Callable[[TRealOutput], TRealOutput]] = None,
+        successor: Callable[[TRealOutput], TRealOutput] | None = None,
         inhibit: bool = False,
     ) -> None:
         super().__init__(

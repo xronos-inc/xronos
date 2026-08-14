@@ -1,9 +1,10 @@
 # SPDX-FileCopyrightText: Copyright (c) Xronos Inc.
 # SPDX-License-Identifier: BSD-3-Clause
 
+from collections.abc import Iterator
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import ClassVar, Dict, Iterator, List, Optional, Tuple
+from typing import ClassVar
 
 
 class Actuator(Enum):
@@ -23,8 +24,8 @@ class Pose:
 
     in_position_tolerance_deg: ClassVar[int] = 5
 
-    positions: Dict[Actuator, int] = field(default_factory=dict[Actuator, int])
-    name: Optional[str] = field(default="")
+    positions: dict[Actuator, int] = field(default_factory=dict[Actuator, int])
+    name: str | None = field(default="")
 
     def validate(self) -> None:
         for actuator in self.positions:
@@ -69,14 +70,13 @@ class Pose:
         """Index by actuator to return the goal pose (position in degrees)."""
         if actuator in self.positions:
             return self.positions[actuator]
-        else:
-            return None
+        return None
 
     def __setitem__(self, actuator: Actuator, position_deg: int) -> None:
         """Set the goal position for the specified actuator."""
         self.positions[actuator] = position_deg
 
-    def __iter__(self) -> Iterator[Tuple[int, int]]:
+    def __iter__(self) -> Iterator[tuple[int, int]]:
         """Iterate over actuator indeces and positions."""
         return (
             (actuator.value, position) for actuator, position in self.positions.items()
@@ -101,7 +101,7 @@ class Trajectory:
     poses: A list of poses making up the trajectory.
     """
 
-    def __init__(self, poses: List[Pose]):
+    def __init__(self, poses: list[Pose]):
         self._poses = poses
         self._iter = iter(self._poses)
 

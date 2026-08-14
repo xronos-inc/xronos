@@ -2,7 +2,8 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import threading
-from typing import Callable, Generic, TypeVar
+from collections.abc import Callable
+from typing import Generic, TypeVar
 
 import xronos
 
@@ -28,7 +29,7 @@ class UserInterface(xronos.Reactor, Generic[T]):
     _unblock = xronos.ProgrammableTimerDeclaration[None]()
 
     def __init__(
-        self, blocking: bool, parser: Callable[[str], T | None | KeyboardInterrupt]
+        self, blocking: bool, parser: Callable[[str], T | KeyboardInterrupt | None]
     ):
         super().__init__()
         self.blocking = blocking

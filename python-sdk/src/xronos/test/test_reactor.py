@@ -36,13 +36,13 @@ class MixinClass(Class, Mixin):
 
 
 @pytest.fixture(params=[BaseClass, Class, ChildClass])
-def class_(request: pytest.FixtureRequest) -> typing.Type[xronos.Reactor]:
-    return typing.cast(typing.Type[xronos.Reactor], request.param)
+def class_(request: pytest.FixtureRequest) -> type[xronos.Reactor]:
+    return typing.cast(type[xronos.Reactor], request.param)
 
 
 class TestBaseReactor:
     @staticmethod
-    def test_init(class_: typing.Type[xronos.Reactor]) -> None:
+    def test_init(class_: type[xronos.Reactor]) -> None:
         assert hasattr(class_, "_Reactor__element_descriptors")
         assert isinstance(class_._Reactor__element_descriptors, list)
         assert len(class_._Reactor__element_descriptors) == 0
@@ -86,11 +86,10 @@ class TestBaseReactor:
 
 def test_direct_initialization():
     # Assert that TypeError is raised when a reactor is instantiated directly
+    class Reactor(xronos.Reactor):
+        pass
+
     with pytest.raises(TypeError):
-
-        class Reactor(xronos.Reactor):
-            pass
-
         Reactor()
 
     # But using create_reactor works
@@ -100,25 +99,23 @@ def test_direct_initialization():
 
 def test_init_called():
     # Assert that TypeError is raised when user forgets calling `super.__init__()`
+    class ForgetsSuper(xronos.Reactor):
+        def __init__(self) -> None:
+            pass
+
+    env = xronos.Environment()
     with pytest.raises(TypeError):
-
-        class Reactor(xronos.Reactor):
-            def __init__(self) -> None:
-                pass
-
-        env = xronos.Environment()
-        env.create_reactor("reactor", Reactor)
+        env.create_reactor("reactor", ForgetsSuper)
 
     # Assert that TypeError is raised when user forgets calling
     # `super.__init__()` or calls it only after accessing an element.
+    class AccessesBeforeSuper(xronos.Reactor):
+        t = xronos.PeriodicTimerDeclaration()
+
+        def __init__(self) -> None:
+            self.t.period = None
+            super().__init__()
+
+    env = xronos.Environment()
     with pytest.raises(TypeError):
-
-        class Reactor(xronos.Reactor):
-            t = xronos.PeriodicTimerDeclaration()
-
-            def __init__(self) -> None:
-                self.t.period = None
-                super().__init__()
-
-        env = xronos.Environment()
-        env.create_reactor("reactor", Reactor)
+        env.create_reactor("reactor", AccessesBeforeSuper)
