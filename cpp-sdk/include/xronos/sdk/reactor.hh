@@ -210,9 +210,9 @@ protected:
    * the runtime.
    *
    * In contrast to add_reaction(), this method annotates the added reaction
-   * with a deadline. The deadline is relative to the timestamp of the
-   * triggering events. The deadline is violated if the lag exceeds the given
-   * duration.
+   * with a deadline. The deadline is relative to the current time of the
+   * triggering event. The deadline is violated if the handler does not
+   * complete within this duration.
    *
    * @tparam ReactionClass The reaction class to instantiate. This is typically a
    * subclass of Reaction.

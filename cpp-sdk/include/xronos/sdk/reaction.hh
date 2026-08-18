@@ -150,7 +150,8 @@ protected:
    * This should only be called from the reaction handler.
    *
    * @returns true while the wall clock has not yet reached the deadline (the
-   * slack is positive), and false once the deadline has been missed.
+   * slack is positive), and false once the deadline has been missed. If no
+   * deadline was declared, this is always true.
    */
   [[nodiscard]] auto is_before_deadline() const noexcept -> bool { return slack() > Duration::zero(); }
 
