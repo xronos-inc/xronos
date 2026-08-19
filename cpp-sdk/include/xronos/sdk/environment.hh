@@ -91,7 +91,8 @@ public:
    * initiates execution by triggering all Startup event sources.
    *
    * Returns when the reactor program terminates. The reactor program terminates
-   * when there are no more events, or after calling request_shutdown().
+   * when there are no more events, or after calling
+   * ShutdownEffect::trigger_shutdown().
    *
    * The program executes on the default runtime. To select a different
    * runtime, use the overload that takes a RuntimeProvider.
@@ -210,7 +211,7 @@ public:
    * @param application_name: The name of the application as it should appear
    *        in the telemetry metadata.
    * @param endpoint: The network endpoint to send telemetry data to. This is
-   *        typically port 4137 on the host running the
+   *        typically port 4317 on the host running the
    *        <a href="../../dashboard.html">Dashboard</a>.
    */
   void enable_telemetry(std::string_view application_name = "xronos", std::string_view endpoint = "localhost:4317");

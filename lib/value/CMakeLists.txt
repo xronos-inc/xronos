@@ -16,7 +16,7 @@ file(GLOB_RECURSE TEST_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/te
 set(VALUE_TEST_SOURCES ${TEST_SOURCES} PARENT_SCOPE)  # make the variable available in parent CMakeLists.txt
 if(XRONOS_LIB_BUILD_TESTS)
   add_executable(xronos-value-tests ${TEST_SOURCES})
-  target_compile_options(xronos-value-tests PRIVATE -Wall -Wextra -pedantic -Werror)
+  target_compile_options(xronos-value-tests PRIVATE -Wall $<$<BOOL:${XRONOS_STRICT_WARNINGS}>:-Wextra -pedantic -Werror>)
   target_link_libraries(
     xronos-value-tests
     PRIVATE xronos-value Catch2::Catch2WithMain

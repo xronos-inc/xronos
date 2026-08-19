@@ -11,7 +11,7 @@ target_sources(
 )
 target_link_libraries(xronos-core PUBLIC xronos-abi xronos-util nonstd::expected-lite PRIVATE fmt::fmt-header-only)
 
-target_compile_options(xronos-core PRIVATE -Wall -Wextra -pedantic -Werror)
+target_compile_options(xronos-core PRIVATE -Wall $<$<BOOL:${XRONOS_STRICT_WARNINGS}>:-Wextra -pedantic -Werror>)
 set_target_properties(xronos-core PROPERTIES VERIFY_INTERFACE_HEADER_SETS ON)
 set_target_properties(xronos-core PROPERTIES VERSION "${PROJECT_VERSION}" SOVERSION 1)
 

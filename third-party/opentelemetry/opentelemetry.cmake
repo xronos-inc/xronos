@@ -24,6 +24,7 @@ function(add_opentelemetry)
     GIT_TAG "${XRONOS_OPENTELEMETRY_VERSION}"
     GIT_SHALLOW TRUE
     GIT_SUBMODULES ""
+    SYSTEM
   )
 
   FetchContent_MakeAvailable(opentelemetry-cpp)

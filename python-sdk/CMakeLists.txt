@@ -16,6 +16,13 @@ set(CMAKE_COLOR_DIAGNOSTICS ON)
 # Generate compilation database
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+set(STRICT_WARNINGS_DEFAULT ON)
+if(NOT "${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
+  set(STRICT_WARNINGS_DEFAULT OFF)
+endif()
+
+option(XRONOS_STRICT_WARNINGS "Enable strict warnings and treat them as errors" ${STRICT_WARNINGS_DEFAULT})
+
 include(FetchContent)
 if(${SKBUILD_STATE} STREQUAL "sdist")
   message("Building sdist.")
@@ -48,7 +55,7 @@ find_package(pybind11 CONFIG REQUIRED)
 
 python_add_library(_cpp_sdk MODULE "${CMAKE_CURRENT_SOURCE_DIR}/cpp/cpp_sdk.cc" WITH_SOABI)
 target_link_libraries(_cpp_sdk PRIVATE xronos::xronos-sdk pybind11::headers)
-target_compile_options(_cpp_sdk PRIVATE -Wall -Wextra -pedantic -Werror)
+target_compile_options(_cpp_sdk PRIVATE -Wall $<$<BOOL:${XRONOS_STRICT_WARNINGS}>:-Wextra -pedantic -Werror>)
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
   target_link_options(_cpp_sdk PRIVATE -Wl,--exclude-libs,ALL)

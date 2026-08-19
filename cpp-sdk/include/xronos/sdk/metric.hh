@@ -31,7 +31,7 @@ inline auto register_metric(std::string_view name, const ReactorContext& context
 } // namespace detail
 
 /**
- * A reactor element for recording metric data to an external data base.
+ * A reactor element for recording numeric values to the Xronos Dashboard.
  *
  * Can be used as a reaction @ref BaseReaction::MetricEffect "effect" allowing
  * the reaction handler to record values using the metric.

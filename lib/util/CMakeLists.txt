@@ -11,7 +11,7 @@ target_sources(
   BASE_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include> $<INSTALL_INTERFACE:include>
   FILES ${HEADERS}
 )
-target_compile_options(xronos-util PRIVATE -Wall -Wextra -pedantic -Werror)
+target_compile_options(xronos-util PRIVATE -Wall $<$<BOOL:${XRONOS_STRICT_WARNINGS}>:-Wextra -pedantic -Werror>)
 set_target_properties(xronos-util PROPERTIES VERIFY_INTERFACE_HEADER_SETS ON)
 set_target_properties(xronos-util PROPERTIES VERSION "${PROJECT_VERSION}" SOVERSION 1)
 

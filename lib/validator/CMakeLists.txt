@@ -17,7 +17,7 @@ target_sources(
   BASE_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>
   FILES ${HEADERS}
 )
-target_compile_options(xronos-validator PRIVATE -Wall -Wextra -pedantic -Werror -Wno-error=unused-parameter)
+target_compile_options(xronos-validator PRIVATE -Wall $<$<BOOL:${XRONOS_STRICT_WARNINGS}>:-Wextra -pedantic -Werror>)
 set_target_properties(xronos-validator PROPERTIES VERSION "${PROJECT_VERSION}" SOVERSION 1)
 set_target_properties(xronos-validator PROPERTIES VERIFY_INTERFACE_HEADER_SETS ON)
 

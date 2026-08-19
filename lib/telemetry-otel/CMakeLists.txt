@@ -8,7 +8,7 @@ target_link_libraries(
   PUBLIC xronos::xronos-telemetry xronos::xronos-runtime-interfaces
   PRIVATE xronos::xronos-util opentelemetry-cpp::api opentelemetry-cpp::proto opentelemetry-cpp::proto_grpc opentelemetry-cpp::otlp_grpc_exporter
 )
-target_compile_options(xronos-telemetry-otel PRIVATE -Wall -Wextra -pedantic -Werror)
+target_compile_options(xronos-telemetry-otel PRIVATE -Wall $<$<BOOL:${XRONOS_STRICT_WARNINGS}>:-Wextra -pedantic -Werror>)
 target_sources(
   xronos-telemetry-otel
   PUBLIC FILE_SET HEADERS

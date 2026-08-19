@@ -2,11 +2,11 @@ cmake_minimum_required(VERSION 3.28)
 
 project(xronos-sdk
   LANGUAGES CXX
-  VERSION "0.13.0"
+  VERSION "0.13.1"
   HOMEPAGE_URL "https://docs.xronos.com"
   DESCRIPTION "The Xronos C++ SDK for writing reactor programs."
 )
-set(PROJECT_VERSION "0.13.0")
+set(PROJECT_VERSION "0.13.1")
 
 # require C++ 20
 set(CMAKE_CXX_STANDARD 20 CACHE STRING "The C++ standard." FORCE)
@@ -24,12 +24,14 @@ set(BUILD_SHARED_DEFAULT ON)
 set(BUILD_TESTS_DEFAULT ON)
 set(BUILD_DOCS_DEFAULT OFF)
 set(BUILD_EXAMPLES_DEFAULT ON)
+set(STRICT_WARNINGS_DEFAULT ON)
 if(NOT "${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
   # Disable some features when building as a subproject
   set(INSTALL_DEFAULT OFF)
   set(BUILD_SHARED_DEFAULT OFF)
   set(BUILD_TESTS_DEFAULT OFF)
   set(BUILD_EXAMPLES_DEFAULT OFF)
+  set(STRICT_WARNINGS_DEFAULT OFF)
 endif()
 
 option(XRONOS_SDK_INSTALL "Generate installation target" ${INSTALL_DEFAULT})
@@ -37,6 +39,8 @@ option(XRONOS_SDK_BUILD_SHARED "Build the SDK as a shared library" ${BUILD_SHARE
 option(XRONOS_SDK_BUILD_TESTS "Build the tests" ${BUILD_TESTS_DEFAULT})
 option(XRONOS_SDK_BUILD_EXAMPLES "Build the examples" ${BUILD_EXAMPLES_DEFAULT})
 option(XRONOS_SDK_BUILD_DOCS "Build API documentation using Doxygen" ${BUILD_DOCS_DEFAULT})
+
+option(XRONOS_STRICT_WARNINGS "Enable strict warnings and treat them as errors" ${STRICT_WARNINGS_DEFAULT})
 
 option(XRONOS_SDK_ENABLE_DIAGRAMS "Enable exporting diagrams for visualization." ON)
 option(XRONOS_SDK_ENABLE_TELEMETRY "Enable the recording of telemetry data (enable_telemetry() also needs to be called by the program)." ON)
@@ -135,7 +139,7 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
 endif()
 
 target_compile_features(xronos-sdk PUBLIC cxx_std_20)
-target_compile_options(xronos-sdk PRIVATE -Wall -Wextra -pedantic -Werror)
+target_compile_options(xronos-sdk PRIVATE -Wall $<$<BOOL:${XRONOS_STRICT_WARNINGS}>:-Wextra -pedantic -Werror>)
 set_target_properties(xronos-sdk PROPERTIES VERSION "${PROJECT_VERSION}" SOVERSION 1)
 
 add_library(xronos::xronos-sdk ALIAS xronos-sdk)

@@ -44,6 +44,7 @@ function(add_grpc)
       "third_party/boringssl-with-bazel"
       "third_party/re2"
     OVERRIDE_FIND_PACKAGE
+    SYSTEM
   )
   FetchContent_MakeAvailable(gRPC)
 

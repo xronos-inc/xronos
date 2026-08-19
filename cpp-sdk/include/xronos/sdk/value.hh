@@ -228,7 +228,7 @@ private:
  *
  * A default-constructed (or absent) view refers to nothing; this is what
  * @ref xronos::sdk::BaseReaction::Trigger "Trigger"`::get()` returns when no
- * event is present at the current timestamp.
+ * event is present.
  *
  * @tparam T The type of the viewed value.
  */
@@ -264,7 +264,7 @@ public:
    * Check whether the view refers to a value.
    *
    * For a view returned by a trigger, this indicates whether an event with a
-   * value is present at the current timestamp.
+   * value is currently present.
    */
   explicit operator bool() const noexcept { return payload_ != nullptr; }
 

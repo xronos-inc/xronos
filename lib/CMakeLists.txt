@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.28)
 
-project(xronos-lib LANGUAGES CXX VERSION "0.13.0")
-set(PROJECT_VERSION "0.13.0")
+project(xronos-lib LANGUAGES CXX VERSION "0.13.1")
+set(PROJECT_VERSION "0.13.1")
 
 # require C++ 20
 set(CMAKE_CXX_STANDARD 20 CACHE STRING "The C++ standard." FORCE)
@@ -20,15 +20,22 @@ set(XRONOS_LOG_LEVEL 2 CACHE STRING "The xronos internal log level")
 
 set(INSTALL_DEFAULT ON)
 set(BUILD_TESTS_DEFAULT ON)
+set(STRICT_WARNINGS_DEFAULT ON)
 if(NOT "${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
   # Disable some features when building as a subproject
   set(INSTALL_DEFAULT OFF)
   set(BUILD_TESTS_DEFAULT OFF)
+  set(STRICT_WARNINGS_DEFAULT OFF)
 endif()
 
 option(XRONOS_LIB_INSTALL "Generate installation target" ${INSTALL_DEFAULT})
 option(XRONOS_LIB_INSTALL_HEADERS "Generate installation target for header files" ${INSTALL_DEFAULT})
 option(XRONOS_LIB_BUILD_TESTS "Build the tests" ${BUILD_TESTS_DEFAULT})
+
+# Warnings are fatal in our own builds. Builds on an unknown toolchain, such as
+# a user compiling from source, keep -Wall so diagnostics stay visible without
+# breaking the build.
+option(XRONOS_STRICT_WARNINGS "Enable strict warnings and treat them as errors" ${STRICT_WARNINGS_DEFAULT})
 
 option(XRONOS_LIB_WITH_GRAPH_EXPORTER "Include the graph exporter in the build" ON)
 option(XRONOS_LIB_WITH_OTEL "Include the otel telemetry backend in the build" ON)

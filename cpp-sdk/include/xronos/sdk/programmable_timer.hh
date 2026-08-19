@@ -32,7 +32,7 @@ inline auto register_programmable_timer(std::string_view name, const ReactorCont
  *
  * Programmable timers may be used by reactions to schedule new events that will
  * be emitted in the future. They can be used both as a reaction @ref
- * BaseReaction::Trigger "trigger" and an reaction @ref
+ * BaseReaction::Trigger "trigger" and a reaction @ref
  * BaseReaction::ProgrammableTimerEffect "effect".
  *
  * @tparam T The value type associated with events emitted by the programmable timer.

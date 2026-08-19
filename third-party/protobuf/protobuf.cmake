@@ -26,6 +26,7 @@ function(add_protobuf)
     GIT_SUBMODULES_RECURSE FALSE
     GIT_SUBMODULES ""
     OVERRIDE_FIND_PACKAGE
+    SYSTEM
   )
   FetchContent_MakeAvailable(Protobuf)
 

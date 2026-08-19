@@ -211,7 +211,7 @@ class EventSource(Element, Generic[T]):
 
 
 class Startup(EventSource[None]):
-    """A reactor element that emits an event program starts executing.
+    """A reactor element that emits an event when the program starts executing.
 
     Can be used as a reaction :class:`Trigger`.
     """
@@ -455,7 +455,7 @@ class PhysicalEventDeclaration(ElementDescriptor[PhysicalEvent[T]]):
 
 
 class Metric(Element):
-    """A reactor element for recording metric data to an external data base.
+    """A reactor element for recording numeric values to the Xronos Dashboard.
 
     Can be used by a reaction as a :class:`MetricEffect` allowing the
     reaction handler to record values using the metric.
@@ -669,7 +669,7 @@ class Environment:
             application_name: The name of the application as it should appear
                 in the telemetry metadata.
             endpoint: The network endpoint to send telemetry data to. This is
-                typically port 4137 on the host running the :ref:`dashboard`.
+                typically port 4317 on the host running the :ref:`dashboard`.
         """
         return self.__sdk_env.enable_telemetry(application_name, endpoint)
 
@@ -997,7 +997,7 @@ class Trigger(Generic[T]):
         self.__sdk_trigger = sdk_trigger
 
     def is_present(self) -> bool:
-        """Check if an event is present at the current timestamp."""
+        """Check if an event is currently present."""
         return self.__sdk_trigger.is_present()
 
     def get(self) -> T:
@@ -1043,7 +1043,7 @@ class PortEffect(Generic[T]):
         self.__sdk_effect.set(value)
 
     def is_present(self) -> bool:
-        """Check if an event is present at the current Timestamp."""
+        """Check if an event is currently present."""
         return self.__sdk_effect.is_present()
 
     def get(self) -> T:
@@ -1089,7 +1089,7 @@ class ProgrammableTimerEffect(Generic[T]):
 
 
 class MetricEffect:
-    """Allows a reaction to record telemetry data using a given :class:`Metric`.
+    """Allows a reaction to record values using a given :class:`Metric`.
 
     This class is not intended to be instantiated directly. Use
     :meth:`~xronos.ReactionContext.add_effect` instead.
@@ -1249,7 +1249,7 @@ class ReactionContext:
         clock to the advancing wall clock and therefore changes while the
         handler runs: the current time does not advance, but the wall clock
         does, so the lag measures how far the wall clock has run ahead of the
-        internal clock -- that is, how far the execution of reactions lags
+        internal clock. It shows how far the execution of reactions lags
         behind the events it processes.
 
         This is a reaction-scoped accessor and is only meaningful while the
@@ -1309,9 +1309,9 @@ class ReactionContext:
         deadline duration ``D`` it is ``D`` minus :attr:`lag`: the lag and the
         slack always sum to ``D``, so as the lag grows during the handler the
         slack shrinks by the same amount. The slack denotes how much further the
-        :attr:`lag` may grow before the deadline is violated. A negative value
-        means the deadline has been missed: the wall clock has passed the
-        deadline.
+        :attr:`lag` may grow before the deadline is missed. A negative value
+        means the deadline has already been missed: the wall clock has passed
+        the deadline.
 
         This is a reaction-scoped accessor and is only meaningful while the
         reaction handler executes; values read outside a handler must not be
@@ -1424,15 +1424,15 @@ class ReactionDescriptor(ElementDescriptor[Reaction], Generic[R_co]):
 
     Reaction descriptors are instantiated when the `@reaction` decorator is
     used (see :deco:`reaction`). The annotated function is expected to
-    accept a reactor instance and a reaction interface as arguments and to
-    return a reaction handler. The function is expected to use the given
-    reactor interface to declare the reaction's dependencies.
+    accept a reactor instance and a :class:`ReactionContext` as arguments
+    and to return a reaction handler. The function is expected to use the
+    given reaction context to declare the reaction's dependencies.
 
     Args:
-        declaration: A callable that accepts a reactor and reaction
-            interface as arguments and returns a reaction handler. The
-            callable responsible for declaring reaction dependencies using
-            the provide reaction interface.
+        declaration: A callable that accepts a reactor and a reaction
+            context as arguments and returns a reaction handler. The
+            callable is responsible for declaring reaction dependencies
+            using the provided reaction context.
         source_location: source location to be associated with the reaction
         deadline: An optional relative deadline for the reaction (see
             :deco:`reaction`).
@@ -1495,7 +1495,7 @@ def reaction_with_deadline(
 
     Args:
         deadline: A deadline relative to the current time of the triggering
-            event. The deadline is violated if the handler does not complete
+            event. The deadline is missed if the handler does not complete
             within this duration.
 
     Raises:

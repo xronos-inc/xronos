@@ -10,7 +10,7 @@ target_sources(
   FILES ${HEADERS}
 )
 
-target_compile_options(xronos-logical-time PRIVATE -Wall -Wextra -pedantic -Werror)
+target_compile_options(xronos-logical-time PRIVATE -Wall $<$<BOOL:${XRONOS_STRICT_WARNINGS}>:-Wextra -pedantic -Werror>)
 set_target_properties(xronos-logical-time PROPERTIES VERIFY_INTERFACE_HEADER_SETS ON)
 set_target_properties(xronos-logical-time PROPERTIES VERSION "${PROJECT_VERSION}" SOVERSION 1)
 

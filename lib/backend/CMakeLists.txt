@@ -22,7 +22,7 @@ if(XRONOS_LIB_WITH_GRAPH_EXPORTER)
   target_link_libraries(xronos-backend PRIVATE xronos-graph-exporter)
   target_compile_definitions(xronos-backend PRIVATE XRONOS_BACKEND_ENABLE_DIAGRAMS)
 endif()
-target_compile_options(xronos-backend PRIVATE -Wall -Wextra -pedantic -Werror)
+target_compile_options(xronos-backend PRIVATE -Wall $<$<BOOL:${XRONOS_STRICT_WARNINGS}>:-Wextra -pedantic -Werror>)
 set_target_properties(xronos-backend PROPERTIES VERIFY_INTERFACE_HEADER_SETS ON)
 
 set_target_properties(xronos-backend PROPERTIES VERSION "${PROJECT_VERSION}" SOVERSION 1)

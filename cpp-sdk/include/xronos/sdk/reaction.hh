@@ -127,8 +127,8 @@ protected:
    * declared deadline duration D it is D - lag(): the lag and the slack always
    * sum to D, so as the lag grows during the handler the slack shrinks by the
    * same amount. The slack denotes how much further the lag may grow before the
-   * deadline is violated. A negative value means the deadline has been missed:
-   * the wall clock has passed the deadline.
+   * deadline is missed. A negative value means the deadline has already been
+   * missed: the wall clock has passed the deadline.
    *
    * This should only be called from the reaction handler.
    *
@@ -188,7 +188,7 @@ protected:
    * the internal clock to the advancing wall clock and therefore changes while
    * the handler runs: the current time does not advance, but the wall clock
    * does, so the lag measures how far the wall clock has run ahead of the
-   * internal clock -- that is, how far the execution of reactions lags behind
+   * internal clock. It shows how far the execution of reactions lags behind
    * the events it processes.
    *
    * This is a reaction-scoped accessor and is only meaningful while the
@@ -375,7 +375,7 @@ protected:
 
   /**
    * Declares a reaction trigger and provides read access to the triggering
-   * EventSource.
+   * event source.
    *
    * @tparam T The value type associated with events received on the triggering
    * event source.
@@ -429,9 +429,9 @@ protected:
      * Get a view of the current event's value.
      *
      * @returns A ValueView of the current event's value. The view is absent
-     * (evaluates to `false`) if no event is present at the current time.
-     * The view is only valid for the duration of the current reaction
-     * handler; copy it into a Value to keep it alive beyond that.
+     * (evaluates to `false`) if no event is present. The view is only valid
+     * for the duration of the current reaction handler; copy it into a Value
+     * to keep it alive beyond that.
      */
     [[nodiscard]] auto get() const noexcept -> ValueView<T>
       requires(!std::is_same_v<T, void>)
@@ -440,7 +440,7 @@ protected:
     }
 
     /**
-     * Check if an event is present at the current timestamp.
+     * Check if an event is currently present.
      *
      * @returns `true` if an event is present, `false` otherwise.
      */
@@ -448,7 +448,7 @@ protected:
   };
 
   /**
-   * Allows a reaction to write data to a given Port.
+   * Allows a reaction to write data to a given port.
    *
    * @tparam T The value type associated with the port.
    * @ingroup effects
@@ -458,7 +458,7 @@ protected:
     /**
      * Constructor.
      *
-     * @param port The Port for which the reaction should have write access.
+     * @param port The port for which the reaction should have write access.
      * @param context The context of the reaction the effect is declared for.
      * Can be obtained using context().
      */
@@ -475,7 +475,7 @@ protected:
      * Write a value to the port, sending a message to connected ports.
      *
      * May be called multiple times, but at most one message is sent to
-     * connected ports at any given time timestamp: when called repeatedly,
+     * connected ports at any given timestamp: when called repeatedly,
      *  the previously written value is replaced.
      *
      * @param value The value to be written to the referenced port. Copy
@@ -564,7 +564,7 @@ protected:
     }
 
     /**
-     * Check if an event is present at the current timestamp.
+     * Check if an event is currently present.
      *
      * @returns `true` if an event is present, `false` otherwise.
      */
@@ -668,7 +668,7 @@ protected:
   };
 
   /**
-   * Allows a reaction to record telemetry data using a given Metric.
+   * Allows a reaction to record values using a given Metric.
    *
    * @ingroup effects
    */
@@ -702,6 +702,8 @@ protected:
 
   /**
    * Allows a reaction to terminate the program.
+   *
+   * @ingroup effects
    */
   class ShutdownEffect {
   public:

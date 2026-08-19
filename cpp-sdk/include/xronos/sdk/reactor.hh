@@ -211,7 +211,7 @@ protected:
    *
    * In contrast to add_reaction(), this method annotates the added reaction
    * with a deadline. The deadline is relative to the current time of the
-   * triggering event. The deadline is violated if the handler does not
+   * triggering event. The deadline is missed if the handler does not
    * complete within this duration.
    *
    * @tparam ReactionClass The reaction class to instantiate. This is typically a

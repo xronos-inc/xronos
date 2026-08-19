@@ -15,7 +15,7 @@ target_link_libraries(xronos-dependency-graph
                         nonstd::expected-lite
                       PRIVATE
                         xronos-util)
-target_compile_options(xronos-dependency-graph PRIVATE -Wall -Wextra -pedantic -Werror)
+target_compile_options(xronos-dependency-graph PRIVATE -Wall $<$<BOOL:${XRONOS_STRICT_WARNINGS}>:-Wextra -pedantic -Werror>)
 set_target_properties(xronos-dependency-graph PROPERTIES VERIFY_INTERFACE_HEADER_SETS ON)
 set_target_properties(xronos-dependency-graph PROPERTIES VERSION "${PROJECT_VERSION}" SOVERSION 1)
 

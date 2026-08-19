@@ -4,7 +4,7 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "xronos"
-version = "0.13.0"
+version = "0.13.1"
 description = "Reactors for Python"
 authors = [
   { name = "Christian Menard", email = "christian@xronos.com" },
@@ -43,7 +43,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dashboard = [
-  'xronos-dashboard==0.13.0',
+  'xronos-dashboard==0.13.1',
 ]
 
 [project.urls]
@@ -68,6 +68,12 @@ wheel.license-files = [
 ]
 sdist.cmake = true
 sdist.include = ["exported_symbols.txt"]
+
+# Building from an sdist means compiling on a user machine with a compiler we
+# have never seen. Warnings stay visible but must not break the install.
+[[tool.scikit-build.overrides]]
+if.from-sdist = true
+cmake.define.XRONOS_STRICT_WARNINGS = "OFF"
 
 [tool.mypy]
 exclude = [

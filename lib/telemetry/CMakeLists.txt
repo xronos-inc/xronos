@@ -10,7 +10,7 @@ target_sources(
   FILES ${HEADERS}
 )
 target_link_libraries(xronos-telemetry PUBLIC xronos-core xronos-runtime-interfaces)
-target_compile_options(xronos-telemetry PRIVATE -Wall -Wextra -pedantic -Werror)
+target_compile_options(xronos-telemetry PRIVATE -Wall $<$<BOOL:${XRONOS_STRICT_WARNINGS}>:-Wextra -pedantic -Werror>)
 set_target_properties(xronos-telemetry PROPERTIES VERIFY_INTERFACE_HEADER_SETS ON)
 
 set_target_properties(xronos-telemetry PROPERTIES VERSION "${PROJECT_VERSION}" SOVERSION 1)
