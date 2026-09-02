@@ -136,13 +136,31 @@ class ExternalInput(xronos.Reactor, Generic[T]):
                     # So the last read value is discarded and the thread is stopped.
                     break
 
-                self.__external_input_event.trigger(external_input)
+                status = self.__external_input_event.trigger(external_input)
+                if status is xronos.TriggerStatus.STOPPED:
+                    # The program stopped; no further input can be delivered.
+                    break
+                if status is xronos.TriggerStatus.NOT_STARTED:
+                    print(
+                        f"WARNING: {self.fqn} dropped an input that was read "
+                        "before the program started."
+                    )
+                if status is xronos.TriggerStatus.UNKNOWN:
+                    print(
+                        f"WARNING: {self.fqn} dropped an input; the runtime "
+                        "reported a status this SDK version does not recognize."
+                    )
         except Exception as e:
             print(
                 f"ERROR: Exception: `{e}` caught in `read_input` generator of "
                 f"{self.fqn}. Forwarding the exception to the runtime."
             )
-            self.__external_exception_event.trigger(e)
+            status = self.__external_exception_event.trigger(e)
+            if status is not xronos.TriggerStatus.ACCEPTED:
+                print(
+                    "ERROR: The exception was lost; the program is not running "
+                    f"(status: {status.name})."
+                )
 
         finally:
             self.__read_input.close()

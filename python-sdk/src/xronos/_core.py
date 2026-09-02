@@ -8,6 +8,7 @@
 # pyright: reportMissingModuleSource = false
 
 import datetime
+import enum
 import inspect
 import sys
 from collections.abc import Callable
@@ -76,6 +77,70 @@ def get_source_location() -> sdk.SourceLocation:
     )
 
 
+def _article(name: str) -> str:
+    """Return the indefinite article for a type name."""
+    return "an" if name[0].lower() in "aeiou" else "a"
+
+
+def _type_names(expected: type | tuple[type, ...]) -> str:
+    """Format the names of the expected types as an enumeration."""
+    types = expected if isinstance(expected, tuple) else (expected,)
+    names = [cls.__name__ for cls in types]
+    if len(names) <= 2:  # noqa: PLR2004
+        return " or ".join(names)
+    return ", ".join(names[:-1]) + ", or " + names[-1]
+
+
+def _type_error(
+    subject: str, expected: type | tuple[type, ...], value: object
+) -> TypeError:
+    """Create a `TypeError` reporting the expected and the received type."""
+    expected_names = _type_names(expected)
+    received = type(value).__name__
+    return TypeError(
+        f"{subject} must be {_article(expected_names)} {expected_names}, "
+        f"but got {_article(received)} {received}."
+    )
+
+
+def _check_type(
+    value: object,
+    expected: type | tuple[type, ...],
+    *,
+    param: str,
+    func: str,
+) -> None:
+    """Raise a `TypeError` if the value is not an instance of an expected type."""
+    if not isinstance(value, expected):
+        raise _type_error(f"The argument '{param}' to {func}()", expected, value)
+
+
+def _check_assigned_type(
+    value: object, expected: type | tuple[type, ...], *, prop: str
+) -> None:
+    """Raise a `TypeError` if the assigned value is not of an expected type."""
+    if not isinstance(value, expected):
+        raise _type_error(f"The value assigned to {prop}", expected, value)
+
+
+def _check_attributes(attributes: "dict[Any, Any] | None", *, func: str) -> None:
+    """Raise a `TypeError` if the attribute map or any of its entries is mistyped."""
+    if attributes is None:
+        return
+    _check_type(attributes, dict, param="attributes", func=func)
+    for key, value in attributes.items():
+        if not isinstance(key, str):
+            raise _type_error(
+                f"Each key of the argument 'attributes' to {func}()", str, key
+            )
+        if not isinstance(value, str | bool | int | float):
+            raise _type_error(
+                f"Each value of the argument 'attributes' to {func}()",
+                (str, bool, int, float),
+                value,
+            )
+
+
 class Element:
     """A reactor element.
 
@@ -124,6 +189,10 @@ class Element:
         Raises:
             KeyError: If the attribute key was added before.
         """
+        _check_type(key, str, param="key", func="Element.add_attribute")
+        _check_type(
+            value, (str, bool, int, float), param="value", func="Element.add_attribute"
+        )
         result = self.__sdk_instance.add_attribute(key, value)
         if not result:
             raise KeyError("Overwriting an existing attribute is not permitted.")
@@ -131,8 +200,9 @@ class Element:
     def add_attributes(self, attributes: dict[str, str | bool | int | float]) -> None:
         """Annotate the element with multiple attributes.
 
-        Adding the attributes only succeeds, if the given key has not been set
-        before on the same element.
+        Attributes apply per key. Each attribute is added only if its key has
+        not been set before on the same element. Attributes with rejected keys
+        do not prevent the remaining attributes from being added.
 
         See :ref:`attributes` for more information.
 
@@ -140,8 +210,9 @@ class Element:
             attributes: A map of attribute names and their values to be added.
 
         Raises:
-            KeyError: If the attribute key was added before.
+            KeyError: If any attribute key was added before.
         """
+        _check_attributes(attributes, func="Element.add_attributes")
         result = self.__sdk_instance.add_attributes(attributes)
         if not result:
             raise KeyError("Overwriting an existing attribute is not permitted.")
@@ -164,13 +235,19 @@ class ElementDescriptor(Generic[Elem]):
         self.__initializer = initializer
         self.__attributes = attributes
 
-    def __set_name__(self, reactor_cls: type["Reactor"], name: str) -> None:
+    def __set_name__(self, reactor_cls: type[Any], name: str) -> None:
         """Record the element name and register the descriptor with the reactor class.
 
         This is called implicitly when assigning an instance of
         `ElementDescriptor` to a class attribute.
         """
         assert not self.__name
+        if not issubclass(reactor_cls, Reactor):
+            raise TypeError(
+                f"Cannot declare the reactor element {name!r} in the class "
+                f"{reactor_cls.__qualname__!r}. Reactor elements may only be "
+                "declared in subclasses of xronos.Reactor."
+            )
         self.__name = name
         reactor_cls._register_element_descriptor(self)
 
@@ -191,7 +268,12 @@ class ElementDescriptor(Generic[Elem]):
 
     @property
     def _name(self) -> str:
-        assert self.__name
+        if not self.__name:
+            raise RuntimeError(
+                "The element descriptor is not registered with a reactor "
+                "class. Reactor elements must be declared as class attributes "
+                "of a subclass of xronos.Reactor."
+            )
         return self.__name
 
     def _create_instance(self, reactor: "Reactor") -> Elem:
@@ -244,6 +326,7 @@ class PeriodicTimer(EventSource[None]):
 
     @period.setter
     def period(self, value: datetime.timedelta) -> None:
+        _check_assigned_type(value, datetime.timedelta, prop="PeriodicTimer.period")
         self.__sdk_instance.set_period(value)
 
     @property
@@ -257,6 +340,7 @@ class PeriodicTimer(EventSource[None]):
 
     @offset.setter
     def offset(self, value: datetime.timedelta) -> None:
+        _check_assigned_type(value, datetime.timedelta, prop="PeriodicTimer.offset")
         self.__sdk_instance.set_offset(value)
 
     @property
@@ -280,6 +364,10 @@ class PeriodicTimerDeclaration(ElementDescriptor[PeriodicTimer]):
         offset: datetime.timedelta = datetime.timedelta(0),
         attributes: AttributeMap | None = None,
     ) -> None:
+        func = "PeriodicTimerDeclaration"
+        _check_type(period, datetime.timedelta, param="period", func=func)
+        _check_type(offset, datetime.timedelta, param="offset", func=func)
+        _check_attributes(attributes, func=func)
         source_location = get_source_location()
 
         def initialize(name: str, reactor: "Reactor") -> PeriodicTimer:
@@ -323,6 +411,7 @@ class InputPortDeclaration(ElementDescriptor[InputPort[T]]):
     """
 
     def __init__(self, attributes: AttributeMap | None = None) -> None:
+        _check_attributes(attributes, func="InputPortDeclaration")
         source_location = get_source_location()
 
         def initialize(name: str, reactor: "Reactor") -> InputPort[T]:
@@ -364,6 +453,7 @@ class OutputPortDeclaration(ElementDescriptor[OutputPort[T]]):
     """
 
     def __init__(self, attributes: AttributeMap | None = None) -> None:
+        _check_attributes(attributes, func="OutputPortDeclaration")
         source_location = get_source_location()
 
         def initialize(name: str, reactor: "Reactor") -> OutputPort[T]:
@@ -371,6 +461,15 @@ class OutputPortDeclaration(ElementDescriptor[OutputPort[T]]):
             return OutputPort(sdk.OutputPort(name, context))
 
         super().__init__(initialize, attributes)
+
+
+def _sdk_port(
+    port: "InputPort[Any] | OutputPort[Any]",
+) -> "sdk.InputPort | sdk.OutputPort":
+    """Return the SDK port wrapped by a Python port."""
+    if isinstance(port, InputPort):
+        return port._get_sdk_instance(sdk.InputPort)
+    return port._get_sdk_instance(sdk.OutputPort)
 
 
 class ProgrammableTimer(EventSource[T]):
@@ -399,6 +498,7 @@ class ProgrammableTimerDeclaration(ElementDescriptor[ProgrammableTimer[T]]):
     """
 
     def __init__(self, attributes: AttributeMap | None = None) -> None:
+        _check_attributes(attributes, func="ProgrammableTimerDeclaration")
         source_location = get_source_location()
 
         def initialize(name: str, reactor: "Reactor") -> ProgrammableTimer[T]:
@@ -406,6 +506,23 @@ class ProgrammableTimerDeclaration(ElementDescriptor[ProgrammableTimer[T]]):
             return ProgrammableTimer(sdk.ProgrammableTimer(name, context))
 
         super().__init__(initialize, attributes)
+
+
+class TriggerStatus(enum.Enum):
+    """The outcome of a :meth:`PhysicalEvent.trigger` attempt."""
+
+    ACCEPTED = 0
+    """The runtime accepted the event and it is queued for processing."""
+
+    NOT_STARTED = 1
+    """The program has not yet started and the event was dropped."""
+
+    STOPPED = 2
+    """The program has stopped executing and the event was dropped."""
+
+    UNKNOWN = 3
+    """The runtime reported a status that this SDK version does not recognize;
+    the event was dropped."""
 
 
 class PhysicalEvent(EventSource[T]):
@@ -422,7 +539,7 @@ class PhysicalEvent(EventSource[T]):
         T: The type of values carried by emitted events.
     """
 
-    def trigger(self, value: T) -> None:
+    def trigger(self, value: T) -> TriggerStatus:
         """Emit a new event with an associated value and trigger reactions.
 
         The event will be assigned a timestamp equal to the current wall-clock
@@ -430,8 +547,11 @@ class PhysicalEvent(EventSource[T]):
 
         Args:
             value: The value to be associated with the emitted event.
+
+        Returns:
+            The outcome of the attempt. :attr:`TriggerStatus.ACCEPTED` on success.
         """
-        self._get_sdk_instance(sdk.PhysicalEvent).trigger(value)
+        return TriggerStatus(self._get_sdk_instance(sdk.PhysicalEvent).trigger(value))
 
 
 class PhysicalEventDeclaration(ElementDescriptor[PhysicalEvent[T]]):
@@ -445,6 +565,7 @@ class PhysicalEventDeclaration(ElementDescriptor[PhysicalEvent[T]]):
     """
 
     def __init__(self, attributes: AttributeMap | None = None) -> None:
+        _check_attributes(attributes, func="PhysicalEventDeclaration")
         source_location = get_source_location()
 
         def initialize(name: str, reactor: "Reactor") -> PhysicalEvent[T]:
@@ -494,6 +615,11 @@ class MetricDeclaration(ElementDescriptor[Metric]):
         unit: str | None = None,
         attributes: AttributeMap | None = None,
     ) -> None:
+        func = "MetricDeclaration"
+        _check_type(description, str, param="description", func=func)
+        if unit is not None:
+            _check_type(unit, str, param="unit", func=func)
+        _check_attributes(attributes, func=func)
         if unit is None:
             unit = ""
 
@@ -526,6 +652,10 @@ class Environment:
     def __init__(
         self, fast: bool = False, timeout: datetime.timedelta | None = None
     ) -> None:
+        if timeout is not None:
+            _check_type(
+                timeout, datetime.timedelta, param="timeout", func="Environment"
+            )
         if timeout:
             self.__sdk_env = sdk.Environment(
                 fast, render_reactor_graph=True, timeout=timeout
@@ -593,10 +723,13 @@ class Environment:
         Raises:
             ValidationError: If an invalid connections is created.
         """
-        from_port = from_._get_sdk_instance(sdk.Element)
-        to_port = to._get_sdk_instance(sdk.Element)
-        assert isinstance(from_port, sdk.InputPort | sdk.OutputPort)
-        assert isinstance(to_port, sdk.InputPort | sdk.OutputPort)
+        func = "Environment.connect"
+        _check_type(from_, (InputPort, OutputPort), param="from_", func=func)
+        _check_type(to, (InputPort, OutputPort), param="to", func=func)
+        if delay is not None:
+            _check_type(delay, datetime.timedelta, param="delay", func=func)
+        from_port = _sdk_port(from_)
+        to_port = _sdk_port(to)
         if delay is None:
             self.__sdk_env.connect(from_port, to_port)
         else:
@@ -632,7 +765,9 @@ class Environment:
         # a concrete reactor class. The Callable is needed to correctly infer
         # the types of all args and kwargs and support type checking any calls
         # to this method.
-        checked_class = Reactor._checked_cast_to_subclass(reactor_class)
+        func = "Environment.create_reactor"
+        _check_type(name, str, param="name", func=func)
+        checked_class = Reactor._checked_cast_to_subclass(reactor_class, func)
         context = self.__sdk_env.context(get_source_location())
         reactor = checked_class._create_instance(name, context, *args, **kwargs)
 
@@ -648,9 +783,15 @@ class Environment:
         processing reactions.
 
         Returns when the reactor program terminates. The reactor program
-        terminates when there are no more events, or after calling
+        terminates when there are no more events, after calling
         :meth:`~xronos.ShutdownEffect.trigger_shutdown()` on a
-        :class:`ShutdownEffect`.
+        :class:`ShutdownEffect`, or when it reaches the ``timeout``
+        configured on the environment.
+
+        An exception raised by a reaction handler also terminates the program.
+        The runtime then stops invoking reaction handlers; a handler that is
+        about to start may still run. Shutdown reactions run in any case, and
+        :meth:`execute` reraises the first exception.
 
         Raises:
             ValidationError: When the program is invalid or reaches an invalid state.
@@ -738,7 +879,7 @@ class Reactor(Element):
         return reactor
 
     @staticmethod
-    def _checked_cast_to_subclass(obj: Callable[..., R]) -> type[R]:
+    def _checked_cast_to_subclass(obj: Callable[..., R], func: str) -> type[R]:
         """Enforce that the given callable is also a subclass of `Reactor`."""
         # `obj` might be a generic type. We try to get the origin type. If this
         # succeeds its a generic type and we continue with origin, otherwise we
@@ -749,13 +890,41 @@ class Reactor(Element):
         if isinstance(cls, type) and issubclass(cls, Reactor):
             return cast(type[R], obj)
 
-        raise TypeError("The provided class is not a subclass of xronos.Reactor.")
+        if isinstance(cls, type):
+            received = f"the class {cls.__name__}"
+        else:
+            type_name = type(obj).__name__
+            received = f"{_article(type_name)} {type_name}"
+        raise TypeError(
+            f"The argument 'reactor_class' to {func}() must be a subclass of "
+            f"Reactor, but got {received}."
+        )
 
     @classmethod
     def __init_subclass__(cls) -> None:
         """Initialize any subclass of `Reactor`."""
         super().__init_subclass__()
+        cls.__check_for_wrapped_descriptors()
         cls.__init_attributes()
+
+    @classmethod
+    def __check_for_wrapped_descriptors(cls) -> None:
+        """Reject element descriptors wrapped in a staticmethod or classmethod.
+
+        A staticmethod or classmethod wrapper does not forward __set_name__,
+        so a wrapped descriptor would never register and its element would be
+        dropped silently.
+        """
+        for name, value in cls.__dict__.items():
+            if not isinstance(value, (staticmethod, classmethod)):
+                continue
+            wrapper = cast("staticmethod[..., Any] | classmethod[Any, ..., Any]", value)
+            if isinstance(wrapper.__func__, ElementDescriptor):
+                raise TypeError(
+                    f"The reactor element {name!r} in class {cls.__qualname__!r} "
+                    "is wrapped in a staticmethod or classmethod. Remove the "
+                    "staticmethod or classmethod decorator."
+                )
 
     @classmethod
     def __init_attributes(cls):
@@ -929,10 +1098,13 @@ class Reactor(Element):
         Raises:
             ValidationError: If an invalid connections is created.
         """
-        from_port = from_._get_sdk_instance(sdk.Element)
-        to_port = to._get_sdk_instance(sdk.Element)
-        assert isinstance(from_port, sdk.InputPort | sdk.OutputPort)
-        assert isinstance(to_port, sdk.InputPort | sdk.OutputPort)
+        func = "Reactor.connect"
+        _check_type(from_, (InputPort, OutputPort), param="from_", func=func)
+        _check_type(to, (InputPort, OutputPort), param="to", func=func)
+        if delay is not None:
+            _check_type(delay, datetime.timedelta, param="delay", func=func)
+        from_port = _sdk_port(from_)
+        to_port = _sdk_port(to)
         if delay is None:
             self.__sdk_instance.connect(from_port, to_port)
         else:
@@ -970,7 +1142,9 @@ class Reactor(Element):
         # a concrete reactor class. The Callable is needed to correctly infer
         # the types of all args and kwargs and support type checking any calls
         # to this method.
-        checked_class = Reactor._checked_cast_to_subclass(reactor_class)
+        func = "Reactor.create_reactor"
+        _check_type(name, str, param="name", func=func)
+        checked_class = Reactor._checked_cast_to_subclass(reactor_class, func)
         context = self._context(get_source_location())
         reactor = checked_class._create_instance(name, context, *args, **kwargs)
 
@@ -1039,6 +1213,9 @@ class PortEffect(Generic[T]):
 
         Args:
             value: The value to be written to the referenced port.
+
+        Raises:
+            ValidationError: If called before execution has started.
         """
         self.__sdk_effect.set(value)
 
@@ -1084,7 +1261,16 @@ class ProgrammableTimerEffect(Generic[T]):
         Args:
             value: The value to be associated with the event.
             delay: The time to wait until the new event is processed.
+
+        Raises:
+            ValidationError: If called before execution has started.
         """
+        _check_type(
+            delay,
+            datetime.timedelta,
+            param="delay",
+            func="ProgrammableTimerEffect.schedule",
+        )
         self.__sdk_effect.schedule(value, delay)
 
 
@@ -1103,7 +1289,11 @@ class MetricEffect:
 
         Args:
             value: The value to be recorded.
+
+        Raises:
+            ValidationError: If called before execution has started.
         """
+        _check_type(value, (int, float), param="value", func="MetricEffect.record")
         self.__sdk_metric.record(value)
 
 
@@ -1123,6 +1313,9 @@ class ShutdownEffect:
         Terminates a running program at the next convenience. After completing all
         currently active reactions, this triggers the Shutdown event sources. Once
         all reactions triggered by Shutdown are processed, the program terminates.
+
+        Raises:
+            ValidationError: If called before execution has started.
         """
         self.__sdk_shutdown.trigger_shutdown()
 
@@ -1159,10 +1352,17 @@ class ReactionContext:
             A new trigger object that can be used by the reaction handler to
             check presence and read values.
         """
+        _check_type(
+            event_source,
+            EventSource,
+            param="event_source",
+            func="ReactionContext.add_trigger",
+        )
         sdk_element = event_source._get_sdk_instance(sdk.Element)
         if isinstance(sdk_element, sdk.PeriodicTimer | sdk.Startup | sdk.Shutdown):
             sdk_trigger = sdk.VoidTrigger(sdk_element, self.__context)
         else:
+            # Every concrete event source wraps one of these SDK types.
             assert isinstance(
                 sdk_element,
                 sdk.InputPort
@@ -1205,9 +1405,7 @@ class ReactionContext:
             write to ports or schedule events.
         """
         if isinstance(target, InputPort | OutputPort):
-            sdk_port = target._get_sdk_instance(sdk.Element)
-            assert isinstance(sdk_port, sdk.InputPort | sdk.OutputPort)
-            return PortEffect(sdk.PortEffect(sdk_port, self.__context))
+            return PortEffect(sdk.PortEffect(_sdk_port(target), self.__context))
         if isinstance(target, ProgrammableTimer):
             sdk_timer = target._get_sdk_instance(sdk.ProgrammableTimer)
             return ProgrammableTimerEffect(
@@ -1219,7 +1417,11 @@ class ReactionContext:
         if isinstance(target, Shutdown):  # type: ignore [reportUnnecessaryIsInstance]
             sdk_shutdown = target._get_sdk_instance(sdk.Shutdown)
             return ShutdownEffect(sdk.ShutdownEffect(sdk_shutdown, self.__context))
-        raise ValueError(f"{type(target)} is not a valid target for an effect.")
+        raise _type_error(
+            "The argument 'target' to ReactionContext.add_effect()",
+            (InputPort, OutputPort, ProgrammableTimer, Metric, Shutdown),
+            target,
+        )
 
     @property
     def current_time(self) -> datetime.datetime:
@@ -1460,11 +1662,37 @@ class ReactionDescriptor(ElementDescriptor[Reaction], Generic[R_co]):
         raise RuntimeError("Reactions may not be called directly")
 
 
+def _check_reaction_declaration(declaration: object) -> None:
+    """Check that a declaration is usable as a reaction, or raise `TypeError`."""
+    if isinstance(declaration, (staticmethod, classmethod)):
+        raise TypeError("@reaction cannot be applied to a staticmethod or classmethod.")
+    if not callable(declaration):
+        raise TypeError("A reaction declaration must be callable.")
+
+    try:
+        signature = inspect.signature(declaration)
+    except (TypeError, ValueError):
+        # An error during inspection can have many reasons, including that
+        # the object is a bound C/C++ function. Since we cannot inspect
+        # without a valid signature, we will just assume that the declaration
+        # is valid.
+        return
+
+    try:
+        signature.bind(object(), object())
+    except TypeError:
+        raise TypeError(
+            "A reaction declaration must accept exactly two positional "
+            "arguments: self and a ReactionContext."
+        ) from None
+
+
 def _make_reaction_descriptor(
     declaration: Callable[[R, ReactionContext], Callable[[], None]],
     source_location: sdk.SourceLocation,
     deadline: datetime.timedelta | None,
 ) -> ReactionDescriptor[R]:
+    _check_reaction_declaration(declaration)
     return ReactionDescriptor[R](declaration, source_location, deadline)
 
 
@@ -1504,6 +1732,9 @@ def reaction_with_deadline(
     To declare a reaction without a deadline, use :deco:`reaction` instead. The
     decorated method has the same requirements as for :deco:`reaction`.
     """
+    _check_type(
+        deadline, datetime.timedelta, param="deadline", func="reaction_with_deadline"
+    )
     if deadline < datetime.timedelta(0):
         raise ValueError("A reaction deadline may not be negative.")
 

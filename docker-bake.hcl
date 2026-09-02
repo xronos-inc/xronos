@@ -1,6 +1,6 @@
 variable "CONTEXT_PREFIX" { default = "." }
 
-variable "XRONOS_VERSION" { default = "0.13.1" }
+variable "XRONOS_VERSION" { default = "0.14.0" }
 
 variable "ALL_PLATFORMS" { default = 0 }
 
@@ -88,7 +88,7 @@ target "third-party-catch2" {
 target "third-party-doxygen" {
   inherits = ["_third-party-common"]
   contexts = {
-    doxygen-src = "https://github.com/doxygen/doxygen.git#Release_1_17_0",
+    doxygen-src = "https://github.com/doxygen/doxygen.git#Release_1_18_0",
   }
   context = "${CONTEXT_PREFIX}/third-party/doxygen"
 }
@@ -279,76 +279,6 @@ target "xronos-examples-isaac-lint" {
   context  = "${CONTEXT_PREFIX}/examples/isaac/"
 }
 
-target "xronos-examples-keyboard-synth-lint" {
-  name     = "xronos-examples-keyboard-synth-lint-${replace(version, ".", "")}"
-  inherits = ["_xronos-examples-common-${replace(version, ".", "")}"]
-  matrix = {
-    version = ["3.12"]
-  }
-  target  = "lint"
-  context = "${CONTEXT_PREFIX}/examples/keyboard-synth/"
-}
-
-target "xronos-examples-montecarlo-test" {
-  name     = "xronos-examples-montecarlo-test-${replace(version, ".", "")}"
-  inherits = ["_xronos-examples-common-${replace(version, ".", "")}"]
-  matrix = {
-    version = ["3.10", "3.11", "3.12", "3.13"]
-  }
-  target  = "test"
-  context = "${CONTEXT_PREFIX}/examples/montecarlo/"
-}
-
-target "xronos-examples-montecarlo-lint" {
-  name     = "xronos-examples-montecarlo-lint-${replace(version, ".", "")}"
-  inherits = ["_xronos-examples-common-${replace(version, ".", "")}"]
-  matrix = {
-    version = ["3.12"]
-  }
-  target  = "lint"
-  context = "${CONTEXT_PREFIX}/examples/montecarlo/"
-}
-
-target "xronos-examples-robot-arm-lint" {
-  name     = "xronos-examples-robot-arm-lint-${replace(version, ".", "")}"
-  inherits = ["_xronos-examples-common-${replace(version, ".", "")}"]
-  matrix = {
-    version = ["3.12"]
-  }
-  target  = "lint"
-  context = "${CONTEXT_PREFIX}/examples/robot-arm/"
-}
-
-target "xronos-examples-simple-neural-net-lint" {
-  name     = "xronos-examples-simple-neural-net-lint-${replace(version, ".", "")}"
-  inherits = ["_xronos-examples-common-${replace(version, ".", "")}"]
-  matrix = {
-    version = ["3.12"]
-  }
-  target  = "lint"
-  context = "${CONTEXT_PREFIX}/examples/simple-neural-net/"
-}
-
-target "xronos-examples-style-guide-test" {
-  name     = "xronos-examples-style-guide-test-${replace(version, ".", "")}"
-  inherits = ["_xronos-examples-common-${replace(version, ".", "")}"]
-  matrix = {
-    version = ["3.10", "3.11", "3.12", "3.13", "3.14"]
-  }
-  target  = "test"
-  context = "${CONTEXT_PREFIX}/examples/style-guide/"
-}
-
-target "xronos-examples-style-guide-lint" {
-  name     = "xronos-examples-style-guide-lint-${replace(version, ".", "")}"
-  inherits = ["_xronos-examples-common-${replace(version, ".", "")}"]
-  matrix = {
-    version = ["3.12"]
-  }
-  target  = "lint"
-  context = "${CONTEXT_PREFIX}/examples/style-guide/"
-}
-
 target "xronos-examples-yolo-test" {
   name     = "xronos-examples-yolo-test-${replace(version, ".", "")}"
   inherits = ["_xronos-examples-common-${replace(version, ".", "")}"]
@@ -402,11 +332,6 @@ variable "LINT_TARGETS" {
     "xronos-py-lint-cpp",
     "xronos-examples-hello-ros2-comparison-lint",
     "xronos-examples-isaac-lint",
-    "xronos-examples-keyboard-synth-lint",
-    "xronos-examples-montecarlo-lint",
-    "xronos-examples-robot-arm-lint",
-    "xronos-examples-simple-neural-net-lint",
-    "xronos-examples-style-guide-lint",
     "xronos-examples-webots-lint",
     "xronos-examples-yolo-lint",
   ]
@@ -433,8 +358,6 @@ variable "TEST_TARGETS" {
     "xronos-lib-test",
     "xronos-cpp-sdk-test",
     "xronos-py-test",
-    "xronos-examples-montecarlo-test",
-    "xronos-examples-style-guide-test",
     "xronos-examples-yolo-test",
   ]
 }

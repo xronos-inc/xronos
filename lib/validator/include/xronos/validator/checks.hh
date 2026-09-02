@@ -4,10 +4,13 @@
 #ifndef XRONOS_VALIDATOR_CHECKS_HH
 #define XRONOS_VALIDATOR_CHECKS_HH
 
+#include <optional>
 #include <string>
 #include <vector>
 
 #include "nonstd/expected.hpp"
+#include "xronos/core/element.hh"
+#include "xronos/core/element_registry.hh"
 #include "xronos/core/reactor_model.hh"
 
 namespace xronos::validator {
@@ -26,6 +29,21 @@ namespace xronos::validator {
     -> nonstd::expected<void, std::vector<std::string>>;
 [[nodiscard]] auto check_boundary_crossing_structure(const core::ReactorModel& model)
     -> nonstd::expected<void, std::vector<std::string>>;
+[[nodiscard]] auto check_port_readback(const core::ReactorModel& model)
+    -> nonstd::expected<void, std::vector<std::string>>;
+[[nodiscard]] auto check_effects_on_connected_ports(const core::ReactorModel& model)
+    -> nonstd::expected<void, std::vector<std::string>>;
+[[nodiscard]] auto check_hierarchy(const core::ReactorModel& model) -> nonstd::expected<void, std::vector<std::string>>;
+
+// Per-edge hierarchy rules, shared with the backend, which enforces them
+// while the model is built. Each returns an error message when the edge
+// violates the reactor hierarchy, and nothing when it conforms.
+[[nodiscard]] auto check_connection_hierarchy(const core::ElementRegistry& registry, core::ElementID from,
+                                              core::ElementID to) -> std::optional<std::string>;
+[[nodiscard]] auto check_trigger_hierarchy(const core::ElementRegistry& registry, core::ElementID reaction,
+                                           core::ElementID trigger) -> std::optional<std::string>;
+[[nodiscard]] auto check_effect_hierarchy(const core::ElementRegistry& registry, core::ElementID reaction,
+                                          core::ElementID effect) -> std::optional<std::string>;
 
 } // namespace xronos::validator
 

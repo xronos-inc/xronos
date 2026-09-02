@@ -10,6 +10,7 @@
 #include <memory>
 #include <mutex>
 #include <optional>
+#include <shared_mutex>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -20,6 +21,7 @@
 #include "xronos/abi/backend.hh"
 #include "xronos/abi/exceptions.hh"
 #include "xronos/abi/types.hh"
+#include "xronos/abi/value.hh"
 #include "xronos/core/connection_graph.hh"
 #include "xronos/core/element.hh"
 #include "xronos/core/element_registry.hh"
@@ -100,11 +102,41 @@ public:
       : state_{state} {}
 
   // Called by run() once the program is prepared, before execution starts.
-  void publish(runtime::ProgramHandle* handle) noexcept { handle_.store(handle, std::memory_order_release); }
+  void publish(runtime::ProgramHandle* handle) noexcept { handle_.store(handle, std::memory_order_seq_cst); }
+
+  void latch_stop_request() noexcept { stop_requested_.store(true, std::memory_order_seq_cst); }
+  [[nodiscard]] auto stop_request_latched() const noexcept -> bool {
+    return stop_requested_.load(std::memory_order_seq_cst);
+  }
+
+  // Permanently closes the trigger path: every later trigger_physical_event
+  // call reports Stopped without touching the program. Closing has two
+  // stages. Setting `closing_` rejects new calls before they touch the
+  // mutex; a reader-preferring rwlock (glibc's default) admits new shared
+  // lockers while a writer waits, so without this stage a sustained stream
+  // of triggers could starve the drain. Taking the unique lock then waits
+  // out the bounded set of deliveries already holding the shared lock, so
+  // returning from retire() guarantees that no trigger call still reaches
+  // into the program. noexcept: locking can in principle throw
+  // std::system_error, and at teardown terminating is preferable to
+  // propagating.
+  void retire() noexcept {
+    closing_.store(true, std::memory_order_release);
+    const std::unique_lock drain{gate_mutex_};
+  }
+
+  // The prepared program, or nullptr before run() publishes it. The handle
+  // stays alive in State for the engine's whole lifetime, so a caller on any
+  // thread may use the returned pointer while the engine exists.
+  [[nodiscard]] auto prepared_run() const noexcept -> runtime::ProgramHandle* {
+    return handle_.load(std::memory_order_seq_cst);
+  }
   // The ABI interface deliberately has a protected, non-virtual destructor
   // (implementation-owned); this concrete class is destroyed as itself, via
-  // State's unique_ptr.
-  virtual ~RuntimeBackendImpl() = default;
+  // State's unique_ptr. Retiring here is a backstop for runs that never
+  // reach run()'s own retire; State destroys this facade before the program
+  // handle, so the drain still precedes the memory it protects.
+  virtual ~RuntimeBackendImpl() { retire(); }
   RuntimeBackendImpl(const RuntimeBackendImpl&) = delete;
   RuntimeBackendImpl(RuntimeBackendImpl&&) = delete;
   auto operator=(const RuntimeBackendImpl&) = delete;
@@ -138,6 +170,34 @@ public:
     auto* handle = prepared_run();
     return handle == nullptr ? nullptr : handle->get_external_trigger(physical_event);
   }
+  [[nodiscard]] auto trigger_physical_event(abi::ElementUid physical_event, abi::AnyValue&& value) noexcept
+      -> abi::TriggerStatus final {
+    // `closing_` is checked before taking the shared lock, so a closed gate
+    // rejects without touching the mutex, and rechecked under it, so a call
+    // that raced the flip still rejects. Rejecting paths return without
+    // moving from `value`: the payload dies in the caller's frame after the
+    // lock is released, so its destructor can never deadlock against the
+    // drain.
+    if (closing_.load(std::memory_order_acquire)) {
+      return abi::TriggerStatus::Stopped;
+    }
+    // The shared lock spans the whole delivery, so retire() waits for it
+    // (see retire above).
+    const std::shared_lock lock{gate_mutex_};
+    if (closing_.load(std::memory_order_acquire)) {
+      return abi::TriggerStatus::Stopped;
+    }
+    auto* handle = prepared_run();
+    if (handle == nullptr) {
+      return abi::TriggerStatus::NotStarted;
+    }
+    auto* trigger = handle->get_external_trigger(physical_event);
+    if (trigger == nullptr) {
+      return abi::TriggerStatus::UnknownPhysicalEvent;
+    }
+    return trigger->try_trigger(std::move(value));
+  }
+
   [[nodiscard]] auto get_metric_recorder(abi::ElementUid metric) noexcept -> abi::MetricRecorder* final {
     auto* handle = prepared_run();
     if (handle == nullptr) {
@@ -158,12 +218,14 @@ public:
   }
 
 private:
-  [[nodiscard]] auto prepared_run() const noexcept -> runtime::ProgramHandle* {
-    return handle_.load(std::memory_order_acquire);
-  }
-
   State& state_;
   std::atomic<runtime::ProgramHandle*> handle_{nullptr};
+  std::atomic<bool> stop_requested_{false};
+  // The live/dead gate of the trigger path (see retire and
+  // trigger_physical_event). Dead is terminal: a backend runs at most once,
+  // so the gate never re-arms.
+  std::shared_mutex gate_mutex_{};
+  std::atomic<bool> closing_{false};
   // The SDK looks each recorder up only once, so this lock is off the hot
   // path; the map keeps recorders alive as long as this RuntimeBackend.
   std::mutex metric_recorders_mutex_{};
@@ -325,10 +387,26 @@ auto Engine::register_reaction_impl(const std::string& name, abi::ElementUid par
 }
 
 void Engine::register_reaction_trigger(abi::ElementUid reaction, abi::ElementUid element) {
+  // Triggers registered while the assemble callbacks run (inside assemble)
+  // are fine; only a prepared program is sealed.
+  if (state_->program_handle != nullptr) {
+    throw abi::ValidationError{"Triggers may not be declared once execution has started."};
+  }
+  if (auto error = validator::check_trigger_hierarchy(state_->model.element_registry, reaction, element)) {
+    throw abi::ValidationError{*error};
+  }
   state_->model.reaction_dependency_registry.register_reaction_trigger(reaction, element);
   outdate_validation();
 }
 void Engine::register_reaction_effect(abi::ElementUid reaction, abi::ElementUid element) {
+  // Effects registered while the assemble callbacks run (inside assemble)
+  // are fine; only a prepared program is sealed.
+  if (state_->program_handle != nullptr) {
+    throw abi::ValidationError{"Effects may not be declared once execution has started."};
+  }
+  if (auto error = validator::check_effect_hierarchy(state_->model.element_registry, reaction, element)) {
+    throw abi::ValidationError{*error};
+  }
   state_->model.reaction_dependency_registry.register_reaction_effect(reaction, element);
   outdate_validation();
 }
@@ -359,6 +437,9 @@ void Engine::add_connection_impl(abi::ElementUid from, abi::ElementUid to, std::
   // assemble) are fine; only a prepared program is sealed.
   if (state_->program_handle != nullptr) {
     throw abi::ValidationError{"Connections may not be created once execution has started."};
+  }
+  if (auto error = validator::check_connection_hierarchy(state_->model.element_registry, from, to)) {
+    throw abi::ValidationError{*error};
   }
   auto& connection_graph = state_->model.connection_graph;
   if (connection_graph.has_incoming_connection(to)) {
@@ -511,7 +592,42 @@ void Engine::run(std::unique_ptr<runtime::Runtime> runtime, const runtime::Execu
   // dependencies during the run find it.
   state_->runtime_backend->publish(state_->program_handle.get());
 
+  // If a stop was requested before the publish above, then the stop is latched.
+  // We forward the request to stop the run.
+  if (state_->runtime_backend->stop_request_latched()) {
+    state_->program_handle->request_stop();
+  }
+
+  // Retire the facade's trigger path as soon as execute() returns or
+  // throws: from then on external threads must observe Stopped instead of
+  // reaching into a program that is about to be destroyed. Retiring also
+  // drains any trigger call still in flight (see RuntimeBackendImpl).
+  struct RetireGuard {
+    explicit RetireGuard(RuntimeBackendImpl* facade)
+        : facade_{facade} {}
+    ~RetireGuard() { facade_->retire(); }
+    RetireGuard(const RetireGuard&) = delete;
+    RetireGuard(RetireGuard&&) = delete;
+    auto operator=(const RetireGuard&) = delete;
+    auto operator=(RetireGuard&&) = delete;
+
+  private:
+    RuntimeBackendImpl* facade_;
+  };
+  const RetireGuard retire_guard{state_->runtime_backend.get()};
+
   state_->program_handle->execute();
+}
+
+void Engine::request_stop() noexcept {
+  // Always latch the stop request. If there is no active handle yet,
+  // the latched stop will be picked up later. If there is an active handle,
+  // then we forward the stop request immediately.
+  state_->runtime_backend->latch_stop_request();
+  auto* handle = state_->runtime_backend->prepared_run();
+  if (handle != nullptr) {
+    handle->request_stop();
+  }
 }
 
 auto Engine::register_element(std::string_view name, core::ElementType type, std::optional<abi::ElementUid> parent)

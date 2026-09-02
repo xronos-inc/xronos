@@ -4,7 +4,6 @@
 #ifndef XRONOS_UTIL_LOGGING_HH
 #define XRONOS_UTIL_LOGGING_HH
 
-#include <functional>
 #include <iostream>
 #include <mutex>
 #include <source_location>
@@ -27,7 +26,7 @@ class Logger {
 public:
   Logger(std::string_view prefix, std::source_location location)
       : location_{location} {
-    ostream_.get() << prefix;
+    std::cerr << prefix;
   }
   ~Logger() {
     if (lock_.owns_lock()) {
@@ -36,10 +35,10 @@ public:
       // it was moved away from, and we'll let the other logger terminate the
       // line.
       if constexpr (print_source_location) {
-        ostream_.get() << " (" << location_.function_name() << ", " << location_.file_name() << ":" << location_.line()
-                       << ')';
+        std::cerr << " (" << location_.function_name() << ", " << location_.file_name() << ":" << location_.line()
+                  << ')';
       }
-      ostream_.get() << '\n';
+      std::cerr << '\n';
     }
   }
   Logger(const Logger&) = delete;
@@ -48,18 +47,12 @@ public:
   auto operator=(Logger&&) -> Logger& = default;
 
   template <class T> auto operator<<(T&& arg) -> Logger& {
-    ostream_.get() << std::forward<T>(arg); // NOLINT
+    std::cerr << std::forward<T>(arg); // NOLINT
     return *this;
-  }
-
-  static void set_ostream(std::ostream& ostream) {
-    std::scoped_lock lock{mutex_};
-    ostream_ = ostream;
   }
 
 private:
   static inline std::mutex mutex_;
-  static inline std::reference_wrapper<std::ostream> ostream_{std::cerr}; // NOLINT
 
   std::unique_lock<std::mutex> lock_{mutex_};
   std::source_location location_;

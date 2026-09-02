@@ -14,6 +14,7 @@
 #include "xronos/sdk/context.hh"
 #include "xronos/sdk/detail/element.hh"
 #include "xronos/sdk/element.hh"
+#include "xronos/sdk/environment.hh"
 #include "xronos/sdk/fwd.hh"
 
 namespace xronos::sdk {
@@ -65,15 +66,19 @@ private:
   std::string unit_;
   abi::MetricRecorder* recorder_{nullptr};
 
-  void record(double value) noexcept {
-    if (auto* recorder = get_recorder(); recorder != nullptr) {
-      recorder->record(value);
+  void record(double value) {
+    auto* recorder = get_recorder();
+    if (recorder == nullptr) {
+      throw ValidationError{"Metric " + fqn() + " may not be recorded before execution has started."};
     }
+    recorder->record(value);
   }
-  void record(std::int64_t value) noexcept {
-    if (auto* recorder = get_recorder(); recorder != nullptr) {
-      recorder->record(value);
+  void record(std::int64_t value) {
+    auto* recorder = get_recorder();
+    if (recorder == nullptr) {
+      throw ValidationError{"Metric " + fqn() + " may not be recorded before execution has started."};
     }
+    recorder->record(value);
   }
   [[nodiscard]] auto get_recorder() noexcept -> abi::MetricRecorder* {
     if (recorder_ == nullptr) {

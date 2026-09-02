@@ -41,11 +41,17 @@ template <typename... Checks> auto run_checks(Checks&&... checks) -> nonstd::exp
 } // namespace detail
 
 auto run_all_checks(const core::ReactorModel& model) -> nonstd::expected<void, std::vector<std::string>> {
+  // The remaining checks assume the shapes the hierarchy rules guarantee.
+  // Run on a malformed model, they can throw instead of reporting, so a
+  // hierarchy failure gates everything else.
+  if (auto result = check_hierarchy(model); !result.has_value()) {
+    return result;
+  }
   return detail::run_checks(
       [&] { return check_shutdown_reactions(model); }, [&] { return check_periodic_timers(model); },
       [&] { return check_dependency_cycles(model); }, [&] { return check_reaction_handlers(model); },
-      [&] { return check_cross_boundary_serializers(model); },
-      [&] { return check_boundary_crossing_structure(model); });
+      [&] { return check_cross_boundary_serializers(model); }, [&] { return check_boundary_crossing_structure(model); },
+      [&] { return check_port_readback(model); }, [&] { return check_effects_on_connected_ports(model); });
 }
 
 // The runtimes invoke reaction handlers unchecked on the hot path; this
@@ -76,6 +82,32 @@ auto check_periodic_timers(const core::ReactorModel& model) -> nonstd::expected<
     if (properties.offset < core::Duration::zero()) {
       error_messages.push_back(fmt::format("Timer offsets must be positive, but timer {} has a period of {}.",
                                            timer.fqn, properties.offset));
+    }
+  }
+
+  if (!error_messages.empty()) {
+    return nonstd::unexpected{std::move(error_messages)};
+  }
+
+  return {};
+}
+
+// A connected port has exactly one writer: the connection. A reaction effect
+// on such a port would race the connection for the port's value within a tag,
+// so the model rejects the combination outright.
+auto check_effects_on_connected_ports(const core::ReactorModel& model)
+    -> nonstd::expected<void, std::vector<std::string>> {
+  std::vector<std::string> error_messages;
+  for (const auto& reaction : model.element_registry.elements_of_type<core::ReactionTag>()) {
+    for (auto effect : model.reaction_dependency_registry.get_effects(reaction.uid)) {
+      auto connection = model.connection_graph.get_incoming_connection(effect);
+      if (connection.has_value()) {
+        error_messages.push_back(
+            fmt::format("A port with an incoming connection may not be used as a reaction effect, but reaction {} has "
+                        "an effect on port {}, which is connected from {}.",
+                        reaction.fqn, model.element_registry.get(effect).fqn,
+                        model.element_registry.get(connection->get().from_uid).fqn));
+      }
     }
   }
 

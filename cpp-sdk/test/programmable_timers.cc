@@ -294,4 +294,71 @@ TEST(programmable_timers, Starvation) {
   reactor.check();
 }
 
+// A timer that triggers a reaction but is not a declared effect of any
+// reaction can never be scheduled. The program must terminate without
+// invoking the handler.
+class TriggerOnlyTimerReactor : public Reactor {
+public:
+  using Reactor::Reactor;
+
+  void check() const { EXPECT_FALSE(handler_invoked_); }
+
+private:
+  ProgrammableTimer<void> timer_{"timer", context()};
+  bool handler_invoked_{false};
+
+  class OnTimer : public Reaction<TriggerOnlyTimerReactor> {
+    using Reaction<TriggerOnlyTimerReactor>::Reaction;
+    Trigger<void> timer_trigger{self().timer_, context()};
+    void handler() final { self().handler_invoked_ = true; }
+  };
+
+  void assemble() final { add_reaction<OnTimer>("on_timer"); }
+};
+
+TEST(programmable_timers, TriggerOnlyTimerTerminates) {
+  TestEnvironment env{100ms};
+
+  TriggerOnlyTimerReactor reactor{"reactor", env.context()};
+  env.execute();
+
+  reactor.check();
+}
+
+// A timer that is a declared effect of only the reaction it triggers is
+// never scheduled: the reaction runs only when the timer fires, and the
+// timer fires only when the reaction schedules it. The program must
+// terminate without invoking the handler.
+class NeverScheduledTimerReactor : public Reactor {
+public:
+  using Reactor::Reactor;
+
+  void check() const { EXPECT_FALSE(handler_invoked_); }
+
+private:
+  ProgrammableTimer<void> timer_{"timer", context()};
+  bool handler_invoked_{false};
+
+  class OnTimer : public Reaction<NeverScheduledTimerReactor> {
+    using Reaction<NeverScheduledTimerReactor>::Reaction;
+    Trigger<void> timer_trigger{self().timer_, context()};
+    ProgrammableTimerEffect<void> timer_effect{self().timer_, context()};
+    void handler() final {
+      self().handler_invoked_ = true;
+      timer_effect.schedule();
+    }
+  };
+
+  void assemble() final { add_reaction<OnTimer>("on_timer"); }
+};
+
+TEST(programmable_timers, NeverScheduledTimerTerminates) {
+  TestEnvironment env{100ms};
+
+  NeverScheduledTimerReactor reactor{"reactor", env.context()};
+  env.execute();
+
+  reactor.check();
+}
+
 } // namespace xronos::sdk::test

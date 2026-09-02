@@ -4,8 +4,11 @@
 #include "xronos/sdk.hh"
 #include "xronos/sdk/context.hh"
 #include "xronos/sdk/fwd.hh"
+#include "xronos/sdk/programmable_timer.hh"
+#include "xronos/sdk/reaction.hh"
 
 #include "gtest/gtest.h"
+#include <string>
 #include <string_view>
 
 using namespace std::literals::chrono_literals;
@@ -38,6 +41,7 @@ public:
   using Reactor::Reactor;
 
   [[nodiscard]] auto input() const noexcept -> auto& { return input_; }
+  [[nodiscard]] auto input() noexcept -> auto& { return input_; }
 
   void check_post_conditions(Duration expected_time) {
     EXPECT_TRUE(reaction_executed_);
@@ -147,6 +151,7 @@ public:
   using Reactor::Reactor;
 
   [[nodiscard]] auto input() const noexcept -> auto& { return input_; }
+  [[nodiscard]] auto input() noexcept -> auto& { return input_; }
 
   void check_post_conditions(Duration expected_time) {
     EXPECT_TRUE(reaction_executed_);
@@ -229,6 +234,56 @@ TEST(ports, SimpleIntMixedDelay2Receivers) {
 }
 
 } // namespace simple_int
+
+namespace effect_read_back {
+
+constexpr static int value{simple_int::value};
+
+// A reaction observes its own write through the effect: before set() the
+// effect reads as absent, and after set() is_present() returns true and
+// get() yields the written value.
+class Sender : public Reactor {
+public:
+  using Reactor::Reactor;
+
+  [[nodiscard]] auto output() const noexcept -> auto& { return output_; }
+
+  void check_post_conditions() const { EXPECT_TRUE(reaction_executed_); }
+
+private:
+  OutputPort<int> output_{"output", context()};
+
+  bool reaction_executed_{false};
+
+  class Send : public Reaction<Sender> {
+    using Reaction<Sender>::Reaction;
+    Trigger<void> startup_trigger{self().startup(), context()};
+    PortEffect<int> output_effect{self().output_, context()};
+    void handler() final {
+      EXPECT_FALSE(output_effect.is_present());
+      EXPECT_EQ(output_effect.get(), nullptr);
+      output_effect.set(value);
+      EXPECT_TRUE(output_effect.is_present());
+      ASSERT_NE(output_effect.get(), nullptr);
+      EXPECT_EQ(*output_effect.get(), value);
+      self().reaction_executed_ = true;
+    }
+  };
+
+  void assemble() final { add_reaction<Send>("send"); }
+};
+
+TEST(ports, EffectReadsBackTheSetValue) {
+  TestEnvironment env{};
+  Sender sender{"sender", env.context()};
+  simple_int::Receiver receiver{"receiver", env.context()};
+  env.connect(sender.output(), receiver.input());
+  env.execute();
+  sender.check_post_conditions();
+  receiver.check_post_conditions(0s);
+}
+
+} // namespace effect_read_back
 
 // TEST_CASE("Sending repeatedly", "[ports]") {
 
@@ -368,7 +423,7 @@ TEST(ports, SendingRepeatedlyMixedDelay2Receivers) {
 
 } // namespace sending_repeatedly
 
-namespace nested {
+namespace nested_connection {
 
 class SenderWrapper : public Reactor {
 public:
@@ -388,6 +443,7 @@ public:
   using Reactor::Reactor;
 
   [[nodiscard]] auto input() const noexcept -> auto& { return input_; }
+  [[nodiscard]] auto input() noexcept -> auto& { return input_; }
 
   void check_post_conditions(Duration expected_time) { receiver_.check_post_conditions(expected_time); }
 
@@ -416,6 +472,564 @@ TEST(ports, Nested1sDelay) {
   receiver.check_post_conditions(1s);
 }
 
-} // namespace nested
+} // namespace nested_connection
+
+namespace nested_reaction {
+
+class WrapperVoid : public Reactor {
+public:
+  using Reactor::Reactor;
+
+  void check_post_conditions(Duration expected_time) { receiver_.check_post_conditions(expected_time); }
+
+private:
+  simple_void::Sender sender_{"sender", context()};
+  simple_void::Receiver receiver_{"receiver", context()};
+
+  class ForwardReaction : public Reaction<WrapperVoid> {
+  public:
+    using Reaction<WrapperVoid>::Reaction;
+    Trigger<void> trigger{self().sender_.output(), context()};
+    PortEffect<void> effect{self().receiver_.input(), context()};
+    void handler() final { effect.set(); }
+  };
+
+  void assemble() final { add_reaction<ForwardReaction>("forward"); }
+};
+
+class WrapperInt : public Reactor {
+public:
+  using Reactor::Reactor;
+
+  void check_post_conditions(Duration expected_time) { receiver_.check_post_conditions(expected_time); }
+
+private:
+  simple_int::Sender sender_{"sender", context()};
+  simple_int::Receiver receiver_{"receiver", context()};
+
+  class ForwardReaction : public Reaction<WrapperInt> {
+  public:
+    using Reaction<WrapperInt>::Reaction;
+    Trigger<int> trigger{self().sender_.output(), context()};
+    PortEffect<int> effect{self().receiver_.input(), context()};
+    void handler() final { effect.set(trigger.get()); }
+  };
+
+  void assemble() final { add_reaction<ForwardReaction>("forward"); }
+};
+
+class WrapperIntDelayed : public Reactor {
+public:
+  using Reactor::Reactor;
+
+  void check_post_conditions(Duration expected_time) { receiver_.check_post_conditions(expected_time); }
+
+private:
+  simple_int::Sender sender_{"sender", context()};
+  simple_int::Receiver receiver_{"receiver", context()};
+  ProgrammableTimer<int> timer_{"timer", context()};
+
+  class ReceiveReaction : public Reaction<WrapperIntDelayed> {
+  public:
+    using Reaction<WrapperIntDelayed>::Reaction;
+    Trigger<int> trigger{self().sender_.output(), context()};
+    ProgrammableTimerEffect<int> effect{self().timer_, context()};
+    void handler() final { effect.schedule(trigger.get(), 1s); }
+  };
+
+  class ForwardReaction : public Reaction<WrapperIntDelayed> {
+  public:
+    using Reaction<WrapperIntDelayed>::Reaction;
+    Trigger<int> trigger{self().timer_, context()};
+    PortEffect<int> effect{self().receiver_.input(), context()};
+    void handler() final { effect.set(trigger.get()); }
+  };
+
+  void assemble() final {
+    add_reaction<ReceiveReaction>("receive");
+    add_reaction<ForwardReaction>("forward");
+  }
+};
+
+// Covers only the trigger direction: a reaction triggered by a contained
+// reactor's output port, with no effect on any nested port.
+class ObserverWrapper : public Reactor {
+public:
+  using Reactor::Reactor;
+
+  void check_post_conditions(Duration expected_time) {
+    EXPECT_TRUE(reaction_executed_);
+    EXPECT_EQ(reaction_executed_at_, expected_time);
+  }
+
+private:
+  simple_int::Sender sender_{"sender", context()};
+
+  bool reaction_executed_{false};
+  Duration reaction_executed_at_{Duration::min()};
+
+  class ObserveReaction : public Reaction<ObserverWrapper> {
+  public:
+    using Reaction<ObserverWrapper>::Reaction;
+    Trigger<int> trigger{self().sender_.output(), context()};
+    void handler() final {
+      EXPECT_TRUE(trigger.is_present());
+      EXPECT_FALSE(self().reaction_executed_);
+      EXPECT_NE(trigger.get(), nullptr);
+      EXPECT_EQ(*trigger.get(), simple_int::value);
+      self().reaction_executed_at_ = elapsed_time();
+      self().reaction_executed_ = true;
+    }
+  };
+
+  void assemble() final { add_reaction<ObserveReaction>("observe"); }
+};
+
+// Covers only the effect direction: a reaction writing to a contained
+// reactor's unconnected input port, with no trigger on any nested port.
+class WriterWrapper : public Reactor {
+public:
+  using Reactor::Reactor;
+
+  void check_post_conditions(Duration expected_time) { receiver_.check_post_conditions(expected_time); }
+
+private:
+  simple_int::Receiver receiver_{"receiver", context()};
+
+  class WriteReaction : public Reaction<WriterWrapper> {
+  public:
+    using Reaction<WriterWrapper>::Reaction;
+    Trigger<void> startup_trigger{self().startup(), context()};
+    PortEffect<int> effect{self().receiver_.input(), context()};
+    void handler() final { effect.set(simple_int::value); }
+  };
+
+  void assemble() final { add_reaction<WriteReaction>("write"); }
+};
+
+// Covers writing to a contained input port that has an outgoing connection:
+// the written value continues through the wrapped receiver's pass-through
+// connection.
+class ConnectedInputWriter : public Reactor {
+public:
+  using Reactor::Reactor;
+
+  void check_post_conditions(Duration expected_time) { receiver_wrapper_.check_post_conditions(expected_time); }
+
+private:
+  nested_connection::ReceiverWrapper receiver_wrapper_{"receiver_wrapper", context()};
+
+  class WriteReaction : public Reaction<ConnectedInputWriter> {
+  public:
+    using Reaction<ConnectedInputWriter>::Reaction;
+    Trigger<void> startup_trigger{self().startup(), context()};
+    PortEffect<int> effect{self().receiver_wrapper_.input(), context()};
+    void handler() final { effect.set(simple_int::value); }
+  };
+
+  void assemble() final { add_reaction<WriteReaction>("write"); }
+};
+
+// Covers triggering on a contained output port that has an incoming
+// connection: the wrapped sender's value arrives through the pass-through
+// connection and triggers the wrapper's reaction.
+class ConnectedOutputObserver : public Reactor {
+public:
+  using Reactor::Reactor;
+
+  void check_post_conditions(Duration expected_time) {
+    EXPECT_TRUE(reaction_executed_);
+    EXPECT_EQ(reaction_executed_at_, expected_time);
+  }
+
+private:
+  nested_connection::SenderWrapper sender_wrapper_{"sender_wrapper", context()};
+
+  bool reaction_executed_{false};
+  Duration reaction_executed_at_{Duration::min()};
+
+  class ObserveReaction : public Reaction<ConnectedOutputObserver> {
+  public:
+    using Reaction<ConnectedOutputObserver>::Reaction;
+    Trigger<int> trigger{self().sender_wrapper_.output(), context()};
+    void handler() final {
+      EXPECT_TRUE(trigger.is_present());
+      EXPECT_FALSE(self().reaction_executed_);
+      EXPECT_NE(trigger.get(), nullptr);
+      EXPECT_EQ(*trigger.get(), simple_int::value);
+      self().reaction_executed_at_ = elapsed_time();
+      self().reaction_executed_ = true;
+    }
+  };
+
+  void assemble() final { add_reaction<ObserveReaction>("observe"); }
+};
+
+// Covers a contained output port that fans out: a connection feeds an inner
+// receiver while the wrapper's own reaction observes the same port
+// directly. Both deliveries arrive at the same tag.
+class ObservedAndConnectedOutput : public Reactor {
+public:
+  using Reactor::Reactor;
+
+  void check_post_conditions(Duration expected_time) {
+    EXPECT_TRUE(reaction_executed_);
+    EXPECT_EQ(reaction_executed_at_, expected_time);
+    receiver_.check_post_conditions(expected_time);
+  }
+
+private:
+  simple_int::Sender sender_{"sender", context()};
+  simple_int::Receiver receiver_{"receiver", context()};
+
+  bool reaction_executed_{false};
+  Duration reaction_executed_at_{Duration::min()};
+
+  class ObserveReaction : public Reaction<ObservedAndConnectedOutput> {
+  public:
+    using Reaction<ObservedAndConnectedOutput>::Reaction;
+    Trigger<int> trigger{self().sender_.output(), context()};
+    void handler() final {
+      EXPECT_TRUE(trigger.is_present());
+      EXPECT_FALSE(self().reaction_executed_);
+      EXPECT_NE(trigger.get(), nullptr);
+      EXPECT_EQ(*trigger.get(), simple_int::value);
+      self().reaction_executed_at_ = elapsed_time();
+      self().reaction_executed_ = true;
+    }
+  };
+
+  void assemble() final {
+    connect(sender_.output(), receiver_.input());
+    add_reaction<ObserveReaction>("observe");
+  }
+};
+
+// Covers two reactions of one reactor writing the same contained input
+// port. Both writes land at the same tag, so the later reaction's value is
+// the one delivered.
+class DoubleWriterWrapper : public Reactor {
+public:
+  using Reactor::Reactor;
+
+  void check_post_conditions(Duration expected_time) { receiver_.check_post_conditions(expected_time); }
+
+private:
+  simple_int::Receiver receiver_{"receiver", context()};
+
+  class WriteFirst : public Reaction<DoubleWriterWrapper> {
+  public:
+    using Reaction<DoubleWriterWrapper>::Reaction;
+    Trigger<void> startup_trigger{self().startup(), context()};
+    PortEffect<int> effect{self().receiver_.input(), context()};
+    void handler() final { effect.set(simple_int::value - 1); }
+  };
+
+  class WriteSecond : public Reaction<DoubleWriterWrapper> {
+  public:
+    using Reaction<DoubleWriterWrapper>::Reaction;
+    Trigger<void> startup_trigger{self().startup(), context()};
+    PortEffect<int> effect{self().receiver_.input(), context()};
+    void handler() final { effect.set(simple_int::value); }
+  };
+
+  void assemble() final {
+    add_reaction<WriteFirst>("write_first");
+    add_reaction<WriteSecond>("write_second");
+  }
+};
+
+// Covers two reactions of one reactor triggering on the same contained
+// output port. Both run at the delivery tag, in reaction order.
+class DoubleObserverWrapper : public Reactor {
+public:
+  using Reactor::Reactor;
+
+  void check_post_conditions(Duration expected_time) {
+    EXPECT_EQ(first_executed_at_, expected_time);
+    EXPECT_EQ(second_executed_at_, expected_time);
+    EXPECT_TRUE(first_ran_before_second_);
+  }
+
+private:
+  simple_int::Sender sender_{"sender", context()};
+
+  Duration first_executed_at_{Duration::min()};
+  Duration second_executed_at_{Duration::min()};
+  bool first_ran_before_second_{false};
+
+  class ObserveFirst : public Reaction<DoubleObserverWrapper> {
+  public:
+    using Reaction<DoubleObserverWrapper>::Reaction;
+    Trigger<int> trigger{self().sender_.output(), context()};
+    void handler() final {
+      EXPECT_TRUE(trigger.is_present());
+      EXPECT_NE(trigger.get(), nullptr);
+      EXPECT_EQ(*trigger.get(), simple_int::value);
+      self().first_executed_at_ = elapsed_time();
+    }
+  };
+
+  class ObserveSecond : public Reaction<DoubleObserverWrapper> {
+  public:
+    using Reaction<DoubleObserverWrapper>::Reaction;
+    Trigger<int> trigger{self().sender_.output(), context()};
+    void handler() final {
+      EXPECT_TRUE(trigger.is_present());
+      EXPECT_NE(trigger.get(), nullptr);
+      EXPECT_EQ(*trigger.get(), simple_int::value);
+      self().first_ran_before_second_ = self().first_executed_at_ != Duration::min();
+      self().second_executed_at_ = elapsed_time();
+    }
+  };
+
+  void assemble() final {
+    add_reaction<ObserveFirst>("observe_first");
+    add_reaction<ObserveSecond>("observe_second");
+  }
+};
+
+// Covers a nested write at the last tag before shutdown. Validation
+// forbids effects on shutdown-triggered reactions, so the writing reaction
+// requests shutdown at the tag it writes instead; that is the closest a
+// write can land to the shutdown tag. The value must still arrive at that
+// tag and the program must terminate.
+class WriteThenShutdownWrapper : public Reactor {
+public:
+  using Reactor::Reactor;
+
+  void check_post_conditions(Duration expected_time) { receiver_.check_post_conditions(expected_time); }
+
+private:
+  simple_int::Receiver receiver_{"receiver", context()};
+
+  class WriteAndRequestShutdown : public Reaction<WriteThenShutdownWrapper> {
+  public:
+    using Reaction<WriteThenShutdownWrapper>::Reaction;
+    Trigger<void> startup_trigger{self().startup(), context()};
+    PortEffect<int> effect{self().receiver_.input(), context()};
+    ShutdownEffect shutdown_effect{self().shutdown(), context()};
+    void handler() final {
+      effect.set(simple_int::value);
+      shutdown_effect.trigger_shutdown();
+    }
+  };
+
+  void assemble() final { add_reaction<WriteAndRequestShutdown>("write_and_request_shutdown"); }
+};
+
+TEST(ports, NestedReactionVoid) {
+  TestEnvironment env{};
+  WrapperVoid wrapper{"wrapper", env.context()};
+  env.execute();
+  wrapper.check_post_conditions(0s);
+}
+
+TEST(ports, NestedReactionInt) {
+  TestEnvironment env{};
+  WrapperInt wrapper{"wrapper", env.context()};
+  env.execute();
+  wrapper.check_post_conditions(0s);
+}
+
+TEST(ports, NestedReactionTriggerOnly) {
+  TestEnvironment env{};
+  ObserverWrapper wrapper{"wrapper", env.context()};
+  env.execute();
+  wrapper.check_post_conditions(0s);
+}
+
+TEST(ports, NestedReactionEffectOnly) {
+  TestEnvironment env{};
+  WriterWrapper wrapper{"wrapper", env.context()};
+  env.execute();
+  wrapper.check_post_conditions(0s);
+}
+
+TEST(ports, NestedReactionWriteToConnectedInput) {
+  TestEnvironment env{};
+  ConnectedInputWriter wrapper{"wrapper", env.context()};
+  env.execute();
+  wrapper.check_post_conditions(0s);
+}
+
+TEST(ports, NestedReactionTriggerFromConnectedOutput) {
+  TestEnvironment env{};
+  ConnectedOutputObserver wrapper{"wrapper", env.context()};
+  env.execute();
+  wrapper.check_post_conditions(0s);
+}
+
+TEST(ports, NestedReactionIntDelayed) {
+  TestEnvironment env{};
+  WrapperIntDelayed wrapper{"wrapper", env.context()};
+  env.execute();
+  wrapper.check_post_conditions(1s);
+}
+
+TEST(ports, NestedReactionTriggerBesideConnection) {
+  TestEnvironment env{};
+  ObservedAndConnectedOutput wrapper{"wrapper", env.context()};
+  env.execute();
+  wrapper.check_post_conditions(0s);
+}
+
+TEST(ports, NestedReactionTwoWriters) {
+  TestEnvironment env{};
+  DoubleWriterWrapper wrapper{"wrapper", env.context()};
+  env.execute();
+  wrapper.check_post_conditions(0s);
+}
+
+TEST(ports, NestedReactionTwoObservers) {
+  TestEnvironment env{};
+  DoubleObserverWrapper wrapper{"wrapper", env.context()};
+  env.execute();
+  wrapper.check_post_conditions(0s);
+}
+
+TEST(ports, NestedReactionWriteBeforeShutdown) {
+  TestEnvironment env{};
+  WriteThenShutdownWrapper wrapper{"wrapper", env.context()};
+  env.execute();
+  wrapper.check_post_conditions(0s);
+}
+
+} // namespace nested_reaction
+
+namespace never_written {
+
+// A sender that declares an output port but has no reaction writing it.
+class SilentSender : public Reactor {
+public:
+  using Reactor::Reactor;
+
+  [[nodiscard]] auto output() const noexcept -> auto& { return output_; }
+
+private:
+  OutputPort<void> output_{"output", context()};
+
+  void assemble() final {}
+};
+
+class Receiver : public Reactor {
+public:
+  using Reactor::Reactor;
+
+  [[nodiscard]] auto input() noexcept -> auto& { return input_; }
+
+  void check_post_conditions() const { EXPECT_FALSE(reaction_executed_); }
+
+private:
+  InputPort<void> input_{"input", context()};
+
+  bool reaction_executed_{false};
+
+  class Receive : public Reaction<Receiver> {
+    using Reaction<Receiver>::Reaction;
+    Trigger<void> input_trigger{self().input_, context()};
+    void handler() final { self().reaction_executed_ = true; }
+  };
+
+  void assemble() final { add_reaction<Receive>("receive"); }
+};
+
+// A connected port that no reaction writes never delivers an event. The
+// program must terminate without invoking the downstream handler.
+TEST(ports, NeverWrittenConnectedPortTerminates) {
+  TestEnvironment env{100ms};
+  SilentSender sender{"sender", env.context()};
+  Receiver receiver{"receiver", env.context()};
+  env.connect(sender.output(), receiver.input());
+  env.execute();
+  receiver.check_post_conditions();
+}
+
+} // namespace never_written
+
+namespace readback {
+
+class InputReadback : public Reactor {
+public:
+  using Reactor::Reactor;
+
+private:
+  InputPort<int> input_{"input", context()};
+
+  class Write : public Reaction<InputReadback> {
+    using Reaction<InputReadback>::Reaction;
+    Trigger<void> startup_trigger{self().startup(), context()};
+    PortEffect<int> input_effect{self().input_, context()};
+    void handler() final { input_effect.set(11); }
+  };
+
+  class Read : public Reaction<InputReadback> {
+    using Reaction<InputReadback>::Reaction;
+    Trigger<int> input_trigger{self().input_, context()};
+    void handler() final {}
+  };
+
+  void assemble() final {
+    add_reaction<Write>("write");
+    add_reaction<Read>("read");
+  }
+};
+
+class OutputReadback : public Reactor {
+public:
+  using Reactor::Reactor;
+
+private:
+  OutputPort<int> output_{"output", context()};
+
+  class Write : public Reaction<OutputReadback> {
+    using Reaction<OutputReadback>::Reaction;
+    Trigger<void> startup_trigger{self().startup(), context()};
+    PortEffect<int> output_effect{self().output_, context()};
+    void handler() final { output_effect.set(29); }
+  };
+
+  class Read : public Reaction<OutputReadback> {
+    using Reaction<OutputReadback>::Reaction;
+    Trigger<int> output_trigger{self().output_, context()};
+    void handler() final {}
+  };
+
+  void assemble() final {
+    add_reaction<Write>("write");
+    add_reaction<Read>("read");
+  }
+};
+
+// The readback pattern is rejected by the hierarchy rules at declaration
+// time: writing the own input and triggering on the own output each violate
+// the direction rule on their own.
+TEST(ports, RejectsInputPortReadback) {
+  TestEnvironment env{};
+  InputReadback reactor{"reactor", env.context()};
+
+  try {
+    env.execute();
+    FAIL() << "expected a ValidationError";
+  } catch (const ValidationError& error) {
+    EXPECT_NE(std::string{error.what()}.find("Reaction reactor.write may not use reactor.input as an effect"),
+              std::string::npos);
+  }
+}
+
+TEST(ports, RejectsOutputPortReadback) {
+  TestEnvironment env{};
+  OutputReadback reactor{"reactor", env.context()};
+
+  try {
+    env.execute();
+    FAIL() << "expected a ValidationError";
+  } catch (const ValidationError& error) {
+    EXPECT_NE(std::string{error.what()}.find("Reaction reactor.read may not use reactor.output as a trigger"),
+              std::string::npos);
+  }
+}
+
+} // namespace readback
 
 } // namespace xronos::sdk::test

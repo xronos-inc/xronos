@@ -8,9 +8,14 @@ import xronos
 
 
 class MainReactor(xronos.Reactor):
-    check_shutdown = xronos.ProgrammableTimerDeclaration[bool]()
+    _colliding_event = xronos.ProgrammableTimerDeclaration[bool]()
     _request_shutdown = xronos.ProgrammableTimerDeclaration[None]()
     _after_shutdown = xronos.ProgrammableTimerDeclaration[None]()
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.shutdown_fired = False
+        self.colliding_event_fired = False
 
     @xronos.reaction
     def on_startup(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
@@ -27,37 +32,39 @@ class MainReactor(xronos.Reactor):
     @xronos.reaction
     def on_request_shutdown(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
         _ = ctx.add_trigger(self._request_shutdown)
-        check_shutdown = ctx.add_effect(self.check_shutdown)
+        colliding_event = ctx.add_effect(self._colliding_event)
         shutdown_effect = ctx.add_effect(self.shutdown)
 
         def handler() -> None:
+            # The zero-delay event lands on the requested shutdown tag. Only
+            # shutdown events run there, so it must be dropped.
             shutdown_effect.trigger_shutdown()
-            check_shutdown.schedule(True)
+            colliding_event.schedule(True)
 
         return handler
 
     @xronos.reaction
-    def on_shutdown_or_check_shutdown(
+    def on_shutdown_or_colliding_event(
         self, ctx: xronos.ReactionContext
     ) -> Callable[[], None]:
         shutdown = ctx.add_trigger(self.shutdown)
-        check_shutdown = ctx.add_trigger(self.check_shutdown)
+        colliding_event = ctx.add_trigger(self._colliding_event)
 
         def handler() -> None:
-            if (not shutdown.is_present()) and check_shutdown.is_present():
-                raise Exception("Shutdown was not triggered at the expected tag")
-            if shutdown.is_present() and not check_shutdown.is_present():
-                raise Exception(
-                    "Shutdown occurred but check_shutdown was not triggered"
-                )
-            print(f"Success: stopping at {ctx.current_time}")
+            if shutdown.is_present():
+                self.shutdown_fired = True
+            if colliding_event.is_present():
+                self.colliding_event_fired = True
+            print(f"Stopping at {ctx.current_time}")
 
         return handler
 
 
 def run(env: xronos.Environment) -> None:
-    env.create_reactor("main", MainReactor)
+    main_reactor = env.create_reactor("main", MainReactor)
     env.execute()
+    assert main_reactor.shutdown_fired
+    assert not main_reactor.colliding_event_fired
 
 
 def main(fast: bool = False) -> None:

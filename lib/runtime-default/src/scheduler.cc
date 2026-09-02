@@ -9,16 +9,17 @@
 #include <cstddef>
 #include <cstdint>
 #include <exception>
+#include <functional>
 #include <map>
 #include <mutex>
 #include <ranges>
 #include <span>
-#include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
 
 #include "xronos/abi/backend.hh"
+#include "xronos/abi/types.hh"
 #include "xronos/abi/value.hh"
 #include "xronos/core/connection_graph.hh"
 #include "xronos/core/element.hh"
@@ -58,9 +59,12 @@ void EventQueue::schedule_event(std::uint64_t element_uid, abi::AnyValue&& value
   cv_.notify_one();
 }
 
-void EventQueue::trigger_external_event(std::uint64_t element_uid, abi::AnyValue&& value) {
+auto EventQueue::trigger_external_event(std::uint64_t element_uid, abi::AnyValue&& value) -> abi::TriggerStatus {
   {
     std::lock_guard<std::mutex> lock(mutex_);
+    if (!started_) {
+      return abi::TriggerStatus::NotStarted;
+    }
     core::TimePoint now{std::chrono::system_clock::now()};
     if (now <= last_external_event_timestamp_) {
       // On some platforms with low clock resolution we might get the same
@@ -70,18 +74,27 @@ void EventQueue::trigger_external_event(std::uint64_t element_uid, abi::AnyValue
       now = last_external_event_timestamp_ + std::chrono::nanoseconds{1};
     }
     logical_time::Tag tag{now, 0};
+    if (stopped_ || stop_requested_ || tag >= shutdown_bound_) {
+      return abi::TriggerStatus::Stopped;
+    }
     last_external_event_timestamp_ = now;
 
     event_queue_[tag].emplace_back(std::move(value), element_uid);
   }
   cv_.notify_one();
+  return abi::TriggerStatus::Accepted;
 }
 
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
-auto EventQueue::wait_until_next_event(const logical_time::Tag& max_tag)
+auto EventQueue::next_event(const logical_time::Tag& max_tag, bool stoppable)
     -> std::map<logical_time::Tag, std::vector<Event>>::node_type {
   std::unique_lock<std::mutex> lock(mutex_);
   while (true) {
+    // Every wait below wakes on request_stop and loops back here, so a stop
+    // reaches a blocked call promptly.
+    if (stoppable && stop_requested_) {
+      return decltype(event_queue_)::node_type{};
+    }
     if (event_queue_.empty() || event_queue_.begin()->first >= max_tag) {
       if (!has_external_triggers_) {
         return decltype(event_queue_)::node_type{};
@@ -112,9 +125,9 @@ auto EventQueue::wait_until_next_event(const logical_time::Tag& max_tag)
   }
 }
 
-auto EventQueue::check_has_events_at_tag(const logical_time::Tag& tag) const noexcept -> bool {
-  std::unique_lock<std::mutex> lock(mutex_);
-  return !event_queue_.empty() && event_queue_.begin()->first == tag;
+void EventQueue::discard_events_at_tag(const logical_time::Tag& tag) noexcept {
+  std::lock_guard<std::mutex> lock(mutex_);
+  event_queue_.erase(tag);
 }
 
 void Scheduler::init(const core::ReactorModel& reactor_model, const RuntimeModel& runtime_model) {
@@ -247,18 +260,38 @@ void Scheduler::handle_boundary_error(std::uint64_t serialize_uid, std::uint64_t
   } catch (...) {
   }
   util::log::error() << message << " Shutting down.";
+  abort_execution_ = true;
   trigger_shutdown();
   if (active_exception_ == nullptr) {
-    active_exception_ = std::make_exception_ptr(std::runtime_error{message});
+    active_exception_ = std::current_exception();
   } else {
-    util::log::warn() << "Dropping exception details as there already is an active exception.";
+    util::log::error() << "Dropping this exception because an earlier exception is already recorded.";
   }
 }
 
 void Scheduler::execute() {
   start_tag_ = logical_time::Tag{std::chrono::system_clock::now(), 0};
   current_tag_ = start_tag_;
-  shutdown_tag_ = start_tag_ + execution_properties_.timeout;
+  // The timeout bounds execution by `start + timeout` inclusive. An event at
+  // exactly the timeout gets its own tag; shutdown follows one microstep
+  // later.
+  shutdown_tag_ = (start_tag_ + execution_properties_.timeout).increment_microstep();
+
+  event_queue_.mark_started(shutdown_tag_);
+  // Guards against an early exit (e.g., due to an exception) and ensures that
+  // the scheduler is marked as stopped.
+  struct StopGuard {
+    explicit StopGuard(EventQueue& queue)
+        : queue_{queue} {}
+    StopGuard(const StopGuard&) = delete;
+    StopGuard(StopGuard&&) = delete;
+    auto operator=(const StopGuard&) = delete;
+    auto operator=(StopGuard&&) = delete;
+    ~StopGuard() { queue_.get().mark_stopped(); }
+
+  private:
+    std::reference_wrapper<EventQueue> queue_;
+  } stop_guard{event_queue_};
 
   util::log::debug() << "Scheduler starts execution at tag " << current_tag_;
 
@@ -274,23 +307,32 @@ void Scheduler::execute() {
     }
   }
 
-  // Process all events until we reach the shutdown tag or run out of events
+  // Process all events until we reach the shutdown tag, run out of events,
+  // or a stop request ends the loop early
   while (process_next_tag(shutdown_tag_)) {
   }
 
   util::log::debug() << "Triggering all shutdown events.";
 
-  if (!has_external_triggers_ && !event_queue_.check_has_events_at_tag(shutdown_tag_)) {
+  // Shut down one microstep after the last processed tag instead of riding
+  // out the timeout or a requested shutdown tag. With a physical event source
+  // this is unsound, since an event may still arrive before that tag; after a
+  // stop request the remaining events are abandoned deliberately.
+  if (!has_external_triggers_ || event_queue_.stop_requested()) {
     shutdown_tag_ = current_tag_ + core::Duration::zero();
   }
+
+  // Only shutdown events run at the shutdown tag. Any other event landing
+  // there, such as one scheduled with zero delay by the reaction that
+  // requested shutdown, is dropped.
+  event_queue_.discard_events_at_tag(shutdown_tag_);
 
   // Trigger the shutdown events
   for (auto shutdown_uid : runtime_model_->shutdown_trigger_uids) {
     schedule_event(shutdown_uid, xronos::value::make<abi::Void>(), shutdown_tag_);
   }
 
-  // Process shutdown reactions
-  process_next_tag(shutdown_tag_ + core::Duration::zero());
+  process_shutdown_tag();
 
   util::log::debug() << "Scheduler is done executing.";
 
@@ -300,7 +342,16 @@ void Scheduler::execute() {
 }
 
 auto Scheduler::process_next_tag(const logical_time::Tag& max_tag) -> bool {
-  auto event_handle = event_queue_.wait_until_next_event(max_tag);
+  return process_events(event_queue_.wait_until_next_event(max_tag));
+}
+
+void Scheduler::process_shutdown_tag() {
+  // The bound sits one microstep past the shutdown tag, so the wait extracts
+  // the events at the shutdown tag itself.
+  process_events(event_queue_.wait_for_shutdown_events(shutdown_tag_ + core::Duration::zero()));
+}
+
+auto Scheduler::process_events(std::map<logical_time::Tag, std::vector<Event>>::node_type event_handle) -> bool {
   if (event_handle.empty()) {
     return false;
   }
@@ -321,7 +372,7 @@ auto Scheduler::process_next_tag(const logical_time::Tag& max_tag) -> bool {
 }
 
 void Scheduler::execute_all_ready_reactions() {
-  while (!ready_queue_.empty()) {
+  while (!ready_queue_.empty() && !abort_execution_) {
     std::ranges::sort(ready_queue_);
     auto [erase_begin, erase_end] = std::ranges::unique(ready_queue_);
     ready_queue_.erase(erase_begin, erase_end);
@@ -331,6 +382,8 @@ void Scheduler::execute_all_ready_reactions() {
 
     ready_queue_.pop_front();
   }
+  abort_execution_ = false;
+  ready_queue_.clear();
 }
 
 void Scheduler::reset_all_active_events() {
@@ -349,12 +402,22 @@ void Scheduler::execute_reaction(abi::ReactionHandler& handler) {
     handler.invoke();
   } catch (...) {
     const auto& fqn = reactor_model_->element_registry.get(ready_queue_.front().uid).fqn;
-    util::log::error() << "Exception caught during execution of reaction " << fqn << ". Shutting down.";
+    std::string what{};
+    try {
+      throw;
+    } catch (const std::exception& error) {
+      what = ": ";
+      what += error.what();
+    } catch (...) {
+    }
+    abort_execution_ = true;
     trigger_shutdown();
     if (active_exception_ == nullptr) {
       active_exception_ = std::current_exception();
+      util::log::error() << "Exception caught during execution of reaction " << fqn << what << ". Shutting down.";
     } else {
-      util::log::warn() << "Dropping exception details as there already is an active exception.";
+      util::log::error() << "Dropping exception from reaction " << fqn
+                         << " because an earlier exception is already recorded" << what;
     }
   }
 }

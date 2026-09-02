@@ -53,5 +53,37 @@ def test_exceptions() -> None:
         run(env)
 
 
+class RaisingWithShutdown(xronos.Reactor):
+    def __init__(self) -> None:
+        super().__init__()
+        self.shutdown_reaction_executed = False
+
+    @xronos.reaction
+    def on_startup(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        ctx.add_trigger(self.startup)
+
+        def handler() -> None:
+            raise Exception("Exception raised at startup, as expected")
+
+        return handler
+
+    @xronos.reaction
+    def on_shutdown(self, ctx: xronos.ReactionContext) -> Callable[[], None]:
+        ctx.add_trigger(self.shutdown)
+
+        def handler() -> None:
+            self.shutdown_reaction_executed = True
+
+        return handler
+
+
+def test_shutdown_runs_after_exception() -> None:
+    env = xronos.Environment(fast=True, timeout=datetime.timedelta(seconds=5))
+    reactor = env.create_reactor("raising", RaisingWithShutdown)
+    with pytest.raises(Exception, match=r"Exception raised at startup, as expected"):
+        env.execute()
+    assert reactor.shutdown_reaction_executed
+
+
 if __name__ == "__main__":
     main()

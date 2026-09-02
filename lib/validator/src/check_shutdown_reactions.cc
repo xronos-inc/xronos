@@ -28,12 +28,11 @@ auto check_shutdown_reactions(const core::ReactorModel& model) -> nonstd::expect
         })) {
       auto effects_view = model.reaction_dependency_registry.get_effects(reaction.uid);
       if (!effects_view.empty()) {
+        auto fqn_of = [&](std::uint64_t uid) -> const std::string& { return model.element_registry.get(uid).fqn; };
         error_messages.emplace_back(
             fmt::format("Reactions triggered by shutdown may not have any effects. The reaction {} is triggered "
-                        "by a shutdown event and has effects on {:n}.",
-                        reaction.fqn, std::views::transform(effects_view, [&](std::uint64_t uid) {
-                          return model.element_registry.get(uid).fqn;
-                        })));
+                        "by a shutdown event and has effects on {}.",
+                        reaction.fqn, fmt::join(std::views::transform(effects_view, fqn_of), ", ")));
       }
     }
   }

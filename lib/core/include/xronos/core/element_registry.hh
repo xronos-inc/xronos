@@ -30,6 +30,8 @@ public:
 
   [[nodiscard]] auto get(ElementID uid) const -> const Element& { return elements_.at(uid); }
 
+  [[nodiscard]] auto contains(ElementID uid) const noexcept -> bool { return uid < elements_.size(); }
+
   [[nodiscard]] auto elements() const noexcept { return std::views::all(elements_); }
 
   template <class T> [[nodiscard]] auto elements_of_type() const noexcept {

@@ -35,6 +35,18 @@ struct SourceLocation {
   std::uint32_t end_column{0};
 };
 
+// Outcome of an external trigger attempt. The enumerator values and the
+// underlying type are frozen within a major ABI version. A minor version
+// may append enumerators; a consumer treats an unrecognized status as a
+// dropped event.
+enum class TriggerStatus : std::uint8_t {
+  Accepted = 0,
+  NotStarted = 1,
+  Stopped = 2,
+  // The uid resolves to no physical event of the running program.
+  UnknownPhysicalEvent = 3,
+};
+
 } // namespace xronos::abi::inline v1
 
 #endif // XRONOS_ABI_TYPES_HH

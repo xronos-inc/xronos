@@ -36,9 +36,10 @@ namespace xronos::abi::inline v1 {
 
 // -- Hot-path interfaces ----------------------------------------------------
 //
-// Each is obtained once from `RuntimeBackend` (see the `get_*` lookups
-// below), cached by the SDK, and then called directly on the hot path. They
-// are not destructible through the interface; the implementation owns them.
+// Each is obtained from `RuntimeBackend` (see the `get_*` lookups below),
+// typically cached by the consumer, and then called directly on the hot
+// path. They are not destructible through the interface; the implementation
+// owns them.
 
 // `get` returns the value of the event at the current tag; the empty value
 // means that no event is present. Valueless events (`void` event sources)
@@ -83,8 +84,15 @@ protected:
 
 // May be called from arbitrary threads, including threads the implementation
 // knows nothing about.
+//
+// Retained for ABI 1.0 compatibility; newer consumers call
+// `RuntimeBackend::trigger_physical_event` instead, which stays safe through
+// the end of a run.
 class ExternalTrigger {
 public:
+  // Delivers the event if the program is live; otherwise the event is
+  // dropped silently.
+  [[deprecated("Retained for ABI 1.0 compatibility; use RuntimeBackend::trigger_physical_event")]]
   virtual void trigger(AnyValue&& value) noexcept = 0;
 
 protected:
@@ -166,13 +174,12 @@ public:
 // implementation and uses implementation-side interfaces.
 class RuntimeBackend {
 public:
-  // One-time hot-path lookups. Each returns nullptr while no run is
-  // prepared, and during a run if the queried dependency was not
-  // registered during assembly. A non-null result synchronizes with the
-  // run's preparation: everything the implementation set up for the run is
-  // visible to the calling thread, on any thread. The returned pointers
-  // remain valid until the `Backend` is destroyed; the SDK caches
-  // them and never looks the same dependency up twice.
+  // Hot-path lookups. Each returns nullptr while no run is prepared, and
+  // during a run if the queried dependency was not registered during
+  // assembly. A non-null result synchronizes with the run's preparation:
+  // everything the implementation set up for the run is visible to the
+  // calling thread, on any thread. The returned pointers remain valid until
+  // the `Backend` is destroyed.
   [[nodiscard]] virtual auto get_trigger(ElementUid reaction, ElementUid trigger) const noexcept
       -> const GettableTrigger* = 0;
   [[nodiscard]] virtual auto get_settable_effect(ElementUid reaction, ElementUid effect) noexcept
@@ -182,8 +189,26 @@ public:
   [[nodiscard]] virtual auto get_shutdown_effect(ElementUid reaction, ElementUid effect) noexcept
       -> ShutdownEffect* = 0;
   [[nodiscard]] virtual auto get_time_access(ElementUid reactor) const noexcept -> const TimeAccess* = 0;
-  [[nodiscard]] virtual auto get_external_trigger(ElementUid physical_event) noexcept -> ExternalTrigger* = 0;
+  [[deprecated("Retained for ABI 1.0 compatibility; use trigger_physical_event")]] [[nodiscard]] virtual auto
+  get_external_trigger(ElementUid physical_event) noexcept -> ExternalTrigger* = 0;
   [[nodiscard]] virtual auto get_metric_recorder(ElementUid metric) noexcept -> MetricRecorder* = 0;
+
+  // Delivers an event on the physical event `physical_event` if the program
+  // is live; the status reports the outcome. `Accepted` means the event is
+  // queued for processing. Otherwise the event is dropped: `NotStarted`
+  // before the program starts, `Stopped` once it has stopped, and
+  // `UnknownPhysicalEvent` when the running program resolves the uid to no
+  // physical event. Before the program starts there is nothing to resolve
+  // against, so a bad uid also reports `NotStarted`. The payload is
+  // consumed only on `Accepted`; a rejected payload stays in the argument
+  // and is destroyed by the caller.
+  //
+  // Safe to call from arbitrary threads, including threads the
+  // implementation knows nothing about, until the `Backend` is destroyed --
+  // concurrent with startup, with the run, and with the run ending.
+  // Added in ABI 1.1.
+  [[nodiscard]] virtual auto trigger_physical_event(ElementUid physical_event, AnyValue&& value) noexcept
+      -> TriggerStatus = 0;
 
 protected:
   // Owned by the implementation; nothing destroys it through the interface.
@@ -241,6 +266,8 @@ public:
   [[nodiscard]] virtual auto register_reaction_with_deadline(const std::string& name, ElementUid parent,
                                                              ReactionHandler* handler, std::uint32_t position,
                                                              Duration deadline) -> ElementUid = 0;
+  // Both throw `ValidationError` once a run has been prepared (the program
+  // is sealed).
   virtual void register_reaction_trigger(ElementUid reaction, ElementUid element) = 0;
   virtual void register_reaction_effect(ElementUid reaction, ElementUid element) = 0;
   [[nodiscard]] virtual auto register_metric(const std::string& name, ElementUid parent, const std::string& description,

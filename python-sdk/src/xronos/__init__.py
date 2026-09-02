@@ -29,6 +29,7 @@ from xronos._core import (
     ShutdownEffect,
     Startup,
     Trigger,
+    TriggerStatus,
     reaction,
     reaction_with_deadline,
 )
@@ -65,6 +66,7 @@ __all__ = [
     "ShutdownEffect",
     "Startup",
     "Trigger",
+    "TriggerStatus",
     "ValidationError",
     "experimental",
     "reaction",

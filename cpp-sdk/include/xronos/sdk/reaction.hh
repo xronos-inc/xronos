@@ -294,10 +294,13 @@ private:
       context.reaction_instance().program_context()->backend().register_reaction_effect(reaction_uid_, effect_uid_);
     }
 
-    void set(abi::AnyValue&& value) noexcept {
-      if (auto* impl = get_impl(); impl != nullptr) {
-        impl->set(std::move(value));
+    void set(abi::AnyValue&& value) {
+      auto* impl = get_impl();
+      if (impl == nullptr) {
+        throw ValidationError{"Port " + program_context_.get().backend().element_fqn(effect_uid_) +
+                              " may not be set before execution has started."};
       }
+      impl->set(std::move(value));
     }
 
     [[nodiscard]] auto get() const noexcept -> const abi::AnyValue& {
@@ -327,8 +330,8 @@ private:
     }
     [[nodiscard]] auto get_impl() const noexcept -> const abi::SettableEffect* {
       if (impl_ == nullptr) {
+        // Null until the run is prepared (see abi::RuntimeBackend).
         impl_ = program_context_.get().runtime_backend().get_settable_effect(reaction_uid_, effect_uid_);
-        assert(impl_ != nullptr);
       }
       return impl_;
     }
@@ -343,10 +346,13 @@ private:
       context.reaction_instance().program_context()->backend().register_reaction_effect(reaction_uid_, effect_uid_);
     }
 
-    void schedule(abi::AnyValue&& value, Duration delay) noexcept {
-      if (auto* impl = get_impl(); impl != nullptr) {
-        impl->schedule(std::move(value), delay);
+    void schedule(abi::AnyValue&& value, Duration delay) {
+      auto* impl = get_impl();
+      if (impl == nullptr) {
+        throw ValidationError{"Programmable timer " + program_context_.get().backend().element_fqn(effect_uid_) +
+                              " may not be scheduled before execution has started."};
       }
+      impl->schedule(std::move(value), delay);
     }
 
   private:
@@ -357,8 +363,8 @@ private:
     abi::SchedulableEffect* impl_{nullptr};
     [[nodiscard]] auto get_impl() noexcept -> abi::SchedulableEffect* {
       if (impl_ == nullptr) {
+        // Null until the run is prepared (see abi::RuntimeBackend).
         impl_ = program_context_.get().runtime_backend().get_schedulable_effect(reaction_uid_, effect_uid_);
-        assert(impl_ != nullptr);
       }
       return impl_;
     }
@@ -480,6 +486,8 @@ protected:
      *
      * @param value The value to be written to the referenced port. Copy
      * constructs the value from the given lvalue reference.
+     *
+     * @throws ValidationError If called before execution has started.
      */
     template <class U>
     void set(const U& value)
@@ -596,6 +604,8 @@ protected:
      * @param value The value to be associated with the future event
      * occurrence. Copy constructs the value from the given lvalue reference.
      * @param delay The time to wait until the new event is processed.
+     *
+     * @throws ValidationError If called before execution has started.
      */
     template <class U>
     void schedule(const U& value, Duration delay = Duration::zero())
@@ -682,19 +692,29 @@ protected:
      * Can be obtained using context().
      */
     MetricEffect(Metric& metric, [[maybe_unused]] const ReactionContext& context)
-        : metric_{metric} {}
+        : metric_{metric} {
+      // Metrics register no reaction dependency with the backend, so the
+      // sealing guard in Engine::register_reaction_effect never sees them.
+      // Detect a started run through the recorder proxy instead: it is null
+      // until the run is prepared (see abi::RuntimeBackend).
+      if (metric.program_context()->runtime_backend().get_metric_recorder(metric.uid()) != nullptr) {
+        throw ValidationError{"Effects may not be declared once execution has started."};
+      }
+    }
 
     /**
      * Record a value at the current timestamp.
      *
      * @param value The value to record.
+     *
+     * @throws ValidationError If called before execution has started.
      */
-    void record(double value) noexcept { metric_.get().record(value); }
+    void record(double value) { metric_.get().record(value); }
 
     /**
      * @overload
      */
-    void record(std::int64_t value) noexcept { metric_.get().record(value); }
+    void record(std::int64_t value) { metric_.get().record(value); }
 
   private:
     std::reference_wrapper<Metric> metric_;
@@ -727,11 +747,16 @@ protected:
      * Terminates a running program at the next convenience. After completing all
      * currently active reactions, this triggers the Shutdown event sources. Once
      * all reactions triggered by Shutdown are processed, the program terminates.
+     *
+     * @throws ValidationError If called before execution has started.
      */
-    void trigger_shutdown() noexcept {
-      if (auto* impl = get_impl(); impl != nullptr) {
-        impl->trigger_shutdown();
+    void trigger_shutdown() {
+      auto* impl = get_impl();
+      if (impl == nullptr) {
+        throw ValidationError{"Shutdown " + program_context_.get().backend().element_fqn(effect_uid_) +
+                              " may not be triggered before execution has started."};
       }
+      impl->trigger_shutdown();
     }
 
   private:
@@ -741,8 +766,8 @@ protected:
     abi::ShutdownEffect* impl_{nullptr};
     [[nodiscard]] auto get_impl() noexcept -> abi::ShutdownEffect* {
       if (impl_ == nullptr) {
+        // Null until the run is prepared (see abi::RuntimeBackend).
         impl_ = program_context_.get().runtime_backend().get_shutdown_effect(reaction_uid_, effect_uid_);
-        assert(impl_ != nullptr);
       }
       return impl_;
     }

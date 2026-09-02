@@ -11,7 +11,9 @@ import xronos._core as core
 
 
 def test_decorator():
-    reaction = object()
+    def reaction(self, ctx):
+        pass
+
     descriptor = core.reaction(reaction)
     assert isinstance(descriptor, core.ReactionDescriptor)
 
@@ -30,7 +32,7 @@ class TestReactionDecorator:
 
         desc_foo = core.ReactionDescriptor(object(), [])
 
-        with pytest.raises(AssertionError):
+        with pytest.raises(RuntimeError):
             _ = desc_foo._name
 
         desc_foo.__set_name__(Reactor, "foo")

@@ -96,14 +96,15 @@ public:
   /**
    * Annotate an element with multiple attributes.
    *
-   * Adding the attributes only succeeds, if the given key has not been set
-   * before on the same element.
+   * Attributes apply per key. Each attribute is added only if its key has not
+   * been set before on the same element. Attributes with rejected keys do not
+   * prevent the remaining attributes from being added.
    *
    * See <a href="../../telemetry.html#attributes">Attributes</a> for more information.
    *
    * @tparam R Type of the range.
    * @param range Range of key-value-pairs to be added as attributes.
-   * @returns `true` if all attributes were successfully added.
+   * @returns `true` only if all attributes were successfully added.
    * @see add_attribute()
    */
   template <std::ranges::input_range R>
@@ -114,7 +115,7 @@ public:
   auto add_attributes(const R& range) noexcept -> bool {
     bool success{true};
     for (const auto& [key, value] : range) {
-      success |= add_attribute(key, value);
+      success &= add_attribute(key, value);
     }
     return success;
   }

@@ -4,7 +4,7 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "xronos"
-version = "0.13.1"
+version = "0.14.0"
 description = "Reactors for Python"
 authors = [
   { name = "Christian Menard", email = "christian@xronos.com" },
@@ -43,7 +43,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dashboard = [
-  'xronos-dashboard==0.13.1',
+  'xronos-dashboard==0.14.0',
 ]
 
 [project.urls]

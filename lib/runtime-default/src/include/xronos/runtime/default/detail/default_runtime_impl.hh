@@ -7,9 +7,11 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <tuple>
 #include <unordered_map>
 #include <utility>
 
+#include "xronos/abi/types.hh"
 #include "xronos/abi/value.hh"
 #include "xronos/core/reactor_model.hh"
 #include "xronos/core/time.hh"
@@ -67,8 +69,10 @@ public:
       : uid_{uid}
       , scheduler_{scheduler} {}
 
-  void trigger(abi::AnyValue&& value) noexcept final {
-    scheduler_.get().trigger_external_event(uid_, std::move(value));
+  void trigger(abi::AnyValue&& value) noexcept final { std::ignore = try_trigger(std::move(value)); }
+
+  [[nodiscard]] auto try_trigger(abi::AnyValue&& value) noexcept -> abi::TriggerStatus final {
+    return scheduler_.get().trigger_external_event(uid_, std::move(value));
   }
 
 private:
@@ -118,6 +122,7 @@ public:
 
   void initialize(const core::ReactorModel& model);
   void execute() final { scheduler_.execute(); }
+  void request_stop() noexcept final { scheduler_.request_stop(); }
 
   [[nodiscard]] auto get_trigger(std::uint64_t reaction_uid, std::uint64_t trigger_uid) const noexcept
       -> const GettableTrigger* final;
@@ -137,9 +142,13 @@ private:
   std::unique_ptr<RuntimeModel> runtime_model_{nullptr};
   const core::ReactorModel* reactor_model_{nullptr};
 
+  // Filled lazily and touched only from the scheduler thread, which makes
+  // the unguarded insertions safe.
   mutable std::unordered_map<std::uint64_t, DefaultTrigger> triggers_;
   std::unordered_map<std::uint64_t, DefaultSettableEffect> settable_effects_;
   std::unordered_map<std::uint64_t, DefaultSchedulableEffect> schedulable_effects_;
+  // Filled eagerly in initialize and immutable afterwards; external threads
+  // look up triggers concurrently.
   std::unordered_map<std::uint64_t, DefaultExternalTrigger> external_triggers_;
 
   Scheduler scheduler_;

@@ -91,8 +91,14 @@ public:
    * initiates execution by triggering all Startup event sources.
    *
    * Returns when the reactor program terminates. The reactor program terminates
-   * when there are no more events, or after calling
-   * ShutdownEffect::trigger_shutdown().
+   * when there are no more events, after calling
+   * ShutdownEffect::trigger_shutdown(), or when it reaches the timeout
+   * configured on the environment.
+   *
+   * An exception thrown by a reaction handler also terminates the program.
+   * The runtime then stops invoking reaction handlers; a handler that is
+   * about to start may still run. Shutdown reactions run in any case, and
+   * execute() rethrows the first exception.
    *
    * The program executes on the default runtime. To select a different
    * runtime, use the overload that takes a RuntimeProvider.

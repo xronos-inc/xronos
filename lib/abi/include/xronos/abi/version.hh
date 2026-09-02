@@ -30,7 +30,7 @@
 namespace xronos::abi::inline v1 {
 
 inline constexpr std::uint32_t version_major = 1;
-inline constexpr std::uint32_t version_minor = 0;
+inline constexpr std::uint32_t version_minor = 1;
 
 // All ABI types live in the inline namespace `v1`, which encodes the major
 // version: qualified names stay `xronos::abi::X`, but mangled names and

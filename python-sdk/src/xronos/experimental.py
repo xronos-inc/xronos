@@ -76,6 +76,10 @@ class InputPort(_core.InputPort[T]):
         parent: _core.Reactor,
         attributes: _core.AttributeMap | None = None,
     ) -> None:
+        func = "InputPort"
+        _core._check_type(name, str, param="name", func=func)
+        _core._check_type(parent, _core.Reactor, param="parent", func=func)
+        _core._check_attributes(attributes, func=func)
         context = parent._context(_core.get_source_location())
         super().__init__(sdk.InputPort(name, context))
         parent._register_dynamic_element(name, self)
@@ -101,6 +105,10 @@ class OutputPort(_core.OutputPort[T]):
         parent: _core.Reactor,
         attributes: _core.AttributeMap | None = None,
     ) -> None:
+        func = "OutputPort"
+        _core._check_type(name, str, param="name", func=func)
+        _core._check_type(parent, _core.Reactor, param="parent", func=func)
+        _core._check_attributes(attributes, func=func)
         context = parent._context(_core.get_source_location())
         super().__init__(sdk.OutputPort(name, context))
         parent._register_dynamic_element(name, self)
@@ -128,6 +136,12 @@ class PeriodicTimer(_core.PeriodicTimer):
         offset: datetime.timedelta = datetime.timedelta(0),
         attributes: _core.AttributeMap | None = None,
     ) -> None:
+        func = "PeriodicTimer"
+        _core._check_type(name, str, param="name", func=func)
+        _core._check_type(parent, _core.Reactor, param="parent", func=func)
+        _core._check_type(period, datetime.timedelta, param="period", func=func)
+        _core._check_type(offset, datetime.timedelta, param="offset", func=func)
+        _core._check_attributes(attributes, func=func)
         context = parent._context(_core.get_source_location())
         super().__init__(sdk.PeriodicTimer(name, context, period, offset))
         parent._register_dynamic_element(name, self)
@@ -156,6 +170,10 @@ class ProgrammableTimer(_core.ProgrammableTimer[T]):
         parent: _core.Reactor,
         attributes: _core.AttributeMap | None = None,
     ) -> None:
+        func = "ProgrammableTimer"
+        _core._check_type(name, str, param="name", func=func)
+        _core._check_type(parent, _core.Reactor, param="parent", func=func)
+        _core._check_attributes(attributes, func=func)
         context = parent._context(_core.get_source_location())
         super().__init__(sdk.ProgrammableTimer(name, context))
         parent._register_dynamic_element(name, self)
@@ -182,6 +200,10 @@ class PhysicalEvent(_core.PhysicalEvent[T]):
         parent: _core.Reactor,
         attributes: _core.AttributeMap | None = None,
     ) -> None:
+        func = "PhysicalEvent"
+        _core._check_type(name, str, param="name", func=func)
+        _core._check_type(parent, _core.Reactor, param="parent", func=func)
+        _core._check_attributes(attributes, func=func)
         context = parent._context(_core.get_source_location())
         super().__init__(sdk.PhysicalEvent(name, context))
         parent._register_dynamic_element(name, self)
@@ -208,6 +230,13 @@ class Metric(_core.Metric):
         unit: str | None = None,
         attributes: _core.AttributeMap | None = None,
     ) -> None:
+        func = "Metric"
+        _core._check_type(name, str, param="name", func=func)
+        _core._check_type(parent, _core.Reactor, param="parent", func=func)
+        _core._check_type(description, str, param="description", func=func)
+        if unit is not None:
+            _core._check_type(unit, str, param="unit", func=func)
+        _core._check_attributes(attributes, func=func)
         context = parent._context(_core.get_source_location())
         super().__init__(sdk.Metric(name, context, description, unit or ""))
         parent._register_dynamic_element(name, self)

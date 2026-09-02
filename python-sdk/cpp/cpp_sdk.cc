@@ -288,7 +288,11 @@ PYBIND11_MODULE(_cpp_sdk, mod, py::mod_gil_not_used()) {
       .def(py::init<std::string_view, ReactorContext>(), py::arg("name"), py::arg("context"))
       .def(
           "trigger",
-          [](PhysicalEvent<GilWrapper>& event, const py::object& value) { event.trigger(GilWrapper{value}); },
+          // The status crosses as its frozen integer value; the Python layer
+          // wraps it in its own enum.
+          [](PhysicalEvent<GilWrapper>& event, const py::object& value) {
+            return static_cast<int>(event.trigger(GilWrapper{value}));
+          },
           py::arg("value"));
 
   py::class_<Metric, Element>(mod, "Metric")

@@ -207,6 +207,70 @@ TEST(startup_and_shutdown, TestStarvation) {
   EXPECT_TRUE(test.shutdown_reaction_executed());
 }
 
+TEST(startup_and_shutdown, TriggerShutdownWithTriggerOnlyTimer) {
+  // One reactor requests shutdown from a timer reaction while another only
+  // waits on a timer that can never fire. The requested shutdown must
+  // terminate the whole program.
+  class ShutdownRequester : public Reactor {
+  public:
+    using Reactor::Reactor;
+
+    [[nodiscard]] auto shutdown_time() const noexcept -> Duration { return shutdown_time_; }
+
+  private:
+    PeriodicTimer timer_{"timer", context(), 100ms, 100ms};
+    Duration shutdown_time_{Duration::min()};
+
+    class OnTimerReaction : public Reaction<ShutdownRequester> {
+      using Reaction<ShutdownRequester>::Reaction;
+      Trigger<void> _{self().timer_, context()};
+      ShutdownEffect shutdown_effect{self().shutdown(), context()};
+      void handler() final { shutdown_effect.trigger_shutdown(); }
+    };
+
+    class OnShutdownReaction : public Reaction<ShutdownRequester> {
+      using Reaction<ShutdownRequester>::Reaction;
+      Trigger<void> shutdown_trigger_{self().shutdown(), context()};
+      void handler() final {
+        EXPECT_TRUE(shutdown_trigger_.is_present());
+        self().shutdown_time_ = elapsed_time();
+      }
+    };
+
+    void assemble() final {
+      add_reaction<OnTimerReaction>("on_timer");
+      add_reaction<OnShutdownReaction>("on_shutdown");
+    }
+  };
+
+  class TimerWaiter : public Reactor {
+  public:
+    using Reactor::Reactor;
+
+    [[nodiscard]] auto handler_invoked() const noexcept -> bool { return handler_invoked_; }
+
+  private:
+    ProgrammableTimer<void> timer_{"timer", context()};
+    bool handler_invoked_{false};
+
+    class OnTimerReaction : public Reaction<TimerWaiter> {
+      using Reaction<TimerWaiter>::Reaction;
+      Trigger<void> timer_trigger_{self().timer_, context()};
+      void handler() final { self().handler_invoked_ = true; }
+    };
+
+    void assemble() final { add_reaction<OnTimerReaction>("on_timer"); }
+  };
+
+  TestEnvironment env{};
+  ShutdownRequester requester{"requester", env.context()};
+  TimerWaiter waiter{"waiter", env.context()};
+  env.execute();
+
+  EXPECT_EQ(requester.shutdown_time(), 100ms);
+  EXPECT_FALSE(waiter.handler_invoked());
+}
+
 struct TriggerShutdownTestReactorParameters {
   std::string name;
   Duration period;
@@ -217,6 +281,7 @@ struct TriggerShutdownTestReactorParameters {
 struct TestTriggerShutdownParameters {
   std::vector<TriggerShutdownTestReactorParameters> reactor_parameters;
   Duration expected_shutdown_time;
+  bool exact_shutdown_time{true};
 };
 
 class TestTriggerShutdown : public ::testing::TestWithParam<TestTriggerShutdownParameters> {};
@@ -233,12 +298,14 @@ TEST_P(TestTriggerShutdown, run) {
 
     [[nodiscard]] auto shutdown_reaction_executed() const noexcept -> bool { return shutdown_reaction_executed_; }
     [[nodiscard]] auto shutdown_time() const noexcept -> Duration { return shutdown_time_; }
+    [[nodiscard]] auto last_tick_time() const noexcept -> Duration { return last_tick_time_; }
 
   private:
     PeriodicTimer timer_;
 
     bool shutdown_reaction_executed_{false};
     Duration shutdown_time_{Duration::zero()};
+    Duration last_tick_time_{Duration::zero()};
     unsigned count_{0};
     unsigned max_count_;
     bool has_shutdown_effect_{false};
@@ -252,6 +319,7 @@ TEST_P(TestTriggerShutdown, run) {
         EXPECT_FALSE(self().shutdown_reaction_executed_);
         EXPECT_LT(self().count_, self().max_count_);
         self().count_++;
+        self().last_tick_time_ = elapsed_time();
         if (self().count_ == self().max_count_) {
           shutdown_effect.trigger_shutdown();
         }
@@ -266,6 +334,7 @@ TEST_P(TestTriggerShutdown, run) {
         EXPECT_FALSE(self().shutdown_reaction_executed_);
         EXPECT_LT(self().count_, self().max_count_);
         self().count_++;
+        self().last_tick_time_ = elapsed_time();
       }
     };
 
@@ -303,7 +372,12 @@ TEST_P(TestTriggerShutdown, run) {
   for (auto& reactor : reactors) {
     std::cout << "checking reactor " << reactor->fqn() << '\n';
     EXPECT_TRUE(reactor->shutdown_reaction_executed());
-    EXPECT_EQ(reactor->shutdown_time(), GetParam().expected_shutdown_time);
+    if (GetParam().exact_shutdown_time) {
+      EXPECT_EQ(reactor->shutdown_time(), GetParam().expected_shutdown_time);
+    } else {
+      EXPECT_LE(reactor->shutdown_time(), GetParam().expected_shutdown_time);
+      EXPECT_GE(reactor->shutdown_time(), reactor->last_tick_time());
+    }
   }
 }
 
@@ -321,15 +395,18 @@ INSTANTIATE_TEST_SUITE_P(
             .reactor_parameters = {TriggerShutdownTestReactorParameters{"test1", 100ms, 100, true},
                                    TriggerShutdownTestReactorParameters{"test2", 100ms, 10, true}},
             .expected_shutdown_time = 1s},
+        // The requested time is a multiple of every period below, so every
+        // reactor processes a tick exactly there and exact equality holds in
+        // any runtime.
         TestTriggerShutdownParameters{.reactor_parameters =
                                           {
-                                              TriggerShutdownTestReactorParameters{"test1", 1ms, 100, true},
+                                              TriggerShutdownTestReactorParameters{"test1", 1ms, 120, true},
                                               TriggerShutdownTestReactorParameters{"test2", 2ms, 100, true},
                                               TriggerShutdownTestReactorParameters{"test3", 3ms, 50, true},
                                               TriggerShutdownTestReactorParameters{"test4", 4ms, 50, true},
-                                              TriggerShutdownTestReactorParameters{"test5", 5ms, 20, true},
+                                              TriggerShutdownTestReactorParameters{"test5", 5ms, 24, true},
                                           },
-                                      .expected_shutdown_time = 100ms},
+                                      .expected_shutdown_time = 120ms},
         TestTriggerShutdownParameters{.reactor_parameters =
                                           {
                                               TriggerShutdownTestReactorParameters{"test1", 1ms, 100, true},
@@ -343,11 +420,21 @@ INSTANTIATE_TEST_SUITE_P(
                                           {
                                               TriggerShutdownTestReactorParameters{"test1", 1ms, 1000, false},
                                               TriggerShutdownTestReactorParameters{"test2", 2ms, 100, true},
-                                              TriggerShutdownTestReactorParameters{"test3", 3ms, 50, true},
+                                              TriggerShutdownTestReactorParameters{"test3", 3ms, 40, true},
                                               TriggerShutdownTestReactorParameters{"test4", 4ms, 1000, false},
                                               TriggerShutdownTestReactorParameters{"test5", 5ms, 1000, false},
                                           },
-                                      .expected_shutdown_time = 150ms}
+                                      .expected_shutdown_time = 120ms},
+        // The 7 ms period does not divide the requested 100 ms, so a runtime
+        // that decides per reactor shuts that reactor down after its last
+        // tick at 98 ms; only bounds hold across runtimes.
+        TestTriggerShutdownParameters{.reactor_parameters =
+                                          {
+                                              TriggerShutdownTestReactorParameters{"test1", 1ms, 100, true},
+                                              TriggerShutdownTestReactorParameters{"test2", 7ms, 1000, false},
+                                          },
+                                      .expected_shutdown_time = 100ms,
+                                      .exact_shutdown_time = false}
 
         ));
 

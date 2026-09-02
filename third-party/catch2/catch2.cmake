@@ -1,4 +1,4 @@
-set(CATCH2_VERSION "v3.15.3" CACHE STRING "Catch2 version")
+set(CATCH2_VERSION "v3.16.0" CACHE STRING "Catch2 version")
 option(CATCH2_FORCE_BUILD "Force building Catch2 from source" OFF)
 option(CATCH2_INSTALL "Add Catch2 to the install target" OFF)
 
@@ -18,8 +18,7 @@ endif()
 include(FetchContent)
 FetchContent_Declare(
   Catch2
-  GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-  GIT_TAG "${CATCH2_VERSION}"
+  URL "https://github.com/catchorg/Catch2/archive/refs/tags/${CATCH2_VERSION}.tar.gz"
   ${CATCH2_EXCLUDE_FROM_ALL}
   ${CATCH2_FIND_PACKAGE_ARGS}
 )

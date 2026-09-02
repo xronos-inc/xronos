@@ -9,6 +9,7 @@
 #include <random>
 #include <string_view>
 #include <thread>
+#include <tuple>
 
 #include "xronos/sdk.hh"
 
@@ -80,7 +81,9 @@ public:
         int key{0};
         while (!self().terminate_.load()) {
           key = getchar();
-          self().keyboard_input_.trigger(key);
+          // The game reads keys only while it runs; a dropped key needs no
+          // handling, so the status is discarded.
+          std::ignore = self().keyboard_input_.trigger(key);
         }
       });
     }

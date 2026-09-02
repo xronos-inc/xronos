@@ -1,4 +1,0 @@
-fastapi==0.141.1
-uvicorn==0.52.1
-websockets==16.1.1
-xronos==0.13.1

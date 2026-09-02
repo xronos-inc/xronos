@@ -73,6 +73,12 @@ public:
   // `std::logic_error` otherwise) and may only be called once.
   void run(std::unique_ptr<runtime::Runtime> runtime, const runtime::ExecutionProperties& properties);
 
+  // Requests a prompt stop of a blocking `run` from any thread: reactions
+  // stop dispatching, shutdown reactions run, and `run` returns normally.
+  // A request before the run is prepared is latched and honored once the
+  // run starts; a call after `run` returned is a harmless no-op.
+  void request_stop() noexcept;
+
   // Read access to the assembled program. Each accessor throws
   // `std::logic_error` before `assemble`, because the model does not
   // describe the complete program until the assemble callbacks have run.

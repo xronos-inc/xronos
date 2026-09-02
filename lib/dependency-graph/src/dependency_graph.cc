@@ -13,10 +13,12 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <optional>
 #include <ranges>
 #include <sstream>
 #include <string>
 #include <unordered_map>
+#include <variant>
 #include <vector>
 
 namespace xronos::dependency_graph {
@@ -83,8 +85,8 @@ void DependencyGraph::add_intra_rector_dependencies(const core::ElementRegistry&
 }
 
 void DependencyGraph::add_port_dependencies(const core::ReactorModel& model) {
-  std::unordered_map<std::uint64_t, std::vector<std::uint64_t>> reactions_by_effect;
-  std::unordered_map<std::uint64_t, std::vector<std::uint64_t>> reactions_by_trigger;
+  ReactionsByElement reactions_by_effect;
+  ReactionsByElement reactions_by_trigger;
 
   for (const auto& reaction : model.element_registry.elements_of_type<core::ReactionTag>()) {
     for (auto trigger : model.reaction_dependency_registry.get_triggers(reaction.uid)) {
@@ -96,17 +98,54 @@ void DependencyGraph::add_port_dependencies(const core::ReactorModel& model) {
   }
 
   for (const auto& [trigger_uid, downstream_reactions] : reactions_by_trigger) {
-    auto connection = model.connection_graph.get_incoming_end_to_end_connection(trigger_uid);
-    if (connection.has_value()) {
-      for (auto upstream_reaction : reactions_by_effect[connection->from_uid]) {
-        for (auto downstream_reaction : downstream_reactions) {
-          if (connection->delay.has_value()) {
-            add_weak_dependency(downstream_reaction, upstream_reaction, *connection->delay);
-          } else {
-            add_strong_dependency(downstream_reaction, upstream_reaction,
-                                  DependencyConnection{.from_uid = connection->from_uid, .to_uid = trigger_uid});
-          }
-        }
+    add_direct_access_dependencies(model, trigger_uid, downstream_reactions, reactions_by_effect);
+    add_connection_dependencies(model, trigger_uid, downstream_reactions, reactions_by_effect);
+  }
+}
+
+// Reactions may access a port directly, without a connection: a parent
+// reaction can write a contained reactor's input or trigger on a contained
+// output. Any reaction effecting the trigger port then runs before the
+// triggered reactions at the same tag. This applies to ports only; events
+// scheduled on timers arrive at a later tag, so a shared timer imposes no
+// same-tag order.
+void DependencyGraph::add_direct_access_dependencies(const core::ReactorModel& model, std::uint64_t trigger_uid,
+                                                     const std::vector<std::uint64_t>& downstream_reactions,
+                                                     const ReactionsByElement& reactions_by_effect) {
+  const auto& trigger_element = model.element_registry.get(trigger_uid);
+  if (!std::holds_alternative<core::InputPortTag>(trigger_element.type) &&
+      !std::holds_alternative<core::OutputPortTag>(trigger_element.type)) {
+    return;
+  }
+  auto it = reactions_by_effect.find(trigger_uid);
+  if (it == reactions_by_effect.end()) {
+    return;
+  }
+  for (auto upstream_reaction : it->second) {
+    for (auto downstream_reaction : downstream_reactions) {
+      add_strong_dependency(downstream_reaction, upstream_reaction, std::nullopt, trigger_uid);
+    }
+  }
+}
+
+void DependencyGraph::add_connection_dependencies(const core::ReactorModel& model, std::uint64_t trigger_uid,
+                                                  const std::vector<std::uint64_t>& downstream_reactions,
+                                                  const ReactionsByElement& reactions_by_effect) {
+  auto connection = model.connection_graph.get_incoming_end_to_end_connection(trigger_uid);
+  if (!connection.has_value()) {
+    return;
+  }
+  auto it = reactions_by_effect.find(connection->from_uid);
+  if (it == reactions_by_effect.end()) {
+    return;
+  }
+  for (auto upstream_reaction : it->second) {
+    for (auto downstream_reaction : downstream_reactions) {
+      if (connection->delay.has_value()) {
+        add_weak_dependency(downstream_reaction, upstream_reaction, *connection->delay);
+      } else {
+        add_strong_dependency(downstream_reaction, upstream_reaction,
+                              DependencyConnection{.from_uid = connection->from_uid, .to_uid = trigger_uid});
       }
     }
   }
@@ -115,7 +154,7 @@ void DependencyGraph::add_port_dependencies(const core::ReactorModel& model) {
 namespace {
 
 // Describes a dependency cycle: the reactions on it, followed by the
-// connections its edges ride on.
+// connections its edges ride on and the ports its edges access directly.
 auto describe_cycle(const std::vector<std::uint64_t>& cycle, const core::ElementRegistry& elements,
                     const std::unordered_map<std::uint64_t, std::vector<StrongDependency>>& strong_dependencies)
     -> std::string {
@@ -125,14 +164,20 @@ auto describe_cycle(const std::vector<std::uint64_t>& cycle, const core::Element
     sstream << "  - " << elements.get(uid).fqn << '\n';
   }
   std::vector<DependencyConnection> cycle_connections;
+  std::vector<std::uint64_t> cycle_ports;
   for (std::size_t i = 0; i < cycle.size(); i++) {
     const auto& dependencies = strong_dependencies.at(cycle[i]);
     auto dependency_uid = cycle[(i + 1) % cycle.size()];
-    auto edge = std::ranges::find_if(dependencies, [dependency_uid](const StrongDependency& dep) {
-      return dep.reaction_uid == dependency_uid && dep.via_connection.has_value();
-    });
-    if (edge != dependencies.end()) {
-      cycle_connections.push_back(*edge->via_connection);
+    for (const auto& dep : dependencies) {
+      if (dep.reaction_uid != dependency_uid) {
+        continue;
+      }
+      if (dep.via_connection.has_value()) {
+        cycle_connections.push_back(*dep.via_connection);
+      }
+      if (dep.via_port.has_value()) {
+        cycle_ports.push_back(*dep.via_port);
+      }
     }
   }
   if (!cycle_connections.empty()) {
@@ -140,6 +185,12 @@ auto describe_cycle(const std::vector<std::uint64_t>& cycle, const core::Element
     for (const auto& connection : cycle_connections) {
       sstream << "  - " << elements.get(connection.from_uid).fqn << " -> " << elements.get(connection.to_uid).fqn
               << '\n';
+    }
+  }
+  if (!cycle_ports.empty()) {
+    sstream << "The cycle runs through direct accesses to the following ports:\n";
+    for (auto port_uid : cycle_ports) {
+      sstream << "  - " << elements.get(port_uid).fqn << '\n';
     }
   }
   return sstream.str();

@@ -1,4 +1,4 @@
-FROM ubuntu:jammy-20260731.1@sha256:3b06811b2afd352be909dd088a004166d665dc76d38b13eada33522a9d915c6f AS base
+FROM ubuntu:jammy-20260810@sha256:2edbbc5dc405e9612ba3584ce95480277e3eb374407b5505fe26f17df77c7dbc AS base
 WORKDIR /xronos
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -98,7 +98,7 @@ ENV MYPY_CACHE_DIR=/dev/null
 FROM scratch AS configs
 COPY .clang-tidy .clang-format dev-requirements.txt /
 
-FROM hashicorp/terraform:1.15.8@sha256:7ae513256f7ce67879e218ae8593d6fbe216ec9e123abe6c94e4e10704857963 AS check-format
+FROM hashicorp/terraform:1.16.0@sha256:64360659224d6cbeb099eeed61aa66a80e02c18ba08c0243bd905165b47b088e AS check-format
 WORKDIR /xronos
 # Need to rename the file because terraform fmt errors out for .hcl (without tftest)
 COPY docker-bake.hcl docker-bake.tftest.hcl

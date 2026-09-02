@@ -32,9 +32,13 @@ struct DependencyConnection {
 struct StrongDependency {
   std::uint64_t reaction_uid;
   // Set when the dependency stems from a connection between ports, so a
-  // reported cycle can name the connections it runs through. Dependencies
-  // from reaction ordering within one reactor carry none.
+  // reported cycle can name the connections it runs through.
   std::optional<DependencyConnection> via_connection;
+  // Set when the dependency stems from two reactions accessing the same port
+  // directly, one as an effect and one as a trigger. Holds that port's uid so
+  // a reported cycle can name it. Dependencies from reaction ordering within
+  // one reactor carry neither field.
+  std::optional<std::uint64_t> via_port;
 };
 
 class DependencyGraph {
@@ -52,9 +56,10 @@ public:
 
 private:
   void add_strong_dependency(std::uint64_t from_uid, std::uint64_t to_uid,
-                             std::optional<DependencyConnection> via_connection = std::nullopt) {
+                             std::optional<DependencyConnection> via_connection = std::nullopt,
+                             std::optional<std::uint64_t> via_port = std::nullopt) {
     strong_dependencies_[from_uid].emplace_back(
-        StrongDependency{.reaction_uid = to_uid, .via_connection = via_connection});
+        StrongDependency{.reaction_uid = to_uid, .via_connection = via_connection, .via_port = via_port});
   }
 
   void add_weak_dependency(std::uint64_t from_uid, std::uint64_t to_uid, core::Duration delay) {
@@ -70,8 +75,17 @@ private:
     auto operator<=>(const ReactionInfo&) const = default;
   };
 
+  // key is an element uid, values are reaction uids
+  using ReactionsByElement = std::unordered_map<std::uint64_t, std::vector<std::uint64_t>>;
+
   void add_intra_rector_dependencies(const core::ElementRegistry& elements);
   void add_port_dependencies(const core::ReactorModel& model);
+  void add_direct_access_dependencies(const core::ReactorModel& model, std::uint64_t trigger_uid,
+                                      const std::vector<std::uint64_t>& downstream_reactions,
+                                      const ReactionsByElement& reactions_by_effect);
+  void add_connection_dependencies(const core::ReactorModel& model, std::uint64_t trigger_uid,
+                                   const std::vector<std::uint64_t>& downstream_reactions,
+                                   const ReactionsByElement& reactions_by_effect);
 
   bool initialized_{false};
   // key is a reaction uid

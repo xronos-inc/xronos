@@ -11,6 +11,8 @@
 
 #include "xronos/abi/backend.hh"
 #include "xronos/abi/exceptions.hh"
+#include "xronos/abi/types.hh"
+#include "xronos/abi/value.hh"
 #include "xronos/core/reactor_model.hh"
 #include "xronos/core/time.hh"
 
@@ -48,6 +50,10 @@ protected:
 };
 
 struct ExternalTrigger : abi::ExternalTrigger {
+  // Delivers the event if the program is live. When the program has stopped
+  // or has not started yet, the event is dropped and the status reports why.
+  [[nodiscard]] virtual auto try_trigger(abi::AnyValue&& value) noexcept -> abi::TriggerStatus = 0;
+
 protected:
   ~ExternalTrigger() = default;
 };
@@ -73,9 +79,16 @@ struct ProgramHandle {
   [[nodiscard]] virtual auto get_shutdown_effect(std::uint64_t reaction_uid, std::uint64_t effect_uid) noexcept
       -> ShutdownEffect* = 0;
   [[nodiscard]] virtual auto get_time_access(std::uint64_t reactor_uid) const noexcept -> const TimeAccess* = 0;
+  // Arbitrary external threads may call this concurrently, so implementations
+  // must tolerate concurrent lookups.
   [[nodiscard]] virtual auto get_external_trigger(std::uint64_t external_trigger_uid) noexcept -> ExternalTrigger* = 0;
 
   virtual void execute() = 0;
+
+  // Requests a prompt stop from any thread while execute() blocks: reactions
+  // stop dispatching, shutdown reactions run, and execute() returns normally.
+  // Safe before and after execute(); a late call is a no-op.
+  virtual void request_stop() noexcept = 0;
 
   virtual ~ProgramHandle() = default;
 };

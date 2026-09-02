@@ -9,7 +9,10 @@
 // worker threads, where Catch2 assertions are not safe); handlers only
 // record, and the checks run after the run returns.
 
+#include <algorithm>
 #include <array>
+#include <atomic>
+#include <barrier>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
@@ -19,6 +22,7 @@
 #include <span>
 #include <stdexcept>
 #include <string>
+#include <thread>
 #include <utility>
 #include <vector>
 
@@ -244,6 +248,88 @@ TEST_CASE("A second inbound connection is rejected", "[backend]") {
   CHECK_THROWS_AS(abi_backend.add_connection(out2, input), xronos::abi::ValidationError);
 }
 
+TEST_CASE("A connection that violates the reactor hierarchy is rejected", "[backend]") {
+  xronos::backend::Engine engine{};
+  auto& abi_backend = engine.abi();
+  auto reactor = abi_backend.register_top_level_reactor("main");
+  auto child = abi_backend.register_reactor("sub", reactor);
+  auto grandchild = abi_backend.register_reactor("subsub", child);
+  auto input = abi_backend.register_input_port("in", reactor);
+  auto grandchild_input = abi_backend.register_input_port("in", grandchild);
+
+  // The connection skips a level of the hierarchy: it may only reach the
+  // ports of a direct child.
+  CHECK_THROWS_AS(abi_backend.add_connection(input, grandchild_input), xronos::abi::ValidationError);
+  CHECK_THROWS_WITH(abi_backend.add_connection(input, grandchild_input),
+                    Catch::Matchers::ContainsSubstring("does not respect the reactor hierarchy") &&
+                        Catch::Matchers::ContainsSubstring("main.in") &&
+                        Catch::Matchers::ContainsSubstring("main.sub.subsub.in"));
+}
+
+TEST_CASE("A connection with a non-port endpoint is rejected", "[backend]") {
+  xronos::backend::Engine engine{};
+  auto& abi_backend = engine.abi();
+  auto reactor = abi_backend.register_top_level_reactor("main");
+  auto timer = abi_backend.register_periodic_timer("timer", reactor, 1ms, 10ms);
+  auto input = abi_backend.register_input_port("in", reactor);
+
+  CHECK_THROWS_AS(abi_backend.add_connection(timer, input), xronos::abi::ValidationError);
+  CHECK_THROWS_WITH(abi_backend.add_connection(timer, input), Catch::Matchers::ContainsSubstring("main.timer") &&
+                                                                  Catch::Matchers::ContainsSubstring("periodic timer"));
+}
+
+TEST_CASE("A trigger that violates the reactor hierarchy is rejected", "[backend]") {
+  xronos::backend::Engine engine{};
+  auto& abi_backend = engine.abi();
+  auto reactor = abi_backend.register_top_level_reactor("main");
+  auto child = abi_backend.register_reactor("sub", reactor);
+  auto grandchild = abi_backend.register_reactor("subsub", child);
+  auto reaction = abi_backend.register_reaction("r", reactor, make_callback<xronos::abi::ReactionHandler>([]() {}), 1);
+
+  SECTION("a grandchild's output is out of reach") {
+    auto grandchild_output = abi_backend.register_output_port("out", grandchild);
+    CHECK_THROWS_AS(abi_backend.register_reaction_trigger(reaction, grandchild_output), xronos::abi::ValidationError);
+    CHECK_THROWS_WITH(abi_backend.register_reaction_trigger(reaction, grandchild_output),
+                      Catch::Matchers::ContainsSubstring("main.r") &&
+                          Catch::Matchers::ContainsSubstring("main.sub.subsub.out") &&
+                          Catch::Matchers::ContainsSubstring("as a trigger"));
+  }
+  SECTION("the reactor's own output is not a trigger") {
+    auto output = abi_backend.register_output_port("out", reactor);
+    CHECK_THROWS_AS(abi_backend.register_reaction_trigger(reaction, output), xronos::abi::ValidationError);
+  }
+  SECTION("a child's input is not a trigger") {
+    auto child_input = abi_backend.register_input_port("in", child);
+    CHECK_THROWS_AS(abi_backend.register_reaction_trigger(reaction, child_input), xronos::abi::ValidationError);
+  }
+}
+
+TEST_CASE("An effect that violates the reactor hierarchy is rejected", "[backend]") {
+  xronos::backend::Engine engine{};
+  auto& abi_backend = engine.abi();
+  auto reactor = abi_backend.register_top_level_reactor("main");
+  auto child = abi_backend.register_reactor("sub", reactor);
+  auto grandchild = abi_backend.register_reactor("subsub", child);
+  auto reaction = abi_backend.register_reaction("r", reactor, make_callback<xronos::abi::ReactionHandler>([]() {}), 1);
+
+  SECTION("a grandchild's input is out of reach") {
+    auto grandchild_input = abi_backend.register_input_port("in", grandchild);
+    CHECK_THROWS_AS(abi_backend.register_reaction_effect(reaction, grandchild_input), xronos::abi::ValidationError);
+    CHECK_THROWS_WITH(abi_backend.register_reaction_effect(reaction, grandchild_input),
+                      Catch::Matchers::ContainsSubstring("main.r") &&
+                          Catch::Matchers::ContainsSubstring("main.sub.subsub.in") &&
+                          Catch::Matchers::ContainsSubstring("as an effect"));
+  }
+  SECTION("the reactor's own input is not an effect") {
+    auto input = abi_backend.register_input_port("in", reactor);
+    CHECK_THROWS_AS(abi_backend.register_reaction_effect(reaction, input), xronos::abi::ValidationError);
+  }
+  SECTION("a child's output is not an effect") {
+    auto child_output = abi_backend.register_output_port("out", child);
+    CHECK_THROWS_AS(abi_backend.register_reaction_effect(reaction, child_output), xronos::abi::ValidationError);
+  }
+}
+
 TEST_CASE("Attributes are only added once per key", "[backend]") {
   xronos::backend::Engine engine{};
   auto& abi_backend = engine.abi();
@@ -267,18 +353,445 @@ TEST_CASE("FQNs can be read back", "[backend]") {
   CHECK(abi_backend.element_fqn(port) == "outer.inner.port");
 }
 
-TEST_CASE("Lookups return null until a run is prepared", "[backend]") {
+TEST_CASE("Triggers before a run is prepared are dropped as NotStarted", "[backend]") {
   xronos::backend::Engine engine{};
   auto& abi_backend = engine.abi();
   auto reactor = abi_backend.register_top_level_reactor("main");
   auto event = abi_backend.register_physical_event("event", reactor);
 
-  // The facade exists from backend creation; it answers null until run()
-  // publishes the prepared program.
+  // The facade exists from backend creation; it drops trigger attempts
+  // until run() publishes the prepared program.
   auto& runtime_backend = abi_backend.runtime_backend();
-  CHECK(runtime_backend.get_external_trigger(event) == nullptr);
+  CHECK(runtime_backend.trigger_physical_event(event, xronos::value::make<xronos::abi::Void>()) ==
+        xronos::abi::TriggerStatus::NotStarted);
   engine.assemble();
-  CHECK(runtime_backend.get_external_trigger(event) == nullptr);
+  CHECK(runtime_backend.trigger_physical_event(event, xronos::value::make<xronos::abi::Void>()) ==
+        xronos::abi::TriggerStatus::NotStarted);
+  // With no prepared run there is nothing to resolve a uid against, so a
+  // uid that names no physical event also reports NotStarted.
+  CHECK(runtime_backend.trigger_physical_event(reactor, xronos::value::make<xronos::abi::Void>()) ==
+        xronos::abi::TriggerStatus::NotStarted);
+}
+
+TEST_CASE("Concurrent triggers through the facade are safe", "[backend]") {
+  constexpr std::size_t contended_thread_count = 4;
+  constexpr std::size_t distinct_event_count = 3;
+  // The racy interleavings are only a few instructions wide, so a single
+  // attempt rarely lands on one. Each repetition builds a fresh engine (a
+  // backend runs only once) and races the deliveries again.
+  constexpr std::size_t repetitions = 100;
+
+  for (std::size_t repetition = 0; repetition < repetitions; repetition++) {
+    CAPTURE(repetition);
+    xronos::backend::Engine engine{};
+    auto& abi_backend = engine.abi();
+    auto reactor = abi_backend.register_top_level_reactor("main");
+    auto shutdown = abi_backend.register_shutdown("shutdown", reactor);
+    auto& runtime_backend = abi_backend.runtime_backend();
+
+    // One contended event that several threads look up at once, plus a set of
+    // distinct events looked up by one thread each.
+    auto contended_event = abi_backend.register_physical_event("contended", reactor);
+    int contended_firings{0};
+    auto contended_reaction = abi_backend.register_reaction(
+        "count_contended", reactor,
+        make_callback<xronos::abi::ReactionHandler>([&contended_firings]() { contended_firings++; }), 1);
+    abi_backend.register_reaction_trigger(contended_reaction, contended_event);
+
+    std::array<ElementUid, distinct_event_count> distinct_events{};
+    std::array<int, distinct_event_count> distinct_firings{};
+    for (std::size_t index = 0; index < distinct_event_count; index++) {
+      distinct_events.at(index) = abi_backend.register_physical_event("event" + std::to_string(index), reactor);
+      auto reaction = abi_backend.register_reaction(
+          "count" + std::to_string(index), reactor,
+          make_callback<xronos::abi::ReactionHandler>([&count = distinct_firings.at(index)]() { count++; }),
+          static_cast<std::uint32_t>(index + 2));
+      abi_backend.register_reaction_trigger(reaction, distinct_events.at(index));
+    }
+
+    // A dedicated physical event ends the run once all workers have fired.
+    auto stop_event = abi_backend.register_physical_event("stop", reactor);
+    auto stop_uid = std::make_shared<ElementUid>();
+    auto stop_reaction = abi_backend.register_reaction(
+        "handle_stop", reactor, make_callback<xronos::abi::ReactionHandler>([&runtime_backend, stop_uid, shutdown]() {
+          auto* effect = runtime_backend.get_shutdown_effect(*stop_uid, shutdown);
+          if (effect != nullptr) {
+            effect->trigger_shutdown();
+          }
+        }),
+        static_cast<std::uint32_t>(distinct_event_count + 2));
+    *stop_uid = stop_reaction;
+    abi_backend.register_reaction_trigger(stop_reaction, stop_event);
+    abi_backend.register_reaction_effect(stop_reaction, shutdown);
+
+    // The scheduler opens its live window shortly after run() publishes the
+    // lookups; a trigger attempt in between is dropped as not-started. A
+    // startup reaction reports the open window so the workers trigger only
+    // inside it.
+    std::atomic<bool> started{false};
+    auto startup = abi_backend.register_startup("startup", reactor);
+    auto startup_reaction = abi_backend.register_reaction(
+        "report_started", reactor, make_callback<xronos::abi::ReactionHandler>([&started]() { started.store(true); }),
+        static_cast<std::uint32_t>(distinct_event_count + 3));
+    abi_backend.register_reaction_trigger(startup_reaction, startup);
+
+    engine.assemble();
+    REQUIRE(engine.validate().empty());
+
+    std::thread run_thread{[&engine]() { run(engine); }};
+
+    // The main thread waits for the startup reaction, then releases the
+    // barrier: every delivery lands inside the live window, and the
+    // deliveries race with each other -- both through the facade's gate and
+    // through the runtime's concurrent trigger lookup.
+    constexpr std::size_t worker_count = contended_thread_count + distinct_event_count;
+    std::barrier barrier{static_cast<std::ptrdiff_t>(worker_count + 1)};
+
+    // Workers only record; per the suite's rule, no Catch2 assertions run on
+    // worker threads.
+    auto fire = [&runtime_backend, &barrier](ElementUid event, xronos::abi::TriggerStatus& slot) {
+      barrier.arrive_and_wait();
+      slot = runtime_backend.trigger_physical_event(event, xronos::value::make<xronos::abi::Void>());
+    };
+
+    std::array<xronos::abi::TriggerStatus, contended_thread_count> contended_results{};
+    std::array<xronos::abi::TriggerStatus, distinct_event_count> distinct_results{};
+    std::vector<std::thread> workers{};
+    workers.reserve(worker_count);
+    for (auto& slot : contended_results) {
+      workers.emplace_back(fire, contended_event, std::ref(slot));
+    }
+    for (std::size_t index = 0; index < distinct_event_count; index++) {
+      workers.emplace_back(fire, distinct_events.at(index), std::ref(distinct_results.at(index)));
+    }
+
+    while (!started.load()) {
+      std::this_thread::yield();
+    }
+    barrier.arrive_and_wait();
+    for (auto& worker : workers) {
+      worker.join();
+    }
+    // All worker fires carry earlier physical timestamps than this one, so the
+    // scheduler handles them before the stop reaction shuts the run down.
+    auto stop_status = runtime_backend.trigger_physical_event(stop_event, xronos::value::make<xronos::abi::Void>());
+    run_thread.join();
+
+    CHECK(stop_status == xronos::abi::TriggerStatus::Accepted);
+    for (auto status : contended_results) {
+      CHECK(status == xronos::abi::TriggerStatus::Accepted);
+    }
+    for (auto status : distinct_results) {
+      CHECK(status == xronos::abi::TriggerStatus::Accepted);
+    }
+    CHECK(contended_firings == static_cast<int>(contended_thread_count));
+    for (int count : distinct_firings) {
+      CHECK(count == 1);
+    }
+  }
+}
+
+// Assembles a program whose single physical event triggers a reaction; the
+// handler counts its executions and then requests shutdown. The live-window
+// tests below drive it from an external thread.
+struct StopOnEventProgram {
+  xronos::backend::Engine engine{};
+  ElementUid reactor{};
+  ElementUid event{};
+  int executions{0};
+
+  StopOnEventProgram() {
+    auto& abi_backend = engine.abi();
+    reactor = abi_backend.register_top_level_reactor("main");
+    auto shutdown = abi_backend.register_shutdown("shutdown", reactor);
+    event = abi_backend.register_physical_event("event", reactor);
+
+    auto reaction_uid = std::make_shared<ElementUid>();
+    auto reaction = abi_backend.register_reaction(
+        "stop", reactor, make_callback<xronos::abi::ReactionHandler>([this, reaction_uid, shutdown]() {
+          executions++;
+          auto* effect = engine.abi().runtime_backend().get_shutdown_effect(*reaction_uid, shutdown);
+          if (effect != nullptr) {
+            effect->trigger_shutdown();
+          }
+        }),
+        1);
+    *reaction_uid = reaction;
+    abi_backend.register_reaction_trigger(reaction, event);
+    abi_backend.register_reaction_effect(reaction, shutdown);
+    engine.assemble();
+  }
+};
+
+// The attempt reports NotStarted until run() publishes the program and the
+// scheduler opens its live window; retrying absorbs that span. Gives up
+// after five seconds and returns the last status.
+auto trigger_until_accepted(xronos::backend::Engine& engine, ElementUid event) -> xronos::abi::TriggerStatus {
+  auto& runtime_backend = engine.abi().runtime_backend();
+  auto status = runtime_backend.trigger_physical_event(event, xronos::value::make<xronos::abi::Void>());
+  const auto deadline = std::chrono::steady_clock::now() + 5s;
+  while (status != xronos::abi::TriggerStatus::Accepted && std::chrono::steady_clock::now() < deadline) {
+    std::this_thread::sleep_for(1ms);
+    status = runtime_backend.trigger_physical_event(event, xronos::value::make<xronos::abi::Void>());
+  }
+  return status;
+}
+
+TEST_CASE("A trigger inside the live window is accepted and delivered", "[backend]") {
+  StopOnEventProgram program{};
+  REQUIRE(program.engine.validate().empty());
+
+  // The timeout only bounds the test if the trigger is never accepted; the
+  // accepted trigger ends the run through the shutdown reaction.
+  std::thread run_thread{[&program]() { run(program.engine, ExecutionProperties{.timeout = 10s}); }};
+  auto status = trigger_until_accepted(program.engine, program.event);
+  run_thread.join();
+
+  CHECK(status == xronos::abi::TriggerStatus::Accepted);
+  CHECK(program.executions == 1);
+}
+
+TEST_CASE("A trigger after the run is dropped and reports Stopped", "[backend]") {
+  StopOnEventProgram program{};
+  REQUIRE(program.engine.validate().empty());
+
+  std::thread run_thread{[&program]() { run(program.engine, ExecutionProperties{.timeout = 10s}); }};
+  auto accepted = trigger_until_accepted(program.engine, program.event);
+  run_thread.join();
+  REQUIRE(accepted == xronos::abi::TriggerStatus::Accepted);
+
+  // run() has returned, so the facade's gate is retired and reports the
+  // program as stopped without touching it.
+  auto& runtime_backend = program.engine.abi().runtime_backend();
+  CHECK(runtime_backend.trigger_physical_event(program.event, xronos::value::make<xronos::abi::Void>()) ==
+        xronos::abi::TriggerStatus::Stopped);
+  CHECK(program.executions == 1);
+}
+
+TEST_CASE("A trigger on a uid that is no physical event reports UnknownPhysicalEvent", "[backend]") {
+  StopOnEventProgram program{};
+  REQUIRE(program.engine.validate().empty());
+
+  std::thread run_thread{[&program]() { run(program.engine, ExecutionProperties{.timeout = 10s}); }};
+  auto accepted = trigger_until_accepted(program.engine, program.event);
+
+  // The run is live here. One uid names a registered element that is no
+  // physical event, the other was never registered; both report the same
+  // status.
+  auto& runtime_backend = program.engine.abi().runtime_backend();
+  auto wrong_kind_status =
+      runtime_backend.trigger_physical_event(program.reactor, xronos::value::make<xronos::abi::Void>());
+  auto unregistered_status =
+      runtime_backend.trigger_physical_event(program.reactor + 1000, xronos::value::make<xronos::abi::Void>());
+  run_thread.join();
+
+  REQUIRE(accepted == xronos::abi::TriggerStatus::Accepted);
+  CHECK(wrong_kind_status == xronos::abi::TriggerStatus::UnknownPhysicalEvent);
+  CHECK(unregistered_status == xronos::abi::TriggerStatus::UnknownPhysicalEvent);
+}
+
+// The lookup-based path stays for consumers compiled against ABI 1.0.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+TEST_CASE("The ABI 1.0 trigger path still delivers events", "[backend]") {
+  StopOnEventProgram program{};
+  REQUIRE(program.engine.validate().empty());
+
+  std::atomic<bool> done{false};
+  std::thread run_thread{[&program, &done]() {
+    run(program.engine, ExecutionProperties{.timeout = 10s});
+    done.store(true);
+  }};
+
+  // Poll the lookup facade until run() publishes the prepared program, then
+  // fire until the shutdown reaction ends the run. The status-less trigger
+  // gives no feedback, so fires before the live window opens are simply
+  // dropped and the loop fires again.
+  xronos::abi::ExternalTrigger* trigger{nullptr};
+  while (trigger == nullptr) {
+    trigger = program.engine.abi().runtime_backend().get_external_trigger(program.event);
+  }
+  while (!done.load()) {
+    trigger->trigger(xronos::value::make<xronos::abi::Void>());
+    std::this_thread::sleep_for(1ms);
+  }
+  run_thread.join();
+
+  CHECK(program.executions >= 1);
+}
+#pragma GCC diagnostic pop
+
+TEST_CASE("Triggers racing the end of a run drain before teardown", "[backend]") {
+  constexpr std::size_t worker_count = 4;
+  // The interesting interleavings -- a delivery in flight while run()
+  // retires the gate, and attempts arriving just after -- are only a few
+  // instructions wide, so the race is retried many times.
+  constexpr std::size_t repetitions = 100;
+
+  for (std::size_t repetition = 0; repetition < repetitions; repetition++) {
+    CAPTURE(repetition);
+
+    std::array<bool, worker_count> sane{};
+    std::array<bool, worker_count> accepted{};
+    std::vector<std::thread> workers{};
+    workers.reserve(worker_count);
+    {
+      StopOnEventProgram program{};
+      REQUIRE(program.engine.validate().empty());
+      std::barrier barrier{static_cast<std::ptrdiff_t>(worker_count + 1)};
+
+      // Workers hammer the trigger while the main thread lets run() return.
+      // The gate retires when run() returns, so every worker observes
+      // Stopped and exits before the engine leaves this scope. Workers only
+      // record; the checks run after the joins.
+      for (std::size_t index = 0; index < worker_count; index++) {
+        workers.emplace_back([&program, &barrier, &sane_slot = sane.at(index), &accepted_slot = accepted.at(index)]() {
+          barrier.arrive_and_wait();
+          bool only_sane_statuses = true;
+          while (true) {
+            auto status = program.engine.abi().runtime_backend().trigger_physical_event(
+                program.event, xronos::value::make<xronos::abi::Void>());
+            if (status == xronos::abi::TriggerStatus::Stopped) {
+              break;
+            }
+            if (status == xronos::abi::TriggerStatus::Accepted) {
+              accepted_slot = true;
+            } else if (status != xronos::abi::TriggerStatus::NotStarted) {
+              only_sane_statuses = false;
+            }
+          }
+          sane_slot = only_sane_statuses;
+        });
+      }
+
+      barrier.arrive_and_wait();
+      // The first accepted fire triggers the shutdown reaction, so the run
+      // ends while the workers keep hammering.
+      run(program.engine, ExecutionProperties{.timeout = 10s});
+      for (auto& worker : workers) {
+        worker.join();
+      }
+      workers.clear();
+      // The engine is destroyed here, after every worker observed Stopped.
+    }
+
+    for (bool only_sane_statuses : sane) {
+      CHECK(only_sane_statuses);
+    }
+    // The run ends through the shutdown reaction, so some worker's fire was
+    // accepted; without this the repetition would not have raced a live
+    // delivery against the retiring gate at all.
+    CHECK(std::ranges::any_of(accepted, [](bool flag) { return flag; }));
+  }
+}
+
+TEST_CASE("A stop request ends a run promptly and runs the shutdown reactions", "[backend]") {
+  xronos::backend::Engine engine{};
+  auto& abi_backend = engine.abi();
+  auto reactor = abi_backend.register_top_level_reactor("main");
+  auto startup = abi_backend.register_startup("startup", reactor);
+  auto timer = abi_backend.register_periodic_timer("timer", reactor, 1h, 1h);
+  auto shutdown = abi_backend.register_shutdown("shutdown", reactor);
+
+  std::atomic<bool> started{false};
+  int timer_firings{0};
+  int shutdown_firings{0};
+  auto startup_reaction = abi_backend.register_reaction(
+      "report_started", reactor, make_callback<xronos::abi::ReactionHandler>([&started]() { started.store(true); }), 1);
+  abi_backend.register_reaction_trigger(startup_reaction, startup);
+  auto timer_reaction = abi_backend.register_reaction(
+      "count_timer", reactor, make_callback<xronos::abi::ReactionHandler>([&timer_firings]() { timer_firings++; }), 2);
+  abi_backend.register_reaction_trigger(timer_reaction, timer);
+  auto shutdown_reaction = abi_backend.register_reaction(
+      "count_shutdown", reactor,
+      make_callback<xronos::abi::ReactionHandler>([&shutdown_firings]() { shutdown_firings++; }), 3);
+  abi_backend.register_reaction_trigger(shutdown_reaction, shutdown);
+
+  engine.assemble();
+  REQUIRE(engine.validate().empty());
+
+  // The hour-long timer means only the stop request can end the run; a lost
+  // request hangs the test instead of passing it.
+  std::thread run_thread{[&engine]() { run(engine); }};
+  while (!started.load()) {
+    std::this_thread::yield();
+  }
+  engine.request_stop();
+  run_thread.join();
+
+  CHECK(timer_firings == 0);
+  CHECK(shutdown_firings == 1);
+  // A stop request after the run returned is a harmless no-op.
+  engine.request_stop();
+}
+
+TEST_CASE("A stop request ends a run that waits for external events", "[backend]") {
+  xronos::backend::Engine engine{};
+  auto& abi_backend = engine.abi();
+  auto reactor = abi_backend.register_top_level_reactor("main");
+  auto startup = abi_backend.register_startup("startup", reactor);
+  auto event = abi_backend.register_physical_event("event", reactor);
+  auto shutdown = abi_backend.register_shutdown("shutdown", reactor);
+
+  std::atomic<bool> started{false};
+  int event_firings{0};
+  int shutdown_firings{0};
+  auto startup_reaction = abi_backend.register_reaction(
+      "report_started", reactor, make_callback<xronos::abi::ReactionHandler>([&started]() { started.store(true); }), 1);
+  abi_backend.register_reaction_trigger(startup_reaction, startup);
+  auto event_reaction = abi_backend.register_reaction(
+      "count_event", reactor, make_callback<xronos::abi::ReactionHandler>([&event_firings]() { event_firings++; }), 2);
+  abi_backend.register_reaction_trigger(event_reaction, event);
+  auto shutdown_reaction = abi_backend.register_reaction(
+      "count_shutdown", reactor,
+      make_callback<xronos::abi::ReactionHandler>([&shutdown_firings]() { shutdown_firings++; }), 3);
+  abi_backend.register_reaction_trigger(shutdown_reaction, shutdown);
+
+  engine.assemble();
+  REQUIRE(engine.validate().empty());
+
+  // With a physical event source and no timeout the scheduler would wait for
+  // external events forever, so only the stop request can end the run.
+  std::thread run_thread{[&engine]() { run(engine); }};
+  while (!started.load()) {
+    std::this_thread::yield();
+  }
+  engine.request_stop();
+  run_thread.join();
+
+  CHECK(event_firings == 0);
+  CHECK(shutdown_firings == 1);
+}
+
+TEST_CASE("A stop requested before the run starts is honored once it starts", "[backend]") {
+  xronos::backend::Engine engine{};
+  auto& abi_backend = engine.abi();
+  auto reactor = abi_backend.register_top_level_reactor("main");
+  auto timer = abi_backend.register_periodic_timer("timer", reactor, 1h, 1h);
+  auto shutdown = abi_backend.register_shutdown("shutdown", reactor);
+
+  int timer_firings{0};
+  int shutdown_firings{0};
+  auto timer_reaction = abi_backend.register_reaction(
+      "count_timer", reactor, make_callback<xronos::abi::ReactionHandler>([&timer_firings]() { timer_firings++; }), 1);
+  abi_backend.register_reaction_trigger(timer_reaction, timer);
+  auto shutdown_reaction = abi_backend.register_reaction(
+      "count_shutdown", reactor,
+      make_callback<xronos::abi::ReactionHandler>([&shutdown_firings]() { shutdown_firings++; }), 2);
+  abi_backend.register_reaction_trigger(shutdown_reaction, shutdown);
+
+  engine.assemble();
+  REQUIRE(engine.validate().empty());
+
+  // The request precedes run(), so no handle exists to forward it to: the
+  // engine latches it and run() replays it right after publishing the
+  // prepared program. The hour-long timer means only the replayed stop can
+  // end the run; a dropped request hangs the test instead of passing it.
+  engine.request_stop();
+  run(engine);
+
+  CHECK(timer_firings == 0);
+  CHECK(shutdown_firings == 1);
 }
 
 TEST_CASE("A program can only run once per backend", "[backend]") {
@@ -416,6 +929,70 @@ TEST_CASE("Validation sees connections added after assembly", "[backend]") {
   CHECK_FALSE(engine.validate().empty());
 }
 
+TEST_CASE("A zero-delay cycle through nested port access is rejected", "[backend]") {
+  xronos::backend::Engine engine{};
+  auto& abi_backend = engine.abi();
+  auto parent = abi_backend.register_top_level_reactor("main");
+  auto child = abi_backend.register_reactor("sub", parent);
+  auto child_input = abi_backend.register_input_port("in", child);
+  auto child_output = abi_backend.register_output_port("out", child);
+
+  // The child forwards its input to its output with zero delay, and the
+  // parent reaction feeds the output back to the input by direct port
+  // access. No connection is involved, yet the cycle is real.
+  auto forward =
+      abi_backend.register_reaction("forward", child, make_callback<xronos::abi::ReactionHandler>([]() {}), 1);
+  abi_backend.register_reaction_trigger(forward, child_input);
+  abi_backend.register_reaction_effect(forward, child_output);
+  auto loop_back =
+      abi_backend.register_reaction("loop_back", parent, make_callback<xronos::abi::ReactionHandler>([]() {}), 1);
+  abi_backend.register_reaction_trigger(loop_back, child_output);
+  abi_backend.register_reaction_effect(loop_back, child_input);
+
+  engine.assemble();
+  auto errors = engine.validate();
+  REQUIRE_FALSE(errors.empty());
+  CHECK_THAT(errors.front(), Catch::Matchers::ContainsSubstring("dependency cycle"));
+  CHECK_THAT(errors.front(), Catch::Matchers::ContainsSubstring("main.loop_back"));
+  CHECK_THAT(errors.front(), Catch::Matchers::ContainsSubstring("main.sub.forward"));
+  CHECK_THAT(errors.front(), Catch::Matchers::ContainsSubstring("direct accesses"));
+}
+
+TEST_CASE("An effect on a connected port is rejected", "[backend]") {
+  xronos::backend::Engine engine{};
+  auto& abi_backend = engine.abi();
+  auto reactor = abi_backend.register_top_level_reactor("main");
+  auto startup = abi_backend.register_startup("startup", reactor);
+  auto child = abi_backend.register_reactor("sub", reactor);
+  auto child_input = abi_backend.register_input_port("in", child);
+  auto input = abi_backend.register_input_port("in", reactor);
+
+  auto reaction =
+      abi_backend.register_reaction("write", reactor, make_callback<xronos::abi::ReactionHandler>([]() {}), 1);
+  abi_backend.register_reaction_trigger(reaction, startup);
+
+  // The parent both forwards its input to the child's input and writes that
+  // input directly. Each declaration respects the hierarchy on its own; only
+  // their combination is invalid. The check inspects the assembled model, so
+  // the declaration order of the effect and the connection must not matter.
+  SECTION("effect declared before the connection") {
+    abi_backend.register_reaction_effect(reaction, child_input);
+    abi_backend.add_connection(input, child_input);
+  }
+  SECTION("connection declared before the effect") {
+    abi_backend.add_connection(input, child_input);
+    abi_backend.register_reaction_effect(reaction, child_input);
+  }
+
+  engine.assemble();
+  auto errors = engine.validate();
+  REQUIRE_FALSE(errors.empty());
+  CHECK_THAT(errors.front(), Catch::Matchers::ContainsSubstring("may not be used as a reaction effect"));
+  CHECK_THAT(errors.front(), Catch::Matchers::ContainsSubstring("main.write"));
+  CHECK_THAT(errors.front(), Catch::Matchers::ContainsSubstring("main.sub.in"));
+  CHECK_THAT(errors.front(), Catch::Matchers::ContainsSubstring("main.in"));
+}
+
 TEST_CASE("Connections are rejected once a run is prepared", "[backend]") {
   xronos::backend::Engine engine{};
   auto& abi_backend = engine.abi();
@@ -426,6 +1003,30 @@ TEST_CASE("Connections are rejected once a run is prepared", "[backend]") {
   REQUIRE(engine.validate().empty());
   run(engine);
   CHECK_THROWS_AS(abi_backend.add_connection(output, input), xronos::abi::ValidationError);
+}
+
+TEST_CASE("Trigger declarations are rejected once a run is prepared", "[backend]") {
+  xronos::backend::Engine engine{};
+  auto& abi_backend = engine.abi();
+  auto reactor = abi_backend.register_top_level_reactor("main");
+  auto input = abi_backend.register_input_port("in", reactor);
+  auto reaction = abi_backend.register_reaction("r", reactor, make_callback<xronos::abi::ReactionHandler>([]() {}), 1);
+  engine.assemble();
+  REQUIRE(engine.validate().empty());
+  run(engine);
+  CHECK_THROWS_AS(abi_backend.register_reaction_trigger(reaction, input), xronos::abi::ValidationError);
+}
+
+TEST_CASE("Effect declarations are rejected once a run is prepared", "[backend]") {
+  xronos::backend::Engine engine{};
+  auto& abi_backend = engine.abi();
+  auto reactor = abi_backend.register_top_level_reactor("main");
+  auto output = abi_backend.register_output_port("out", reactor);
+  auto reaction = abi_backend.register_reaction("r", reactor, make_callback<xronos::abi::ReactionHandler>([]() {}), 1);
+  engine.assemble();
+  REQUIRE(engine.validate().empty());
+  run(engine);
+  CHECK_THROWS_AS(abi_backend.register_reaction_effect(reaction, output), xronos::abi::ValidationError);
 }
 
 TEST_CASE("A null reaction handler is rejected", "[backend]") {
@@ -789,18 +1390,13 @@ TEST_CASE("A cross-boundary connection round-trips values through both codecs", 
   engine.add_cross_boundary_connection(output, input, BoundaryCrossing::Both);
 
   (void)register_int_send(abi_backend, reactor, "send", startup, output, 1, 42);
-  int at_source{-1};
-  (void)register_int_probe(abi_backend, reactor, "observe", output, 2, at_source);
   int received{-1};
-  (void)register_int_probe(abi_backend, reactor, "receive", input, 3, received);
+  (void)register_int_probe(abi_backend, reactor, "receive", input, 2, received);
 
   engine.assemble();
   REQUIRE(engine.validate().empty());
   run(engine);
 
-  // The source port's own trigger sees the original box, untouched by the
-  // codecs.
-  CHECK(at_source == 42);
   CHECK(received == 1042);
   CHECK(producer.serialized == 1);
   CHECK(producer.deserialized == 0);
@@ -933,8 +1529,9 @@ TEST_CASE("A cross-boundary connection forwarded on the consumer side re-encodes
   xronos::backend::Engine engine{};
   auto& abi_backend = engine.abi();
   auto reactor = abi_backend.register_top_level_reactor("main");
-  auto startup = abi_backend.register_startup("startup", reactor);
-  auto source = abi_backend.register_output_port("source", reactor);
+  auto child = abi_backend.register_reactor("sub", reactor);
+  auto startup = abi_backend.register_startup("startup", child);
+  auto source = abi_backend.register_output_port("source", child);
   auto boundary = abi_backend.register_output_port("boundary", reactor);
   auto sink = abi_backend.register_input_port("sink", reactor);
 
@@ -942,12 +1539,13 @@ TEST_CASE("A cross-boundary connection forwarded on the consumer side re-encodes
   CodecCounters consumer{};
   abi_backend.set_port_serializer(source, make_codec<IntCodec>(producer));
   abi_backend.set_port_serializer(boundary, make_codec<IntCodec>(consumer, [](int value) { return value + 7; }));
-  // The boundary crossing sits between source and boundary; the plain
-  // connection forwards onwards to a port with no serializer at all.
+  // The boundary crossing sits between the child's source and the parent's
+  // boundary port; the plain connection forwards onwards to a port with no
+  // serializer at all.
   engine.add_cross_boundary_connection(source, boundary, BoundaryCrossing::Both);
   abi_backend.add_connection(boundary, sink);
 
-  (void)register_int_send(abi_backend, reactor, "send", startup, source, 1, 42);
+  (void)register_int_send(abi_backend, child, "send", startup, source, 1, 42);
   int received{-1};
   (void)register_int_probe(abi_backend, reactor, "receive", sink, 2, received);
 
@@ -967,21 +1565,22 @@ TEST_CASE("A cross-boundary connection forwarded on the producer side re-encodes
   xronos::backend::Engine engine{};
   auto& abi_backend = engine.abi();
   auto reactor = abi_backend.register_top_level_reactor("main");
-  auto startup = abi_backend.register_startup("startup", reactor);
-  auto source = abi_backend.register_output_port("source", reactor);
+  auto child = abi_backend.register_reactor("sub", reactor);
+  auto startup = abi_backend.register_startup("startup", child);
+  auto source = abi_backend.register_output_port("source", child);
   auto boundary = abi_backend.register_output_port("boundary", reactor);
   auto sink = abi_backend.register_input_port("sink", reactor);
 
   CodecCounters producer{};
   CodecCounters consumer{};
-  // The plain connection forwards the source's box to the boundary; only the
-  // boundary and the sink carry serializers.
+  // The plain connection forwards the child source's box to the parent's
+  // boundary port; only the boundary and the sink carry serializers.
   abi_backend.set_port_serializer(boundary, make_codec<IntCodec>(producer));
   abi_backend.set_port_serializer(sink, make_codec<IntCodec>(consumer, [](int value) { return value + 7; }));
   abi_backend.add_connection(source, boundary);
   engine.add_cross_boundary_connection(boundary, sink, BoundaryCrossing::Both);
 
-  (void)register_int_send(abi_backend, reactor, "send", startup, source, 1, 42);
+  (void)register_int_send(abi_backend, child, "send", startup, source, 1, 42);
   int received{-1};
   (void)register_int_probe(abi_backend, reactor, "receive", sink, 2, received);
 
@@ -998,8 +1597,9 @@ TEST_CASE("A pass-through chain re-encodes per boundary in order", "[backend]") 
   xronos::backend::Engine engine{};
   auto& abi_backend = engine.abi();
   auto reactor = abi_backend.register_top_level_reactor("main");
-  auto startup = abi_backend.register_startup("startup", reactor);
-  auto first = abi_backend.register_output_port("first", reactor);
+  auto child = abi_backend.register_reactor("sub", reactor);
+  auto startup = abi_backend.register_startup("startup", child);
+  auto first = abi_backend.register_output_port("first", child);
   auto middle = abi_backend.register_output_port("middle", reactor);
   auto last = abi_backend.register_input_port("last", reactor);
 
@@ -1014,7 +1614,7 @@ TEST_CASE("A pass-through chain re-encodes per boundary in order", "[backend]") 
   engine.add_cross_boundary_connection(first, middle, BoundaryCrossing::Both);
   engine.add_cross_boundary_connection(middle, last, BoundaryCrossing::Both);
 
-  (void)register_int_send(abi_backend, reactor, "send", startup, first, 1, 42);
+  (void)register_int_send(abi_backend, child, "send", startup, first, 1, 42);
   int received{-1};
   (void)register_int_probe(abi_backend, reactor, "receive", last, 2, received);
 
@@ -1035,8 +1635,9 @@ TEST_CASE("An exit and entry pair round-trips through a serializer-less relay po
   xronos::backend::Engine engine{};
   auto& abi_backend = engine.abi();
   auto reactor = abi_backend.register_top_level_reactor("main");
-  auto startup = abi_backend.register_startup("startup", reactor);
-  auto output = abi_backend.register_output_port("out", reactor);
+  auto child = abi_backend.register_reactor("sub", reactor);
+  auto startup = abi_backend.register_startup("startup", child);
+  auto output = abi_backend.register_output_port("out", child);
   auto relay = abi_backend.register_output_port("relay", reactor);
   auto input = abi_backend.register_input_port("in", reactor);
 
@@ -1049,7 +1650,7 @@ TEST_CASE("An exit and entry pair round-trips through a serializer-less relay po
   engine.add_cross_boundary_connection(output, relay, BoundaryCrossing::Exit);
   engine.add_cross_boundary_connection(relay, input, BoundaryCrossing::Entry);
 
-  (void)register_int_send(abi_backend, reactor, "send", startup, output, 1, 42);
+  (void)register_int_send(abi_backend, child, "send", startup, output, 1, 42);
   int received{-1};
   (void)register_int_probe(abi_backend, reactor, "receive", input, 2, received);
 
@@ -1106,7 +1707,8 @@ TEST_CASE("An exit and entry pair requires serializers only at its exit and entr
   xronos::backend::Engine engine{};
   auto& abi_backend = engine.abi();
   auto reactor = abi_backend.register_top_level_reactor("main");
-  auto output = abi_backend.register_output_port("out", reactor);
+  auto child = abi_backend.register_reactor("sub", reactor);
+  auto output = abi_backend.register_output_port("out", child);
   auto relay = abi_backend.register_output_port("relay", reactor);
   auto input = abi_backend.register_input_port("in", reactor);
 
@@ -1120,11 +1722,12 @@ TEST_CASE("An exit and entry pair requires serializers only at its exit and entr
   // port and the entry's to port need one. The relay passes serialized
   // bytes through and stays out of the errors.
   REQUIRE(errors.size() == 2);
-  CHECK_THAT(errors[0], Catch::Matchers::ContainsSubstring("main.out") && !Catch::Matchers::ContainsSubstring("relay"));
+  CHECK_THAT(errors[0],
+             Catch::Matchers::ContainsSubstring("main.sub.out") && !Catch::Matchers::ContainsSubstring("relay"));
   CHECK_THAT(errors[1], Catch::Matchers::ContainsSubstring("main.in") && !Catch::Matchers::ContainsSubstring("relay"));
 }
 
-TEST_CASE("A throwing deserializer fails the run with both port names", "[backend]") {
+TEST_CASE("A throwing deserializer fails the run and rethrows the exception", "[backend]") {
   xronos::backend::Engine engine{};
   auto& abi_backend = engine.abi();
   auto reactor = abi_backend.register_top_level_reactor("main");
@@ -1143,9 +1746,7 @@ TEST_CASE("A throwing deserializer fails the run with both port names", "[backen
 
   engine.assemble();
   REQUIRE(engine.validate().empty());
-  CHECK_THROWS_WITH(run(engine), Catch::Matchers::ContainsSubstring("main.out") &&
-                                     Catch::Matchers::ContainsSubstring("main.in") &&
-                                     Catch::Matchers::ContainsSubstring("deliberate deserialization failure"));
+  CHECK_THROWS_WITH(run(engine), Catch::Matchers::Equals("deliberate deserialization failure"));
   CHECK(received == -1);
 }
 
