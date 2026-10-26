@@ -24,7 +24,7 @@ auto operator<<(std::ostream& os, std::chrono::time_point<std::chrono::system_cl
       std::chrono::system_clock::to_time_t(std::chrono::time_point_cast<std::chrono::system_clock::duration>(tp));
   {
     static std::mutex mutex{};
-    std::lock_guard<std::mutex> lock{mutex};
+    std::scoped_lock lock{mutex};
     // std::localtime may not be thread safe and we protect it with the lock above
     std::tm local_time = *std::localtime(&time);
     os << std::put_time(&local_time, "%Y-%m-%d %H:%M:%S");

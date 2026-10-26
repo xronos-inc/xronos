@@ -76,10 +76,10 @@ void DependencyGraph::add_intra_rector_dependencies(const core::ElementRegistry&
   for (auto& [_, reactions] : reactions_by_reactor) {
     std::ranges::sort(reactions);
     for (std::uint64_t i{0}; i + 1 < reactions.size(); i++) {
-      add_strong_dependency(reactions[i + 1].uid, reactions[i].uid);
+      add_strong_dependency(reactions.at(i + 1).uid, reactions.at(i).uid);
     }
     if (reactions.size() > 1) {
-      add_weak_dependency(reactions[0].uid, reactions[reactions.size() - 1].uid, core::Duration::zero());
+      add_weak_dependency(reactions.front().uid, reactions.back().uid, core::Duration::zero());
     }
   }
 }
@@ -166,8 +166,8 @@ auto describe_cycle(const std::vector<std::uint64_t>& cycle, const core::Element
   std::vector<DependencyConnection> cycle_connections;
   std::vector<std::uint64_t> cycle_ports;
   for (std::size_t i = 0; i < cycle.size(); i++) {
-    const auto& dependencies = strong_dependencies.at(cycle[i]);
-    auto dependency_uid = cycle[(i + 1) % cycle.size()];
+    const auto& dependencies = strong_dependencies.at(cycle.at(i));
+    auto dependency_uid = cycle.at((i + 1) % cycle.size());
     for (const auto& dep : dependencies) {
       if (dep.reaction_uid != dependency_uid) {
         continue;

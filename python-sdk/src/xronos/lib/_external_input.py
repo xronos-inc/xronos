@@ -14,8 +14,9 @@ class ExternalInput(xronos.Reactor, Generic[T]):
     """A reactor that reads inputs from an external source.
 
     This reactor can perform blocking I/O operations to read inputs from external
-    sources such as files, network sockets, stdin, etc. The external inputs are
-    scheduled on a :class:`xronos.PhysicalEvent` and forwarded to the output port.
+    sources such as files, network sockets, stdin, etc. For each external input, the
+    :class:`xronos.PhysicalEvent` source emits an event that the reactor forwards to
+    the output port.
 
     The reactor reads inputs using the provided `read_input` generator. This
     generator should perform the necessary setup and teardown operations and yield
@@ -51,8 +52,8 @@ class ExternalInput(xronos.Reactor, Generic[T]):
     #: OutputPort[T]: Emits the read inputs as events.
     output = xronos.OutputPortDeclaration[T]()
     __external_input_event = xronos.PhysicalEventDeclaration[T]()
-    # If an unhandeled exception occurs in the read_input generator, it is caught and
-    # scheduled as a physical event and raised within the runtime.
+    # If an unhandled exception occurs in the read_input generator, it is caught,
+    # emitted as a physical event, and raised within the runtime.
     __external_exception_event = xronos.PhysicalEventDeclaration[Exception]()
 
     # The timeout for the thread to join when the reactor is shutting down.
@@ -121,29 +122,29 @@ class ExternalInput(xronos.Reactor, Generic[T]):
 
     @final
     def __run_user_input_thread(self) -> None:
-        """Read external inputs and schedule them as events.
+        """Read external inputs and emit them as physical events.
 
         This method is run in a separate thread and calls the provided read_input
         generator. A `threading.Event` is used to signal the thread to stop. If
-        an unhandled exception occurs in the read_input generator, it is caught and
-        scheduled as a physical event and further raised within the runtime.
+        an unhandled exception occurs in the read_input generator, it is caught,
+        emitted as a physical event, and raised within the runtime.
 
         """
         try:
             for external_input in self.__read_input:
                 if self.__stop_thread_event.is_set():
-                    # The stop event signals that the reactor is shutting down.
+                    # The stop flag signals that the reactor is shutting down.
                     # So the last read value is discarded and the thread is stopped.
                     break
 
                 status = self.__external_input_event.trigger(external_input)
                 if status is xronos.TriggerStatus.STOPPED:
-                    # The program stopped; no further input can be delivered.
+                    # The application stopped; no further input can be delivered.
                     break
                 if status is xronos.TriggerStatus.NOT_STARTED:
                     print(
                         f"WARNING: {self.fqn} dropped an input that was read "
-                        "before the program started."
+                        "before the application started."
                     )
                 if status is xronos.TriggerStatus.UNKNOWN:
                     print(
@@ -158,7 +159,7 @@ class ExternalInput(xronos.Reactor, Generic[T]):
             status = self.__external_exception_event.trigger(e)
             if status is not xronos.TriggerStatus.ACCEPTED:
                 print(
-                    "ERROR: The exception was lost; the program is not running "
+                    "ERROR: The exception was lost; the application is not running "
                     f"(status: {status.name})."
                 )
 

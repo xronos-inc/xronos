@@ -30,7 +30,27 @@
 #include "xronos/sdk/startup.hh"
 #include "xronos/sdk/time.hh"
 
-using namespace xronos::sdk;
+using xronos::sdk::AttributeValue;
+using xronos::sdk::BaseReaction;
+using xronos::sdk::Context;
+using xronos::sdk::Duration;
+using xronos::sdk::Element;
+using xronos::sdk::Environment;
+using xronos::sdk::EnvironmentContext;
+using xronos::sdk::InputPort;
+using xronos::sdk::InvalidNameError;
+using xronos::sdk::Metric;
+using xronos::sdk::OutputPort;
+using xronos::sdk::PeriodicTimer;
+using xronos::sdk::PhysicalEvent;
+using xronos::sdk::ProgrammableTimer;
+using xronos::sdk::ReactionContext;
+using xronos::sdk::Reactor;
+using xronos::sdk::ReactorContext;
+using xronos::sdk::Shutdown;
+using xronos::sdk::Startup;
+using xronos::sdk::ValidationError;
+namespace detail = xronos::sdk::detail;
 namespace py = pybind11;
 
 // Helper class that wraps arbitrary Python objects for handling in C++.
@@ -40,7 +60,7 @@ private:
 
 public:
   // This is called from Python and we should already hold the GIL
-  GilWrapper(py::object object)
+  explicit GilWrapper(py::object object)
       : object{std::move(object)} {}
 
   ~GilWrapper() {
@@ -94,7 +114,7 @@ public:
   // Replaces Python's signal handler with the default handler and restores
   // Python's handler when destructed. This ensures that Ctrl+C aborts the
   // program immediately, but it does not raise a KeyboardInterrupt while a
-  // Xronos program is running.
+  // Xronos application is running.
   class SigintHandler {
   public:
     SigintHandler()
@@ -160,7 +180,7 @@ PYBIND11_MODULE(_cpp_sdk, mod, py::mod_gil_not_used()) {
   mod.doc() = "Python bindings for the Xronos C++ SDK";
 
   auto validation_error = py::register_exception<ValidationError>(mod, "ValidationError");
-  validation_error.doc() = "Exception that is thrown when a program reaches an invalid state.";
+  validation_error.doc() = "Exception that is thrown when an application reaches an invalid state.";
   // Overwriting the module ensures that Python tracebacks show
   // `xronos.ValidationError` instead of `xronos._cpp_sdk.ValidationError` when
   // the exception is thrown.
@@ -172,7 +192,7 @@ PYBIND11_MODULE(_cpp_sdk, mod, py::mod_gil_not_used()) {
   // never closes, which fails the docs build.
   invalid_name_error.doc() = "Exception that is thrown when creating an element with an invalid name: one that is "
                              "empty, contains whitespace or any of ``.,/*$?#@``, or is already in use within the same "
-                             "parent.";
+                             "container.";
   invalid_name_error.attr("__module__") = "xronos";
 
   py::class_<detail::SourceLocationView>(mod, "SourceLocation")

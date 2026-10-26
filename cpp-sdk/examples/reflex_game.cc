@@ -77,7 +77,7 @@ public:
     using sdk::Reaction<KeyboardInput>::Reaction;
     Trigger<void> startup_trigger{self().startup(), context()};
     void handler() final {
-      self().thread_ = std::thread([&]() {
+      self().thread_ = std::thread([&] {
         int key{0};
         while (!self().terminate_.load()) {
           key = getchar();

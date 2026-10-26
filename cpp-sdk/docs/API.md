@@ -1,7 +1,7 @@
 # Xronos C++ SDK
 
 The Xronos C++ SDK is a lightweight framework for building deterministic,
-component-based robotics applications. It supports real-time telemetry, system
+component-based robotics applications. It supports real-time telemetry, application
 visualization, and modular design with a focus on clarity, scalability, and
 correctness.
 

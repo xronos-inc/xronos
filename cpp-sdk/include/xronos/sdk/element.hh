@@ -35,15 +35,17 @@ using AttributeValue = std::variant<std::string, bool, std::int64_t, double>;
  * Exception that is thrown when creating an element with an invalid name.
  *
  * A name is invalid if it is empty, if it contains whitespace or any of
- * `. , / * $ ? # @`, or if it is already in use within the same parent.
+ * `. , / * $ ? # @`, or if it is already in use within the same container.
  */
+// NOLINTNEXTLINE(readability-redundant-qualified-alias): Doxygen skips using-declarations.
 using InvalidNameError = abi::InvalidNameError;
 
 /**
- * Base class for all reactor elements.
+ * Base class for all elements.
  *
- * Reactor elements are objects that can be contained by reactors and that have
- * special meaning to the Xronos SDK.
+ * An element is a named part of an application that the runtime tracks: a
+ * port, a timer, a physical event, startup, shutdown, a reaction, a metric, or
+ * a reactor. Its container is a reactor or the environment.
  */
 class Element {
 public:
@@ -59,7 +61,7 @@ public:
    *
    * The fully qualified name (FQN) represents the containment hierarchy. It
    * consists of the containing reactor's FQN plus the element's name separated
-   * by a `.`. For top-level reactors (those owned by the Environment), the FQN
+   * by a `.`. For top-level reactors (those contained by the Environment), the FQN
    * is equal to the name.
    *
    * @returns The element's fully qualified name.
@@ -77,7 +79,8 @@ public:
    * Annotate an element with an attribute.
    *
    * Adding the attribute only succeeds, if the given key has not been set
-   * before on the same element.
+   * before on the same element. Elements inherit the attributes of their
+   * container.
    *
    * See <a href="../../telemetry.html#attributes">Attributes</a> for more information.
    *

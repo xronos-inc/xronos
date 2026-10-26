@@ -20,7 +20,7 @@ For the full license text, see:
 Component: address_sorting
 License: BSD 3-Clause License
 License text: https://opensource.org/licenses/BSD-3-Clause
-Source: https://github.com/grpc/grpc/tree/v1.83.1/third_party/address_sorting
+Source: https://github.com/grpc/grpc/tree/v1.84.1/third_party/address_sorting
 
 For the full license text, see:
 [third-party-licenses/address_sorting_LICENSE](third-party-licenses/address_sorting_LICENSE)
@@ -28,12 +28,24 @@ For the full license text, see:
 ---
 
 Component: boringssl
-License: Mixed, see full license text
-Version c63fadbde60a2224c22189d14c4001bbd2a3a629
+Version: 2b44a3701a4788e1ef866ddc7f143060a3d196c9
+License: Apache License 2.0
+License text: https://www.apache.org/licenses/LICENSE-2.0
 Source: https://boringssl.googlesource.com/boringssl
 
 For the full license text, see:
 [third-party-licenses/boringssl_LICENSE](third-party-licenses/boringssl_LICENSE)
+
+---
+
+Component: c-ares
+Version: v1.34.5
+License: MIT License
+License text: https://opensource.org/licenses/MIT
+Source: https://github.com/c-ares/c-ares
+
+For the full license text, see:
+[third-party-licenses/c-ares_LICENSE](third-party-licenses/c-ares_LICENSE)
 
 ---
 
@@ -59,7 +71,7 @@ For the full license text, see:
 ---
 
 Component: gRPC
-Version: v1.83.1
+Version: v1.84.1
 License: Apache License 2.0
 License text: https://www.apache.org/licenses/LICENSE-2.0
 Source: https://github.com/grpc/grpc
@@ -81,7 +93,7 @@ For the full license text, see:
 ---
 
 Component: OpenTelemetry C++
-Version: v1.28.0
+Version: v1.30.0
 License: Apache License 2.0
 License text: https://www.apache.org/licenses/LICENSE-2.0
 Source: https://github.com/open-telemetry/opentelemetry-cpp
@@ -127,7 +139,7 @@ For the full license text, see:
 Component: utf8_range
 License: MIT License
 License text: https://opensource.org/licenses/MIT
-Source: https://github.com/grpc/grpc/tree/v1.83.1/third_party/utf8_range
+Source: https://github.com/grpc/grpc/tree/v1.84.1/third_party/utf8_range
 
 For the full license text, see:
 [third-party-licenses/utf8_range_LICENSE](third-party-licenses/utf8_range_LICENSE)

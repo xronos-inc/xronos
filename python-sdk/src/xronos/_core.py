@@ -10,12 +10,12 @@
 import datetime
 import enum
 import inspect
-import sys
 from collections.abc import Callable
 from typing import (
     Any,
     Generic,
     ParamSpec,
+    Self,
     TypeAlias,
     TypeVar,
     cast,
@@ -24,12 +24,6 @@ from typing import (
 )
 
 import xronos._cpp_sdk as sdk
-
-# Self is only available for Python>=3.11
-if sys.version_info >= (3, 11):
-    from typing import Self
-else:
-    from typing_extensions import Self
 
 T = TypeVar("T")
 R = TypeVar("R", bound="Reactor")
@@ -45,7 +39,7 @@ AttributeMap: TypeAlias = dict[str, AttributeValue]
 
 
 class InvalidReactionHandler(TypeError):
-    """Exception that is thrown when a reaction returns an invalid handler."""
+    """Exception raised when a reaction declaration returns an invalid handler."""
 
 
 def get_source_location() -> sdk.SourceLocation:
@@ -58,11 +52,7 @@ def get_source_location() -> sdk.SourceLocation:
     if frame.filename.endswith("typing.py"):
         frame = stack[3]
 
-    try:
-        pos = frame.positions
-    except AttributeError:
-        # Fallback for Python 3.10
-        pos = None
+    pos = frame.positions
     lineno = pos.lineno if pos and pos.lineno else frame.lineno
     end_lineno = pos.end_lineno if pos and pos.end_lineno else lineno
     col_offset = pos.col_offset if pos and pos.col_offset else 0
@@ -142,12 +132,13 @@ def _check_attributes(attributes: "dict[Any, Any] | None", *, func: str) -> None
 
 
 class Element:
-    """A reactor element.
+    """A named part of an application that the runtime tracks.
 
-    Reactor elements are objects that can be contained by reactors and that have
-    special meaning to the Xronos SDK.
+    An element is a port, a timer, a physical event, startup, shutdown, a
+    reaction, a metric, or a reactor. Its container is a reactor or the
+    environment.
 
-    Reactor elements should not be instantiated directly. Use the corresponding
+    Elements should not be instantiated directly. Use the corresponding
     ``<Element>Declaration`` classes instead.
     """
 
@@ -169,7 +160,7 @@ class Element:
 
         The fully qualified name (FQN) represents the containment hierarchy. It
         consists of the containing reactor's FQN plus the element's name
-        separated by a ``.``. For top-level reactors (those owned by the
+        separated by a ``.``. For top-level reactors (those contained by the
         environment), the FQN is equal to the name.
         """
         return self.__sdk_instance.fqn
@@ -178,7 +169,8 @@ class Element:
         """Annotate the element with an attribute.
 
         Adding the attribute only succeeds, if the given key has not been set
-        before on the same element.
+        before on the same element. Elements inherit the attributes of their
+        container.
 
         See :ref:`attributes` for more information.
 
@@ -218,8 +210,12 @@ class Element:
             raise KeyError("Overwriting an existing attribute is not permitted.")
 
 
-class ElementDescriptor(Generic[Elem]):
-    """A descriptor for a reactor element.
+class ElementDeclaration(Generic[Elem]):
+    """The base class of element declarations.
+
+    It implements the Python descriptor protocol: assigned as a class
+    attribute of a reactor, it creates and names the element when the reactor
+    is instantiated.
 
     Args:
         initializer: a callable that can be used to create the element
@@ -236,20 +232,20 @@ class ElementDescriptor(Generic[Elem]):
         self.__attributes = attributes
 
     def __set_name__(self, reactor_cls: type[Any], name: str) -> None:
-        """Record the element name and register the descriptor with the reactor class.
+        """Record the element name and register the declaration with the reactor class.
 
         This is called implicitly when assigning an instance of
-        `ElementDescriptor` to a class attribute.
+        `ElementDeclaration` to a class attribute.
         """
         assert not self.__name
         if not issubclass(reactor_cls, Reactor):
             raise TypeError(
-                f"Cannot declare the reactor element {name!r} in the class "
-                f"{reactor_cls.__qualname__!r}. Reactor elements may only be "
+                f"Cannot declare the element {name!r} in the class "
+                f"{reactor_cls.__qualname__!r}. Elements may only be "
                 "declared in subclasses of xronos.Reactor."
             )
         self.__name = name
-        reactor_cls._register_element_descriptor(self)
+        reactor_cls._register_element_declaration(self)
 
     @overload
     def __get__(self, reactor: "Reactor", _: type) -> Elem: ...
@@ -270,8 +266,8 @@ class ElementDescriptor(Generic[Elem]):
     def _name(self) -> str:
         if not self.__name:
             raise RuntimeError(
-                "The element descriptor is not registered with a reactor "
-                "class. Reactor elements must be declared as class attributes "
+                "The element declaration is not registered with a reactor "
+                "class. Elements must be declared as class attributes "
                 "of a subclass of xronos.Reactor."
             )
         return self.__name
@@ -280,7 +276,7 @@ class ElementDescriptor(Generic[Elem]):
         """Return an instance of the described element.
 
         Args:
-            reactor: the owning `Reactor`
+            reactor: the containing `Reactor`
         """
         instance = self.__initializer(self._name, reactor)
         if self.__attributes:
@@ -293,21 +289,22 @@ class EventSource(Element, Generic[T]):
 
 
 class Startup(EventSource[None]):
-    """A reactor element that emits an event when the program starts executing.
+    """An event source that emits one event as execution begins.
 
     Can be used as a reaction :class:`Trigger`.
     """
 
 
 class Shutdown(EventSource[None]):
-    """A reactor element that emits an event right before the program shuts down.
+    """An event source that emits one event before execution ends.
 
-    Can be used as a reaction :class:`Trigger`.
+    Can be used as a reaction :class:`Trigger`, or as a :class:`ShutdownEffect` to
+    stop the application.
     """
 
 
 class PeriodicTimer(EventSource[None]):
-    """A reactor element that emits events in regular intervals.
+    """An element that emits events in regular intervals.
 
     Can be used as a reaction :class:`Trigger`.
 
@@ -320,7 +317,7 @@ class PeriodicTimer(EventSource[None]):
         """The delay in between two events emitted by the timer (read-write).
 
         Raises:
-            RuntimeError: When set during program execution.
+            RuntimeError: When set during application execution.
         """
         return self.__sdk_instance.period()
 
@@ -334,7 +331,7 @@ class PeriodicTimer(EventSource[None]):
         """The delay between :attr:`~Reactor.startup` and the first event emitted by the timer (read-write).
 
         Raises:
-            RuntimeError: When set during program execution.
+            RuntimeError: When set during application execution.
         """  # noqa: E501
         return self.__sdk_instance.offset()
 
@@ -348,14 +345,14 @@ class PeriodicTimer(EventSource[None]):
         return self._get_sdk_instance(sdk.PeriodicTimer)
 
 
-class PeriodicTimerDeclaration(ElementDescriptor[PeriodicTimer]):
+class PeriodicTimerDeclaration(ElementDeclaration[PeriodicTimer]):
     """A declaration for a :class:`PeriodicTimer`.
 
     Args:
         period: The delay in between two events emitted by the timer (optional).
         offset: The delay between the :attr:`~Reactor.startup` event
             and the first event emitted by the timer (optional).
-        attributes: A dict of attributes characterizing the timer (optional).
+        attributes: A dict of attributes annotating the timer (optional).
     """
 
     def __init__(
@@ -379,7 +376,7 @@ class PeriodicTimerDeclaration(ElementDescriptor[PeriodicTimer]):
 
 
 class InputPort(EventSource[T]):
-    """A reactor element for receiving messages from other reactors.
+    """An element for receiving messages from other reactors.
 
     Input ports can be used as a reaction :class:`Trigger`
     and provide an interface for reactors to receive messages from other
@@ -400,11 +397,11 @@ class InputPort(EventSource[T]):
     """
 
 
-class InputPortDeclaration(ElementDescriptor[InputPort[T]]):
+class InputPortDeclaration(ElementDeclaration[InputPort[T]]):
     """A declaration for an :class:`InputPort[T]<InputPort>`.
 
     Args:
-        attributes: A dict of attributes characterizing the input port (optional).
+        attributes: A dict of attributes annotating the input port (optional).
 
     Type Parameters:
         T: The value type associated with messages.
@@ -422,7 +419,7 @@ class InputPortDeclaration(ElementDescriptor[InputPort[T]]):
 
 
 class OutputPort(EventSource[T]):
-    """A reactor element for sending messages to other reactors.
+    """An element for sending messages to other reactors.
 
     Output ports can be used as a :class:`PortEffect` and provide an interface
     for reactors to send messages to other reactors.
@@ -442,14 +439,14 @@ class OutputPort(EventSource[T]):
     """
 
 
-class OutputPortDeclaration(ElementDescriptor[OutputPort[T]]):
+class OutputPortDeclaration(ElementDeclaration[OutputPort[T]]):
     """A declaration for an :class:`OutputPort[T]<OutputPort>`.
 
     Args:
-        attributes: A dict of attributes characterizing the output port (optional).
+        attributes: A dict of attributes annotating the output port (optional).
 
     Type Parameters:
-        T: The type of values carried by the port.
+        T: The type of values carried by the port's messages.
     """
 
     def __init__(self, attributes: AttributeMap | None = None) -> None:
@@ -473,11 +470,11 @@ def _sdk_port(
 
 
 class ProgrammableTimer(EventSource[T]):
-    """A reactor element for scheduling new events.
+    """An event source that emits events scheduled by a reaction handler.
 
-    Programmable timers may be used by reactions to schedule new events that
-    will be emitted in the future. They can be used both as a reaction
-    :class:`Trigger` as and as a :class:`ProgrammableTimerEffect`.
+    A programmable timer emits each event at the scheduling handler's current
+    time plus a chosen delay. It can be used both as a reaction
+    :class:`Trigger` and as a :class:`ProgrammableTimerEffect`.
 
     Type Parameters:
         T: The value type associated with events emitted by the programmable
@@ -485,11 +482,11 @@ class ProgrammableTimer(EventSource[T]):
     """
 
 
-class ProgrammableTimerDeclaration(ElementDescriptor[ProgrammableTimer[T]]):
+class ProgrammableTimerDeclaration(ElementDeclaration[ProgrammableTimer[T]]):
     """A declaration for a :class:`ProgrammableTimer[T]<ProgrammableTimer>`.
 
     Args:
-        attributes: A dict of attributes characterizing the
+        attributes: A dict of attributes annotating the
             programmable timer (optional).
 
     Type Parameters:
@@ -515,10 +512,10 @@ class TriggerStatus(enum.Enum):
     """The runtime accepted the event and it is queued for processing."""
 
     NOT_STARTED = 1
-    """The program has not yet started and the event was dropped."""
+    """The application has not yet started and the event was dropped."""
 
     STOPPED = 2
-    """The program has stopped executing and the event was dropped."""
+    """The application has stopped executing and the event was dropped."""
 
     UNKNOWN = 3
     """The runtime reported a status that this SDK version does not recognize;
@@ -526,11 +523,11 @@ class TriggerStatus(enum.Enum):
 
 
 class PhysicalEvent(EventSource[T]):
-    """A reactor element for receiving events from external sources.
+    """An element for receiving events from external sources.
 
-    Physical events may be used to trigger reactions from a context outside of
-    the scope of the reactor program. These could be external event handlers that
-    respond to sensor inputs.
+    Physical events carry input arriving from outside the application, for
+    example from a sensor thread, into it. The timestamp of each event is the
+    wall-clock time at which its input arrived.
 
     Can be used as a reaction :class:`Trigger` allowing the reaction handler to
     read the associated value.
@@ -554,11 +551,11 @@ class PhysicalEvent(EventSource[T]):
         return TriggerStatus(self._get_sdk_instance(sdk.PhysicalEvent).trigger(value))
 
 
-class PhysicalEventDeclaration(ElementDescriptor[PhysicalEvent[T]]):
+class PhysicalEventDeclaration(ElementDeclaration[PhysicalEvent[T]]):
     """A declaration for a :class:`PhysicalEvent[T]<PhysicalEvent>`.
 
     Args:
-        attributes: A dict of attributes characterizing the physical event (optional).
+        attributes: A dict of attributes annotating the physical event (optional).
 
     Type Parameters:
         T: The type of values carried by emitted events.
@@ -576,10 +573,11 @@ class PhysicalEventDeclaration(ElementDescriptor[PhysicalEvent[T]]):
 
 
 class Metric(Element):
-    """A reactor element for recording numeric values to the Xronos Dashboard.
+    """An element for recording numeric values over time.
 
-    Can be used by a reaction as a :class:`MetricEffect` allowing the
-    reaction handler to record values using the metric.
+    A reaction handler records values through a :class:`MetricEffect`. The
+    metric carries a description and an optional unit, and the recorded values
+    are part of the application's telemetry.
 
     This class is not intended to be instantiated directly. Use
     :class:`MetricDeclaration` instead.
@@ -600,13 +598,13 @@ class Metric(Element):
         return self._get_sdk_instance(sdk.Metric)
 
 
-class MetricDeclaration(ElementDescriptor[Metric]):
+class MetricDeclaration(ElementDeclaration[Metric]):
     """A declaration for a :class:`Metric`.
 
     Args:
         description: A description of the metric.
         unit: The unit of the metric.
-        attributes: A dict of attributes characterizing the metric.
+        attributes: A dict of attributes annotating the metric.
     """
 
     def __init__(
@@ -633,20 +631,19 @@ class MetricDeclaration(ElementDescriptor[Metric]):
 
 
 class Environment:
-    """The entry point for assembling and executing reactor programs.
+    """The entry point for assembling and executing applications.
 
-    The environment acts as an execution context for reactor programs. It
-    manages both the creation of reactors and the execution of reactor
-    programs.
+    The environment creates and contains top-level reactors, connects them, and
+    executes the application.
 
     Args:
         fast: If set to `True`, enables a special mode of execution that skips
             waiting between executing events and instead processes events as
             fast as possible. This is relevant for testing. (optional)
-        timeout: Specifies a maximum duration for which the program executes.
-            When the program reaches the timeout it terminates and triggers
-            :attr:`~xronos.Reactor.shutdown`. This is mostly useful for
-            testing. (optional)
+        timeout: The elapsed time at which the environment requests shutdown.
+            When the application reaches it, :attr:`~xronos.Reactor.shutdown`
+            emits its event and the application terminates. This is mostly
+            useful for testing. (optional)
     """
 
     def __init__(
@@ -712,11 +709,12 @@ class Environment:
         that the timestamp at which the message is received is the timestamp at
         which it was sent plus delay.
 
+        A port may feed several connections but receives through at most one.
+        The environment connects only ports of top-level reactors.
+
         Args:
-            from_(InputPort[T] | OutputPort[T]): The port to draw the
-                connection from.
-            to(InputPort[T] | OutputPort[T]): The port to draw the connection
-                to.
+            from_(InputPort[T] | OutputPort[T]): The port to connect from.
+            to(InputPort[T] | OutputPort[T]): The port to connect to.
             delay(~datetime.timedelta | None): The delay to apply to messages.
                 (optional)
 
@@ -742,9 +740,9 @@ class Environment:
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> R:
-        """Create a new reactor.
+        """Create a top-level reactor.
 
-        A factory method for instantiating and registering a new reactor.
+        A factory method for instantiating a reactor contained by the environment.
 
         Args:
             name: Name of the reactor to be instantiated.
@@ -776,25 +774,26 @@ class Environment:
         return reactor
 
     def execute(self) -> None:
-        """Execute the reactor program.
+        """Execute the application.
 
-        Initiates the execution of a reactor program. This triggers
-        :attr:`~xronos.Reactor.startup` and instructs the runtime to start
-        processing reactions.
+        Initiates the execution of an application. :attr:`~xronos.Reactor.startup`
+        emits an event in every reactor, and the runtime starts processing
+        reactions.
 
-        Returns when the reactor program terminates. The reactor program
+        Returns when the application terminates. The application
         terminates when there are no more events, after calling
         :meth:`~xronos.ShutdownEffect.trigger_shutdown()` on a
         :class:`ShutdownEffect`, or when it reaches the ``timeout``
         configured on the environment.
 
-        An exception raised by a reaction handler also terminates the program.
+        An exception raised by a reaction handler also terminates the application.
         The runtime then stops invoking reaction handlers; a handler that is
         about to start may still run. Shutdown reactions run in any case, and
         :meth:`execute` reraises the first exception.
 
         Raises:
-            ValidationError: When the program is invalid or reaches an invalid state.
+            ValidationError: When the application is invalid or reaches an invalid
+                state.
         """
         return self.__sdk_env.execute()
 
@@ -838,15 +837,15 @@ class Reactor(Element):
         )
         self.__initialized = True
 
-        #: Dictionary of contained reactor elements
+        #: Dictionary of contained elements
         self.__elements: dict[str, Element] = {}
-        # Create a dict of uniquely named element descriptors. This allows
-        # classes to override descriptors in the base class.
-        unique_element_descriptors = {
-            desc._name: desc for desc in type(self).__element_descriptors
+        # Create a dict of uniquely named element declarations. This allows
+        # classes to override declarations in the base class.
+        unique_element_declarations = {
+            desc._name: desc for desc in type(self).__element_declarations
         }
         # Initialize all contained elements
-        for name, desc in unique_element_descriptors.items():
+        for name, desc in unique_element_declarations.items():
             self.__elements[name] = desc._create_instance(self)
 
         #: List of contained reactors.
@@ -904,24 +903,24 @@ class Reactor(Element):
     def __init_subclass__(cls) -> None:
         """Initialize any subclass of `Reactor`."""
         super().__init_subclass__()
-        cls.__check_for_wrapped_descriptors()
+        cls.__check_for_wrapped_declarations()
         cls.__init_attributes()
 
     @classmethod
-    def __check_for_wrapped_descriptors(cls) -> None:
-        """Reject element descriptors wrapped in a staticmethod or classmethod.
+    def __check_for_wrapped_declarations(cls) -> None:
+        """Reject element declarations wrapped in a staticmethod or classmethod.
 
         A staticmethod or classmethod wrapper does not forward __set_name__,
-        so a wrapped descriptor would never register and its element would be
+        so a wrapped declaration would never register and its element would be
         dropped silently.
         """
         for name, value in cls.__dict__.items():
             if not isinstance(value, (staticmethod, classmethod)):
                 continue
             wrapper = cast("staticmethod[..., Any] | classmethod[Any, ..., Any]", value)
-            if isinstance(wrapper.__func__, ElementDescriptor):
+            if isinstance(wrapper.__func__, ElementDeclaration):
                 raise TypeError(
-                    f"The reactor element {name!r} in class {cls.__qualname__!r} "
+                    f"The element {name!r} in class {cls.__qualname__!r} "
                     "is wrapped in a staticmethod or classmethod. Remove the "
                     "staticmethod or classmethod decorator."
                 )
@@ -933,28 +932,28 @@ class Reactor(Element):
         This is used to ensure that each subclass keeps track of its
         reactions individually.
         """
-        if "_Reactor__element_descriptors" not in cls.__dict__:
-            #: List of element descriptors
-            cls.__element_descriptors = cls.__get_base_element_descriptors()
+        if "_Reactor__element_declarations" not in cls.__dict__:
+            #: List of element declarations
+            cls.__element_declarations = cls.__get_base_element_declarations()
 
     @classmethod
-    def __get_base_element_descriptors(cls) -> list["ElementDescriptor[Any]"]:
-        """Retrieve the element descriptors of all base classes."""
-        descriptors = list["ElementDescriptor[Any]"]()
+    def __get_base_element_declarations(cls) -> list["ElementDeclaration[Any]"]:
+        """Retrieve the element declarations of all base classes."""
+        declarations = list["ElementDeclaration[Any]"]()
         base = cls.__get_base_reactor()
         if base:
-            for desc in base.__element_descriptors:
-                descriptors.append(desc)
-        return descriptors
+            for desc in base.__element_declarations:
+                declarations.append(desc)
+        return declarations
 
     @classmethod
-    def _register_element_descriptor(cls, descriptor: "ElementDescriptor[Any]"):
-        """Register an element descriptor."""
+    def _register_element_declaration(cls, declaration: "ElementDeclaration[Any]"):
+        """Register an element declaration."""
         # need to initialize the class attributes as this is called from
         # __set_name__ which is called before __init_submodules.
         cls.__init_attributes()
-        assert descriptor not in cls.__element_descriptors
-        cls.__element_descriptors.append(descriptor)
+        assert declaration not in cls.__element_declarations
+        cls.__element_declarations.append(declaration)
 
     def _get_element(self, name: str) -> Element:
         if not hasattr(self, "_Reactor__initialized"):
@@ -1012,7 +1011,7 @@ class Reactor(Element):
     def startup(self) -> Startup:
         """Startup event source.
 
-        Triggers once when the program execution starts.
+        Emits one event as execution begins.
         """
         return Startup(self.__sdk_instance.startup)
 
@@ -1020,7 +1019,7 @@ class Reactor(Element):
     def shutdown(self) -> Shutdown:
         """Shutdown event source.
 
-        Triggers once right before the program execution ends.
+        Emits one event before execution ends.
         """
         return Shutdown(self.__sdk_instance.shutdown)
 
@@ -1085,13 +1084,15 @@ class Reactor(Element):
         that the timestamp at which the message is received is the timestamp at
         which it was sent plus delay.
 
+        A port may feed several connections but receives through at most one.
+        A reactor connects only its own ports and those of the reactors it
+        directly contains, never deeper or across.
+
         Also see `Environment.connect`.
 
         Args:
-            from_(InputPort[T] | OutputPort[T]): The port to draw the
-                connection from.
-            to(InputPort[T] | OutputPort[T]): The port to draw the connection
-                to.
+            from_(InputPort[T] | OutputPort[T]): The port to connect from.
+            to(InputPort[T] | OutputPort[T]): The port to connect to.
             delay(~datetime.timedelta | None): The delay to apply to messages.
                 (optional)
 
@@ -1117,9 +1118,9 @@ class Reactor(Element):
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> R:
-        """Create a nested reactor.
+        """Create a contained reactor.
 
-        A factory method for instantiating and registering a new nested reactor.
+        A factory method for instantiating and registering a new contained reactor.
         In contrast to :meth:`Environment.create_reactor`, the newly created reactor
         is contained by ``self``.
 
@@ -1161,7 +1162,10 @@ class AbsentError(Exception):
 
 
 class Trigger(Generic[T]):
-    """Provides read access to an event source that a reaction is triggered by.
+    """A reaction's trigger, declared on an event source.
+
+    Through it the handler tests whether an event is present and reads its
+    value.
 
     This class is not intended to be instantiated directly. Use
     :meth:`~xronos.ReactionContext.add_trigger` instead.
@@ -1191,15 +1195,17 @@ class Trigger(Generic[T]):
 
 
 class PortEffect(Generic[T]):
-    """Allows a reaction to write data to a given :class:`InputPort` or
-    :class:`OutputPort`.
+    """A reaction's effect on an :class:`InputPort` or :class:`OutputPort`.
+
+    Through it the handler sets the port's value, sending a message to
+    connected ports.
 
     This class is not intended to be instantiated directly. Use
     :meth:`~xronos.ReactionContext.add_effect` instead.
 
     Type Args:
         T: The value type associated with the port.
-    """  # noqa: D205
+    """
 
     def __init__(self, sdk_effect: sdk.PortEffect) -> None:
         self.__sdk_effect = sdk_effect
@@ -1241,7 +1247,9 @@ class PortEffect(Generic[T]):
 
 
 class ProgrammableTimerEffect(Generic[T]):
-    """Allows a reaction to schedule future events using a :class:`ProgrammableTimer`.
+    """A reaction's effect on a :class:`ProgrammableTimer`.
+
+    Through it the handler schedules events.
 
     This class is not intended to be instantiated directly. Use
     :meth:`~xronos.ReactionContext.add_effect` instead.
@@ -1258,9 +1266,11 @@ class ProgrammableTimerEffect(Generic[T]):
     ) -> None:
         """Schedule a future event.
 
+        The timer emits the event at the current time plus ``delay``.
+
         Args:
             value: The value to be associated with the event.
-            delay: The time to wait until the new event is processed.
+            delay: The delay from the current time to the event's timestamp.
 
         Raises:
             ValidationError: If called before execution has started.
@@ -1275,7 +1285,9 @@ class ProgrammableTimerEffect(Generic[T]):
 
 
 class MetricEffect:
-    """Allows a reaction to record values using a given :class:`Metric`.
+    """A reaction's effect on a :class:`Metric`.
+
+    Through it the handler records values.
 
     This class is not intended to be instantiated directly. Use
     :meth:`~xronos.ReactionContext.add_effect` instead.
@@ -1298,7 +1310,9 @@ class MetricEffect:
 
 
 class ShutdownEffect:
-    """Allows a reaction to terminate the program.
+    """A reaction's effect on :class:`Shutdown`.
+
+    Through it the handler requests that the application stop.
 
     This class is not intended to be instantiated directly. Use
     :meth:`~xronos.ReactionContext.add_effect` instead.
@@ -1308,11 +1322,12 @@ class ShutdownEffect:
         self.__sdk_shutdown = sdk_shutdown
 
     def trigger_shutdown(self) -> None:
-        """Terminate the currently running reactor program.
+        """Terminate the currently running application.
 
-        Terminates a running program at the next convenience. After completing all
-        currently active reactions, this triggers the Shutdown event sources. Once
-        all reactions triggered by Shutdown are processed, the program terminates.
+        Terminates a running application at the next convenience. After completing all
+        currently active reactions, shutdown emits its event in every reactor. Once
+        all reactions triggered by shutdown are processed, the application
+        terminates.
 
         Raises:
             ValidationError: If called before execution has started.
@@ -1321,11 +1336,11 @@ class ShutdownEffect:
 
 
 class ReactionContext:
-    """The context passed to a reaction declaration.
+    """A reaction's context, through which it declares its triggers and effects.
 
     An instance is passed automatically to any method decorated with
-    :deco:`reaction` or :deco:`reaction_with_deadline`. Use it to declare the
-    reaction's triggers and effects, and to read the reaction-scoped timing API.
+    :deco:`reaction` or :deco:`reaction_with_deadline`. It also carries the
+    reaction-scoped timing API.
     The reaction handler may capture the context object in its closure to access
     the timing API during execution.
 
@@ -1342,8 +1357,8 @@ class ReactionContext:
     def add_trigger(self, event_source: EventSource[T]) -> Trigger[T]:
         """Declare a reaction trigger.
 
-        When the triggering event source emits an event, the reaction that
-        declares the trigger will be invoked automatically.
+        The reaction handler is invoked once per timestamp at which any of the
+        reaction's triggers emits an event.
 
         Args:
             event_source: The event source to declare as the reaction trigger.
@@ -1394,11 +1409,13 @@ class ReactionContext:
     ) -> PortEffect[T] | ProgrammableTimerEffect[T] | MetricEffect | ShutdownEffect:
         """Declare a reaction effect.
 
-        An effect provides read and write access to the referenced element, but
-        does not trigger the reaction.
+        An effect lets the reaction handler produce events or values on the
+        element: a port to set, a programmable timer to schedule, a metric to
+        record, or shutdown to request. Declaring an effect alone never invokes
+        the handler.
 
         Args:
-            target: The reactor element to declare as the reaction effect.
+            target: The element to declare as the reaction effect.
 
         Returns:
             A new effect object that can be used by the reaction handler to
@@ -1428,16 +1445,17 @@ class ReactionContext:
         """The current time as provided by the internal clock (read-only).
 
         This does not read wall-clock time. The Xronos runtime uses an internal
-        clock to control how a program advances. The internal clock does not
-        advance while a reaction handler executes, so this value does not change
-        while the handler runs: any two reads within the same handler return the
-        same value.
+        clock to control how an application advances, and the current time is
+        the reading of that clock, equal to the timestamp of the triggering
+        events. The internal clock does not advance while a reaction handler
+        executes, so this value does not change while the handler runs: any two
+        reads within the same handler return the same value.
 
         This is a reaction-scoped accessor and is only meaningful while the
         reaction handler executes; values read outside a handler must not be
         relied upon.
 
-        If the program is not yet executing (for example, when accessed during
+        If the application is not yet executing (for example, when accessed during
         reaction declaration), this returns a default value: the epoch.
         """
         return self.__sdk_reaction.current_time()
@@ -1458,7 +1476,7 @@ class ReactionContext:
         reaction handler executes; values read outside a handler must not be
         relied upon.
 
-        If the program is not yet executing (for example, when accessed during
+        If the application is not yet executing (for example, when accessed during
         reaction declaration), this returns a default value: zero.
         """
         return self.__sdk_reaction.lag()
@@ -1467,16 +1485,16 @@ class ReactionContext:
     def elapsed_time(self) -> datetime.timedelta:
         """How far the internal clock has advanced since startup (read-only).
 
-        This is the difference between :attr:`current_time` and the time at
-        which the program started. It is measured on the internal clock and
-        does not depend on wall-clock time. Like :attr:`current_time`, it does
+        This is the difference between :attr:`current_time` and the timestamp
+        of the startup events. It is measured on the internal clock and does not
+        depend on wall-clock time. Like :attr:`current_time`, it does
         not change while the handler runs.
 
         This is a reaction-scoped accessor and is only meaningful while the
         reaction handler executes; values read outside a handler must not be
         relied upon.
 
-        If the program is not yet executing (for example, when accessed during
+        If the application is not yet executing (for example, when accessed during
         reaction declaration), this returns a default value: zero.
         """
         return self.__sdk_reaction.elapsed_time()
@@ -1496,7 +1514,7 @@ class ReactionContext:
         reaction handler executes; values read outside a handler must not be
         relied upon.
 
-        If no deadline was declared, or if the program is not yet executing
+        If no deadline was declared, or if the application is not yet executing
         (for example, when accessed during reaction declaration), this is
         ``None``.
         """
@@ -1519,7 +1537,7 @@ class ReactionContext:
         reaction handler executes; values read outside a handler must not be
         relied upon.
 
-        If no deadline was declared, or if the program is not executing (for
+        If no deadline was declared, or if the application is not executing (for
         example, when accessed during reaction declaration),
         :attr:`datetime.timedelta.max` is returned.
         """
@@ -1617,24 +1635,24 @@ class Reaction(Element):
         raise RuntimeError("Reactions may not be called directly")
 
 
-class ReactionDescriptor(ElementDescriptor[Reaction], Generic[R_co]):
-    """A descriptor for reactions.
+class ReactionDeclaration(ElementDeclaration[Reaction], Generic[R_co]):
+    """A declaration for a reaction.
 
     This is an implementation of the Python descriptor protocol. It is used
     to manage the declaration and instantiation of reactions. The complete
     protocol is split between this class and the `Reactor` base class.
 
-    Reaction descriptors are instantiated when the `@reaction` decorator is
+    Reaction declarations are instantiated when the `@reaction` decorator is
     used (see :deco:`reaction`). The annotated function is expected to
     accept a reactor instance and a :class:`ReactionContext` as arguments
     and to return a reaction handler. The function is expected to use the
-    given reaction context to declare the reaction's dependencies.
+    given reaction context to declare the reaction's causal interface.
 
     Args:
         declaration: A callable that accepts a reactor and a reaction
             context as arguments and returns a reaction handler. The
-            callable is responsible for declaring reaction dependencies
-            using the provided reaction context.
+            callable is responsible for declaring the reaction's triggers and
+            effects using the provided reaction context.
         source_location: source location to be associated with the reaction
         deadline: An optional relative deadline for the reaction (see
             :deco:`reaction`).
@@ -1687,18 +1705,18 @@ def _check_reaction_declaration(declaration: object) -> None:
         ) from None
 
 
-def _make_reaction_descriptor(
+def _make_reaction_declaration(
     declaration: Callable[[R, ReactionContext], Callable[[], None]],
     source_location: sdk.SourceLocation,
     deadline: datetime.timedelta | None,
-) -> ReactionDescriptor[R]:
+) -> ReactionDeclaration[R]:
     _check_reaction_declaration(declaration)
-    return ReactionDescriptor[R](declaration, source_location, deadline)
+    return ReactionDeclaration[R](declaration, source_location, deadline)
 
 
 def reaction(
     declaration: Callable[[R, ReactionContext], Callable[[], None]],
-) -> ReactionDescriptor[R]:
+) -> ReactionDeclaration[R]:
     """Decorator that is used to declare reactions.
 
     Args:
@@ -1710,14 +1728,14 @@ def reaction(
     To declare a reaction with a deadline, use :deco:`reaction_with_deadline`
     instead.
     """
-    return _make_reaction_descriptor(declaration, get_source_location(), None)
+    return _make_reaction_declaration(declaration, get_source_location(), None)
 
 
 def reaction_with_deadline(
     *,
     deadline: datetime.timedelta,
 ) -> Callable[
-    [Callable[[R, ReactionContext], Callable[[], None]]], ReactionDescriptor[R]
+    [Callable[[R, ReactionContext], Callable[[], None]]], ReactionDeclaration[R]
 ]:
     """Decorator that is used to declare reactions with a deadline.
 
@@ -1742,7 +1760,7 @@ def reaction_with_deadline(
 
     def decorator(
         declaration: Callable[[R, ReactionContext], Callable[[], None]],
-    ) -> ReactionDescriptor[R]:
-        return _make_reaction_descriptor(declaration, source_location, deadline)
+    ) -> ReactionDeclaration[R]:
+        return _make_reaction_declaration(declaration, source_location, deadline)
 
     return decorator

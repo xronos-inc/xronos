@@ -14,23 +14,23 @@ def test_decorator():
     def reaction(self, ctx):
         pass
 
-    descriptor = core.reaction(reaction)
-    assert isinstance(descriptor, core.ReactionDescriptor)
+    declaration = core.reaction(reaction)
+    assert isinstance(declaration, core.ReactionDeclaration)
 
 
 class TestReactionDecorator:
     @staticmethod
     def test_init():
         reaction = object()
-        desc = core.ReactionDescriptor(reaction, core.get_source_location())
-        assert desc._ElementDescriptor__name is None
+        desc = core.ReactionDeclaration(reaction, core.get_source_location())
+        assert desc._ElementDeclaration__name is None
 
     @staticmethod
     def test_set_name():
         class Reactor(core.Reactor):
             pass
 
-        desc_foo = core.ReactionDescriptor(object(), [])
+        desc_foo = core.ReactionDeclaration(object(), [])
 
         with pytest.raises(RuntimeError):
             _ = desc_foo._name
@@ -38,7 +38,7 @@ class TestReactionDecorator:
         desc_foo.__set_name__(Reactor, "foo")
         assert desc_foo._name == "foo"
 
-        desc_bar = core.ReactionDescriptor(object(), [])
+        desc_bar = core.ReactionDeclaration(object(), [])
         desc_bar.__set_name__(Reactor, "bar")
         assert desc_bar._name == "bar"
 
@@ -50,7 +50,7 @@ class TestReactionDecorator:
         env = core.Environment()
         reactor = env.create_reactor("reactor", Reactor)
         reaction_stub = mocker.Mock(spec=Callable)
-        desc = core.ReactionDescriptor(reaction_stub, core.get_source_location())
+        desc = core.ReactionDeclaration(reaction_stub, core.get_source_location())
         desc.__set_name__(Reactor, "foo")
         instance = desc._create_instance(reactor)
         assert not reaction_stub.called

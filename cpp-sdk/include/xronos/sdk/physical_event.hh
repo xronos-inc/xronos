@@ -32,8 +32,8 @@ namespace xronos::sdk {
  * The outcome of a @ref PhysicalEvent trigger attempt.
  *
  * - `TriggerStatus::Accepted`: the runtime accepted the event and it is queued for processing.
- * - `TriggerStatus::NotStarted`: the program has not started yet and the event was dropped.
- * - `TriggerStatus::Stopped`: the program has stopped and the event was dropped.
+ * - `TriggerStatus::NotStarted`: the application has not started yet and the event was dropped.
+ * - `TriggerStatus::Stopped`: the application has stopped and the event was dropped.
  * - `TriggerStatus::Unknown`: the implementation reported a status this SDK version does not recognize; the event
  *   was dropped.
  */
@@ -47,7 +47,7 @@ enum class TriggerStatus : std::uint8_t {
 namespace detail {
 
 inline auto register_physical_event(std::string_view name, const ReactorContext& context) -> std::uint64_t {
-  return register_with_location(context, [&]() {
+  return register_with_location(context, [&] {
     return get_backend(context).register_physical_event(std::string{name}, ContextAccess::get_parent_uid(context));
   });
 }
@@ -58,8 +58,8 @@ public:
       : uid_{uid}
       , program_context_{*ContextAccess::get_program_context(context)} {}
 
-  // Routes every attempt through the backend, which owns the program's
-  // live/dead state; holding no pointer into program-owned memory is what
+  // Routes every attempt through the backend, which owns the application's
+  // live/dead state; holding no pointer into application-owned memory is what
   // keeps concurrent triggers safe across the end of a run (see
   // abi::RuntimeBackend::trigger_physical_event).
   [[nodiscard]] auto trigger(abi::AnyValue&& value) -> TriggerStatus {
@@ -72,7 +72,7 @@ public:
       return TriggerStatus::Stopped;
     case abi::TriggerStatus::UnknownPhysicalEvent:
       // The uid comes from this element's registration, so the running
-      // program resolves it; this status means the SDK or the
+      // application resolves it; this status means the SDK or the
       // implementation broke that invariant. The `void` overload of
       // `PhysicalEvent::trigger` is noexcept, so there the throw
       // terminates.
@@ -92,19 +92,19 @@ private:
 } // namespace detail
 
 /**
- * A reactor element for receiving events from external sources.
+ * An element for receiving events from external sources.
  *
- * Physical events may be used to trigger reactions from a context outside of
- * the scope of the reactor program. These could be external event handlers that
- * respond to sensor inputs.
+ * Physical events carry input arriving from outside the application, for
+ * example from a sensor thread, into it. The timestamp of each event is the
+ * wall-clock time at which its input arrived.
  *
  * Can be used as a reaction @ref BaseReaction::Trigger "trigger" allowing the
  * reaction handler to read the associated value.
  *
  * @ref trigger may be called from any thread, and is safe while this element
  * and its @ref Environment are alive. This includes calls concurrent with
- * program startup, with shutdown, and with @ref Environment::execute
- * returning. Once the program has stopped, every attempt returns
+ * application startup, with shutdown, and with @ref Environment::execute
+ * returning. Once the application has stopped, every attempt returns
  * `TriggerStatus::Stopped`; sensor threads should treat that status as the
  * signal to exit.
  *
@@ -130,7 +130,7 @@ public:
    *
    * May be called from any thread while this element and its @ref
    * Environment are alive (see @ref PhysicalEvent). Events emitted while
-   * the program is not running are dropped, and the status reports why.
+   * the application is not running are dropped, and the status reports why.
    *
    * @param value The value to be associated with the emitted event.
    * @return The outcome of the attempt. `TriggerStatus::Accepted` on success.
@@ -160,7 +160,7 @@ public:
     requires(!std::is_same_v<T, void>)
   {
     if (value == nullptr) {
-      throw std::invalid_argument{"An empty Value may not be sent through a physical event."};
+      throw std::invalid_argument{"An empty Value may not be emitted through a physical event."};
     }
     return impl_.trigger(abi::AnyValue{detail::ValueAccess::unwrap(value)});
   }
@@ -176,7 +176,7 @@ public:
     // from an absent trigger refers to an *empty* value, so the pointer is
     // non-null but nothing must be emitted.
     if (view == nullptr) {
-      throw std::invalid_argument{"An absent ValueView may not be sent through a physical event."};
+      throw std::invalid_argument{"An absent ValueView may not be emitted through a physical event."};
     }
     return impl_.trigger(abi::AnyValue{*detail::ValueAccess::unwrap(view)});
   }

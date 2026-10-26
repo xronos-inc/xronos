@@ -240,15 +240,15 @@ TEST_P(ProgrammableTimerAsDelayTest, run) {
 
 INSTANTIATE_TEST_SUITE_P(delay_test, ProgrammableTimerAsDelayTest, ::testing::Values(1s, 200ms, 3s));
 
-class TestProgrammableTimerStarvationReactor : public Reactor {
+class TestProgrammableTimerQuiescenceReactor : public Reactor {
   using Reactor::Reactor;
 
   ProgrammableTimer<void> next_{"next", context()};
   unsigned count_{0};
   bool shutdown_invoked_{false};
 
-  class NextReaction : public Reaction<TestProgrammableTimerStarvationReactor> {
-    using Reaction<TestProgrammableTimerStarvationReactor>::Reaction;
+  class NextReaction : public Reaction<TestProgrammableTimerQuiescenceReactor> {
+    using Reaction<TestProgrammableTimerQuiescenceReactor>::Reaction;
     Trigger<void> startup_trigger{self().startup(), context()};
     Trigger<void> next_trigger{self().next_, context()};
     ProgrammableTimerEffect<void> next_effect{self().next_, context()};
@@ -266,8 +266,8 @@ class TestProgrammableTimerStarvationReactor : public Reactor {
     }
   };
 
-  class ShutdownReaction : public Reaction<TestProgrammableTimerStarvationReactor> {
-    using Reaction<TestProgrammableTimerStarvationReactor>::Reaction;
+  class ShutdownReaction : public Reaction<TestProgrammableTimerQuiescenceReactor> {
+    using Reaction<TestProgrammableTimerQuiescenceReactor>::Reaction;
     Trigger<void> shutdown_trigger{self().shutdown(), context()};
     void handler() final {
       EXPECT_TRUE(shutdown_trigger.is_present());
@@ -285,10 +285,10 @@ public:
   void check() const { EXPECT_TRUE(shutdown_invoked_); }
 };
 
-TEST(programmable_timers, Starvation) {
+TEST(programmable_timers, Quiescence) {
   TestEnvironment env{};
 
-  TestProgrammableTimerStarvationReactor reactor{"reactor", env.context()};
+  TestProgrammableTimerQuiescenceReactor reactor{"reactor", env.context()};
   env.execute();
 
   reactor.check();

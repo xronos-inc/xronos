@@ -6,7 +6,7 @@ software-in-the-loop (SIL) simulation.
 ## Prerequisites
 
 - xronos python library
-- Python 3.10 or later
+- Python 3.11 or later
 - Python virtual environment (optional but recommended)
 - Webots (see [installation instructions](https://cyberbotics.com/doc/guide/installation-procedure#installation-on-linux)
 

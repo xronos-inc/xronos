@@ -30,15 +30,15 @@
 namespace xronos::sdk {
 
 /**
- * @brief A Xronos program's entry point, launched with `xronos run`.
+ * @brief A reactor that `xronos run` loads as an application's unit of deployment.
  *
- * A node is the root reactor of a program that `xronos run` loads and runs, in
- * place of a hand-written `main()` and Environment. Because a Node is a Reactor,
+ * A node takes the place of a hand-written `main()` and Environment: `xronos run`
+ * loads it and runs it as the application. Because a Node is a Reactor,
  * it has the full reactor surface: define its behavior with reactions, build and
- * wire child reactors as data members using context(), and override assemble()
- * — which runs automatically when the program starts.
+ * wire contained reactors as data members using context(), and override assemble()
+ * — which runs automatically when the application starts.
  *
- * To define a node, derive from Node, add its reactions and any child reactors,
+ * To define a node, derive from Node, add its reactions and any contained reactors,
  * and register the class with @ref XRONOS_REGISTER_NODE so `xronos run` can find
  * it:
  *
@@ -81,11 +81,11 @@ protected:
    * @brief Declare @p port as part of this node's interface.
    *
    * An exported port is visible outside the node and may be connected to
-   * another node's exported port. Ports are internal unless exported.
+   * another node's exported port. A port that is not exported stays inside the node.
    * A node's interface is the set of all exported ports.
    *
    * @p port must be one of this node's own ports; exporting anything else
-   * throws. To export a child reactor's port, give the node a port
+   * throws. To export a contained reactor's port, give the node a port
    * of its own and connect the two.
    *
    * This overload exports the port under the encoding named by the
@@ -199,8 +199,8 @@ template <class NodeClass>
 }
 
 // This overload builds a reactor context for `parent` (the uid of a reactor
-// the host registered against the same backend), so the node becomes a child
-// of that reactor, exactly as if it were declared inside it.
+// the host registered against the same backend), so the node becomes a
+// contained reactor of that reactor, exactly as if it were declared inside it.
 template <class NodeClass>
 [[nodiscard]] auto create_node(const char* name, abi::Backend* backend, abi::ElementUid parent,
                                std::source_location source_location = std::source_location::current()) -> abi::Node* {
@@ -241,7 +241,7 @@ template <class NodeClass>
 //     against (the host's compatibility gate) plus the SDK version and default
 //     name; the host reads it before constructing anything.
 //   * xronos_create_top_level_node builds the node against the host's backend
-//     as a top-level reactor; xronos_create_node builds it as a child of the
+//     as a top-level reactor; xronos_create_node builds it as a contained reactor of the
 //     host reactor named by `parent`. Both delegate to detail::create_node
 //     (which wraps the backend in a borrowing program context the host keeps
 //     alive for the node's whole lifetime); the host picks one per placement.

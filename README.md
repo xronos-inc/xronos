@@ -8,7 +8,7 @@
 [![Discord](https://img.shields.io/discord/1431403540475285578?logo=discord&logoColor=white)](https://discord.gg/Azvua4wBNp)
 
 **Xronos** is a lightweight framework for building deterministic, component-based robotics applications in Python or C++.
-It supports real-time telemetry, system visualization, and modular design with a focus on clarity, scalability, and correctness.
+It supports real-time telemetry, application visualization, and modular design with a focus on clarity, scalability, and correctness.
 
 ## Features
 
@@ -17,13 +17,13 @@ It supports real-time telemetry, system visualization, and modular design with a
 - 🪶 **Lightweight**: 7MB pip install; no OS version lock-in.
 - 🧩 **Modular Architecture**: Component-based design for separation of concerns.
 - ⏱️ **Deterministic Concurrency**: Reactor-based execution model guarantees predictable behavior.
-- 🧠 **Automatic System Visualization**: Architecture diagrams generated from code.
+- 🧠 **Automatic Application Visualization**: Architecture diagrams generated from code.
 
 ## Getting Started
 
 - **Python users**: [Python Getting Started Guide](https://docs.xronos.com/python_sdk/getting_started.html)
 - **C++ users**: [C++ Getting Started Guide](https://docs.xronos.com/cpp_sdk/getting_started.html)
-- **VS Code users**: optional [Xronos VS Code Extension](https://marketplace.visualstudio.com/items?itemName=xronos.xronos) for rendering diagrams of your programs
+- **VS Code users**: optional [Xronos VS Code Extension](https://marketplace.visualstudio.com/items?itemName=xronos.xronos) for rendering diagrams of your applications
 
 ## Examples and Tutorials
 

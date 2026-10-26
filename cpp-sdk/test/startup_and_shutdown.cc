@@ -158,8 +158,8 @@ TEST(startup_and_shutdown, TestShutdownWithEffect) {
   EXPECT_NE(captured_output.find("Reactions triggered by shutdown may not have any effects"), std::string::npos);
 }
 
-TEST(startup_and_shutdown, TestStarvation) {
-  class StarvationTest : public Reactor {
+TEST(startup_and_shutdown, TestQuiescence) {
+  class QuiescenceTest : public Reactor {
   public:
     using Reactor::Reactor;
 
@@ -169,21 +169,21 @@ TEST(startup_and_shutdown, TestStarvation) {
     ProgrammableTimer<void> programmable_timer_{"timer", context()};
     bool shutdown_reaction_executed_{false};
 
-    class OnStartupReaction : public Reaction<StarvationTest> {
-      using Reaction<StarvationTest>::Reaction;
+    class OnStartupReaction : public Reaction<QuiescenceTest> {
+      using Reaction<QuiescenceTest>::Reaction;
       Trigger<void> startup_trigger_{self().startup(), context()};
       ProgrammableTimerEffect<void> timer_effect_{self().programmable_timer_, context()};
       void handler() final { timer_effect_.schedule(1s); }
     };
 
-    class OnTimerReaction : public Reaction<StarvationTest> {
-      using Reaction<StarvationTest>::Reaction;
+    class OnTimerReaction : public Reaction<QuiescenceTest> {
+      using Reaction<QuiescenceTest>::Reaction;
       Trigger<void> _{self().programmable_timer_, context()};
       void handler() final {}
     };
 
-    class OnShutdownReaction : public Reaction<StarvationTest> {
-      using Reaction<StarvationTest>::Reaction;
+    class OnShutdownReaction : public Reaction<QuiescenceTest> {
+      using Reaction<QuiescenceTest>::Reaction;
       Trigger<void> shutdown_trigger_{self().shutdown(), context()};
       void handler() final {
         EXPECT_TRUE(shutdown_trigger_.is_present());
@@ -201,7 +201,7 @@ TEST(startup_and_shutdown, TestStarvation) {
   };
 
   TestEnvironment env{};
-  StarvationTest test{"test", env.context()};
+  QuiescenceTest test{"test", env.context()};
   env.execute();
 
   EXPECT_TRUE(test.shutdown_reaction_executed());

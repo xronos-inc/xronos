@@ -18,13 +18,13 @@ auto AttributeManager::try_emplace_and_get_attribute_map(std::uint64_t uid) -> A
 }
 
 void AttributeManager::set_attribute(std::uint64_t uid, std::string_view key, const AttributeValue& value) {
-  std::lock_guard<std::mutex> lock(mutex_);
+  std::scoped_lock lock(mutex_);
   auto& current_attributes = try_emplace_and_get_attribute_map(uid);
   current_attributes[std::string{key}] = value;
 }
 
 void AttributeManager::set_attributes(std::uint64_t uid, AttributeMap attributes) {
-  std::lock_guard<std::mutex> lock(mutex_);
+  std::scoped_lock lock(mutex_);
 
   auto& current_attributes = try_emplace_and_get_attribute_map(uid);
   // Swap the current and the new attributes.
@@ -38,14 +38,14 @@ void AttributeManager::set_attributes(std::uint64_t uid, AttributeMap attributes
 }
 
 auto AttributeManager::add_attribute(std::uint64_t uid, std::string_view key, const AttributeValue& value) -> bool {
-  std::lock_guard<std::mutex> lock(mutex_);
+  std::scoped_lock lock(mutex_);
   auto& current_attributes = try_emplace_and_get_attribute_map(uid);
   auto result = current_attributes.try_emplace(std::string{key}, value);
   return result.second;
 }
 
 auto AttributeManager::add_attributes(std::uint64_t uid, AttributeMap attributes) -> bool {
-  std::lock_guard<std::mutex> lock(mutex_);
+  std::scoped_lock lock(mutex_);
   auto& current_attributes = try_emplace_and_get_attribute_map(uid);
   current_attributes.merge(attributes);
   return attributes.empty();

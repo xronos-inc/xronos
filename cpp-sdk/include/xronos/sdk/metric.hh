@@ -32,10 +32,11 @@ inline auto register_metric(std::string_view name, const ReactorContext& context
 } // namespace detail
 
 /**
- * A reactor element for recording numeric values to the Xronos Dashboard.
+ * An element for recording numeric values over time.
  *
- * Can be used as a reaction @ref BaseReaction::MetricEffect "effect" allowing
- * the reaction handler to record values using the metric.
+ * A reaction handler records values through a @ref BaseReaction::MetricEffect
+ * "metric effect". The metric carries a description and an optional unit, and
+ * the recorded values are part of the application's telemetry.
  */
 class Metric final : public Element {
 public:
@@ -82,7 +83,7 @@ private:
   }
   [[nodiscard]] auto get_recorder() noexcept -> abi::MetricRecorder* {
     if (recorder_ == nullptr) {
-      // Null until the run is prepared (see abi::RuntimeBackend).
+      // Null until the run has started (see abi::RuntimeBackend).
       recorder_ = program_context()->runtime_backend().get_metric_recorder(uid());
     }
     return recorder_;

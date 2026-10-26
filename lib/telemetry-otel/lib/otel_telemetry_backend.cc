@@ -26,12 +26,13 @@
 #include "opentelemetry/trace/noop.h"
 #include "opentelemetry/trace/provider.h"
 
-using namespace xronos::telemetry::otel;
+namespace xronos::telemetry::otel {
 
 constexpr auto BATCH_EXPORT_INTERVAL = std::chrono::milliseconds(500);
 
 auto create_exporter(std::string_view endpoint) {
-  using namespace opentelemetry::exporter::otlp;
+  using opentelemetry::exporter::otlp::OtlpGrpcExporterFactory;
+  using opentelemetry::exporter::otlp::OtlpGrpcExporterOptions;
   OtlpGrpcExporterOptions options{};
   options.endpoint = endpoint;
   options.use_ssl_credentials = endpoint.starts_with("https://");
@@ -40,7 +41,8 @@ auto create_exporter(std::string_view endpoint) {
 
 auto create_span_processor(std::string_view endpoint) {
   auto exporter = create_exporter(endpoint);
-  using namespace opentelemetry::sdk::trace;
+  using opentelemetry::sdk::trace::BatchSpanProcessorFactory;
+  using opentelemetry::sdk::trace::BatchSpanProcessorOptions;
   BatchSpanProcessorOptions options{};
   options.schedule_delay_millis = BATCH_EXPORT_INTERVAL;
   return BatchSpanProcessorFactory::Create(std::move(exporter), options);
@@ -48,7 +50,7 @@ auto create_span_processor(std::string_view endpoint) {
 
 static auto get_deployment_id() -> std::string {
   auto time = std::chrono::system_clock::now();
-  long time_since_epoch_ns = time.time_since_epoch() / std::chrono::nanoseconds(1);
+  std::int64_t time_since_epoch_ns = time.time_since_epoch() / std::chrono::nanoseconds(1);
   std::random_device platform_rng;
   // XOR with the current time in case the platform RNG does not provide the required randomness.
   // random_device's behavior is underspecified and has even been a fixed constant in at least one case:
@@ -64,19 +66,19 @@ static auto get_deployment_id() -> std::string {
 }
 
 auto create_resource(std::string_view application_name, std::string_view hostname, std::int64_t pid) {
-  using namespace opentelemetry::sdk::resource;
-  using namespace opentelemetry::semconv;
+  using opentelemetry::sdk::resource::Resource;
+  namespace semconv = opentelemetry::semconv;
   return Resource::Create({
-      {service::kServiceName, application_name},
-      {deployment::kDeploymentId, get_deployment_id()},
-      {process::kProcessPid, pid},
-      {host::kHostName, hostname},
+      {semconv::service::kServiceName, application_name},
+      {semconv::deployment::kDeploymentId, get_deployment_id()},
+      {semconv::process::kProcessPid, pid},
+      {semconv::host::kHostName, hostname},
   });
 }
 
 void OtelTelemetryBackend::initialize() {
-  using namespace opentelemetry::trace;
-  using namespace opentelemetry::sdk::trace;
+  using opentelemetry::sdk::trace::TracerProviderFactory;
+  using opentelemetry::trace::Provider;
   auto processor = create_span_processor(endpoint_);
   auto resource = create_resource(application_name_, hostname_, pid_);
   auto tracer_provider = TracerProviderFactory::Create(std::move(processor), resource);
@@ -84,7 +86,10 @@ void OtelTelemetryBackend::initialize() {
 }
 
 OtelTelemetryBackend::~OtelTelemetryBackend() {
-  using namespace opentelemetry::trace;
+  using opentelemetry::trace::NoopTracerProvider;
+  using opentelemetry::trace::Provider;
   // This will destroy the previously configured trace provider and flush all pending data
   Provider::SetTracerProvider(std::make_shared<NoopTracerProvider>());
 }
+
+} // namespace xronos::telemetry::otel

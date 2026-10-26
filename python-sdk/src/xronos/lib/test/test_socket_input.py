@@ -10,7 +10,7 @@ import pytest
 
 import xronos
 from xronos.lib import SocketInput
-from xronos.lib.test.util import AssertList
+from xronos.lib.test.util import AssertBytes, AssertList
 
 HOST = "localhost"
 
@@ -22,9 +22,7 @@ def find_free_port() -> int:
         return s.getsockname()[1]
 
 
-def tcp_client_writer(
-    host: str, port: int, data: list[bytes], sleep_between_writes: float = 0.1
-) -> None:
+def tcp_client_writer(host: str, port: int, data: list[bytes]) -> None:
     """Connect to a TCP server and write data to it."""
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         while True:
@@ -32,17 +30,12 @@ def tcp_client_writer(
                 s.connect((host, port))
                 for d in data:
                     s.sendall(d)
-                    # This sleep is necessary to avoid the server receiving all the data
-                    # in a single recv call.
-                    time.sleep(sleep_between_writes)
                 break
             except ConnectionRefusedError:
                 pass
 
 
-def tcp_server_writer(
-    host: str, port: int, data: list[bytes], sleep_between_writes: float = 0.1
-) -> None:
+def tcp_server_writer(host: str, port: int, data: list[bytes]) -> None:
     """Open TCP server and write data to a client."""
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind((host, port))
@@ -51,9 +44,6 @@ def tcp_server_writer(
         with conn:
             for d in data:
                 conn.sendall(d)
-                # This sleep is necessary to avoid the client receiving all the data
-                # in a single recv call.
-                time.sleep(sleep_between_writes)
 
 
 def udp_writer(host: str, port: int, data: list[bytes]) -> None:
@@ -75,7 +65,7 @@ def udp_writer(host: str, port: int, data: list[bytes]) -> None:
     reason="The SocketInput reactor currently does not work on MacOs",
 )
 def test_simple_tcp_server() -> None:
-    """Test ExternalInput with a generator that produces a list of values."""
+    """Receive a byte stream from a client through a TCP server."""
     port = find_free_port()
     mode = SocketInput.Mode.TCP_SERVER
     env = xronos.Environment()
@@ -83,7 +73,7 @@ def test_simple_tcp_server() -> None:
     env.connect(
         env.create_reactor("SocketInput", SocketInput, HOST, port, mode).output,
         env.create_reactor(
-            "AssertList", AssertList[bytes], testInput, debug=False
+            "AssertBytes", AssertBytes, b"".join(testInput), debug=False
         ).input_,
     )
 
@@ -100,7 +90,7 @@ def test_simple_tcp_server() -> None:
     reason="The SocketInput reactor currently does not work on MacOs",
 )
 def test_tcp_server_with_multiple_clients() -> None:
-    """Test ExternalInput with a generator that produces a list of values."""
+    """Receive one message from each of several clients through a TCP server."""
     port = find_free_port()
     mode = SocketInput.Mode.TCP_SERVER
     env = xronos.Environment()
@@ -109,7 +99,7 @@ def test_tcp_server_with_multiple_clients() -> None:
     env.connect(
         env.create_reactor("SocketInput", SocketInput, HOST, port, mode).output,
         env.create_reactor(
-            "AssertList", AssertList[bytes], testInput, debug=False
+            "AssertBytes", AssertBytes, b"".join(testInput), debug=False
         ).input_,
     )
     threads = [
@@ -130,7 +120,7 @@ def test_tcp_server_with_multiple_clients() -> None:
     reason="The SocketInput reactor currently does not work on MacOs",
 )
 def test_simple_tcp_client() -> None:
-    """Test ExternalInput with a generator that produces a list of values."""
+    """Receive a byte stream from a server through a TCP client."""
     port = find_free_port()
     mode = SocketInput.Mode.TCP_CLIENT
     env = xronos.Environment()
@@ -138,7 +128,7 @@ def test_simple_tcp_client() -> None:
     env.connect(
         env.create_reactor("SocketInput", SocketInput, HOST, port, mode).output,
         env.create_reactor(
-            "AssertList", AssertList[bytes], testInput, debug=False
+            "AssertBytes", AssertBytes, b"".join(testInput), debug=False
         ).input_,
     )
 
@@ -155,7 +145,7 @@ def test_simple_tcp_client() -> None:
     reason="The SocketInput reactor currently does not work on MacOs",
 )
 def test_simple_udp_listener() -> None:
-    """Test ExternalInput with a generator that produces a list of values."""
+    """Receive datagrams through a UDP listener."""
     port = find_free_port()
     mode = SocketInput.Mode.UDP_LISTENER
     env = xronos.Environment()

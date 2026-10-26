@@ -18,9 +18,9 @@ namespace xronos::validator {
 
 namespace {
 
-// Collects every port a subtree serializes or deserializes at that carries
+// Collects every port a segment serializes or deserializes at that carries
 // no serializer.
-void collect_ports_without_serializer(const core::DeliverySubtree& subtree, const core::ReactorModel& model,
+void collect_ports_without_serializer(const core::ConnectionSegment& segment, const core::ReactorModel& model,
                                       std::set<core::ElementID>& ports_without_serializer) {
   auto require_serializer = [&](core::ElementID uid) {
     const auto& element = model.element_registry.get(uid);
@@ -28,11 +28,11 @@ void collect_ports_without_serializer(const core::DeliverySubtree& subtree, cons
       ports_without_serializer.insert(uid);
     }
   };
-  for (const auto& serialization : subtree.serializations) {
+  for (const auto& serialization : segment.serializations) {
     require_serializer(serialization.serialize_uid);
-    for (const auto& branch : serialization.branches) {
-      require_serializer(branch.deserialize_uid);
-      collect_ports_without_serializer(branch.subtree, model, ports_without_serializer);
+    for (const auto& deserialization : serialization.deserializations) {
+      require_serializer(deserialization.deserialize_uid);
+      collect_ports_without_serializer(deserialization.segment, model, ports_without_serializer);
     }
   }
 }
@@ -46,7 +46,7 @@ auto check_cross_boundary_serializers(const core::ReactorModel& model)
   // A set keeps the messages free of duplicates when one port sits on
   // several crossings, and orders them by uid.
   std::set<core::ElementID> ports_without_serializer;
-  for (const auto& tree : model.connection_graph.compute_delivery_trees()) {
+  for (const auto& tree : model.connection_graph.compute_connection_trees()) {
     collect_ports_without_serializer(tree.root, model, ports_without_serializer);
   }
 

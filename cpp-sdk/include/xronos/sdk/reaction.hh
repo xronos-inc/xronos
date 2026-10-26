@@ -36,18 +36,23 @@
 
 /**
  * @defgroup effects effects Reaction effect classes.
+ *
+ * An effect is an element a reaction declares so that its handler may produce
+ * events or values on it: a port to set, a programmable timer to schedule, a
+ * metric to record, or shutdown to request. Declaring an effect alone never
+ * invokes the handler.
  */
 
 namespace xronos::sdk {
 /**
- * Opaque data type used for constructing reaction @ref
+ * A reaction's context, through which it declares its @ref
  * xronos::sdk::BaseReaction::Trigger "triggers" and @ref effects.
  *
  * Use BaseReaction::context() to obtain an instance of this class.
  */
 class ReactionContext {
 private:
-  ReactionContext(BaseReaction& reaction_instance)
+  explicit ReactionContext(BaseReaction& reaction_instance)
       : reaction_instance_{reaction_instance} {}
 
   std::reference_wrapper<BaseReaction> reaction_instance_;
@@ -60,7 +65,7 @@ namespace detail {
 
 [[nodiscard]] inline auto get_reaction_time_access(const detail::ProgramContext& program_context,
                                                    std::uint64_t reactor_uid) noexcept -> const abi::TimeAccess* {
-  // Null until the run is prepared (see abi::RuntimeBackend).
+  // Null until the run has started (see abi::RuntimeBackend).
   return program_context.runtime_backend().get_time_access(reactor_uid);
 }
 
@@ -72,11 +77,11 @@ namespace detail {
  * In the Xronos SDK, reactions define the behavior of a reactor. Reactions have
  * one or more @ref Trigger "triggers" and may have @ref effects. The reaction's
  * behavior is defined by overriding the handler() method, which is invoked
- * automatically for any event received on the triggers.
+ * once per timestamp at which any of the triggers emits an event.
  *
  * Typically, user reactions should not inherit from BaseReaction directly and
  * use Reaction instead as it provides additional tools for accessing other
- * reactor elements and reactor state.
+ * elements and reactor state.
  *
  * Note that reaction classes may not be instantiated directly. Use the
  * Reactor::add_reaction() factory method instead.
@@ -93,7 +98,7 @@ public:
    * be invoked directly. Use the Reactor::add_reaction() factory method
    * instead.
    */
-  BaseReaction(const ReactionProperties& properties)
+  explicit BaseReaction(const ReactionProperties& properties)
       : Element{register_reaction(properties, this), properties.name_, properties.context_}
       , parent_uid_{detail::ContextAccess::get_parent_uid(properties.context_)}
       , deadline_{properties.deadline_} {}
@@ -110,11 +115,11 @@ protected:
    * this instant.
    *
    * This should only be called from the reaction handler. If called outside of
-   * program execution (e.g. during reaction declaration), this returns
+   * application execution (e.g. during reaction declaration), this returns
    * std::nullopt.
    *
    * @returns The wall-clock instant by which the handler must complete (equal to
-   * current_time() + D), or std::nullopt if no deadline is set or the program is
+   * current_time() + D), or std::nullopt if no deadline is set or the application is
    * not executing.
    */
   [[nodiscard]] auto deadline() const noexcept -> std::optional<TimePoint>;
@@ -133,7 +138,7 @@ protected:
    * This should only be called from the reaction handler.
    *
    * @returns The remaining wall-clock duration before the deadline. If there is
-   * no deadline, or if the program is not executing (e.g. during reaction
+   * no deadline, or if the application is not executing (e.g. during reaction
    * declaration), Duration::max() is returned.
    */
   [[nodiscard]] auto slack() const noexcept -> Duration {
@@ -159,14 +164,15 @@ protected:
    * Get the current time.
    *
    * This does not read wall-clock time. The Xronos runtime uses an internal
-   * clock to control how a program advances, and this returns the current
-   * reading of that clock. The internal clock does not advance while a reaction
+   * clock to control how an application advances, and this returns the current
+   * reading of that clock, equal to the timestamp of the triggering events. The
+   * internal clock does not advance while a reaction
    * handler executes, so this value does not change while the handler runs: any
    * two reads within the same handler return the same value.
    *
    * This is a reaction-scoped accessor and is only meaningful while the
    * reaction handler executes; values read outside a handler must not be
-   * relied upon. If the program is not yet executing (for example, when called
+   * relied upon. If the application is not yet executing (for example, when called
    * during the reaction's construction or member initialization), this returns
    * a default value: the epoch (a default-constructed TimePoint).
    *
@@ -193,7 +199,7 @@ protected:
    *
    * This is a reaction-scoped accessor and is only meaningful while the
    * reaction handler executes; values read outside a handler must not be
-   * relied upon. If the program is not yet executing (for example, when called
+   * relied upon. If the application is not yet executing (for example, when called
    * during the reaction's construction or member initialization), this returns
    * a default value: zero.
    *
@@ -210,19 +216,19 @@ protected:
   /**
    * Get how far the internal clock has advanced since the startup event.
    *
-   * This is the difference between the current time and the time at which the
-   * program started. It is measured on the internal clock and does not depend
-   * on wall-clock time. Like current_time(), it does not change while a
+   * This is the difference between the current time and the timestamp of the
+   * startup events. It is measured on the internal clock and does not depend on
+   * wall-clock time. Like current_time(), it does not change while a
    * reaction handler executes.
    *
    * This is a reaction-scoped accessor and is only meaningful while the
    * reaction handler executes; values read outside a handler must not be
-   * relied upon. If the program is not yet executing (for example, when called
+   * relied upon. If the application is not yet executing (for example, when called
    * during the reaction's construction or member initialization), this returns
    * a default value: zero.
    *
    * @returns The difference between the current time given by current_time()
-   * and the time at which the program started.
+   * and the timestamp of the startup events.
    */
   [[nodiscard]] auto elapsed_time() const noexcept -> Duration {
     const auto* time_access = detail::get_reaction_time_access(*program_context(), parent_uid_);
@@ -233,7 +239,7 @@ protected:
   }
 
 private:
-  // Invokes the user's reaction body through the ABI's reaction-handler
+  // Invokes the user's handler through the ABI's reaction-handler
   // interface. The reaction must outlive the handler, which the backend owns.
   class HandlerImpl final : public abi::ReactionHandler {
   public:
@@ -380,8 +386,10 @@ protected:
   [[nodiscard]] auto context() noexcept -> auto { return ReactionContext{*this}; };
 
   /**
-   * Declares a reaction trigger and provides read access to the triggering
-   * event source.
+   * A reaction's trigger, declared on an event source.
+   *
+   * Through it the handler tests whether an event is present and reads its
+   * value.
    *
    * @tparam T The value type associated with events received on the triggering
    * event source.
@@ -392,8 +400,8 @@ protected:
      * Constructor.
      *
      * Constructing a Trigger automatically registers the given event source as
-     * a trigger of the reaction, causing the reaction handler to run whenever
-     * the event source emits an event.
+     * a trigger of the reaction, causing the reaction handler to run at every
+     * timestamp at which the event source emits an event.
      *
      * @param trigger An event source that should trigger the reaction.
      * @param context Context of the reaction the trigger is declared for. Can
@@ -454,7 +462,10 @@ protected:
   };
 
   /**
-   * Allows a reaction to write data to a given port.
+   * A reaction's effect on a port.
+   *
+   * Through it the handler sets the port's value, sending a message to
+   * connected ports.
    *
    * @tparam T The value type associated with the port.
    * @ingroup effects
@@ -580,7 +591,9 @@ protected:
   };
 
   /**
-   * Allows a reaction to schedule future events using a ProgrammableTimer.
+   * A reaction's effect on a ProgrammableTimer.
+   *
+   * Through it the handler schedules events.
    *
    * @tparam T The value type associated with the programmable timer.
    * @ingroup effects
@@ -601,9 +614,11 @@ protected:
     /**
      * Schedule a future event.
      *
+     * The timer emits the event at the current time plus @p delay.
+     *
      * @param value The value to be associated with the future event
      * occurrence. Copy constructs the value from the given lvalue reference.
-     * @param delay The time to wait until the new event is processed.
+     * @param delay The delay from the current time to the event's timestamp.
      *
      * @throws ValidationError If called before execution has started.
      */
@@ -678,7 +693,9 @@ protected:
   };
 
   /**
-   * Allows a reaction to record values using a given Metric.
+   * A reaction's effect on a Metric.
+   *
+   * Through it the handler records values.
    *
    * @ingroup effects
    */
@@ -696,7 +713,7 @@ protected:
       // Metrics register no reaction dependency with the backend, so the
       // sealing guard in Engine::register_reaction_effect never sees them.
       // Detect a started run through the recorder proxy instead: it is null
-      // until the run is prepared (see abi::RuntimeBackend).
+      // until the run has started (see abi::RuntimeBackend).
       if (metric.program_context()->runtime_backend().get_metric_recorder(metric.uid()) != nullptr) {
         throw ValidationError{"Effects may not be declared once execution has started."};
       }
@@ -721,7 +738,9 @@ protected:
   };
 
   /**
-   * Allows a reaction to terminate the program.
+   * A reaction's effect on Shutdown.
+   *
+   * Through it the handler requests that the application stop.
    *
    * @ingroup effects
    */
@@ -730,7 +749,7 @@ protected:
     /**
      * Constructor.
      *
-     * @param shutdown The shutdown event source used to trigger termination of the program.
+     * @param shutdown The shutdown event source through which the reaction stops the application.
      * @param context The context of the reaction the effect is declared for.
      * Can be obtained using context().
      */
@@ -742,11 +761,11 @@ protected:
     }
 
     /**
-     * Terminate the currently running reactor program.
+     * Terminate the currently running application.
      *
-     * Terminates a running program at the next convenience. After completing all
-     * currently active reactions, this triggers the Shutdown event sources. Once
-     * all reactions triggered by Shutdown are processed, the program terminates.
+     * Terminates a running application at the next convenience. After completing all
+     * currently active reactions, shutdown emits its event in every reactor. Once
+     * all reactions triggered by shutdown are processed, the application terminates.
      *
      * @throws ValidationError If called before execution has started.
      */
@@ -777,8 +796,9 @@ private:
   /**
    * The reaction handler.
    *
-   * This method is invoked automatically in response to triggering events. User
-   * code must override this method to define a reaction's behavior.
+   * This method is invoked once per timestamp at which any of the reaction's
+   * triggers emits an event. User code must override this method to define a
+   * reaction's behavior.
    */
   virtual void handler() = 0;
 
@@ -795,29 +815,29 @@ private:
  * Reaction base class with reactor access.
  *
  * In addition to BaseReaction, this class provides fully-typed access to the
- * owning reactor and all its state and elements.
+ * containing reactor and all its state and elements.
  *
- * @tparam R Type of the owning reactor. This must be a subclass of Reactor.
+ * @tparam R Type of the containing reactor. This must be a subclass of Reactor.
  */
 template <class R> class Reaction : public BaseReaction {
 public:
   /**
    * @copydoc BaseReaction::BaseReaction
    */
-  Reaction(const ReactionProperties& properties)
+  explicit Reaction(const ReactionProperties& properties)
       : BaseReaction(properties)
       , self_(dynamic_cast<R&>(properties.container())) {}
 
 protected:
   /**
-   * Get a reference to the owning reactor.
+   * Get a reference to the containing reactor.
    *
    * The reactor reference can be used for referencing other elements of the
    * reactor when declaring @ref xronos::sdk::BaseReaction::Trigger "triggers"
    * and @ref effects. It can also be used in the reaction @ref handler for
    * accessing the reactor's state.
    *
-   * @returns A reference to the owning reactor.
+   * @returns A reference to the containing reactor.
    */
   [[nodiscard]] auto self() noexcept -> R& { return self_; }
 
@@ -848,7 +868,7 @@ inline auto BaseReaction::deadline() const noexcept -> std::optional<TimePoint> 
     return std::nullopt;
   }
 
-  // The deadline can only be computed relative to a running program's logical
+  // The deadline can only be computed relative to a running application's current
   // time. When called outside of execution (e.g. during reaction declaration),
   // there is no valid time access, so we report that no deadline is available.
   const auto* time_access = detail::get_reaction_time_access(*program_context(), parent_uid_);

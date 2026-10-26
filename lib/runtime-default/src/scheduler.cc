@@ -4,14 +4,15 @@
 #include "xronos/runtime/default/detail/scheduler.hh"
 
 #include <algorithm>
+#include <atomic>
 #include <chrono>
-#include <condition_variable>
 #include <cstddef>
 #include <cstdint>
 #include <exception>
 #include <functional>
 #include <map>
 #include <mutex>
+#include <optional>
 #include <ranges>
 #include <span>
 #include <string>
@@ -26,6 +27,7 @@
 #include "xronos/core/reactor_model.hh"
 #include "xronos/core/time.hh"
 #include "xronos/logical_time/tag.hh"
+#include "xronos/physical_time/interrupt.hh"
 #include "xronos/runtime/default/detail/runtime_model.hh"
 #include "xronos/util/assert.hh"
 #include "xronos/util/logging.hh"
@@ -35,8 +37,8 @@ namespace xronos::runtime::default_::detail {
 
 namespace {
 
-// Backs the ABI's sink-based serializer with an owned buffer the branches
-// then deserialize from.
+// Backs the ABI's sink-based serializer with an owned buffer the
+// deserializing ports then deserialize from.
 class VectorByteSink final : public abi::ByteSink {
 public:
   void write(const std::byte* data, std::size_t size) final {
@@ -52,81 +54,88 @@ private:
 } // namespace
 
 void EventQueue::schedule_event(std::uint64_t element_uid, abi::AnyValue&& value, const logical_time::Tag& tag) {
-  {
-    std::lock_guard<std::mutex> lock(mutex_);
-    event_queue_[tag].emplace_back(std::move(value), element_uid);
-  }
-  cv_.notify_one();
+  // Every caller runs on the scheduler thread, so no wait in next_event is
+  // in progress and none needs waking. next_event relies on this invariant.
+  std::scoped_lock lock(mutex_);
+  event_queue_[tag].emplace_back(std::move(value), element_uid);
 }
 
-auto EventQueue::trigger_external_event(std::uint64_t element_uid, abi::AnyValue&& value) -> abi::TriggerStatus {
-  {
-    std::lock_guard<std::mutex> lock(mutex_);
-    if (!started_) {
-      return abi::TriggerStatus::NotStarted;
-    }
-    core::TimePoint now{std::chrono::system_clock::now()};
-    if (now <= last_external_event_timestamp_) {
-      // On some platforms with low clock resolution we might get the same
-      // timestamp for consecutive calls to now(). If we were to use the same
-      // tag twice, for the same element, we would overwrite the event.
-      // Therefore, we increment the timestamp by one ns.
-      now = last_external_event_timestamp_ + std::chrono::nanoseconds{1};
-    }
-    logical_time::Tag tag{now, 0};
-    if (stopped_ || stop_requested_ || tag >= shutdown_bound_) {
-      return abi::TriggerStatus::Stopped;
-    }
-    last_external_event_timestamp_ = now;
-
-    event_queue_[tag].emplace_back(std::move(value), element_uid);
+auto EventQueue::trigger_physical_event(std::uint64_t element_uid, abi::AnyValue&& value) -> abi::TriggerStatus {
+  std::scoped_lock lock(mutex_);
+  if (!started_) {
+    return abi::TriggerStatus::NotStarted;
   }
-  cv_.notify_one();
+  core::TimePoint now{clock_.get().now()};
+  if (now <= last_physical_event_timestamp_) {
+    // On some platforms with low clock resolution we might get the same
+    // timestamp for consecutive calls to now(). If we were to use the same
+    // tag twice, for the same element, we would overwrite the event.
+    // Therefore, we increment the timestamp by one ns.
+    now = last_physical_event_timestamp_ + std::chrono::nanoseconds{1};
+  }
+  logical_time::Tag tag{now, 0};
+  if (stopped_ || stop_requested_ || tag >= shutdown_bound_) {
+    return abi::TriggerStatus::Stopped;
+  }
+  last_physical_event_timestamp_ = now;
+
+  event_queue_[tag].emplace_back(std::move(value), element_uid);
+  wait_interrupt_.interrupt();
   return abi::TriggerStatus::Accepted;
 }
 
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 auto EventQueue::next_event(const logical_time::Tag& max_tag, bool stoppable)
     -> std::map<logical_time::Tag, std::vector<Event>>::node_type {
+  // The next tag when it lies before max_tag.
+  auto next_tag_before_max = [this, &max_tag]() -> std::optional<logical_time::Tag> {
+    if (event_queue_.empty() || event_queue_.begin()->first >= max_tag) {
+      return std::nullopt;
+    }
+    return event_queue_.begin()->first;
+  };
+
   std::unique_lock<std::mutex> lock(mutex_);
   while (true) {
-    // Every wait below wakes on request_stop and loops back here, so a stop
+    // Every wait below ends on an interrupt and loops back here, so a stop
     // reaches a blocked call promptly.
     if (stoppable && stop_requested_) {
       return decltype(event_queue_)::node_type{};
     }
-    if (event_queue_.empty() || event_queue_.begin()->first >= max_tag) {
-      if (!has_external_triggers_) {
-        return decltype(event_queue_)::node_type{};
-      }
-      auto status = cv_.wait_until(lock, max_tag.timestamp());
-      if (event_queue_.empty() || event_queue_.begin()->first >= max_tag) {
-        if (status == std::cv_status::timeout && (event_queue_.empty() || event_queue_.begin()->first >= max_tag)) {
-          return decltype(event_queue_)::node_type{};
-        }
-        // If we reach here, we woke up spuriously or because a new event got
-        // inserted into the queue. We simply go back to the start of the loop
-        // and try again.
-      }
-    } else {
-      if (fast_mode_ && !has_external_triggers_) {
-        return event_queue_.extract(event_queue_.begin());
-      }
-
-      auto next_tag = event_queue_.begin()->first;
-      auto status = cv_.wait_until(lock, next_tag.timestamp());
-      if (status == std::cv_status::timeout && next_tag == event_queue_.begin()->first) {
-        return event_queue_.extract(event_queue_.begin());
-      }
-      // If we reach here, we woke up spuriously or because a new event got
-      // inserted into the queue. We simply go back to the start of the loop
-      // and try again.
+    auto next_tag = next_tag_before_max();
+    if (!next_tag.has_value() && !has_physical_events_) {
+      return decltype(event_queue_)::node_type{};
     }
+    if (next_tag.has_value() && fast_mode_ && !has_physical_events_) {
+      return event_queue_.extract(event_queue_.begin());
+    }
+
+    // Wait for the physical clock to reach the next tag, or max_tag when no
+    // tag lies before it. Only two calls from other threads end the wait
+    // early: trigger_physical_event, which may add an earlier tag, and
+    // request_stop. Nothing else changes the queue meanwhile, because
+    // schedule_event runs only on this thread. Both call interrupt() on
+    // wait_interrupt_. An interrupt is never reset, so each wait takes a
+    // fresh source; a reused one would end every later wait at once.
+    wait_interrupt_ = physical_time::InterruptSource{};
+    auto interrupt = wait_interrupt_.token();
+    lock.unlock();
+    bool reached = clock_.get().wait_until(next_tag.value_or(max_tag).timestamp(), interrupt);
+    lock.lock();
+
+    // A wait that ended early, or one during which the next tag changed, is
+    // re-evaluated from the top.
+    if (!reached || next_tag_before_max() != next_tag) {
+      continue;
+    }
+    if (!next_tag.has_value()) {
+      return decltype(event_queue_)::node_type{};
+    }
+    return event_queue_.extract(event_queue_.begin());
   }
 }
 
 void EventQueue::discard_events_at_tag(const logical_time::Tag& tag) noexcept {
-  std::lock_guard<std::mutex> lock(mutex_);
+  std::scoped_lock lock(mutex_);
   event_queue_.erase(tag);
 }
 
@@ -135,18 +144,17 @@ void Scheduler::init(const core::ReactorModel& reactor_model, const RuntimeModel
   runtime_model_ = &runtime_model;
 
   for (auto index : std::views::iota(0U, runtime_model.ordered_reaction_uids.size())) {
-    auto& properties = core::get_properties<core::ReactionTag>(
-        reactor_model.element_registry.get(runtime_model.ordered_reaction_uids[index]));
+    auto uid = runtime_model.ordered_reaction_uids.at(index);
+    auto& properties = core::get_properties<core::ReactionTag>(reactor_model.element_registry.get(uid));
     // Guaranteed by validator::check_reaction_handlers on validated models.
     util::assert_(properties.handler != nullptr);
-    auto res = reactions_.try_emplace(runtime_model.ordered_reaction_uids[index], index,
-                                      runtime_model.ordered_reaction_uids[index], *properties.handler);
+    auto res = reactions_.try_emplace(uid, index, uid, *properties.handler);
     util::assert_(res.second);
   }
 
   if (!reactor_model.element_registry.elements_of_type<core::PhysicalEventTag>().empty()) {
-    event_queue_.set_has_external_triggers();
-    has_external_triggers_ = true;
+    event_queue_.set_has_physical_events();
+    has_physical_events_ = true;
   }
 }
 
@@ -161,10 +169,10 @@ void Scheduler::schedule_event(std::uint64_t element_uid, abi::AnyValue&& value,
 }
 
 void Scheduler::trigger_event(std::uint64_t element_uid, abi::AnyValue&& value) {
-  auto& event_source = event_sources_[element_uid];
+  auto& present_value = present_values_[element_uid];
 
-  event_source.activate(std::move(value));
-  active_events_.push_back(element_uid);
+  present_value.set(std::move(value));
+  present_elements_.push_back(element_uid);
 
   auto dbg = util::log::debug();
   dbg << "Triggering element " << reactor_model_->element_registry.get(element_uid).fqn
@@ -175,68 +183,70 @@ void Scheduler::trigger_event(std::uint64_t element_uid, abi::AnyValue&& value) 
     for (auto reaction_uid : it->second.triggered_reaction_uids) {
       dbg << "  - " << reactor_model_->element_registry.get(element_uid).fqn << '\n';
       util::assert_(reactions_.contains(reaction_uid));
-      ready_queue_.emplace_back(reactions_.at(reaction_uid));
+      triggered_reactions_.emplace_back(reactions_.at(reaction_uid));
     }
   }
 }
 
 void Scheduler::set_port(std::uint64_t port_uid, abi::AnyValue&& value) {
   util::log::debug() << "Setting port " << reactor_model_->element_registry.get(port_uid).fqn;
-  util::assert_(event_sources_.contains(port_uid));
+  util::assert_(present_values_.contains(port_uid));
 
-  // Delivery trees are keyed by origin. A port in the middle of a connection
-  // chain misses the map: its downstream ports are leaves of the origin's
-  // tree and receive their events when the origin is set.
-  auto tree_it = runtime_model_->delivery_trees.find(port_uid);
-  if (tree_it == runtime_model_->delivery_trees.end()) {
+  // The port's trigger and effect share one present value, so triggering the
+  // port stores the value for the writing reaction to read back and
+  // triggers the reactions that observe the port. An origin port whose
+  // connection tree keeps no delivery has no entry in the map.
+  auto tree_it = runtime_model_->connection_trees.find(port_uid);
+  if (tree_it == runtime_model_->connection_trees.end()) {
     trigger_event(port_uid, std::move(value));
     return;
   }
 
   trigger_event(port_uid, abi::AnyValue{value});
-  (void)deliver_subtree(tree_it->second, std::move(value));
+  (void)deliver_segment(tree_it->second, std::move(value));
 }
 
-auto Scheduler::deliver_subtree(const ResolvedDeliverySubtree& subtree, abi::AnyValue&& value) noexcept -> bool {
-  // Fanning out needs one box per receiver; only the last leaf can steal the
-  // incoming value, and only when no serialization still needs it.
-  auto deliver_leaf = [this](const core::DeliveryLeaf& leaf, abi::AnyValue&& to_send) {
-    if (leaf.delay.has_value()) {
-      schedule_event(leaf.port_uid, std::move(to_send), *leaf.delay);
+auto Scheduler::deliver_segment(const ResolvedConnectionSegment& segment, abi::AnyValue&& value) noexcept -> bool {
+  // Fanning out needs one box per receiver; only the last delivery can steal
+  // the incoming value, and only when no serialization still needs it.
+  auto deliver = [this](const core::ReceivingPort& delivery, abi::AnyValue&& to_send) {
+    if (delivery.delay.has_value()) {
+      schedule_event(delivery.port_uid, std::move(to_send), *delivery.delay);
     } else {
-      trigger_event(leaf.port_uid, std::move(to_send));
+      trigger_event(delivery.port_uid, std::move(to_send));
     }
   };
-  for (std::size_t index = 0; index < subtree.leaves.size(); index++) {
-    if (index + 1 == subtree.leaves.size() && subtree.serializations.empty()) {
-      deliver_leaf(subtree.leaves[index], std::move(value));
+  for (std::size_t index = 0; index < segment.deliveries.size(); index++) {
+    if (index + 1 == segment.deliveries.size() && segment.serializations.empty()) {
+      deliver(segment.deliveries.at(index), std::move(value));
     } else {
-      deliver_leaf(subtree.leaves[index], abi::AnyValue{value});
+      deliver(segment.deliveries.at(index), abi::AnyValue{value});
     }
   }
 
-  for (const auto& serialization : subtree.serializations) {
-    // Encode once per boundary port, no matter how many branches leave it.
+  for (const auto& serialization : segment.serializations) {
+    // Encode once per serializing port, however many deserializing ports
+    // the crossing has.
     std::vector<std::byte> bytes{};
     try {
       VectorByteSink sink{};
       serialization.serializer->serialize(value, sink);
       bytes = std::move(sink).take();
     } catch (...) {
-      handle_boundary_error(serialization.serialize_uid, serialization.branches.front().deserialize_uid, true);
+      handle_boundary_error(serialization.serialize_uid, serialization.deserializations.front().deserialize_uid, true);
       return false;
     }
-    for (const auto& branch : serialization.branches) {
-      // Each branch delivers the box created by its own deserializer, so the
-      // receivers never share the sender's box.
+    for (const auto& deserialization : serialization.deserializations) {
+      // Each deserializing port delivers the box created by its own
+      // deserializer, so the receivers never share the sender's box.
       abi::AnyValue decoded{};
       try {
-        decoded = branch.deserializer->deserialize(bytes.data(), bytes.size());
+        decoded = deserialization.deserializer->deserialize(bytes.data(), bytes.size());
       } catch (...) {
-        handle_boundary_error(serialization.serialize_uid, branch.deserialize_uid, false);
+        handle_boundary_error(serialization.serialize_uid, deserialization.deserialize_uid, false);
         return false;
       }
-      if (!deliver_subtree(branch.subtree, std::move(decoded))) {
+      if (!deliver_segment(deserialization.segment, std::move(decoded))) {
         return false;
       }
     }
@@ -270,14 +280,15 @@ void Scheduler::handle_boundary_error(std::uint64_t serialize_uid, std::uint64_t
 }
 
 void Scheduler::execute() {
-  start_tag_ = logical_time::Tag{std::chrono::system_clock::now(), 0};
+  start_tag_ = logical_time::Tag{clock_.get().now(), 0};
   current_tag_ = start_tag_;
   // The timeout bounds execution by `start + timeout` inclusive. An event at
   // exactly the timeout gets its own tag; shutdown follows one microstep
   // later.
-  shutdown_tag_ = (start_tag_ + execution_properties_.timeout).increment_microstep();
+  shutdown_bound_ = (start_tag_ + execution_properties_.timeout).increment_microstep();
 
-  event_queue_.mark_started(shutdown_tag_);
+  event_queue_.mark_started(shutdown_bound_);
+  started_.store(true, std::memory_order_release);
   // Guards against an early exit (e.g., due to an exception) and ensures that
   // the scheduler is marked as stopped.
   struct StopGuard {
@@ -307,32 +318,33 @@ void Scheduler::execute() {
     }
   }
 
-  // Process all events until we reach the shutdown tag, run out of events,
-  // or a stop request ends the loop early
-  while (process_next_tag(shutdown_tag_)) {
+  // Process all events until we reach the shutdown bound, run out of
+  // events, or a stop request ends the loop early.
+  while (process_next_tag(shutdown_bound_)) {
   }
 
   util::log::debug() << "Triggering all shutdown events.";
 
-  // Shut down one microstep after the last processed tag instead of riding
-  // out the timeout or a requested shutdown tag. With a physical event source
-  // this is unsound, since an event may still arrive before that tag; after a
-  // stop request the remaining events are abandoned deliberately.
-  if (!has_external_triggers_ || event_queue_.stop_requested()) {
-    shutdown_tag_ = current_tag_ + core::Duration::zero();
+  // The shutdown tag is one microstep after the last processed tag instead
+  // of the shutdown bound. With a physical event this is unsound, since an
+  // event may still arrive before that tag; after a stop request the
+  // remaining events are abandoned deliberately.
+  auto shutdown_tag = shutdown_bound_;
+  if (!has_physical_events_ || event_queue_.stop_requested()) {
+    shutdown_tag = current_tag_ + core::Duration::zero();
   }
 
   // Only shutdown events run at the shutdown tag. Any other event landing
   // there, such as one scheduled with zero delay by the reaction that
   // requested shutdown, is dropped.
-  event_queue_.discard_events_at_tag(shutdown_tag_);
+  event_queue_.discard_events_at_tag(shutdown_tag);
 
   // Trigger the shutdown events
   for (auto shutdown_uid : runtime_model_->shutdown_trigger_uids) {
-    schedule_event(shutdown_uid, xronos::value::make<abi::Void>(), shutdown_tag_);
+    schedule_event(shutdown_uid, xronos::value::make<abi::Void>(), shutdown_tag);
   }
 
-  process_shutdown_tag();
+  process_shutdown_tag(shutdown_tag);
 
   util::log::debug() << "Scheduler is done executing.";
 
@@ -345,10 +357,10 @@ auto Scheduler::process_next_tag(const logical_time::Tag& max_tag) -> bool {
   return process_events(event_queue_.wait_until_next_event(max_tag));
 }
 
-void Scheduler::process_shutdown_tag() {
+void Scheduler::process_shutdown_tag(const logical_time::Tag& shutdown_tag) {
   // The bound sits one microstep past the shutdown tag, so the wait extracts
   // the events at the shutdown tag itself.
-  process_events(event_queue_.wait_for_shutdown_events(shutdown_tag_ + core::Duration::zero()));
+  process_events(event_queue_.wait_for_shutdown_events(shutdown_tag + core::Duration::zero()));
 }
 
 auto Scheduler::process_events(std::map<logical_time::Tag, std::vector<Event>>::node_type event_handle) -> bool {
@@ -363,45 +375,45 @@ auto Scheduler::process_events(std::map<logical_time::Tag, std::vector<Event>>::
   for (auto& event : event_handle.mapped()) {
     trigger_event(event.element_uid, std::move(event.value));
   }
-  execute_all_ready_reactions();
+  execute_triggered_reactions();
 
-  reset_all_active_events();
+  clear_present_values();
 
   util::log::debug() << "Done processing tag " << current_tag_ << '.';
   return true;
 }
 
-void Scheduler::execute_all_ready_reactions() {
-  while (!ready_queue_.empty() && !abort_execution_) {
-    std::ranges::sort(ready_queue_);
-    auto [erase_begin, erase_end] = std::ranges::unique(ready_queue_);
-    ready_queue_.erase(erase_begin, erase_end);
+void Scheduler::execute_triggered_reactions() {
+  while (!triggered_reactions_.empty() && !abort_execution_) {
+    std::ranges::sort(triggered_reactions_);
+    auto [erase_begin, erase_end] = std::ranges::unique(triggered_reactions_);
+    triggered_reactions_.erase(erase_begin, erase_end);
 
-    auto& handler = ready_queue_.front().handler.get();
+    auto& handler = triggered_reactions_.front().handler.get();
     execute_reaction(handler);
 
-    ready_queue_.pop_front();
+    triggered_reactions_.pop_front();
   }
   abort_execution_ = false;
-  ready_queue_.clear();
+  triggered_reactions_.clear();
 }
 
-void Scheduler::reset_all_active_events() {
-  for (auto uid : active_events_) {
-    event_sources_[uid].reset();
+void Scheduler::clear_present_values() {
+  for (auto uid : present_elements_) {
+    present_values_[uid].clear();
     if (auto it = runtime_model_->periodic_timer_properties.find(uid);
         it != runtime_model_->periodic_timer_properties.end()) {
       schedule_event(uid, xronos::value::make<abi::Void>(), it->second.period);
     }
   }
-  active_events_.clear();
+  present_elements_.clear();
 }
 
 void Scheduler::execute_reaction(abi::ReactionHandler& handler) {
   try {
     handler.invoke();
   } catch (...) {
-    const auto& fqn = reactor_model_->element_registry.get(ready_queue_.front().uid).fqn;
+    const auto& fqn = reactor_model_->element_registry.get(triggered_reactions_.front().uid).fqn;
     std::string what{};
     try {
       throw;

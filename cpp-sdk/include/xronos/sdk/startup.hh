@@ -28,7 +28,7 @@ inline auto register_startup(std::string_view name, const ReactorContext& contex
 } // namespace detail
 
 /**
- * A reactor element that emits an event when the program starts up.
+ * An event source that emits one event as execution begins.
  *
  * Can be used as a reaction @ref BaseReaction::Trigger "trigger".
  */

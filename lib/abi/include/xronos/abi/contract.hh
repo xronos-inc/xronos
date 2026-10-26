@@ -44,7 +44,7 @@ static_assert(sizeof(std::chrono::nanoseconds) == 8 && alignof(std::chrono::nano
 
 // Domain checks: the compile-time definition of the Linux/libstdc++ domain.
 
-#if !defined(__GLIBCXX__)
+#ifndef __GLIBCXX__
 #error "The xronos ABI requires libstdc++ on both sides of the SDK/implementation boundary."
 #endif
 
@@ -61,7 +61,7 @@ static_assert(sizeof(std::chrono::nanoseconds) == 8 && alignof(std::chrono::nano
 #error "The xronos ABI requires the cxx11 library ABI (_GLIBCXX_USE_CXX11_ABI=1)."
 #endif
 
-#if !defined(__linux__)
+#ifndef __linux__
 #error "The xronos ABI is only supported on Linux."
 #endif
 

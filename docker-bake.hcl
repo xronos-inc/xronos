@@ -1,6 +1,6 @@
 variable "CONTEXT_PREFIX" { default = "." }
 
-variable "XRONOS_VERSION" { default = "0.14.0" }
+variable "XRONOS_VERSION" { default = "0.15.0" }
 
 variable "ALL_PLATFORMS" { default = 0 }
 
@@ -18,7 +18,7 @@ target "base" {
 target "py-venv" {
   name = "py-venv-${replace(version, ".", "")}"
   matrix = {
-    version = ["3.10", "3.11", "3.12", "3.13", "3.13t", "3.14", "3.14t"]
+    version = ["3.11", "3.12", "3.13", "3.13t", "3.14", "3.14t", "3.15", "3.15t"]
   }
   args = {
     python_version = version
@@ -186,7 +186,7 @@ target "xronos-cpp-sdk-docs" {
 target "xronos-py-wheel" {
   name = "xronos-py-wheel-${replace(version, ".", "")}"
   matrix = {
-    version = ["3.10", "3.11", "3.12", "3.13", "3.13t", "3.14", "3.14t"]
+    version = ["3.11", "3.12", "3.13", "3.13t", "3.14", "3.14t", "3.15", "3.15t"]
   }
   target  = "wheel"
   context = "${CONTEXT_PREFIX}/python-sdk"
@@ -222,7 +222,7 @@ target "xronos-py-test" {
   inherits = ["xronos-py-wheel-${replace(version, ".", "")}"]
   name     = "xronos-py-test-${replace(version, ".", "")}"
   matrix = {
-    version = ["3.10", "3.11", "3.12", "3.13", "3.13t", "3.14", "3.14t"]
+    version = ["3.11", "3.12", "3.13", "3.13t", "3.14", "3.14t", "3.15", "3.15t"]
   }
   target = "test"
   output = [{ type = "cacheonly" }]
@@ -252,7 +252,7 @@ target "xronos-examples-common-files" {
 target "_xronos-examples-common" {
   name = "_xronos-examples-common-${replace(version, ".", "")}"
   matrix = {
-    version = ["3.10", "3.11", "3.12", "3.13", "3.13t", "3.14", "3.14t"]
+    version = ["3.11", "3.12", "3.13", "3.13t", "3.14", "3.14t", "3.15", "3.15t"]
   }
   contexts = {
     common-files = "target:xronos-examples-common-files"

@@ -176,10 +176,10 @@ class RuntimeBackend {
 public:
   // Hot-path lookups. Each returns nullptr while no run is prepared, and
   // during a run if the queried dependency was not registered during
-  // assembly. A non-null result synchronizes with the run's preparation:
-  // everything the implementation set up for the run is visible to the
-  // calling thread, on any thread. The returned pointers remain valid until
-  // the `Backend` is destroyed.
+  // assembly. `get_time_access` and `get_metric_recorder` also return
+  // nullptr until the run has started, since the start time does not exist
+  // before then. The returned pointers remain valid until the `Backend` is
+  // destroyed.
   [[nodiscard]] virtual auto get_trigger(ElementUid reaction, ElementUid trigger) const noexcept
       -> const GettableTrigger* = 0;
   [[nodiscard]] virtual auto get_settable_effect(ElementUid reaction, ElementUid effect) noexcept
@@ -235,9 +235,6 @@ class Backend {
 public:
   // The backend's hot-path lookup facade; may be called at any time, from
   // any thread, and the result stays valid until the backend is destroyed.
-  // Lookups on it return nullptr until the host has prepared a run through
-  // the implementation-side lifecycle -- when (and whether) that happens is
-  // deliberately not part of this contract.
   [[nodiscard]] virtual auto runtime_backend() noexcept -> RuntimeBackend& = 0;
 
   // Top-level reactors (those owned by the environment) have no parent and

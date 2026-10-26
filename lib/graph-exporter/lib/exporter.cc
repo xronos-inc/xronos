@@ -42,7 +42,7 @@ namespace detail {
 
 class AttributeValueSetter {
 public:
-  AttributeValueSetter(messages::reactor_graph::Attribute& attribute)
+  explicit AttributeValueSetter(messages::reactor_graph::Attribute& attribute)
       : attribute_{attribute} {}
 
   void operator()(const std::string& value) { attribute_.get().set_string(value); }
@@ -86,7 +86,7 @@ public:
   }
 
   void operator()(const core::PeriodicTimerTag& type) {
-    using TimeUtil = google::protobuf::util::TimeUtil;
+    using google::protobuf::util::TimeUtil;
     auto& timer = *element_.get().mutable_timer();
     *timer.mutable_offset() = TimeUtil::NanosecondsToDuration(type.properties->offset.count());
     *timer.mutable_period() = TimeUtil::NanosecondsToDuration(type.properties->period.count());
@@ -107,7 +107,7 @@ public:
     auto& reaction = *element_.get().mutable_reaction();
     reaction.set_priority(type.properties->position + 1);
     if (const auto& deadline = type.properties->deadline; deadline.has_value()) {
-      using TimeUtil = google::protobuf::util::TimeUtil;
+      using google::protobuf::util::TimeUtil;
       *reaction.mutable_deadline() = TimeUtil::NanosecondsToDuration(deadline->count());
     }
   }
@@ -158,8 +158,8 @@ void serialize_connections(const core::ConnectionGraph& connection_graph, messag
       auto& target_properties = *target.mutable_properties();
       target_properties.set_is_physical(false);
       if (props->delay.has_value()) {
-        using TimeUtil = google::protobuf::util::TimeUtil;
-        *(target_properties.mutable_delay()) = TimeUtil::NanosecondsToDuration(props->delay.value().count());
+        using google::protobuf::util::TimeUtil;
+        *target_properties.mutable_delay() = TimeUtil::NanosecondsToDuration(props->delay.value().count());
       }
     }
   }

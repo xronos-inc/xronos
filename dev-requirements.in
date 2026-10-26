@@ -1,11 +1,10 @@
-auditwheel==6.8.1
-build==1.6.0
+auditwheel==6.8.2
+build==1.6.1
 patchelf==0.19.1.0
 pytest==9.1.1
-pytest-mock==3.15.1
-pytest-subprocess
+pytest-mock==3.17.0
 pytest-subprocess==1.6.0
-pyright==1.1.411
-mypy==2.3.1
-ruff==0.16.5
+pyright==1.1.414
+mypy==2.4.0
+ruff==0.17.2
 wheel==0.48.0

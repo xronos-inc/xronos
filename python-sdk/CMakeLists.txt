@@ -49,7 +49,7 @@ endif()
 FetchContent_MakeAvailable(xronos-sdk)
 
 
-find_package(Python 3.10.0...<3.15.0 REQUIRED COMPONENTS Interpreter
+find_package(Python 3.11.0...<3.16.0 REQUIRED COMPONENTS Interpreter
   Development.Module)
 find_package(pybind11 CONFIG REQUIRED)
 

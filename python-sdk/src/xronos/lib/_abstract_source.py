@@ -22,7 +22,7 @@ class OutputDiscardedWarning(UserWarning):
 
     Args:
         message: the warning message.
-        fqn: fully qualified name of the reactor element that produced the output.
+        fqn: fully qualified name of the element that produced the output.
         value: value that was discarded.
         timestamp: the timestamp at which the value was discarded.
     """
@@ -58,13 +58,14 @@ class AbstractSource(xronos.Reactor, Generic[TOutput]):
     - `_startup_handler`
     - `_shutdown_handler`
 
-    Output from this reactor may be inhibited at startup or runtime. Inhibit changes
-    are applied before any outputs are produced. If output is inhibited and a trigger
-    is received, the appropriate handler is called, but its output is not produced.
+    Output from this reactor may be inhibited at startup or during execution.
+    Inhibit changes are applied before any outputs are produced. If output is
+    inhibited and an event arrives, the appropriate handler is called, but its
+    output is not produced.
 
-    In case of simultaneous events, handlers will be executed in the order above,
-    and the value from the last handler to execute will be output. A warning will
-    be logged if the value from a previous handler was discarded.
+    For events at the same timestamp, handlers will be executed in the order
+    above, and the value from the last handler to execute will be output. A
+    warning will be logged if the value from a previous handler was discarded.
 
     Args:
         inhibit: Initialize with output inhibited.
@@ -84,7 +85,7 @@ class AbstractSource(xronos.Reactor, Generic[TOutput]):
 
     @abstractmethod
     def _startup_handler(self) -> TOutput:
-        """Handler for the startup reaction.
+        """Hook that the startup reaction's handler calls to produce the output.
 
         Override this method to implement custom behavior.
 
@@ -95,7 +96,7 @@ class AbstractSource(xronos.Reactor, Generic[TOutput]):
 
     @abstractmethod
     def _shutdown_handler(self) -> TOutput:
-        """Handler for the shutdown reaction.
+        """Hook that the shutdown reaction's handler calls to produce the output.
 
         Override this method to implement custom behavior.
 
@@ -114,19 +115,19 @@ class AbstractSource(xronos.Reactor, Generic[TOutput]):
         handler_base_class: type["AbstractSource[TOutput]"],
         handler: Callable[..., TOutput],
     ) -> Callable[[], None]:
-        """Conditionally specify a reaction with a single trigger and output.
+        """Conditionally declare a reaction with a single trigger and output.
 
         If `handler` is implemented in a subclass of `handler_base_class`, the
-        reaction is specified with a trigger and the result of `handler()` is
+        reaction is declared with a trigger and the result of `handler()` is
         passed to the output port as an effect.
 
-        If `handler` is abstract, the reaction has no body, triggers or effects.
+        If `handler` is abstract, the reaction has no handler, triggers, or effects.
 
         Args:
             ctx: Reaction context to add trigger and effect.
             trigger: The trigger for the reaction.
             handler_base_class: The base class for the abstract handler.
-            handler: The handler to call in the reaction body. Must be bound method.
+            handler: The method the reaction handler calls. Must be a bound method.
 
         Returns:
             Reaction handler.
@@ -151,7 +152,7 @@ class AbstractSource(xronos.Reactor, Generic[TOutput]):
             if output_effect.is_present() and self.warn_on_simultaneous_output:
                 warnings.warn(
                     OutputDiscardedWarning(
-                        message="Simultaneous writes to an output port occurred.",
+                        message="Multiple writes to an output port at one timestamp.",
                         fqn=self.output.fqn,
                         value=output_effect.get(),
                         timestamp=ctx.current_time,
@@ -250,20 +251,21 @@ class AbstractTriggeredSource(AbstractSource[TOutput]):
     - `_trigger_handler`
     - `_shutdown_handler`
 
-    Output from this reactor may be inhibited at startup or runtime. Inhibit changes
-    are applied before any outputs are produced. If output is inhibited and a trigger
-    is received, the appropriate handler is called, but its output is not produced.
+    Output from this reactor may be inhibited at startup or during execution.
+    Inhibit changes are applied before any outputs are produced. If output is
+    inhibited and an event arrives, the appropriate handler is called, but its
+    output is not produced.
 
-    In case of simultaneous events, handlers will be executed in the order above,
-    and the value from the last handler to execute will be output. A warning will
-    be logged if the value from a previous handler was discarded.
+    For events at the same timestamp, handlers will be executed in the order
+    above, and the value from the last handler to execute will be output. A
+    warning will be logged if the value from a previous handler was discarded.
     """
 
     trigger = xronos.InputPortDeclaration[None]()
 
     @abstractmethod
     def _trigger_handler(self) -> TOutput:
-        """Handler for the triggered reaction.
+        """Hook that the triggered reaction's handler calls to produce the output.
 
         Override this method to implement custom behavior.
 
@@ -296,16 +298,17 @@ class AbstractTimerSource(AbstractSource[TOutput]):
     - `_timer_handler`
     - `_shutdown_handler`
 
-    Output from this reactor may be inhibited at startup or runtime. Inhibit changes
-    are applied before any outputs are produced. If output is inhibited and a trigger
-    is received, the appropriate handler is called, but its output is not produced.
+    Output from this reactor may be inhibited at startup or during execution.
+    Inhibit changes are applied before any outputs are produced. If output is
+    inhibited and an event arrives, the appropriate handler is called, but its
+    output is not produced.
 
-    In case of simultaneous events, handlers will be executed in the order above,
-    and the value from the last handler to execute will be output. A warning will
-    be logged if the value from a previous handler was discarded.
+    For events at the same timestamp, handlers will be executed in the order
+    above, and the value from the last handler to execute will be output. A
+    warning will be logged if the value from a previous handler was discarded.
 
     Args:
-        period: The interval at which the timer event is triggered.
+        period: The period at which the timer emits events.
         inhibit: Initialize with output inhibited.
     """
 
@@ -324,7 +327,7 @@ class AbstractTimerSource(AbstractSource[TOutput]):
 
     @abstractmethod
     def _timer_handler(self) -> TOutput:
-        """Handler for the timer reaction.
+        """Hook that the timer reaction's handler calls to produce the output.
 
         Override this method to implement custom behavior.
 

@@ -1,6 +1,6 @@
 Checks: '
     clang-diagnostic-*,
-    Google-*,
+    google-*,
     clang-analyzer-*,
     modernize-*,
     performance-*,
@@ -11,6 +11,7 @@ Checks: '
     cert-*,
     misc-include-cleaner,
     -readability-redundant-member-init,
+    -llvm-prefer-static-over-anonymous-namespace,
     -portability-template-virtual-member-function'
 WarningsAsErrors: '*'
 HeaderFilterRegex: 'xronos/.*\.hh'
@@ -27,3 +28,5 @@ CheckOptions:
     value: true
   - key: misc-include-cleaner.IgnoreHeaders
     value: bits/chrono.h;pybind11/detail/.*
+  - key: modernize-use-trailing-return-type.TransformLambdas
+    value: none

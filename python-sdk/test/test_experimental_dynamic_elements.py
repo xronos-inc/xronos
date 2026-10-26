@@ -7,9 +7,9 @@ import datetime
 import gc
 import weakref
 from collections.abc import Callable
+from typing import assert_type
 
 import pytest
-from typing_extensions import assert_type
 
 import xronos
 import xronos.experimental

@@ -21,7 +21,7 @@ auto ElementRegistry::add_new_element(std::string_view name, ElementType type,
     -> nonstd::expected<std::reference_wrapper<const Element>, std::string> {
   // The dot joins names into fully qualified names, so a name containing one
   // would make those paths ambiguous. The other rejected characters carry
-  // syntax where fully qualified names serve as addresses: selection lists
+  // syntax where fully qualified names serve as addresses: assignment lists
   // join them with commas, and network key expressions reserve the rest.
   if (name.empty() || name.find_first_of(". \t\n\v\f\r,/*$?#@") != std::string_view::npos) {
     return nonstd::make_unexpected(
@@ -42,7 +42,12 @@ auto ElementRegistry::add_new_element(std::string_view name, ElementType type,
   // preferring push_back() here over emplace_back() as it allows for
   // aggregate initialization with designated initializers
   elements_.push_back(Element{
-      .name = std::string{name}, .fqn = std::move(fqn), .uid = uid, .parent_uid = parent_uid, .type = std::move(type)});
+      .name = std::string{name},
+      .fqn = std::move(fqn),
+      .uid = uid,
+      .parent_uid = parent_uid,
+      .type = std::move(type),
+  });
   const auto& element = elements_.back();
   fqns_.insert(element.fqn);
   return elements_.back();

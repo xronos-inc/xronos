@@ -27,11 +27,11 @@ void DefaultRuntimeImpl::initialize(const core::ReactorModel& model) {
 
   scheduler_.init(model, *runtime_model_);
 
-  // Populate the external trigger map for every physical event up front.
-  // External threads may call get_external_trigger concurrently, so the map
-  // must be complete and immutable before the program handle is published.
+  // Populate the physical event map up front. External threads may call
+  // get_physical_event concurrently, so the map must be complete and
+  // immutable before the program handle is published.
   for (const auto& elem : model.element_registry.elements_of_type<core::PhysicalEventTag>()) {
-    auto res = external_triggers_.try_emplace(elem.uid, elem.uid, scheduler_);
+    auto res = physical_events_.try_emplace(elem.uid, elem.uid, scheduler_);
     util::assert_(res.second);
   }
 }
@@ -129,23 +129,23 @@ auto DefaultRuntimeImpl::get_shutdown_effect(std::uint64_t reaction_uid, std::ui
   return &shutdown_effect_;
 }
 
-auto DefaultRuntimeImpl::get_external_trigger(std::uint64_t external_trigger_uid) noexcept -> ExternalTrigger* {
+auto DefaultRuntimeImpl::get_physical_event(std::uint64_t physical_event_uid) noexcept -> PhysicalEvent* {
   // The map holds every physical event since initialize and is never mutated
   // afterwards, which makes concurrent lookups from external threads safe.
-  auto it = external_triggers_.find(external_trigger_uid);
-  if (it != external_triggers_.end()) {
+  auto it = physical_events_.find(physical_event_uid);
+  if (it != physical_events_.end()) {
     return &it->second;
   }
 
   // Population is exhaustive, so a miss means the uid names no physical
   // event. Callers may pass arbitrary uids, so resolve the FQN only for
   // registered ones; `get` has no miss path.
-  if (reactor_model_->element_registry.contains(external_trigger_uid)) {
+  if (reactor_model_->element_registry.contains(physical_event_uid)) {
     util::log::error() << "Requested write access to element "
-                       << reactor_model_->element_registry.get(external_trigger_uid).fqn
+                       << reactor_model_->element_registry.get(physical_event_uid).fqn
                        << " which is not a physical event.";
   } else {
-    util::log::error() << "Requested write access to unknown element uid " << external_trigger_uid << ".";
+    util::log::error() << "Requested write access to unknown element uid " << physical_event_uid << ".";
   }
   return nullptr;
 }

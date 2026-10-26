@@ -28,9 +28,10 @@ inline auto register_shutdown(std::string_view name, const ReactorContext& conte
 } // namespace detail
 
 /**
- * A reactor element that emits an event right before the program shuts down.
+ * An event source that emits one event before execution ends.
  *
- * Can be used as a reaction @ref BaseReaction::Trigger "trigger".
+ * Can be used as a reaction @ref BaseReaction::Trigger "trigger", or as a
+ * @ref BaseReaction::ShutdownEffect "shutdown effect" to stop the application.
  */
 class Shutdown final : public Element {
 public:

@@ -135,8 +135,10 @@ public:
   // (implementation-owned); this concrete class is destroyed as itself, via
   // State's unique_ptr. Retiring here is a backstop for runs that never
   // reach run()'s own retire; State destroys this facade before the program
-  // handle, so the drain still precedes the memory it protects.
-  virtual ~RuntimeBackendImpl() { retire(); }
+  // handle, so the drain still precedes the memory it protects. The destructor
+  // stays virtual because cppcoreguidelines-virtual-class-destructor does not
+  // exempt final classes.
+  virtual ~RuntimeBackendImpl() { retire(); } // NOLINT(clang-diagnostic-unnecessary-virtual-specifier)
   RuntimeBackendImpl(const RuntimeBackendImpl&) = delete;
   RuntimeBackendImpl(RuntimeBackendImpl&&) = delete;
   auto operator=(const RuntimeBackendImpl&) = delete;
@@ -166,9 +168,10 @@ public:
     auto* handle = prepared_run();
     return handle == nullptr ? nullptr : handle->get_time_access(reactor);
   }
+  // Serves the ABI 1.0 name and hands back the physical event.
   [[nodiscard]] auto get_external_trigger(abi::ElementUid physical_event) noexcept -> abi::ExternalTrigger* final {
     auto* handle = prepared_run();
-    return handle == nullptr ? nullptr : handle->get_external_trigger(physical_event);
+    return handle == nullptr ? nullptr : handle->get_physical_event(physical_event);
   }
   [[nodiscard]] auto trigger_physical_event(abi::ElementUid physical_event, abi::AnyValue&& value) noexcept
       -> abi::TriggerStatus final {
@@ -191,7 +194,7 @@ public:
     if (handle == nullptr) {
       return abi::TriggerStatus::NotStarted;
     }
-    auto* trigger = handle->get_external_trigger(physical_event);
+    auto* trigger = handle->get_physical_event(physical_event);
     if (trigger == nullptr) {
       return abi::TriggerStatus::UnknownPhysicalEvent;
     }
@@ -203,7 +206,7 @@ public:
     if (handle == nullptr) {
       return nullptr;
     }
-    const std::lock_guard lock{metric_recorders_mutex_};
+    const std::scoped_lock lock{metric_recorders_mutex_};
     auto it = metric_recorders_.find(metric);
     if (it != metric_recorders_.end()) {
       return it->second.get();
@@ -334,8 +337,10 @@ void Engine::export_port(abi::ElementUid node, abi::ElementUid port, const std::
 auto Engine::register_periodic_timer(const std::string& name, abi::ElementUid parent, abi::Duration offset,
                                      abi::Duration period) -> abi::ElementUid {
   return register_element(name,
-                          core::PeriodicTimerTag{std::make_unique<core::PeriodicTimerProperties>(
-                              core::PeriodicTimerProperties{.offset = offset, .period = period})},
+                          core::PeriodicTimerTag{
+                              std::make_unique<core::PeriodicTimerProperties>(
+                                  core::PeriodicTimerProperties{.offset = offset, .period = period}),
+                          },
                           parent);
 }
 void Engine::set_periodic_timer_offset(abi::ElementUid timer, abi::Duration offset) {
@@ -376,8 +381,13 @@ auto Engine::register_reaction_impl(const std::string& name, abi::ElementUid par
     throw std::invalid_argument{"register_reaction requires a non-null handler."};
   }
   auto uid = register_element(name,
-                              core::ReactionTag{std::make_unique<core::ReactionProperties>(core::ReactionProperties{
-                                  .handler = nullptr, .position = position, .deadline = deadline})},
+                              core::ReactionTag{
+                                  std::make_unique<core::ReactionProperties>(core::ReactionProperties{
+                                      .handler = nullptr,
+                                      .position = position,
+                                      .deadline = deadline,
+                                  }),
+                              },
                               parent);
   // The wrapper needs the reaction's uid for span logging, so the handler
   // is set after registration assigned it.
@@ -413,10 +423,12 @@ void Engine::register_reaction_effect(abi::ElementUid reaction, abi::ElementUid 
 
 auto Engine::register_metric(const std::string& name, abi::ElementUid parent, const std::string& description,
                              const std::string& unit) -> abi::ElementUid {
-  return register_element(name,
-                          core::MetricTag{std::make_unique<core::MetricProperties>(
-                              core::MetricProperties{.description = description, .unit = unit})},
-                          parent);
+  return register_element(
+      name,
+      core::MetricTag{
+          std::make_unique<core::MetricProperties>(core::MetricProperties{.description = description, .unit = unit}),
+      },
+      parent);
 }
 
 void Engine::add_connection(abi::ElementUid from, abi::ElementUid to) {
@@ -444,10 +456,10 @@ void Engine::add_connection_impl(abi::ElementUid from, abi::ElementUid to, std::
   auto& connection_graph = state_->model.connection_graph;
   if (connection_graph.has_incoming_connection(to)) {
     const auto& registry = state_->model.element_registry;
-    auto upstream_uid = connection_graph.get_upstream_uid(to).value();
+    auto sending_uid = connection_graph.get_sending_uid(to).value();
     throw abi::ValidationError{"Cannot connect port " + registry.get(from).fqn + " to port " + registry.get(to).fqn +
                                " because it already has an inbound connection from port " +
-                               registry.get(upstream_uid).fqn + ". Each port may have at most one inbound " +
+                               registry.get(sending_uid).fqn + ". Each port may have at most one inbound " +
                                "connection."};
   }
   auto success =

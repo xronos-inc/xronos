@@ -35,7 +35,7 @@ struct SourceLocation {
   std::uint32_t end_column{0};
 };
 
-// Outcome of an external trigger attempt. The enumerator values and the
+// Outcome of an attempt to trigger a physical event. The enumerator values and the
 // underlying type are frozen within a major ABI version. A minor version
 // may append enumerators; a consumer treats an unrecognized status as a
 // dropped event.

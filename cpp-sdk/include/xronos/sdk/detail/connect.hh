@@ -14,7 +14,7 @@ namespace xronos::sdk::detail {
 
 inline void connect_impl(detail::ProgramContext& program_context, const Element& from_port, const Element& to_port,
                          const std::optional<Duration>& delay) {
-  // Throws ValidationError if the downstream port already has a
+  // Throws ValidationError if the receiving port already has a
   // connection, or once a run has been prepared (the implementation seals
   // the model).
   if (delay.has_value()) {

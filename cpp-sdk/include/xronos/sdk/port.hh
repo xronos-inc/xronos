@@ -32,13 +32,13 @@ namespace xronos::sdk {
 namespace detail {
 
 [[nodiscard]] inline auto register_input_port(std::string_view name, const ReactorContext& context) -> std::uint64_t {
-  return register_with_location(context, [&]() {
+  return register_with_location(context, [&] {
     return get_backend(context).register_input_port(std::string{name}, ContextAccess::get_parent_uid(context));
   });
 }
 
 [[nodiscard]] inline auto register_output_port(std::string_view name, const ReactorContext& context) -> std::uint64_t {
-  return register_with_location(context, [&]() {
+  return register_with_location(context, [&] {
     return get_backend(context).register_output_port(std::string{name}, ContextAccess::get_parent_uid(context));
   });
 }
@@ -178,7 +178,7 @@ inline void export_void_port(std::uint64_t node_uid, std::uint64_t port_uid, con
 } // namespace detail
 
 /**
- * A reactor element for receiving messages from other reactors.
+ * An element for receiving messages from other reactors.
  *
  * Input ports can be used as a reaction @ref BaseReaction::Trigger "trigger"
  * and provide an interface for reactors to receive messages from other
@@ -211,7 +211,7 @@ public:
 };
 
 /**
- * A reactor element for sending messages to other reactors.
+ * An element for sending messages to other reactors.
  *
  * Output ports can be used as a reaction @ref BaseReaction::PortEffect "effect"
  * and provide an interface for reactors to send messages to other reactors.

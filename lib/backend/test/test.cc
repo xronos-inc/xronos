@@ -537,6 +537,21 @@ auto trigger_until_accepted(xronos::backend::Engine& engine, ElementUid event) -
   return status;
 }
 
+// The attempt reports NotStarted until run() publishes the program; retrying
+// absorbs that span. Unlike trigger_until_accepted, this does not wait for
+// the scheduler's live window. Gives up after five seconds and returns the
+// last status.
+auto trigger_until_published(xronos::backend::Engine& engine, ElementUid uid) -> xronos::abi::TriggerStatus {
+  auto& runtime_backend = engine.abi().runtime_backend();
+  auto status = runtime_backend.trigger_physical_event(uid, xronos::value::make<xronos::abi::Void>());
+  const auto deadline = std::chrono::steady_clock::now() + 5s;
+  while (status == xronos::abi::TriggerStatus::NotStarted && std::chrono::steady_clock::now() < deadline) {
+    std::this_thread::sleep_for(1ms);
+    status = runtime_backend.trigger_physical_event(uid, xronos::value::make<xronos::abi::Void>());
+  }
+  return status;
+}
+
 TEST_CASE("A trigger inside the live window is accepted and delivered", "[backend]") {
   StopOnEventProgram program{};
   REQUIRE(program.engine.validate().empty());
@@ -573,16 +588,17 @@ TEST_CASE("A trigger on a uid that is no physical event reports UnknownPhysicalE
   REQUIRE(program.engine.validate().empty());
 
   std::thread run_thread{[&program]() { run(program.engine, ExecutionProperties{.timeout = 10s}); }};
-  auto accepted = trigger_until_accepted(program.engine, program.event);
 
-  // The run is live here. One uid names a registered element that is no
-  // physical event, the other was never registered; both report the same
-  // status.
+  // One uid names a registered element that is no physical event, the other
+  // was never registered; both report the same status. The facade answers a
+  // bad uid from the published program, before the scheduler's live window
+  // opens. Both probes precede the accepted trigger that ends the run, so
+  // the gate is still open for them.
+  auto wrong_kind_status = trigger_until_published(program.engine, program.reactor);
   auto& runtime_backend = program.engine.abi().runtime_backend();
-  auto wrong_kind_status =
-      runtime_backend.trigger_physical_event(program.reactor, xronos::value::make<xronos::abi::Void>());
   auto unregistered_status =
       runtime_backend.trigger_physical_event(program.reactor + 1000, xronos::value::make<xronos::abi::Void>());
+  auto accepted = trigger_until_accepted(program.engine, program.event);
   run_thread.join();
 
   REQUIRE(accepted == xronos::abi::TriggerStatus::Accepted);
@@ -1354,6 +1370,114 @@ auto register_int_probe(xronos::abi::Backend& abi_backend, ElementUid reactor, c
   return reaction;
 }
 
+TEST_CASE("A port that a child writes triggers the parent reaction observing it", "[backend]") {
+  xronos::backend::Engine engine{};
+  auto& abi_backend = engine.abi();
+  auto reactor = abi_backend.register_top_level_reactor("main");
+  auto child = abi_backend.register_reactor("sub", reactor);
+  auto startup = abi_backend.register_startup("startup", child);
+  auto output = abi_backend.register_output_port("out", child);
+
+  (void)register_int_send(abi_backend, child, "send", startup, output, 1, 42);
+  int received{-1};
+  (void)register_int_probe(abi_backend, reactor, "receive", output, 2, received);
+
+  engine.assemble();
+  REQUIRE(engine.validate().empty());
+  run(engine);
+
+  CHECK(received == 42);
+}
+
+TEST_CASE("An observed origin with a connection triggers its observer and its receiver", "[backend]") {
+  xronos::backend::Engine engine{};
+  auto& abi_backend = engine.abi();
+  auto reactor = abi_backend.register_top_level_reactor("main");
+  auto child = abi_backend.register_reactor("sub", reactor);
+  auto startup = abi_backend.register_startup("startup", child);
+  auto output = abi_backend.register_output_port("out", child);
+  auto sibling = abi_backend.register_reactor("sibling", reactor);
+  auto input = abi_backend.register_input_port("in", sibling);
+  abi_backend.add_connection(output, input);
+
+  (void)register_int_send(abi_backend, child, "send", startup, output, 1, 42);
+  int observed{-1};
+  (void)register_int_probe(abi_backend, reactor, "observe", output, 2, observed);
+  int received{-1};
+  (void)register_int_probe(abi_backend, sibling, "receive", input, 1, received);
+
+  engine.assemble();
+  REQUIRE(engine.validate().empty());
+  run(engine);
+
+  CHECK(observed == 42);
+  CHECK(received == 42);
+}
+
+TEST_CASE("A writing reaction reads back a port that no reaction observes", "[backend]") {
+  xronos::backend::Engine engine{};
+  auto& abi_backend = engine.abi();
+  auto reactor = abi_backend.register_top_level_reactor("main");
+  auto startup = abi_backend.register_startup("startup", reactor);
+  auto output = abi_backend.register_output_port("out", reactor);
+
+  auto& runtime_backend = abi_backend.runtime_backend();
+  ElementUid send_uid{};
+  int read_back{-1};
+  send_uid = abi_backend.register_reaction("send", reactor, make_callback<xronos::abi::ReactionHandler>([&]() {
+                                             auto* effect = runtime_backend.get_settable_effect(send_uid, output);
+                                             if (effect == nullptr) {
+                                               return;
+                                             }
+                                             effect->set(xronos::value::make<int>(42));
+                                             const auto* value = xronos::value::get_if<int>(effect->get());
+                                             if (value != nullptr) {
+                                               read_back = *value;
+                                             }
+                                           }),
+                                           1);
+  abi_backend.register_reaction_trigger(send_uid, startup);
+  abi_backend.register_reaction_effect(send_uid, output);
+
+  engine.assemble();
+  REQUIRE(engine.validate().empty());
+  run(engine);
+
+  CHECK(read_back == 42);
+}
+
+TEST_CASE("A delayed connection to a port that no reaction observes does not extend the run", "[backend]") {
+  xronos::backend::Engine engine{};
+  auto& abi_backend = engine.abi();
+  auto reactor = abi_backend.register_top_level_reactor("main");
+  auto source = abi_backend.register_reactor("source", reactor);
+  auto startup = abi_backend.register_startup("startup", source);
+  auto output = abi_backend.register_output_port("out", source);
+  auto sink = abi_backend.register_reactor("sink", reactor);
+  auto shutdown = abi_backend.register_shutdown("shutdown", sink);
+  auto input = abi_backend.register_input_port("in", sink);
+  abi_backend.add_delayed_connection(output, input, 1s);
+
+  (void)register_int_send(abi_backend, source, "send", startup, output, 1, 42);
+  // The shutdown reaction does not observe the sink's input.
+  auto& runtime_backend = abi_backend.runtime_backend();
+  std::optional<xronos::abi::Duration> shutdown_offset;
+  auto record = abi_backend.register_reaction("record", sink, make_callback<xronos::abi::ReactionHandler>([&]() {
+                                                const auto* time = runtime_backend.get_time_access(sink);
+                                                if (time != nullptr) {
+                                                  shutdown_offset = time->get_timestamp() - time->get_start_timestamp();
+                                                }
+                                              }),
+                                              1);
+  abi_backend.register_reaction_trigger(record, shutdown);
+
+  engine.assemble();
+  REQUIRE(engine.validate().empty());
+  run(engine, ExecutionProperties{.fast_mode = true});
+
+  CHECK(shutdown_offset == std::optional<xronos::abi::Duration>{0s});
+}
+
 TEST_CASE("A cross-boundary connection without a serializer fails validation", "[backend]") {
   xronos::backend::Engine engine{};
   auto& abi_backend = engine.abi();
@@ -1363,7 +1487,7 @@ TEST_CASE("A cross-boundary connection without a serializer fails validation", "
 
   CodecCounters producer{};
   abi_backend.set_port_serializer(output, make_codec<IntCodec>(producer));
-  engine.add_cross_boundary_connection(output, input, BoundaryCrossing::Both);
+  engine.add_cross_boundary_connection(output, input, BoundaryCrossing::Complete);
 
   engine.assemble();
   auto errors = engine.validate();
@@ -1387,7 +1511,7 @@ TEST_CASE("A cross-boundary connection round-trips values through both codecs", 
   // The consumer's transform proves the delivered box was created by the
   // consumer's codec and not passed through directly.
   abi_backend.set_port_serializer(input, make_codec<IntCodec>(consumer, [](int value) { return value + 1000; }));
-  engine.add_cross_boundary_connection(output, input, BoundaryCrossing::Both);
+  engine.add_cross_boundary_connection(output, input, BoundaryCrossing::Complete);
 
   (void)register_int_send(abi_backend, reactor, "send", startup, output, 1, 42);
   int received{-1};
@@ -1416,7 +1540,7 @@ TEST_CASE("A delayed cross-boundary connection delivers the round-tripped value"
   CodecCounters consumer{};
   abi_backend.set_port_serializer(output, make_codec<IntCodec>(producer));
   abi_backend.set_port_serializer(input, make_codec<IntCodec>(consumer, [](int value) { return value + 1000; }));
-  engine.add_cross_boundary_connection(output, input, BoundaryCrossing::Both, 1ms);
+  engine.add_cross_boundary_connection(output, input, BoundaryCrossing::Complete, 1ms);
 
   (void)register_int_send(abi_backend, reactor, "send", startup, output, 1, 42);
   int received{-1};
@@ -1448,8 +1572,8 @@ TEST_CASE("A fan-out applies serialization per edge", "[backend]") {
   abi_backend.set_port_serializer(first, make_codec<IntCodec>(first_consumer, [](int value) { return value + 1000; }));
   abi_backend.set_port_serializer(second,
                                   make_codec<IntCodec>(second_consumer, [](int value) { return value + 2000; }));
-  engine.add_cross_boundary_connection(output, first, BoundaryCrossing::Both);
-  engine.add_cross_boundary_connection(output, second, BoundaryCrossing::Both);
+  engine.add_cross_boundary_connection(output, first, BoundaryCrossing::Complete);
+  engine.add_cross_boundary_connection(output, second, BoundaryCrossing::Complete);
   abi_backend.add_connection(output, plain);
 
   (void)register_int_send(abi_backend, reactor, "send", startup, output, 1, 42);
@@ -1464,13 +1588,14 @@ TEST_CASE("A fan-out applies serialization per edge", "[backend]") {
   REQUIRE(engine.validate().empty());
   run(engine);
 
-  // The differing observed values prove each marked edge ran its own round
-  // trip while the unmarked edge passed the box through directly.
+  // The differing observed values prove each cross-boundary connection ran
+  // its own round trip while the plain connection passed the box through
+  // directly.
   CHECK(at_first == 1042);
   CHECK(at_second == 2042);
   CHECK(at_plain == 42);
-  // Both marked edges leave the same port and so share one serialization
-  // node, so the fan-out serialized the value once.
+  // Both cross-boundary connections leave the same port and so share one
+  // boundary crossing, so the fan-out serialized the value once.
   CHECK(producer.serialized == 1);
   CHECK(first_consumer.deserialized == 1);
   CHECK(second_consumer.deserialized == 1);
@@ -1488,7 +1613,7 @@ TEST_CASE("A void cross-boundary connection round-trips zero bytes", "[backend]"
   CodecCounters consumer{};
   abi_backend.set_port_serializer(output, make_codec<VoidCodec>(producer));
   abi_backend.set_port_serializer(input, make_codec<VoidCodec>(consumer));
-  engine.add_cross_boundary_connection(output, input, BoundaryCrossing::Both);
+  engine.add_cross_boundary_connection(output, input, BoundaryCrossing::Complete);
 
   auto send_uid = std::make_shared<ElementUid>();
   auto send = abi_backend.register_reaction(
@@ -1542,7 +1667,7 @@ TEST_CASE("A cross-boundary connection forwarded on the consumer side re-encodes
   // The boundary crossing sits between the child's source and the parent's
   // boundary port; the plain connection forwards onwards to a port with no
   // serializer at all.
-  engine.add_cross_boundary_connection(source, boundary, BoundaryCrossing::Both);
+  engine.add_cross_boundary_connection(source, boundary, BoundaryCrossing::Complete);
   abi_backend.add_connection(boundary, sink);
 
   (void)register_int_send(abi_backend, child, "send", startup, source, 1, 42);
@@ -1578,7 +1703,7 @@ TEST_CASE("A cross-boundary connection forwarded on the producer side re-encodes
   abi_backend.set_port_serializer(boundary, make_codec<IntCodec>(producer));
   abi_backend.set_port_serializer(sink, make_codec<IntCodec>(consumer, [](int value) { return value + 7; }));
   abi_backend.add_connection(source, boundary);
-  engine.add_cross_boundary_connection(boundary, sink, BoundaryCrossing::Both);
+  engine.add_cross_boundary_connection(boundary, sink, BoundaryCrossing::Complete);
 
   (void)register_int_send(abi_backend, child, "send", startup, source, 1, 42);
   int received{-1};
@@ -1611,8 +1736,8 @@ TEST_CASE("A pass-through chain re-encodes per boundary in order", "[backend]") 
   // boundaries ran in producer to consumer order.
   abi_backend.set_port_serializer(middle, make_codec<IntCodec>(middle_codec, [](int value) { return value * 2; }));
   abi_backend.set_port_serializer(last, make_codec<IntCodec>(last_codec, [](int value) { return value + 100; }));
-  engine.add_cross_boundary_connection(first, middle, BoundaryCrossing::Both);
-  engine.add_cross_boundary_connection(middle, last, BoundaryCrossing::Both);
+  engine.add_cross_boundary_connection(first, middle, BoundaryCrossing::Complete);
+  engine.add_cross_boundary_connection(middle, last, BoundaryCrossing::Complete);
 
   (void)register_int_send(abi_backend, child, "send", startup, first, 1, 42);
   int received{-1};
@@ -1631,7 +1756,7 @@ TEST_CASE("A pass-through chain re-encodes per boundary in order", "[backend]") 
   CHECK(last_codec.deserialized == 1);
 }
 
-TEST_CASE("An exit and entry pair round-trips through a serializer-less relay port", "[backend]") {
+TEST_CASE("A serializing and deserializing pair round-trips through a serializer-less relay port", "[backend]") {
   xronos::backend::Engine engine{};
   auto& abi_backend = engine.abi();
   auto reactor = abi_backend.register_top_level_reactor("main");
@@ -1645,10 +1770,10 @@ TEST_CASE("An exit and entry pair round-trips through a serializer-less relay po
   CodecCounters consumer{};
   abi_backend.set_port_serializer(output, make_codec<IntCodec>(producer));
   abi_backend.set_port_serializer(input, make_codec<IntCodec>(consumer, [](int value) { return value + 1000; }));
-  // The relay carries no serializer. Inside the region the value exists
+  // The relay carries no serializer. Inside the crossing the value exists
   // only in serialized form and merely passes through.
-  engine.add_cross_boundary_connection(output, relay, BoundaryCrossing::Exit);
-  engine.add_cross_boundary_connection(relay, input, BoundaryCrossing::Entry);
+  engine.add_cross_boundary_connection(output, relay, BoundaryCrossing::Serializing);
+  engine.add_cross_boundary_connection(relay, input, BoundaryCrossing::Deserializing);
 
   (void)register_int_send(abi_backend, child, "send", startup, output, 1, 42);
   int received{-1};
@@ -1659,15 +1784,15 @@ TEST_CASE("An exit and entry pair round-trips through a serializer-less relay po
   run(engine);
 
   CHECK(received == 1042);
-  // One serialization at the exit and one deserialization at the entry.
-  // The relay in between re-encodes nothing.
+  // One serialization at the serializing port and one deserialization at
+  // the deserializing port. The relay in between re-encodes nothing.
   CHECK(producer.serialized == 1);
   CHECK(producer.deserialized == 0);
   CHECK(consumer.serialized == 0);
   CHECK(consumer.deserialized == 1);
 }
 
-TEST_CASE("An entry without an upstream exit fails validation on a live chain", "[backend]") {
+TEST_CASE("A deserializing connection without an open crossing fails validation on a live chain", "[backend]") {
   xronos::backend::Engine engine{};
   auto& abi_backend = engine.abi();
   auto reactor = abi_backend.register_top_level_reactor("main");
@@ -1675,7 +1800,7 @@ TEST_CASE("An entry without an upstream exit fails validation on a live chain", 
   auto output = abi_backend.register_output_port("out", reactor);
   auto input = abi_backend.register_input_port("in", reactor);
 
-  engine.add_cross_boundary_connection(output, input, BoundaryCrossing::Entry);
+  engine.add_cross_boundary_connection(output, input, BoundaryCrossing::Deserializing);
   // The chain is live: a reaction writes the origin port.
   (void)register_int_send(abi_backend, reactor, "send", startup, output, 1, 42);
 
@@ -1684,11 +1809,11 @@ TEST_CASE("An entry without an upstream exit fails validation on a live chain", 
   REQUIRE(errors.size() == 1);
   CHECK_THAT(errors.front(), Catch::Matchers::ContainsSubstring("main.out") &&
                                  Catch::Matchers::ContainsSubstring("main.in") &&
-                                 Catch::Matchers::ContainsSubstring("boundary entry") &&
-                                 Catch::Matchers::ContainsSubstring("no upstream"));
+                                 Catch::Matchers::ContainsSubstring("deserializes at its receiving port") &&
+                                 Catch::Matchers::ContainsSubstring("no boundary crossing is open"));
 }
 
-TEST_CASE("A stray entry on a dead chain passes validation", "[backend]") {
+TEST_CASE("A stray deserializing connection on a dead chain passes validation", "[backend]") {
   xronos::backend::Engine engine{};
   auto& abi_backend = engine.abi();
   auto reactor = abi_backend.register_top_level_reactor("main");
@@ -1697,13 +1822,14 @@ TEST_CASE("A stray entry on a dead chain passes validation", "[backend]") {
 
   // No reaction writes the origin, so nothing ever flows here and the
   // stray mark is inert.
-  engine.add_cross_boundary_connection(output, input, BoundaryCrossing::Entry);
+  engine.add_cross_boundary_connection(output, input, BoundaryCrossing::Deserializing);
 
   engine.assemble();
   CHECK(engine.validate().empty());
 }
 
-TEST_CASE("An exit and entry pair requires serializers only at its exit and entry ports", "[backend]") {
+TEST_CASE("A serializing and deserializing pair requires serializers only at its serializing and deserializing ports",
+          "[backend]") {
   xronos::backend::Engine engine{};
   auto& abi_backend = engine.abi();
   auto reactor = abi_backend.register_top_level_reactor("main");
@@ -1712,19 +1838,40 @@ TEST_CASE("An exit and entry pair requires serializers only at its exit and entr
   auto relay = abi_backend.register_output_port("relay", reactor);
   auto input = abi_backend.register_input_port("in", reactor);
 
-  engine.add_cross_boundary_connection(output, relay, BoundaryCrossing::Exit);
-  engine.add_cross_boundary_connection(relay, input, BoundaryCrossing::Entry);
+  engine.add_cross_boundary_connection(output, relay, BoundaryCrossing::Serializing);
+  engine.add_cross_boundary_connection(relay, input, BoundaryCrossing::Deserializing);
 
   engine.assemble();
   auto errors = engine.validate();
   // The serializer check applies even though nothing writes the chain,
-  // because assembly resolves serializers eagerly. Only the exit's from
-  // port and the entry's to port need one. The relay passes serialized
+  // because assembly resolves serializers eagerly. Only the serializing
+  // port and the deserializing port need one. The relay passes serialized
   // bytes through and stays out of the errors.
   REQUIRE(errors.size() == 2);
   CHECK_THAT(errors[0],
              Catch::Matchers::ContainsSubstring("main.sub.out") && !Catch::Matchers::ContainsSubstring("relay"));
   CHECK_THAT(errors[1], Catch::Matchers::ContainsSubstring("main.in") && !Catch::Matchers::ContainsSubstring("relay"));
+}
+
+TEST_CASE("A crossing with no observed port below it never runs its codecs", "[backend]") {
+  xronos::backend::Engine engine{};
+  auto& abi_backend = engine.abi();
+  auto reactor = abi_backend.register_top_level_reactor("main");
+  auto startup = abi_backend.register_startup("startup", reactor);
+  auto output = abi_backend.register_output_port("out", reactor);
+  auto input = abi_backend.register_input_port("in", reactor);
+
+  CodecCounters producer{};
+  abi_backend.set_port_serializer(output, make_codec<IntCodec>(producer));
+  abi_backend.set_port_serializer(input, make_codec<ThrowingDeserializerCodec>());
+  engine.add_cross_boundary_connection(output, input, BoundaryCrossing::Complete);
+
+  (void)register_int_send(abi_backend, reactor, "send", startup, output, 1, 42);
+
+  engine.assemble();
+  REQUIRE(engine.validate().empty());
+  REQUIRE_NOTHROW(run(engine));
+  CHECK(producer.serialized == 0);
 }
 
 TEST_CASE("A throwing deserializer fails the run and rethrows the exception", "[backend]") {
@@ -1738,7 +1885,7 @@ TEST_CASE("A throwing deserializer fails the run and rethrows the exception", "[
   CodecCounters producer{};
   abi_backend.set_port_serializer(output, make_codec<IntCodec>(producer));
   abi_backend.set_port_serializer(input, make_codec<ThrowingDeserializerCodec>());
-  engine.add_cross_boundary_connection(output, input, BoundaryCrossing::Both);
+  engine.add_cross_boundary_connection(output, input, BoundaryCrossing::Complete);
 
   (void)register_int_send(abi_backend, reactor, "send", startup, output, 1, 42);
   int received{-1};

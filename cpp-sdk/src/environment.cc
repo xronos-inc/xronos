@@ -52,16 +52,16 @@ namespace {
 // repeat call before it mutates the backend.
 [[noreturn]] void throw_executed_twice() {
   throw std::logic_error("Environment::execute cannot be called twice on the same environment. To correctly start a "
-                         "new instance of the program, create a new environment.");
+                         "new instance of the application, create a new environment.");
 }
 
 } // namespace
 
-Environment::Environment(bool fast_fwd_execution, Duration timeout, bool render_reactor_graph)
+Environment::Environment(bool fast_mode, Duration timeout, bool render_reactor_graph)
     : default_program_context_{detail::create_default_program_context()}
     , program_context_{default_program_context_} // implicit, compiler-checked upcast to the interface
     , timeout_{timeout}
-    , fast_fwd_execution_{fast_fwd_execution}
+    , fast_mode_{fast_mode}
     , diagram_export_requested_{render_reactor_graph} {}
 
 void Environment::execute() {
@@ -71,20 +71,20 @@ void Environment::execute() {
 
   auto& backend = default_program_context_->backend_impl();
   backend.assemble();
-  // A validation failure is a programming error in the reactor program, so
+  // A validation failure is a programming error in the application, so
   // it is fatal here: log every finding, then throw one summary exception.
   if (const auto errors = backend.validate(); !errors.empty()) {
     for (const auto& error : errors) {
       util::log::error() << error;
     }
-    throw ValidationError{"The reactor program is invalid and cannot be executed."};
+    throw ValidationError{"The application is invalid and cannot be executed."};
   }
   if (diagram_export_requested_) {
     backend.export_diagram();
   }
   // Prepares the run, publishes it behind the runtime-backend facade, and
-  // blocks until the program finishes.
-  backend.run(runtime::ExecutionProperties{.timeout = timeout_, .fast_mode = fast_fwd_execution_});
+  // blocks until the application finishes.
+  backend.run(runtime::ExecutionProperties{.timeout = timeout_, .fast_mode = fast_mode_});
 }
 
 void Environment::execute(const RuntimeProvider& runtime_provider) {
@@ -107,7 +107,7 @@ void Environment::execute(const RuntimeProvider& runtime_provider) {
   // standard lifecycle. Only the parameterless execute() drives assembly and the
   // run; this overload just selects the runtime beforehand.
   default_program_context_->backend_impl().set_runtime_factory(
-      [&runtime_provider]() { return runtime_provider.get_runtime(); });
+      [&runtime_provider] { return runtime_provider.get_runtime(); });
   execute();
 }
 
@@ -120,8 +120,7 @@ namespace detail {
 // Declared in environment.hh; the inline Environment constructors call it to
 // obtain a program context from the linked SDK library.
 auto create_default_program_context() -> std::shared_ptr<DefaultProgramContext> {
-  return std::make_shared<DefaultProgramContext>(
-      []() { return std::make_unique<runtime::default_::DefaultRuntime>(); });
+  return std::make_shared<DefaultProgramContext>([] { return std::make_unique<runtime::default_::DefaultRuntime>(); });
 }
 
 } // namespace detail

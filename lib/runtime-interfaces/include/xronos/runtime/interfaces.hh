@@ -25,9 +25,12 @@ struct ValidationError : public abi::ValidationError {
 
 // The hot-path interfaces a runtime hands out are the ABI's hot-path
 // interfaces (see xronos/abi/backend.hh): deriving without adding members
-// lets a `ProgramHandle`'s pointers upcast to the ABI types with no adapter
-// objects and no extra dispatch. The runtime-facing names remain so runtimes
-// and forward declarations (e.g. xronos/sdk/fwd.hh) are unaffected.
+// lets a `ProgramHandle`'s pointers upcast to the ABI types with no extra
+// dispatch. A runtime implements each interface on a per-role adapter member
+// embedded in the runtime element it belongs to, so a handed-out pointer
+// costs no allocation per call and stays address-stable for the run. The
+// runtime-facing names remain so runtimes and forward declarations (e.g.
+// xronos/sdk/fwd.hh) are unaffected.
 
 struct GettableTrigger : abi::GettableTrigger {
 protected:
@@ -49,13 +52,14 @@ protected:
   ~ShutdownEffect() = default;
 };
 
-struct ExternalTrigger : abi::ExternalTrigger {
+// The ABI base keeps its ABI 1.0 name.
+struct PhysicalEvent : abi::ExternalTrigger {
   // Delivers the event if the program is live. When the program has stopped
   // or has not started yet, the event is dropped and the status reports why.
   [[nodiscard]] virtual auto try_trigger(abi::AnyValue&& value) noexcept -> abi::TriggerStatus = 0;
 
 protected:
-  ~ExternalTrigger() = default;
+  ~PhysicalEvent() = default;
 };
 
 // Extends the ABI's TimeAccess with accessors that only implementation-side
@@ -78,10 +82,15 @@ struct ProgramHandle {
       -> SchedulableEffect* = 0;
   [[nodiscard]] virtual auto get_shutdown_effect(std::uint64_t reaction_uid, std::uint64_t effect_uid) noexcept
       -> ShutdownEffect* = 0;
+  // Null until the run has started, since the start tag does not exist
+  // before execute() determines it. The other lookups resolve as soon as
+  // the program is initialized. Callable from any thread. A non-null result
+  // synchronizes with the start of the run, so the caller sees the start
+  // tag the run set.
   [[nodiscard]] virtual auto get_time_access(std::uint64_t reactor_uid) const noexcept -> const TimeAccess* = 0;
   // Arbitrary external threads may call this concurrently, so implementations
   // must tolerate concurrent lookups.
-  [[nodiscard]] virtual auto get_external_trigger(std::uint64_t external_trigger_uid) noexcept -> ExternalTrigger* = 0;
+  [[nodiscard]] virtual auto get_physical_event(std::uint64_t physical_event_uid) noexcept -> PhysicalEvent* = 0;
 
   virtual void execute() = 0;
 

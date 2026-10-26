@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "xronos/sdk.hh"
@@ -208,9 +209,13 @@ private:
   }
 };
 
+// A reactor connected to itself whose cycle closes through a programmable
+// timer. The reaction `next` schedules the timer with `next_delay`.
 class ProgrammableTimerLoopVoid : public Reactor {
 public:
-  using Reactor::Reactor;
+  ProgrammableTimerLoopVoid(std::string_view name, const Context& context, Duration next_delay)
+      : Reactor{name, context}
+      , next_delay_{next_delay} {}
 
   [[nodiscard]] auto output() const noexcept -> const auto& { return output_; }
   [[nodiscard]] auto input() const noexcept -> const auto& { return input_; }
@@ -222,6 +227,7 @@ private:
   OutputPort<void> output_{"output", context()};
   InputPort<void> input_{"input", context()};
 
+  Duration next_delay_;
   bool continue_{true};
   unsigned messages_received_{0};
 
@@ -240,7 +246,7 @@ private:
     void handler() final {
       self().messages_received_++;
       if (self().continue_) {
-        effect_.schedule(Duration::zero());
+        effect_.schedule(self().next_delay_);
         self().continue_ = false;
       } else {
         shutdown_.trigger_shutdown();
@@ -398,12 +404,19 @@ TEST(loops, DirectFeedbackSelfTriggered) {
   loop.chek_post_conditions(-1);
 }
 
-TEST(loops, ProgrammableTimerLoopVoid) {
+class ProgrammableTimerLoopVoidTest : public ::testing::TestWithParam<Duration> {};
+
+TEST_P(ProgrammableTimerLoopVoidTest, run) {
   TestEnvironment env{5s};
-  ProgrammableTimerLoopVoid loop{"loop", env.context()};
+  ProgrammableTimerLoopVoid loop{"loop", env.context(), GetParam()};
   env.connect(loop.output(), loop.input());
   env.execute();
   loop.chek_post_conditions(2);
 }
+
+INSTANTIATE_TEST_SUITE_P(loops, ProgrammableTimerLoopVoidTest, ::testing::Values(Duration::zero(), Duration{1ms}),
+                         [](const ::testing::TestParamInfo<Duration>& info) {
+                           return "next_delay_" + std::to_string(info.param.count()) + "ns";
+                         });
 
 } // namespace xronos::sdk::test::loops

@@ -101,7 +101,7 @@ public:
    * value instead of copying it.
    *
    * Use this to pass values owned by another framework (for example,
-   * messages received from a ROS 2 subscription) into the reactor program
+   * messages received from a ROS 2 subscription) into the application
    * without copying the payload. The value must not be modified through any
    * other reference for as long as it is shared -- the same contract that
    * sharing a `std::shared_ptr<const T>` implies everywhere else. To hand

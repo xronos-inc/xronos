@@ -9,7 +9,7 @@
 namespace xronos::sdk::detail {
 
 // The SDK's grip on the implementation behind the ABI. Elements share the
-// context of their program via shared_ptr and reach the implementation
+// context of their application via shared_ptr and reach the implementation
 // exclusively through the `abi::Backend` it hands out; how the backend is
 // owned is up to the concrete implementation of this interface (the SDK
 // library's compiled internals own a complete backend, see
@@ -27,10 +27,10 @@ public:
   // The implementation's assembly and lookup surface (never null).
   [[nodiscard]] virtual auto backend() const noexcept -> abi::Backend& = 0;
 
-  // The program's hot-path lookup facade. The facade itself is always
-  // valid and may be called at any time; it is the individual get_*
-  // lookups on it that return nullptr until a run is prepared (see
-  // abi::RuntimeBackend).
+  // The application's hot-path lookup facade. The facade itself is always
+  // valid and may be called at any time; it is the individual get_* lookups
+  // on it that return nullptr until a run is prepared or, for time and
+  // metrics, started (see abi::RuntimeBackend).
   [[nodiscard]] auto runtime_backend() const noexcept -> abi::RuntimeBackend& { return backend().runtime_backend(); }
 
 protected:

@@ -25,8 +25,9 @@
 namespace xronos::sdk {
 
 /**
- * Exception that is thrown when a program reaches an invalid state.
+ * Exception that is thrown when an application reaches an invalid state.
  */
+// NOLINTNEXTLINE(readability-redundant-qualified-alias): Doxygen skips using-declarations.
 using ValidationError = abi::ValidationError;
 
 /**
@@ -57,10 +58,10 @@ auto create_default_program_context() -> std::shared_ptr<DefaultProgramContext>;
 } // namespace detail
 
 /**
- * The entry point for assembling and executing reactor programs.
+ * The entry point for assembling and executing applications.
  *
- * The environment acts as an execution context for reactor programs. It manages
- * both the creation of reactors and the execution of reactor programs.
+ * The environment creates and contains top-level reactors, connects them, and
+ * executes the application.
  */
 class Environment {
 public:
@@ -77,30 +78,30 @@ public:
 
   // The Environment may not be moved or copied: the transient context objects
   // reference the program context it owns, so a move would dangle them, and
-  // there is no meaningful copy of a program's single execution.
+  // there is no meaningful copy of an application's single execution.
   Environment(Environment&&) = delete;
   Environment(const Environment&) = delete;
   auto operator=(Environment&&) = delete;
   auto operator=(const Environment&) = delete;
 
   /**
-   * Execute the reactor program.
+   * Execute the application.
    *
-   * Initiates the execution of a reactor program. This first assembles the
-   * reactor program by calling Reactor::assemble() on each reactor and then
-   * initiates execution by triggering all Startup event sources.
+   * Initiates the execution of an application. This first assembles the
+   * application by calling Reactor::assemble() on each reactor. The runtime
+   * then begins execution, and every Startup event source emits an event.
    *
-   * Returns when the reactor program terminates. The reactor program terminates
+   * Returns when the application terminates. The application terminates
    * when there are no more events, after calling
    * ShutdownEffect::trigger_shutdown(), or when it reaches the timeout
    * configured on the environment.
    *
-   * An exception thrown by a reaction handler also terminates the program.
+   * An exception thrown by a reaction handler also terminates the application.
    * The runtime then stops invoking reaction handlers; a handler that is
    * about to start may still run. Shutdown reactions run in any case, and
    * execute() rethrows the first exception.
    *
-   * The program executes on the default runtime. To select a different
+   * The application executes on the default runtime. To select a different
    * runtime, use the overload that takes a RuntimeProvider.
    */
   void execute();
@@ -140,9 +141,12 @@ public:
    * timestamp at which the message is received is the same as the timestamp at
    * which it was sent.
    *
-   * @tparam T Value type associated with events relayed by the connection.
-   * @param from The port to draw the connection from
-   * @param to The port to draw the connection to.
+   * A port may feed several connections but receives through at most one. The
+   * environment connects only ports of top-level reactors.
+   *
+   * @tparam T Value type associated with messages relayed by the connection.
+   * @param from The port to connect from.
+   * @param to The port to connect to.
    */
   template <class T, template <class> class FromSerializer, template <class> class ToSerializer>
     requires std::is_same_v<FromSerializer<T>, NoSerializer<T>> || std::is_same_v<ToSerializer<T>, NoSerializer<T>> ||
@@ -177,9 +181,12 @@ public:
    * timestamp at which the message is received is the timestamp at which it was
    * sent plus @p delay.
    *
-   * @tparam T Value type associated with events relayed by the connection.
-   * @param from The port to draw the connection from
-   * @param to The port to draw the connection to.
+   * A port may feed several connections but receives through at most one. The
+   * environment connects only ports of top-level reactors.
+   *
+   * @tparam T Value type associated with messages relayed by the connection.
+   * @param from The port to connect from.
+   * @param to The port to connect to.
    * @param delay The delay to apply to all messages.
    */
   template <class T, template <class> class FromSerializer, template <class> class ToSerializer>
@@ -228,15 +235,15 @@ protected:
    * @brief Low-level constructor for the environment that supports advanced configuration.
    *
    * @details This constructor usually should not be called directly.
-   * @param fast_fwd_execution Use a special mode of execution that skips waiting between
-   * executing events and instead processes events as fast as possible.
-   * @param timeout The maximum amount of time to simulate before terminating.
-   * @param render_reactor_graph Whether to export the reactor graph to a diagram server.
+   * @param fast_mode Process each event as soon as it is ready instead of waiting for the
+   * wall clock to reach its timestamp.
+   * @param timeout The elapsed time at which the environment requests shutdown.
+   * @param render_reactor_graph Whether to export a diagram of the application to a diagram server.
    */
   // Defined in the SDK library, where DefaultProgramContext is complete: it
   // obtains the concrete context from the factory and upcasts it to seed
   // program_context_ (an ordinary, compiler-checked base conversion).
-  Environment(bool fast_fwd_execution, Duration timeout, bool render_reactor_graph);
+  Environment(bool fast_mode, Duration timeout, bool render_reactor_graph);
 
 private:
   // The program context is held twice, as the same object: default_program_context_
@@ -248,7 +255,7 @@ private:
   std::shared_ptr<detail::ProgramContext> program_context_;
 
   Duration timeout_;
-  bool fast_fwd_execution_;
+  bool fast_mode_;
   bool diagram_export_requested_;
   bool executed_{false};
 };
@@ -264,9 +271,9 @@ public:
   /**
    * Constructor.
    *
-   * @param timeout The maximum amount of time to simulate before terminating.
+   * @param timeout The elapsed time at which the environment requests shutdown.
    */
-  TestEnvironment(Duration timeout = Duration::max())
+  explicit TestEnvironment(Duration timeout = Duration::max())
       : Environment{true, timeout, false} {}
 };
 

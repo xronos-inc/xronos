@@ -34,7 +34,7 @@ inline auto register_periodic_timer(std::string_view name, const ReactorContext&
 } // namespace detail
 
 /**
- * A reactor element that emits events in regular intervals.
+ * An element that emits events in regular intervals.
  *
  * Can be used as a reaction @ref BaseReaction::Trigger "trigger".
  */

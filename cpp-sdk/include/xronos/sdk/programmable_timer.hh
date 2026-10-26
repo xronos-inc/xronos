@@ -28,10 +28,10 @@ inline auto register_programmable_timer(std::string_view name, const ReactorCont
 } // namespace detail
 
 /**
- * A reactor element for scheduling new events.
+ * An event source that emits events scheduled by a reaction handler.
  *
- * Programmable timers may be used by reactions to schedule new events that will
- * be emitted in the future. They can be used both as a reaction @ref
+ * A programmable timer emits each event at the scheduling handler's current
+ * time plus a chosen delay. It can be used both as a reaction @ref
  * BaseReaction::Trigger "trigger" and a reaction @ref
  * BaseReaction::ProgrammableTimerEffect "effect".
  *

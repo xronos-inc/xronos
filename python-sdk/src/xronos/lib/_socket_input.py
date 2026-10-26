@@ -18,7 +18,9 @@ class SocketInput(ExternalInput[bytes]):
     This reactor opens a network socket and reads bytes from it. The bytes are forwarded
     to the output port. The reactor can be configured to open either a TCP
     server, a TCP client or a UDP listener. Deserialization of the data must be handled
-    by the reactor connected to the output port.
+    by the reactor connected to the output port. TCP is a byte stream, so each output
+    event carries the bytes of one socket read, which need not align with the sender's
+    writes. The connected reactor must apply any framing.
 
     In TCP client mode, if ``reconnect`` is set to True, the reactor will keep trying to
     connect to the server if it gets a :exc:`ConnectionRefusedError`. Once connected, it

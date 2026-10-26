@@ -21,7 +21,7 @@ auto ConnectionGraph::add_connection(const ConnectionProperties& properties) noe
   return res;
 }
 
-auto ConnectionGraph::get_upstream_uid(ElementID uid) const noexcept -> std::optional<ElementID> {
+auto ConnectionGraph::get_sending_uid(ElementID uid) const noexcept -> std::optional<ElementID> {
   if (auto properties = get_incoming_connection(uid); properties.has_value()) {
     return properties.value().get().from_uid;
   }
@@ -81,15 +81,15 @@ auto accumulate_delay(std::optional<Duration> accumulated, std::optional<Duratio
   return accumulated;
 }
 
-// All Exit and Both connections leaving the same port share one
-// serialization node, so the value is serialized once per port.
-auto find_or_create_serialization(DeliverySubtree& subtree, ElementID serialize_uid) -> BoundarySerialization& {
-  auto serialization = std::ranges::find_if(subtree.serializations, [&](const BoundarySerialization& candidate) {
+// Every connection that serializes at the same sending port shares one
+// boundary crossing, so the value is serialized once per port.
+auto find_or_create_serialization(ConnectionSegment& segment, ElementID serialize_uid) -> ConnectionSerialization& {
+  auto serialization = std::ranges::find_if(segment.serializations, [&](const ConnectionSerialization& candidate) {
     return candidate.serialize_uid == serialize_uid;
   });
-  if (serialization == subtree.serializations.end()) {
-    subtree.serializations.push_back(BoundarySerialization{.serialize_uid = serialize_uid, .branches = {}});
-    serialization = std::prev(subtree.serializations.end());
+  if (serialization == segment.serializations.end()) {
+    segment.serializations.push_back(ConnectionSerialization{.serialize_uid = serialize_uid, .deserializations = {}});
+    serialization = std::prev(segment.serializations.end());
   }
   return *serialization;
 }
@@ -98,11 +98,12 @@ auto find_or_create_serialization(DeliverySubtree& subtree, ElementID serialize_
 //
 // The walk is total. It interprets every combination of marks, including
 // ones the validator rejects on live chains, so that computing the trees
-// never throws. An `Entry` with no open region delivers nothing and its
-// edge is skipped. An `Exit` inside an open region acts as a plain
-// connection. A `Both` inside an open region acts as an `Entry`.
-void collect_deliveries(ElementID port_uid, std::optional<Duration> accumulated_delay, DeliverySubtree& subtree,
-                        BoundarySerialization* open_serialization, const OutgoingConnections& outgoing) {
+// never throws. A `Deserializing` connection with no open crossing adds no
+// receiving port and is skipped. A `Serializing` connection inside an open crossing
+// acts as a plain connection. A `Complete` connection inside an open
+// crossing acts as `Deserializing`.
+void collect_receiving_ports(ElementID port_uid, std::optional<Duration> accumulated_delay, ConnectionSegment& segment,
+                             ConnectionSerialization* open_serialization, const OutgoingConnections& outgoing) {
   auto it = outgoing.find(port_uid);
   if (it == outgoing.end()) {
     return;
@@ -112,79 +113,81 @@ void collect_deliveries(ElementID port_uid, std::optional<Duration> accumulated_
     auto delay = accumulate_delay(accumulated_delay, connection->delay);
     auto crossing = connection->crossing;
     if (open_serialization != nullptr) {
-      if (crossing == BoundaryCrossing::Exit) {
+      if (crossing == BoundaryCrossing::Serializing) {
         crossing = BoundaryCrossing::None;
-      } else if (crossing == BoundaryCrossing::Both) {
-        crossing = BoundaryCrossing::Entry;
+      } else if (crossing == BoundaryCrossing::Complete) {
+        crossing = BoundaryCrossing::Deserializing;
       }
     }
 
     switch (crossing) {
     case BoundaryCrossing::None: {
-      subtree.leaves.push_back(DeliveryLeaf{.port_uid = connection->to_uid, .delay = delay});
-      collect_deliveries(connection->to_uid, delay, subtree, open_serialization, outgoing);
+      segment.receiving_ports.push_back(ReceivingPort{.port_uid = connection->to_uid, .delay = delay});
+      collect_receiving_ports(connection->to_uid, delay, segment, open_serialization, outgoing);
       break;
     }
-    case BoundaryCrossing::Exit: {
-      // The port behind the exit is a pass-through boundary port and keeps
-      // a plain leaf, like any mid-chain port.
-      subtree.leaves.push_back(DeliveryLeaf{.port_uid = connection->to_uid, .delay = delay});
-      auto& serialization = find_or_create_serialization(subtree, connection->from_uid);
-      collect_deliveries(connection->to_uid, delay, subtree, &serialization, outgoing);
+    case BoundaryCrossing::Serializing: {
+      // The receiving port of a serializing connection is a pass-through
+      // port and stays a receiving port of the enclosing segment, like any
+      // mid-chain port.
+      segment.receiving_ports.push_back(ReceivingPort{.port_uid = connection->to_uid, .delay = delay});
+      auto& serialization = find_or_create_serialization(segment, connection->from_uid);
+      collect_receiving_ports(connection->to_uid, delay, segment, &serialization, outgoing);
       break;
     }
-    case BoundaryCrossing::Entry: {
+    case BoundaryCrossing::Deserializing: {
       if (open_serialization == nullptr) {
         break;
       }
-      auto& branch = open_serialization->branches.emplace_back(
-          BoundaryDeserialization{.deserialize_uid = connection->to_uid, .subtree = {}});
-      branch.subtree.leaves.push_back(DeliveryLeaf{.port_uid = connection->to_uid, .delay = delay});
-      collect_deliveries(connection->to_uid, delay, branch.subtree, nullptr, outgoing);
+      auto& deserialization = open_serialization->deserializations.emplace_back(
+          ConnectionDeserialization{.deserialize_uid = connection->to_uid, .segment = {}});
+      deserialization.segment.receiving_ports.push_back(ReceivingPort{.port_uid = connection->to_uid, .delay = delay});
+      collect_receiving_ports(connection->to_uid, delay, deserialization.segment, nullptr, outgoing);
       break;
     }
-    case BoundaryCrossing::Both: {
-      auto& serialization = find_or_create_serialization(subtree, connection->from_uid);
-      auto& branch = serialization.branches.emplace_back(
-          BoundaryDeserialization{.deserialize_uid = connection->to_uid, .subtree = {}});
-      branch.subtree.leaves.push_back(DeliveryLeaf{.port_uid = connection->to_uid, .delay = delay});
-      collect_deliveries(connection->to_uid, delay, branch.subtree, nullptr, outgoing);
+    case BoundaryCrossing::Complete: {
+      auto& serialization = find_or_create_serialization(segment, connection->from_uid);
+      auto& deserialization = serialization.deserializations.emplace_back(
+          ConnectionDeserialization{.deserialize_uid = connection->to_uid, .segment = {}});
+      deserialization.segment.receiving_ports.push_back(ReceivingPort{.port_uid = connection->to_uid, .delay = delay});
+      collect_receiving_ports(connection->to_uid, delay, deserialization.segment, nullptr, outgoing);
       break;
     }
     }
   }
 }
 
-// Drops serialization nodes that ended up with no deserializing branch: an
-// `Exit` whose region no `Entry` ever closed. Nothing would be delivered
-// through such a node, and the runtimes rely on every remaining node having
-// at least one branch.
-void prune_branchless_serializations(DeliverySubtree& subtree) {
-  std::erase_if(subtree.serializations,
-                [](const BoundarySerialization& serialization) { return serialization.branches.empty(); });
-  for (auto& serialization : subtree.serializations) {
-    for (auto& branch : serialization.branches) {
-      prune_branchless_serializations(branch.subtree);
+// Drops boundary crossings that ended up with no deserializing port: a
+// crossing that a serializing connection opened and no deserializing
+// connection ever closed. No value would pass through such a crossing, and
+// the consumers of connection trees rely on every remaining crossing having
+// at least one deserializing port.
+void prune_serializations_without_deserialization(ConnectionSegment& segment) {
+  std::erase_if(segment.serializations,
+                [](const ConnectionSerialization& serialization) { return serialization.deserializations.empty(); });
+  for (auto& serialization : segment.serializations) {
+    for (auto& deserialization : serialization.deserializations) {
+      prune_serializations_without_deserialization(deserialization.segment);
     }
   }
 }
 
 } // namespace
 
-auto ConnectionGraph::compute_delivery_trees() const -> std::vector<DeliveryTree> {
+auto ConnectionGraph::compute_connection_trees() const -> std::vector<ConnectionTree> {
   OutgoingConnections outgoing;
   for (const auto& [to_uid, properties] : connections_) {
     outgoing[properties.from_uid].push_back(&properties);
   }
 
-  std::vector<DeliveryTree> trees;
+  std::vector<ConnectionTree> trees;
   for (const auto& [from_uid, connections] : outgoing) {
     if (has_incoming_connection(from_uid)) {
       continue;
     }
-    auto& tree = trees.emplace_back(DeliveryTree{.origin_uid = from_uid, .root = {}});
-    collect_deliveries(from_uid, std::nullopt, tree.root, nullptr, outgoing);
-    prune_branchless_serializations(tree.root);
+    auto& tree = trees.emplace_back(ConnectionTree{.origin_uid = from_uid, .root = {}});
+    collect_receiving_ports(from_uid, std::nullopt, tree.root, nullptr, outgoing);
+    prune_serializations_without_deserialization(tree.root);
   }
 
   return trees;

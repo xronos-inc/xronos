@@ -15,7 +15,9 @@ namespace xronos::logical_time {
 class Tag {
 public:
   Tag() = default;
-  Tag(const core::TimePoint timestamp, std::uint32_t microstep = 0)
+  explicit Tag(const core::TimePoint timestamp)
+      : Tag{timestamp, 0} {}
+  Tag(const core::TimePoint timestamp, std::uint32_t microstep)
       : timestamp_{timestamp}
       , microstep_{microstep} {}
 

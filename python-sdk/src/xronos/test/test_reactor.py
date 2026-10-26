@@ -43,9 +43,9 @@ def class_(request: pytest.FixtureRequest) -> type[xronos.Reactor]:
 class TestBaseReactor:
     @staticmethod
     def test_init(class_: type[xronos.Reactor]) -> None:
-        assert hasattr(class_, "_Reactor__element_descriptors")
-        assert isinstance(class_._Reactor__element_descriptors, list)
-        assert len(class_._Reactor__element_descriptors) == 0
+        assert hasattr(class_, "_Reactor__element_declarations")
+        assert isinstance(class_._Reactor__element_declarations, list)
+        assert len(class_._Reactor__element_declarations) == 0
 
     @staticmethod
     def test_get_base() -> None:
@@ -63,25 +63,25 @@ class TestBaseReactor:
                 pass
 
     @staticmethod
-    def test_register_descriptor():
+    def test_register_declaration():
         dummy_desc_1 = object()
         dummy_desc_2 = object()
         dummy_desc_3 = object()
-        Class._register_element_descriptor(dummy_desc_1)
-        Class._register_element_descriptor(dummy_desc_2)
-        Class._register_element_descriptor(dummy_desc_3)
-        assert len(Class._Reactor__element_descriptors) == 3
-        assert len(BaseClass._Reactor__element_descriptors) == 0
-        assert dummy_desc_1 is Class._Reactor__element_descriptors[0]
-        assert dummy_desc_2 is Class._Reactor__element_descriptors[1]
-        assert dummy_desc_3 is Class._Reactor__element_descriptors[2]
+        Class._register_element_declaration(dummy_desc_1)
+        Class._register_element_declaration(dummy_desc_2)
+        Class._register_element_declaration(dummy_desc_3)
+        assert len(Class._Reactor__element_declarations) == 3
+        assert len(BaseClass._Reactor__element_declarations) == 0
+        assert dummy_desc_1 is Class._Reactor__element_declarations[0]
+        assert dummy_desc_2 is Class._Reactor__element_declarations[1]
+        assert dummy_desc_3 is Class._Reactor__element_declarations[2]
 
     @staticmethod
-    def test_base_descriptors():
-        assert len(BaseClass._Reactor__get_base_element_descriptors()) == 0
-        assert len(Class._Reactor__get_base_element_descriptors()) == 0
-        assert len(ChildClass._Reactor__get_base_element_descriptors()) == 3
-        assert len(MixinClass._Reactor__get_base_element_descriptors()) == 3
+    def test_base_declarations():
+        assert len(BaseClass._Reactor__get_base_element_declarations()) == 0
+        assert len(Class._Reactor__get_base_element_declarations()) == 0
+        assert len(ChildClass._Reactor__get_base_element_declarations()) == 3
+        assert len(MixinClass._Reactor__get_base_element_declarations()) == 3
 
 
 def test_direct_initialization():

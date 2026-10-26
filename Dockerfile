@@ -1,10 +1,10 @@
-FROM ubuntu:jammy-20260810@sha256:2edbbc5dc405e9612ba3584ce95480277e3eb374407b5505fe26f17df77c7dbc AS base
+FROM ubuntu:jammy-20260930@sha256:0a9887931b0e38af2e3487ed39e29436b0535c4f3f52e57745baaf79d1898956 AS base
 WORKDIR /xronos
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV DISPLAY=localhost:0.0
 
-ARG clang_tools_version=20
+ARG clang_tools_version=23
 
 RUN apt-get update -qq
 RUN apt-get install -y -q --no-install-recommends apt-utils
@@ -47,26 +47,21 @@ RUN apt-get update -qq && apt-get install -y -q --no-install-recommends \
         llvm-${clang_tools_version}-dev \
         libclang-${clang_tools_version}-dev \
         libgl1 \
-        python3.10-dev python3.10-venv \
         python3.11-dev python3.11-venv \
         python3.12-dev python3.12-venv \
         python3.13-dev python3.13-venv python3.13-nogil \
         python3.14-dev python3.14-venv python3.14-nogil \
+        python3.15-dev python3.15-venv python3.15-nogil \
         python3-pygments \
         zlib1g-dev
 
 # This is a workaround for a gcc bug. See https://gcc.gnu.org/bugzilla/show_bug.cgi?id=118700
-RUN cp /usr/include/python3.13t/pyconfig.h ./
-RUN rm -rf /usr/include/python3.13t
-RUN cp -r /usr/include/python3.13 /usr/include/python3.13t
-RUN rm /usr/include/python3.13t/pyconfig.h
-RUN mv ./pyconfig.h /usr/include/python3.13t/pyconfig.h
-# Same for Python 3.14
-RUN cp /usr/include/python3.14t/pyconfig.h ./
-RUN rm -rf /usr/include/python3.14t
-RUN cp -r /usr/include/python3.14 /usr/include/python3.14t
-RUN rm /usr/include/python3.14t/pyconfig.h
-RUN mv ./pyconfig.h /usr/include/python3.14t/pyconfig.h
+RUN set -e; for v in 3.13 3.14 3.15; do \
+        cp /usr/include/python${v}t/pyconfig.h ./; \
+        rm -rf /usr/include/python${v}t; \
+        cp -r /usr/include/python${v} /usr/include/python${v}t; \
+        mv ./pyconfig.h /usr/include/python${v}t/pyconfig.h; \
+    done
 
 RUN update-alternatives --install /usr/bin/clang clang /usr/bin/clang-${clang_tools_version} 100
 RUN update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-${clang_tools_version} 100
@@ -98,7 +93,7 @@ ENV MYPY_CACHE_DIR=/dev/null
 FROM scratch AS configs
 COPY .clang-tidy .clang-format dev-requirements.txt /
 
-FROM hashicorp/terraform:1.16.0@sha256:64360659224d6cbeb099eeed61aa66a80e02c18ba08c0243bd905165b47b088e AS check-format
+FROM hashicorp/terraform:1.17.0@sha256:4d1b496a256f2989bccdb04b9104a4ede97234b10fba90259e173e905ec4fb58 AS check-format
 WORKDIR /xronos
 # Need to rename the file because terraform fmt errors out for .hcl (without tftest)
 COPY docker-bake.hcl docker-bake.tftest.hcl

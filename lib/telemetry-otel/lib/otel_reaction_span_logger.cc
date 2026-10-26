@@ -22,7 +22,7 @@ class OtelReactionSpanScope final : public ReactionSpanScope {
   std::shared_ptr<opentelemetry::trace::Span> span_;
 
 public:
-  OtelReactionSpanScope(std::shared_ptr<opentelemetry::trace::Span> span)
+  explicit OtelReactionSpanScope(std::shared_ptr<opentelemetry::trace::Span> span)
       : scope_(opentelemetry::trace::Tracer::WithActiveSpan(span))
       , span_(std::move(span)) {};
   OtelReactionSpanScope(const OtelReactionSpanScope&) = delete;

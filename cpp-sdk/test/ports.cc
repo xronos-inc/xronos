@@ -935,7 +935,7 @@ private:
 };
 
 // A connected port that no reaction writes never delivers an event. The
-// program must terminate without invoking the downstream handler.
+// program must terminate without invoking the receiving reactor's handler.
 TEST(ports, NeverWrittenConnectedPortTerminates) {
   TestEnvironment env{100ms};
   SilentSender sender{"sender", env.context()};

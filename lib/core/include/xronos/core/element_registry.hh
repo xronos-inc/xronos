@@ -23,7 +23,7 @@ public:
   // contains (ASCII) whitespace or any of ".,/*$?#@": fully qualified
   // names are dot-joined paths, and the other rejected characters carry
   // syntax where those paths serve as addresses, such as network key
-  // expressions and selection lists.
+  // expressions and assignment lists.
   [[nodiscard]] auto add_new_element(std::string_view name, ElementType type,
                                      const std::optional<ElementID>& parent_uid) noexcept
       -> nonstd::expected<std::reference_wrapper<const Element>, std::string>;

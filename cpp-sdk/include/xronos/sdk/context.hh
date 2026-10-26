@@ -25,7 +25,7 @@ class ReactorContext;
 using Context = std::variant<EnvironmentContext, ReactorContext>;
 
 /**
- * Opaque data type used for constructing reactors.
+ * The environment's context, through which it creates top-level reactors.
  *
  * Use Environment::context() to obtain an instance of this class.
  */
@@ -44,7 +44,7 @@ private:
 };
 
 /**
- * Opaque data type used for constructing @ref Element "Elements".
+ * A reactor's context, through which it creates its @ref Element "elements".
  *
  * Use Reactor::context() to obtain an instance of this class.
  */

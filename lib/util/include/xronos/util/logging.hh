@@ -109,7 +109,7 @@ inline auto error([[maybe_unused]] std::source_location location = std::source_l
 
 class NamedLogger {
 public:
-  NamedLogger(std::string_view name)
+  explicit NamedLogger(std::string_view name)
       : name_{name} {}
 
   [[nodiscard]] auto debug(std::source_location location = std::source_location::current()) const noexcept -> auto {

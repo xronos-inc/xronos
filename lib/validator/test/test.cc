@@ -317,7 +317,7 @@ TEST_F(HierarchyCheck, HierarchyFailureGatesLaterChecks) {
   auto timer = add("timer", core::PeriodicTimerTag{std::make_unique<core::PeriodicTimerProperties>()}, reactor);
   auto input = add_input(reactor);
   ASSERT_TRUE(model_.connection_graph.add_connection(
-      {.from_uid = timer, .to_uid = input, .delay = std::nullopt, .crossing = core::BoundaryCrossing::Both}));
+      {.from_uid = timer, .to_uid = input, .delay = std::nullopt, .crossing = core::BoundaryCrossing::Complete}));
 
   auto result = validator::run_all_checks(model_);
   ASSERT_FALSE(result.has_value());

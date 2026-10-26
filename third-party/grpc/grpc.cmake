@@ -1,4 +1,4 @@
-set(XRONOS_GRPC_VERSION "v1.83.1" CACHE STRING "grpc version")
+set(XRONOS_GRPC_VERSION "v1.84.1" CACHE STRING "grpc version")
 set(XRONOS_GRPC_PROVIDER "module" CACHE STRING "grpc provider (module|package|none)")
 
 function(add_grpc)
@@ -43,6 +43,7 @@ function(add_grpc)
       "third_party/cares"
       "third_party/boringssl-with-bazel"
       "third_party/re2"
+      "third_party/grpc-proto"
     OVERRIDE_FIND_PACKAGE
     SYSTEM
   )

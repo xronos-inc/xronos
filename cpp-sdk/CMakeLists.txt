@@ -2,11 +2,11 @@ cmake_minimum_required(VERSION 3.28)
 
 project(xronos-sdk
   LANGUAGES CXX
-  VERSION "0.14.0"
+  VERSION "0.15.0"
   HOMEPAGE_URL "https://docs.xronos.com"
   DESCRIPTION "The Xronos C++ SDK for writing reactor programs."
 )
-set(PROJECT_VERSION "0.14.0")
+set(PROJECT_VERSION "0.15.0")
 
 # require C++ 20
 set(CMAKE_CXX_STANDARD 20 CACHE STRING "The C++ standard." FORCE)
@@ -237,7 +237,22 @@ if(XRONOS_SDK_INSTALL)
 
   set(CPACK_PACKAGE_CONTACT "christian@xronos.com")
   set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Christian Menard <christian@xronos.com>")
-  set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT) # use debian naming scheme for the deb package
+  # dpkg sorts `~` before the empty string, so the package version `0.15.0~dev`
+  # sorts below the `0.15.0` release. The file name keeps `-` because GitHub
+  # renames `~` in release asset names, and the `.sha512` file records the name.
+  string(REPLACE "-" "~" CPACK_DEBIAN_PACKAGE_VERSION "${PROJECT_VERSION}")
+  # Hosts without dpkg, such as macOS, cannot build the DEB package and only
+  # build the TGZ.
+  find_program(DPKG_EXECUTABLE dpkg)
+  if(DPKG_EXECUTABLE)
+    execute_process(
+      COMMAND "${DPKG_EXECUTABLE}" --print-architecture
+      OUTPUT_VARIABLE CPACK_DEBIAN_PACKAGE_ARCHITECTURE
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+      COMMAND_ERROR_IS_FATAL ANY
+    )
+    set(CPACK_DEBIAN_FILE_NAME "${PROJECT_NAME}_${PROJECT_VERSION}_${CPACK_DEBIAN_PACKAGE_ARCHITECTURE}.deb")
+  endif()
 
   set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
   set(CPACK_DEBIAN_PACKAGE_GENERATE_SHLIBS ON)

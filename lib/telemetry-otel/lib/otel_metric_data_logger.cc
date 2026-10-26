@@ -12,8 +12,7 @@
 #include "xronos/runtime/interfaces.hh"
 #include "xronos/telemetry/metric.hh"
 
-using namespace xronos::telemetry;
-using namespace xronos::telemetry::otel;
+namespace xronos::telemetry::otel {
 
 void OtelMetricDataLogger::record(const core::Element& metric, const runtime::TimeAccess& time_access,
                                   MetricValue value) {
@@ -51,3 +50,5 @@ void OtelMetricDataLogger::record(const core::Element& metric, const runtime::Ti
   auto timestamp = std::chrono::time_point_cast<std::chrono::system_clock::duration>(time_access.get_timestamp());
   current_span->AddEvent(metric.fqn, timestamp, attributes);
 }
+
+} // namespace xronos::telemetry::otel

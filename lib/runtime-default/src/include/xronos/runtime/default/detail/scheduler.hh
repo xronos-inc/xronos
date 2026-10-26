@@ -4,7 +4,7 @@
 #ifndef XRONOS_RUNTIME_DEFAULT_DETAIL_SCHEDULER_HH
 #define XRONOS_RUNTIME_DEFAULT_DETAIL_SCHEDULER_HH
 
-#include <condition_variable>
+#include <atomic>
 #include <cstdint>
 #include <deque>
 #include <exception>
@@ -21,6 +21,8 @@
 #include "xronos/core/reactor_model.hh"
 #include "xronos/core/time.hh"
 #include "xronos/logical_time/tag.hh"
+#include "xronos/physical_time/interrupt.hh"
+#include "xronos/physical_time/physical_clock.hh"
 #include "xronos/runtime/default/detail/runtime_model.hh"
 #include "xronos/runtime/interfaces.hh"
 
@@ -40,14 +42,15 @@ struct Reaction {
   auto operator==(const Reaction& other) const noexcept { return index == other.index; }
 };
 
-class EventSource {
+// The value an element holds at the current tag.
+class PresentValue {
 public:
   // The empty value means that no event is present; valueless events carry a
   // boxed `abi::Void`.
   [[nodiscard]] auto get() const noexcept -> const abi::AnyValue& { return value_; }
 
-  void activate(abi::AnyValue&& value) { value_ = std::move(value); }
-  void reset() { value_.reset(); }
+  void set(abi::AnyValue&& value) { value_ = std::move(value); }
+  void clear() { value_.reset(); }
 
 private:
   abi::AnyValue value_;
@@ -55,11 +58,12 @@ private:
 
 class EventQueue {
 public:
-  EventQueue(const ExecutionProperties& properties)
-      : fast_mode_(properties.fast_mode) {}
+  EventQueue(const ExecutionProperties& properties, const physical_time::PhysicalClock& clock)
+      : fast_mode_(properties.fast_mode)
+      , clock_{clock} {}
 
   void schedule_event(std::uint64_t element_uid, abi::AnyValue&& value, const logical_time::Tag& tag);
-  auto trigger_external_event(std::uint64_t element_uid, abi::AnyValue&& value) -> abi::TriggerStatus;
+  auto trigger_physical_event(std::uint64_t element_uid, abi::AnyValue&& value) -> abi::TriggerStatus;
   // The next batch of events at one tag, or empty once max_tag is reached.
   // A stop request makes a blocked call return empty without waiting, so the
   // event loop ends promptly.
@@ -79,35 +83,33 @@ public:
   // Wakes a blocked wait_until_next_event so it returns empty. Callable from
   // any thread; external events arriving afterwards are rejected as Stopped.
   void request_stop() {
-    {
-      std::lock_guard<std::mutex> lock(mutex_);
-      stop_requested_ = true;
-    }
-    cv_.notify_one();
+    std::scoped_lock lock(mutex_);
+    stop_requested_ = true;
+    wait_interrupt_.interrupt();
   }
   [[nodiscard]] auto stop_requested() const -> bool {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::scoped_lock lock(mutex_);
     return stop_requested_;
   }
 
-  void set_has_external_triggers() { has_external_triggers_ = true; }
+  void set_has_physical_events() { has_physical_events_ = true; }
 
   // The scheduler owns the live window, but its state is single-threaded
-  // while `trigger_external_event` runs on external threads. The scheduler
+  // while `trigger_physical_event` runs on external threads. The scheduler
   // calls these methods to copy each window transition into fields guarded
   // by `mutex_`, so the status check and the event insertion happen under
   // one lock.
   void mark_started(const logical_time::Tag& shutdown_bound) {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::scoped_lock lock(mutex_);
     started_ = true;
     shutdown_bound_ = shutdown_bound;
   }
   void narrow_shutdown_bound(const logical_time::Tag& shutdown_bound) {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::scoped_lock lock(mutex_);
     shutdown_bound_ = shutdown_bound;
   }
   void mark_stopped() {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::scoped_lock lock(mutex_);
     stopped_ = true;
   }
 
@@ -117,10 +119,13 @@ private:
 
   std::map<logical_time::Tag, std::vector<Event>> event_queue_{};
   mutable std::mutex mutex_{};
-  std::condition_variable cv_{};
-  bool has_external_triggers_{false};
+  // Ends the wait in progress in next_event, which replaces it before each
+  // wait. Guarded by `mutex_`.
+  physical_time::InterruptSource wait_interrupt_{};
+  bool has_physical_events_{false};
   bool fast_mode_;
-  core::TimePoint last_external_event_timestamp_{};
+  std::reference_wrapper<const physical_time::PhysicalClock> clock_;
+  core::TimePoint last_physical_event_timestamp_{};
   // Live-window state, guarded by `mutex_`.
   bool started_{false};
   bool stopped_{false};
@@ -130,23 +135,26 @@ private:
 
 class Scheduler final {
 public:
-  Scheduler(const ExecutionProperties& execution_properties)
+  Scheduler(const ExecutionProperties& execution_properties, const physical_time::PhysicalClock& clock)
       : execution_properties_{execution_properties}
-      , event_queue_{execution_properties} {}
+      , event_queue_{execution_properties, clock}
+      , clock_{clock} {}
 
   void init(const core::ReactorModel& reactor_model, const RuntimeModel& runtime_model);
 
-  auto get_event_source(std::uint64_t element_uid) const -> const EventSource& { return event_sources_[element_uid]; }
+  auto get_present_value(std::uint64_t element_uid) const -> const PresentValue& {
+    return present_values_[element_uid];
+  }
 
   void schedule_event(std::uint64_t element_uid, abi::AnyValue&& value, core::Duration delay);
   void schedule_event(std::uint64_t element_uid, abi::AnyValue&& value, const logical_time::Tag& tag);
-  auto trigger_external_event(std::uint64_t element_uid, abi::AnyValue&& value) -> abi::TriggerStatus {
-    return event_queue_.trigger_external_event(element_uid, std::move(value));
+  auto trigger_physical_event(std::uint64_t element_uid, abi::AnyValue&& value) -> abi::TriggerStatus {
+    return event_queue_.trigger_physical_event(element_uid, std::move(value));
   }
   void set_port(std::uint64_t port_uid, abi::AnyValue&& value);
   void trigger_shutdown() {
-    shutdown_tag_ = current_tag_ + core::Duration::zero();
-    event_queue_.narrow_shutdown_bound(shutdown_tag_);
+    shutdown_bound_ = current_tag_ + core::Duration::zero();
+    event_queue_.narrow_shutdown_bound(shutdown_bound_);
   }
   // Requests a prompt stop from any thread while execute() blocks: the
   // scheduler abandons all remaining events, runs the shutdown reactions one
@@ -157,38 +165,42 @@ public:
 
   auto get_current_tag() const -> const logical_time::Tag& { return current_tag_; }
   auto get_start_tag() const -> const logical_time::Tag& { return start_tag_; }
+  [[nodiscard]] auto has_started() const noexcept -> bool { return started_.load(std::memory_order_acquire); }
 
 private:
   ExecutionProperties execution_properties_;
   EventQueue event_queue_;
-  std::deque<Reaction> ready_queue_{};
+  std::reference_wrapper<const physical_time::PhysicalClock> clock_;
+  std::deque<Reaction> triggered_reactions_{};
   logical_time::Tag start_tag_{};
   logical_time::Tag current_tag_{};
-  logical_time::Tag shutdown_tag_{};
+  logical_time::Tag shutdown_bound_{};
+  std::atomic<bool> started_{false};
 
   std::unordered_map<std::uint64_t, Reaction> reactions_{};
-  mutable std::unordered_map<std::uint64_t, EventSource> event_sources_{};
-  std::vector<std::uint64_t> active_events_{};
+  mutable std::unordered_map<std::uint64_t, PresentValue> present_values_{};
+  // The elements that hold a present value at the current tag.
+  std::vector<std::uint64_t> present_elements_{};
 
   const RuntimeModel* runtime_model_{nullptr};
   const core::ReactorModel* reactor_model_{nullptr};
-  bool has_external_triggers_{false};
+  bool has_physical_events_{false};
   std::exception_ptr active_exception_{nullptr};
   // One-shot request to stop executing the current tag's remaining
-  // reactions. Either error site sets it; execute_all_ready_reactions
+  // reactions. Either error site sets it; execute_triggered_reactions
   // consumes it and resets it after its loop, so shutdown reactions still
   // run.
   bool abort_execution_{false};
 
   void trigger_event(std::uint64_t element_uid, abi::AnyValue&& value);
 
-  // Delivers `value` to every leaf and boundary crossing of the subtree:
-  // leaves first, then one serialization per boundary node and one
-  // deserialization per branch, recursing with the decoded box. Returns
-  // false when a serializer or deserializer threw. A failure aborts the
-  // entire remaining walk: it is logged, stored for the rethrow from
+  // Delivers `value` to every delivery and boundary crossing of the segment:
+  // deliveries first, then one serialization per crossing and one
+  // deserialization per deserializing port, recursing with the decoded box.
+  // Returns false when a serializer or deserializer threw. A failure aborts
+  // the entire remaining walk: it is logged, stored for the rethrow from
   // execute, and triggers shutdown.
-  auto deliver_subtree(const ResolvedDeliverySubtree& subtree, abi::AnyValue&& value) noexcept -> bool;
+  auto deliver_segment(const ResolvedConnectionSegment& segment, abi::AnyValue&& value) noexcept -> bool;
   void handle_boundary_error(std::uint64_t serialize_uid, std::uint64_t deserialize_uid, bool serializing) noexcept;
 
   // Extracts and processes the next tag's events. Returns false once
@@ -196,12 +208,12 @@ private:
   auto process_next_tag(const logical_time::Tag& max_tag) -> bool;
   // Runs the reactions scheduled at the shutdown tag. The wait ignores a
   // stop request: shutdown reactions are the point of a graceful stop.
-  void process_shutdown_tag();
+  void process_shutdown_tag(const logical_time::Tag& shutdown_tag);
   // The shared tail of both: advances the current tag and runs the extracted
   // events' reactions. Returns false on an empty handle.
   auto process_events(std::map<logical_time::Tag, std::vector<Event>>::node_type event_handle) -> bool;
-  void execute_all_ready_reactions();
-  void reset_all_active_events();
+  void execute_triggered_reactions();
+  void clear_present_values();
   void execute_reaction(abi::ReactionHandler& handler);
 };
 

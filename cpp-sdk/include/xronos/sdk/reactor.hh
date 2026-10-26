@@ -71,7 +71,7 @@ public:
   }
 
   // Reactors may not be moved or copied. Copying is already deleted through the
-  // Element base. Move is deleted too because the reactions and child elements
+  // Element base. Move is deleted too because the reactions and contained elements
   // assembled within a reactor hold references back to it (e.g.
   // ReactionProperties::container_), so relocating the reactor would leave those
   // dangling.
@@ -83,7 +83,7 @@ public:
 
 protected:
   /**
-   * Get a context object for constructing reactor elements and contained
+   * Get a context object for constructing elements and contained
    * reactors.
    *
    * @param source_location Source location of the call site. Normally this
@@ -105,21 +105,22 @@ protected:
   /**
    * Get the startup event source.
    *
-   * @returns An event source that triggers once when the program execution
-   * starts.
+   * @returns The event source that emits one event as execution begins.
    */
   [[nodiscard]] auto startup() const noexcept -> const Startup& { return startup_; }
 
   /**
    * Get the shutdown event source.
    *
-   * @returns An event source that triggers once right before the program
-   * execution ends.
+   * @returns The event source that emits one event before execution ends.
    */
   [[nodiscard]] auto shutdown() noexcept -> Shutdown& { return shutdown_; }
 
   /**
    * @copydoc Environment::connect(const InputPort<T, FromSerializer>&, const InputPort<T, ToSerializer>&)
+   *
+   * A reactor connects only its own ports and those of the reactors it directly
+   * contains, never deeper or across.
    *
    * @see assemble()
    */
@@ -150,6 +151,9 @@ protected:
 
   /**
    * @copydoc Environment::connect(const InputPort<T, FromSerializer>&, const InputPort<T, ToSerializer>&, Duration)
+   *
+   * A reactor connects only its own ports and those of the reactors it directly
+   * contains, never deeper or across.
    *
    * @see assemble()
    */
@@ -184,6 +188,10 @@ protected:
    * This factory method is intended to be invoked when overloading assemble()
    * in a subclass. It instantiates a reaction and registers it for execution by
    * the runtime.
+   *
+   * The order in which a reactor adds its reactions is its reaction order. When
+   * multiple reactions of this reactor trigger at the same timestamp, they run
+   * in this order. It implies no order between different reactors' reactions.
    *
    * @tparam ReactionClass The reaction class to instantiate. This is typically a
    * subclass of Reaction.
@@ -234,13 +242,14 @@ protected:
 
 private:
   /**
-   * Method that sets up the internal topology of the reactor.
+   * Assemble the reactor.
    *
-   * This method needs to be overridden by concrete subclasses. The method is
-   * called by the runtime before the execution starts. An implementation of
-   * assemble() should call add_reaction() to instantiate the reactor's
-   * reactions. If the reactor contains other reactors, their ports may be
-   * connected using connect().
+   * Assembly is the phase in which reactors create their elements and declare
+   * connections, triggers, and effects, before execution begins. The runtime
+   * calls this method on every reactor before execution starts, and concrete
+   * subclasses must override it. An implementation of assemble() should call
+   * add_reaction() to instantiate the reactor's reactions. If the reactor
+   * contains other reactors, their ports may be connected using connect().
    */
   virtual void assemble() = 0;
 

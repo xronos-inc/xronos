@@ -15,6 +15,7 @@
 #include "xronos/abi/value.hh"
 #include "xronos/core/reactor_model.hh"
 #include "xronos/core/time.hh"
+#include "xronos/physical_time/physical_clock.hh"
 #include "xronos/runtime/default/detail/runtime_model.hh"
 #include "xronos/runtime/default/detail/scheduler.hh"
 #include "xronos/runtime/interfaces.hh"
@@ -24,26 +25,26 @@ namespace xronos::runtime::default_::detail {
 class DefaultTrigger final : public GettableTrigger {
 public:
   DefaultTrigger(std::uint64_t uid, const Scheduler& scheduler)
-      : event_source_{scheduler.get_event_source(uid)} {}
+      : present_value_{scheduler.get_present_value(uid)} {}
 
-  [[nodiscard]] auto get() const noexcept -> const abi::AnyValue& final { return event_source_.get().get(); }
+  [[nodiscard]] auto get() const noexcept -> const abi::AnyValue& final { return present_value_.get().get(); }
 
 private:
-  std::reference_wrapper<const EventSource> event_source_;
+  std::reference_wrapper<const PresentValue> present_value_;
 };
 
 class DefaultSettableEffect final : public SettableEffect {
 public:
   DefaultSettableEffect(std::uint64_t uid, Scheduler& scheduler)
-      : event_source_{scheduler.get_event_source(uid)}
+      : present_value_{scheduler.get_present_value(uid)}
       , scheduler_{scheduler}
       , uid_{uid} {}
 
   void set(abi::AnyValue&& value) noexcept final { scheduler_.get().set_port(uid_, std::move(value)); }
-  [[nodiscard]] auto get() const noexcept -> const abi::AnyValue& final { return event_source_.get().get(); }
+  [[nodiscard]] auto get() const noexcept -> const abi::AnyValue& final { return present_value_.get().get(); }
 
 private:
-  std::reference_wrapper<const EventSource> event_source_;
+  std::reference_wrapper<const PresentValue> present_value_;
   std::reference_wrapper<Scheduler> scheduler_;
   std::uint64_t uid_;
 };
@@ -63,16 +64,16 @@ private:
   std::uint64_t uid_;
 };
 
-class DefaultExternalTrigger final : public ExternalTrigger {
+class DefaultPhysicalEvent final : public PhysicalEvent {
 public:
-  DefaultExternalTrigger(std::uint64_t uid, Scheduler& scheduler)
+  DefaultPhysicalEvent(std::uint64_t uid, Scheduler& scheduler)
       : uid_{uid}
       , scheduler_{scheduler} {}
 
   void trigger(abi::AnyValue&& value) noexcept final { std::ignore = try_trigger(std::move(value)); }
 
   [[nodiscard]] auto try_trigger(abi::AnyValue&& value) noexcept -> abi::TriggerStatus final {
-    return scheduler_.get().trigger_external_event(uid_, std::move(value));
+    return scheduler_.get().trigger_physical_event(uid_, std::move(value));
   }
 
 private:
@@ -82,7 +83,7 @@ private:
 
 class DefaultShutdownEffect final : public ShutdownEffect {
 public:
-  DefaultShutdownEffect(Scheduler& scheduler)
+  explicit DefaultShutdownEffect(Scheduler& scheduler)
       : scheduler_{scheduler} {}
 
   void trigger_shutdown() noexcept final { scheduler_.get().trigger_shutdown(); };
@@ -93,7 +94,7 @@ private:
 
 class DefaultTimeAccess final : public TimeAccess {
 public:
-  DefaultTimeAccess(const Scheduler& scheduler)
+  explicit DefaultTimeAccess(const Scheduler& scheduler)
       : scheduler_{scheduler} {}
 
   [[nodiscard]] auto get_timestamp() const noexcept -> core::TimePoint final {
@@ -112,8 +113,8 @@ private:
 
 class DefaultRuntimeImpl final : public ProgramHandle {
 public:
-  DefaultRuntimeImpl(const ExecutionProperties& properties)
-      : scheduler_{properties} {}
+  explicit DefaultRuntimeImpl(const ExecutionProperties& properties)
+      : scheduler_{properties, clock_} {}
   DefaultRuntimeImpl(const DefaultRuntimeImpl&) = delete;
   DefaultRuntimeImpl(DefaultRuntimeImpl&&) = delete;
   auto operator=(const DefaultRuntimeImpl&) = delete;
@@ -132,9 +133,14 @@ public:
       -> SchedulableEffect* final;
   [[nodiscard]] auto get_shutdown_effect(std::uint64_t reaction_uid, std::uint64_t effect_uid) noexcept
       -> ShutdownEffect* final;
-  [[nodiscard]] auto get_external_trigger(std::uint64_t external_trigger_uid) noexcept -> ExternalTrigger* final;
+  [[nodiscard]] auto get_physical_event(std::uint64_t physical_event_uid) noexcept -> PhysicalEvent* final;
   [[nodiscard]] auto get_time_access([[maybe_unused]] std::uint64_t reactor_uid) const noexcept
       -> const TimeAccess* final {
+    // time_access_ reads the scheduler's tags, which hold no valid values
+    // before execute() assigns them.
+    if (!scheduler_.has_started()) {
+      return nullptr;
+    }
     return &time_access_;
   }
 
@@ -149,8 +155,9 @@ private:
   std::unordered_map<std::uint64_t, DefaultSchedulableEffect> schedulable_effects_;
   // Filled eagerly in initialize and immutable afterwards; external threads
   // look up triggers concurrently.
-  std::unordered_map<std::uint64_t, DefaultExternalTrigger> external_triggers_;
+  std::unordered_map<std::uint64_t, DefaultPhysicalEvent> physical_events_;
 
+  physical_time::SystemClock clock_{};
   Scheduler scheduler_;
   DefaultTimeAccess time_access_{scheduler_};
   DefaultShutdownEffect shutdown_effect_{scheduler_};

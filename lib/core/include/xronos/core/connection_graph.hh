@@ -16,23 +16,23 @@
 
 namespace xronos::core {
 
-// How a connection relates to a node boundary crossing. A crossing spans a
-// serialized region of the connection graph. Values inside a region exist
-// only in serialized form.
+// How a connection takes part in a boundary crossing. A crossing spans the
+// connections between its serializing port and its deserializing ports.
+// Between them the value exists only as bytes.
 //
 // - `None`: a plain connection.
-// - `Exit`: the value leaves its node. It is serialized with the serializer
-//   of `from_uid`, which opens a serialized region.
-// - `Entry`: the value enters a node. It is deserialized with the serializer
-//   of `to_uid`, which closes the region.
-// - `Both`: a single-connection crossing. The value is serialized with the
-//   serializer of `from_uid` and deserialized with the serializer of
-//   `to_uid` on the same connection.
+// - `Serializing`: the value is serialized with the serializer of `from_uid`,
+//   the serializing port, which opens a crossing.
+// - `Deserializing`: the value is deserialized with the serializer of
+//   `to_uid`, a deserializing port, which closes the crossing.
+// - `Complete`: a crossing that opens and closes on this one connection.
+//   The value is serialized with the serializer of `from_uid` and
+//   deserialized with the serializer of `to_uid`.
 enum class BoundaryCrossing : std::uint8_t {
   None,
-  Exit,
-  Entry,
-  Both,
+  Serializing,
+  Deserializing,
+  Complete,
 };
 
 struct ConnectionProperties {
@@ -42,45 +42,49 @@ struct ConnectionProperties {
   BoundaryCrossing crossing{BoundaryCrossing::None};
 };
 
-// The delivery tree of an origin port describes where a value written to
-// that port is delivered. Leaves are the receiving ports. Interior nodes are
-// node boundary crossings, where values are serialized and deserialized.
+// The connection tree of an origin port holds every connection that carries
+// the port's values, whichever reactions write or observe its ports. Its
+// leaves are the receiving ports, and its interior vertices are boundary
+// crossings, where values are serialized and deserialized.
 
 // A receiving port together with the delay accumulated along the path from
 // the origin port.
-struct DeliveryLeaf {
+struct ReceivingPort {
   ElementID port_uid{};
   std::optional<Duration> delay;
 };
 
-struct BoundarySerialization;
+struct ConnectionSerialization;
 
-// The receiving ports and boundary crossings reachable from one point in
-// the tree without crossing a further boundary.
-struct DeliverySubtree {
-  std::vector<DeliveryLeaf> leaves;
-  std::vector<BoundarySerialization> serializations;
+// A part of a connection tree between crossings: the receiving ports and
+// boundary crossings reachable from one point in the tree without crossing
+// a further boundary. A nested segment lists its deserializing port as a
+// receiving port.
+struct ConnectionSegment {
+  std::vector<ReceivingPort> receiving_ports;
+  std::vector<ConnectionSerialization> serializations;
 };
 
-// One deserializing side of a boundary crossing. The value is deserialized
+// One deserializing port of a boundary crossing. The value is deserialized
 // with the serializer of the port named by `deserialize_uid` and then
-// delivered to the subtree below.
-struct BoundaryDeserialization {
+// continues into the nested segment below.
+struct ConnectionDeserialization {
   ElementID deserialize_uid{};
-  DeliverySubtree subtree;
+  ConnectionSegment segment;
 };
 
-// One serializing side of a boundary crossing. The value is serialized once
-// with the serializer of the port named by `serialize_uid`, no matter how
-// many branches leave the port.
-struct BoundarySerialization {
+// The serializing port of a boundary crossing. The value is serialized once
+// with the serializer of the port named by `serialize_uid`, however many
+// deserializing ports the crossing has. Every crossing has at least one
+// deserializing port.
+struct ConnectionSerialization {
   ElementID serialize_uid{};
-  std::vector<BoundaryDeserialization> branches;
+  std::vector<ConnectionDeserialization> deserializations;
 };
 
-struct DeliveryTree {
+struct ConnectionTree {
   ElementID origin_uid{};
-  DeliverySubtree root;
+  ConnectionSegment root;
 };
 
 class ConnectionGraph {
@@ -88,7 +92,7 @@ public:
   [[nodiscard]] auto has_incoming_connection(ElementID uid) const noexcept -> bool {
     return connections_.contains(uid);
   }
-  [[nodiscard]] auto get_upstream_uid(ElementID uid) const noexcept -> std::optional<ElementID>;
+  [[nodiscard]] auto get_sending_uid(ElementID uid) const noexcept -> std::optional<ElementID>;
   [[nodiscard]] auto get_incoming_connection(ElementID uid) const noexcept
       -> std::optional<std::reference_wrapper<const ConnectionProperties>>;
   auto add_connection(const ConnectionProperties& properties) noexcept -> bool;
@@ -97,16 +101,16 @@ public:
     return connections_ | std::views::transform([](const auto& pair) -> const auto& { return pair.second; });
   }
 
-  // Derives connection properties for end to end connection from its upstream
-  // origin to the given downstream port. This accumulates all individual
-  // connections found along the way into a single properties object. This
-  // assumes that there are no cycles in the connection graph.
+  // Derives the properties of the end-to-end connection from the origin port
+  // to the given receiving port. This accumulates all individual connections
+  // found along the way into a single properties object. This assumes that
+  // there are no cycles in the connection graph.
   [[nodiscard]] auto get_incoming_end_to_end_connection(ElementID to_uid) const noexcept
       -> std::optional<core::ConnectionProperties>;
 
-  // Computes the delivery tree of every origin port (ports without an
-  // incoming connection).
-  [[nodiscard]] auto compute_delivery_trees() const -> std::vector<DeliveryTree>;
+  // Computes the connection tree of every origin port with outgoing
+  // connections. An origin port is a port without an incoming connection.
+  [[nodiscard]] auto compute_connection_trees() const -> std::vector<ConnectionTree>;
 
 private:
   // The to_uid of each connection acts as key. This reflects, that each

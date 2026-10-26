@@ -23,10 +23,10 @@ TOutput = TypeVar("TOutput")
 
 
 class TimerSource(abstract_source.AbstractTimerSource[None]):
-    """Simple reactor that produces a pure (valueless) event from a periodic timer.
+    """Simple reactor that produces a valueless event from a periodic timer.
 
     Args:
-        period: The interval at which the timer event is triggered.
+        period: The period at which the timer emits events.
         inhibit: Initialize with output inhibited.
     """
 
@@ -162,7 +162,7 @@ class RampSource(SuccessorSource[TRealOutput]):
     reentrant to ensure thread safety.
 
     Args:
-        initial_value: The value to output at each timer event.
+        initial_value: The value to output at the first event.
         successor: Successor operator for the type.
         inhibit: Initialize with output inhibited.
     """

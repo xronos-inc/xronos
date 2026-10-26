@@ -42,7 +42,7 @@ inline auto operator<<(std::ostream& os, TimePoint tp) -> std::ostream& {
       std::chrono::system_clock::to_time_t(std::chrono::time_point_cast<std::chrono::system_clock::duration>(tp));
   {
     static std::mutex mutex{};
-    const std::lock_guard<std::mutex> lock{mutex};
+    const std::scoped_lock lock{mutex};
     // std::localtime may not be thread safe and we protect it with the lock above.
     // It also returns nullptr for a time_t it cannot represent as a calendar date.
     // A valid nanosecond TimePoint stays in range on a 64-bit time_t (the whole

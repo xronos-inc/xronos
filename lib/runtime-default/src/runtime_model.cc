@@ -31,42 +31,44 @@ auto resolve_serializer(const core::ReactorModel& model, core::ElementID uid) ->
   return serializer;
 }
 
-auto is_empty(const ResolvedDeliverySubtree& subtree) -> bool {
-  return subtree.leaves.empty() && subtree.serializations.empty();
+auto is_empty(const ResolvedConnectionSegment& segment) -> bool {
+  return segment.deliveries.empty() && segment.serializations.empty();
 }
 
 // Resolves the serializers of every boundary crossing and prunes the tree
-// to the ports the scheduler stores events for: leaves that trigger no
-// reaction are dropped, then branches and serialization nodes that lost
-// their whole subtree. Pruning is bottom up, so a reaction-less port in the
-// middle of a chain never drops a boundary nested below it. Serializers are
+// to the ports the scheduler stores events for: receiving ports that trigger
+// no reaction are dropped, then deserializing ports and crossings that lost
+// their whole segment. Pruning is bottom up, so a reaction-less port in the
+// middle of a chain never drops a crossing nested below it. Serializers are
 // resolved before pruning, so a missing serializer fails init even when the
 // crossing delivers to no reaction.
-auto resolve_subtree(const core::ReactorModel& model,
+auto resolve_segment(const core::ReactorModel& model,
                      const std::unordered_map<std::uint64_t, TriggerProperties>& triggers,
-                     const core::DeliverySubtree& subtree) -> ResolvedDeliverySubtree {
-  ResolvedDeliverySubtree resolved;
-  for (const auto& leaf : subtree.leaves) {
-    if (triggers.contains(leaf.port_uid)) {
-      resolved.leaves.push_back(leaf);
+                     const core::ConnectionSegment& segment) -> ResolvedConnectionSegment {
+  ResolvedConnectionSegment resolved;
+  for (const auto& port : segment.receiving_ports) {
+    if (triggers.contains(port.port_uid)) {
+      resolved.deliveries.push_back(port);
     }
   }
-  for (const auto& serialization : subtree.serializations) {
-    ResolvedBoundarySerialization resolved_serialization{.serializer =
-                                                             resolve_serializer(model, serialization.serialize_uid),
-                                                         .serialize_uid = serialization.serialize_uid,
-                                                         .branches = {}};
-    for (const auto& branch : serialization.branches) {
-      auto* deserializer = resolve_serializer(model, branch.deserialize_uid);
-      auto resolved_branch_subtree = resolve_subtree(model, triggers, branch.subtree);
-      if (!is_empty(resolved_branch_subtree)) {
-        resolved_serialization.branches.push_back(
-            ResolvedBoundaryDeserialization{.deserializer = deserializer,
-                                            .deserialize_uid = branch.deserialize_uid,
-                                            .subtree = std::move(resolved_branch_subtree)});
+  for (const auto& serialization : segment.serializations) {
+    ResolvedConnectionSerialization resolved_serialization{
+        .serializer = resolve_serializer(model, serialization.serialize_uid),
+        .serialize_uid = serialization.serialize_uid,
+        .deserializations = {},
+    };
+    for (const auto& deserialization : serialization.deserializations) {
+      auto* deserializer = resolve_serializer(model, deserialization.deserialize_uid);
+      auto resolved_nested_segment = resolve_segment(model, triggers, deserialization.segment);
+      if (!is_empty(resolved_nested_segment)) {
+        resolved_serialization.deserializations.push_back(ResolvedConnectionDeserialization{
+            .deserializer = deserializer,
+            .deserialize_uid = deserialization.deserialize_uid,
+            .segment = std::move(resolved_nested_segment),
+        });
       }
     }
-    if (!resolved_serialization.branches.empty()) {
+    if (!resolved_serialization.deserializations.empty()) {
       resolved.serializations.push_back(std::move(resolved_serialization));
     }
   }
@@ -92,10 +94,10 @@ void RuntimeModel::init(const core::ReactorModel& model) {
         element.type);
   }
 
-  for (const auto& tree : model.connection_graph.compute_delivery_trees()) {
-    auto resolved = resolve_subtree(model, triggers, tree.root);
+  for (const auto& tree : model.connection_graph.compute_connection_trees()) {
+    auto resolved = resolve_segment(model, triggers, tree.root);
     if (!is_empty(resolved)) {
-      delivery_trees.emplace(tree.origin_uid, std::move(resolved));
+      connection_trees.emplace(tree.origin_uid, std::move(resolved));
     }
   }
 

@@ -24,6 +24,7 @@ target_link_libraries(xronos-runtime-default-private-headers
   INTERFACE
   xronos::xronos-core
   xronos::xronos-logical-time
+  xronos::xronos-physical-time
   xronos::xronos-util
   xronos::xronos-runtime-interfaces
 )
@@ -37,6 +38,7 @@ target_link_libraries(xronos-runtime-default
   PRIVATE
   xronos::xronos-dependency-graph
   xronos::xronos-logical-time
+  xronos::xronos-physical-time
   xronos::xronos-util
   xronos::xronos-value)
 target_include_directories(xronos-runtime-default PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/include>)
@@ -44,5 +46,21 @@ target_compile_options(xronos-runtime-default PRIVATE -Wall $<$<BOOL:${XRONOS_ST
 set_target_properties(xronos-runtime-default PROPERTIES VERIFY_INTERFACE_HEADER_SETS ON)
 
 set_target_properties(xronos-runtime-default PROPERTIES VERSION "${PROJECT_VERSION}" SOVERSION 1)
+
+if(XRONOS_LIB_BUILD_TESTS)
+  include(../../third-party/googletest/googletest.cmake)
+  file(GLOB_RECURSE TEST_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/test/*.cc")
+  add_executable(xronos-runtime-default-tests ${TEST_SOURCES})
+  target_link_libraries(xronos-runtime-default-tests
+    PRIVATE
+      xronos-runtime-default
+      xronos-runtime-default-private-headers
+      xronos-physical-time
+      xronos-value
+      GTest::gtest_main
+  )
+  include(GoogleTest)
+  gtest_discover_tests(xronos-runtime-default-tests)
+endif()
 
 add_library(xronos::xronos-runtime-default ALIAS xronos-runtime-default)
