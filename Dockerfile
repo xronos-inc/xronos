@@ -1,3 +1,5 @@
+FROM node:24.22.1-trixie-slim@sha256:43b9ba1142b8dcf33fa8f922ca1be85714adc444e0586c7cf7726daaeabc1bea AS node
+
 FROM ubuntu:jammy-20260930@sha256:0a9887931b0e38af2e3487ed39e29436b0535c4f3f52e57745baaf79d1898956 AS base
 WORKDIR /xronos
 
@@ -85,8 +87,9 @@ RUN if [ "$python_version" = "3.13t" ]; then \
         cp dev-requirements.txt venv-requirements.txt; \
     fi
 RUN . /venv/bin/activate && pip install --no-cache-dir -r venv-requirements.txt
-# Run pyright once to install its node dependencies
-RUN . /venv/bin/activate && pyright --version
+# pyright uses the node on PATH. Without one, it installs the latest Node.js
+# release on first run, and the build then depends on whatever release that is.
+COPY --from=node /usr/local/bin/node /usr/local/bin/node
 ENV MYPY_CACHE_DIR=/dev/null
 
 
